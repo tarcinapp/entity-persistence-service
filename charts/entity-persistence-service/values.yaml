@@ -47,7 +47,7 @@ service:
   name: entity-persistence-service
   type: ClusterIP
   externalPort: 80
-  internalPort: 8080
+  internalPort: 3000
   annotations:
     fabric8.io/expose: "true"
     fabric8.io/ingress.annotations: "kubernetes.io/ingress.class: nginx"
@@ -58,7 +58,7 @@ resources:
   requests:
     cpu: 200m
     memory: 128Mi
-probePath: /
+probePath: /ping
 livenessProbe:
   initialDelaySeconds: 60
   periodSeconds: 10
