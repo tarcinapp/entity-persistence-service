@@ -1,9 +1,16 @@
+import {RestBindings} from '@loopback/rest';
 import {ApplicationConfig, EntityPersistenceApplication} from './application';
 
 export * from './application';
 
 export async function main(options: ApplicationConfig = {}) {
   const app = new EntityPersistenceApplication(options);
+
+  app.bind(RestBindings.ERROR_WRITER_OPTIONS).to({
+    debug: process.env.NODE_ENV != 'production',
+    safeFields: ['errorCode', 'message']
+  });
+
   await app.boot();
   await app.start();
 
