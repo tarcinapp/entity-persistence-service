@@ -46,7 +46,7 @@ export class HttpErrorResponse extends Model {
   })
   statusCode: number;
 
-  @property.array(Object, { // <------- We should be able to use '@property.array(SingleError, {' here, according to the documentation. But this usage fails lb4 to create correct schema descriptor.
+  @property.array(Object, { // <------- We should be able to use '@property.array(SingleError, {' here, according to the documentation. But this usage cause lb4 to fail when creating schema descriptor.
     jsonSchema: getJsonSchema(SingleError)
   })
   errors: SingleError[];
