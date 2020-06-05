@@ -1,5 +1,36 @@
 import {Model, model, property} from '@loopback/repository';
-import {SingleError} from './single-error.model';
+import {getJsonSchema} from '@loopback/rest';
+
+@model()
+export class SingleError extends Model {
+  @property({
+    type: 'string',
+    required: true,
+  })
+  code: string;
+
+  @property({
+    type: 'string',
+    required: true,
+  })
+  message: string;
+
+  @property({
+    type: 'string',
+  })
+  source?: string;
+
+  constructor(data?: Partial<SingleError>) {
+    super(data);
+  }
+}
+
+export interface SingleErrorRelations {
+  // describe navigational properties here
+}
+
+export type SingleErrorWithRelations = SingleError & SingleErrorRelations;
+
 
 @model()
 export class HttpErrorResponse extends Model {
@@ -11,11 +42,13 @@ export class HttpErrorResponse extends Model {
 
   @property({
     type: 'number',
-    required: true,
+    required: true
   })
   statusCode: number;
 
-  @property.array(SingleError)
+  @property.array(Object, { // <------- We should be able to use '@property.array(SingleError, {' here, according to the documentation. But this usage fails lb4 to create correct schema descriptor.
+    jsonSchema: getJsonSchema(SingleError)
+  })
   errors: SingleError[];
 
   constructor(data?: Partial<HttpErrorResponse>) {

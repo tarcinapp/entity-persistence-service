@@ -1,6 +1,6 @@
 import {Count, CountSchema, Filter, FilterExcludingWhere, repository, Where} from '@loopback/repository';
-import {del, get, getModelSchemaRef, param, patch, post, put, requestBody} from '@loopback/rest';
-import {GenericEntity, HttpErrorResponseDocumentation} from '../models';
+import {del, get, getJsonSchema, getModelSchemaRef, param, patch, post, put, requestBody} from '@loopback/rest';
+import {GenericEntity, HttpErrorResponse} from '../models';
 import {GenericEntityRepository} from '../repositories';
 
 export class GenericEntityControllerController {
@@ -19,7 +19,11 @@ export class GenericEntityControllerController {
         description: 'Entity name already exists.',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponseDocumentation)
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse)
+              }
+            }
           }
         }
       }
