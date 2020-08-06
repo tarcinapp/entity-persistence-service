@@ -1,0 +1,11 @@
+stages:
+- name: build
+  steps:
+  - publishImageConfig:
+      dockerfilePath: ./Dockerfile
+      buildContext: .
+      tag: tarcinapp/entity-persistence-service:v1
+      pushRemote: true
+      registry: bulutarti.com/private/registry
+timeout: 60
+notification: {}
