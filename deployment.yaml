@@ -15,6 +15,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: entity-persistence-deployment
+  namespace: tarcinapp-test
   labels:
     app: entity-persistence
 spec:
