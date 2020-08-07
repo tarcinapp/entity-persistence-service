@@ -11,7 +11,6 @@ stages:
   - runScriptConfig:
       image: node:latest
       shellScript: |-
-        echo '${CICD_GIT_REPO_NAME}'
         cat <<EOT >> deployment.yaml
         kind: Service
         apiVersion: v1
@@ -50,6 +49,5 @@ stages:
                 ports:
                 - containerPort: 3000
         ls
-        cat deployment.yaml
 timeout: 60
 notification: {}
