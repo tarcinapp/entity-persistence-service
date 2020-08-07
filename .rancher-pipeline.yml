@@ -1,58 +1,10 @@
 stages:
-- name: build
+- name: Build
   steps:
   - publishImageConfig:
       dockerfilePath: ./Dockerfile
       buildContext: .
       tag: tarcinapp/entity-persistence-service
       registry: bulutarti.com/private/registry
-- name: Add YAML
-  steps:
-  - runScriptConfig:
-      image: node:latest
-      shellScript: |-
-        echo '${CICD_GIT_REPO_NAME}'
-        cat <<EOT >> deployment.yaml
-        kind: Service
-        apiVersion: v1
-        metadata:
-          name: ${APP_NAME}-service
-        spec:
-          selector:
-            app: ${APP_NAME}
-          type: NodePort
-          ports:
-            - protocol: TCP
-              port: 80
-              targetPort: 3000
-        ---
-        apiVersion: apps/v1
-        kind: Deployment
-        metadata:
-          name: ${APP_NAME}-deployment
-          labels:
-            app: ${APP_NAME}
-        spec:
-          replicas: 1
-          selector:
-            matchLabels:
-              app: ${APP_NAME}
-          template:
-            metadata:
-              labels:
-                app: ${APP_NAME}
-            spec:
-              imagePullSecrets:
-              - name: pipeline-docker-registry
-              containers:
-              - name: ${APP_NAME}
-                image: ${CICD_IMAGE}:${CICD_EXECUTION_SEQUENCE}
-                ports:
-                - containerPort: 3000
-        EOT
-        ls
-        cat deployment.yaml
-    env:
-      APP_NAME: entity-persistence
 timeout: 60
 notification: {}
