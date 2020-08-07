@@ -48,6 +48,7 @@ stages:
                 image: ${CICD_IMAGE}:${CICD_EXECUTION_SEQUENCE}
                 ports:
                 - containerPort: 3000
+        EOT
         ls
 timeout: 60
 notification: {}
