@@ -6,5 +6,11 @@ stages:
       buildContext: .
       tag: tarcinapp/entity-persistence-service
       registry: bulutarti.com/private/registry
+- name: Deploy
+  steps:
+  - applyYamlConfig:
+      path: ./deployment.yaml
+    env:
+      APP_NAME: entity-persistence
 timeout: 60
 notification: {}
