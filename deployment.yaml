@@ -2,6 +2,7 @@ kind: Service
 apiVersion: v1
 metadata:
   name: entity-persistence-service
+  namespace: tarcinapp-test
 spec:
   selector:
     app: entity-persistence
