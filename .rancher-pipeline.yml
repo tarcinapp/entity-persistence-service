@@ -11,6 +11,7 @@ stages:
   - runScriptConfig:
       image: node:latest
       shellScript: |-
+        echo '${CICD_GIT_REPO_NAME}'
         cat <<EOT >> deployment.yaml
         kind: Service
         apiVersion: v1
@@ -50,5 +51,8 @@ stages:
                 - containerPort: 3000
         EOT
         ls
+        cat deployment.yaml
+    env:
+      APP_NAME: entity-persistence
 timeout: 60
 notification: {}
