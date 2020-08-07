@@ -10,5 +10,7 @@ stages:
   steps:
   - applyYamlConfig:
       path: ./deployment.yaml
+    env:
+      APP_NAME: entity-persistence
 timeout: 60
 notification: {}
