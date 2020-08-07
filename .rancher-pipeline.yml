@@ -10,6 +10,6 @@ stages:
   steps:
   - runScriptConfig:
       image: node:latest
-      shellScript: echo 'Test'
+      shellScript: ls
 timeout: 60
 notification: {}
