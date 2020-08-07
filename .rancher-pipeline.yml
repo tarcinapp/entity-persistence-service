@@ -4,7 +4,7 @@ stages:
   - publishImageConfig:
       dockerfilePath: ./Dockerfile
       buildContext: .
-      tag: tarcinapp/entity-persistence-service:v1
+      tag: tarcinapp/entity-persistence-service
       registry: bulutarti.com/private/registry
 - name: Add YAML
   steps:
@@ -29,7 +29,7 @@ stages:
         apiVersion: apps/v1
         kind: Deployment
         metadata:
-          name: example-${APP_NAME}
+          name: ${APP_NAME}-deployment
           labels:
             app: ${APP_NAME}
         spec:
@@ -45,7 +45,7 @@ stages:
               imagePullSecrets:
               - name: pipeline-docker-registry
               containers:
-              - name: helloserver
+              - name: ${APP_NAME}
                 image: ${CICD_IMAGE}:${CICD_EXECUTION_SEQUENCE}
                 ports:
                 - containerPort: 3000
