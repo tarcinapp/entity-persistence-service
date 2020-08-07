@@ -10,6 +10,11 @@ stages:
   steps:
   - runScriptConfig:
       image: node:latest
-      shellScript: ls
+      shellScript: |-
+        cat <<EOT >> greetings.txt
+        line 1
+        line 2
+        EOT
+        ls
 timeout: 60
 notification: {}
