@@ -1,10 +1,10 @@
 kind: Service
 apiVersion: v1
 metadata:
-  name: ${APP_NAME}-service
+  name: entity-persistence-service
 spec:
   selector:
-    app: ${APP_NAME}
+    app: entity-persistence
   type: NodePort
   ports:
     - protocol: TCP
@@ -14,23 +14,23 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ${APP_NAME}-deployment
+  name: entity-persistence-deployment
   labels:
-    app: ${APP_NAME}
+    app: entity-persistence
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ${APP_NAME}
+      app: entity-persistence
   template:
     metadata:
       labels:
-        app: ${APP_NAME}
+        app: entity-persistence
     spec:
       imagePullSecrets:
       - name: pipeline-docker-registry
       containers:
-      - name: ${APP_NAME}
+      - name: entity-persistence
         image: ${CICD_IMAGE}:${CICD_EXECUTION_SEQUENCE}
         ports:
         - containerPort: 3000
