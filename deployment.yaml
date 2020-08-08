@@ -36,3 +36,12 @@ spec:
         image: ${CICD_IMAGE}:${CICD_EXECUTION_SEQUENCE}
         ports:
         - containerPort: 3000
+      livenessProbe:
+        httpGet:
+          path: /ping
+          port: 3000
+        initialDelaySeconds: 3
+        periodSeconds: 60
+        timeoutSeconds: 2
+        successThreshold: 1
+        failureThreshold: 3
