@@ -4,8 +4,8 @@ import {juggler} from '@loopback/repository';
 const config = {
   name: 'EntityDb',
   connector: 'mongodb',
-  url: 'mongodb://entityrwappuser:Tarcinapp123!@entity-db:27017/tarcinapp',
-  host: 'entity-db',
+  url: 'mongodb://entityrwappuser:Tarcinapp123!@mongodb:27017/tarcinapp',
+  host: 'mongodb',
   port: 27017,
   user: 'entityrwappuser',
   password: 'Tarcinapp123!',
