@@ -4,7 +4,7 @@ stages:
   - publishImageConfig:
       dockerfilePath: ./Dockerfile
       buildContext: .
-      tag: tarcinapp/entity-persistence-service
+      tag: tarcinapp/entity-persistence-service:${CICD_EXECUTION_SEQUENCE}
       registry: bulutarti.com/private/registry
 - name: Deploy
   steps:
