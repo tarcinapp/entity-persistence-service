@@ -6,6 +6,7 @@ export class GenericEntity extends Entity {
     type: 'string',
     id: true,
     generated: false,
+    defaultFn: "uuidv4"
   })
   id?: string;
 
@@ -38,14 +39,20 @@ export class GenericEntity extends Entity {
   banner?: string;
 
   @property({
-    type: 'date'
+    type: 'date',
+    defaultFn: "now"
   })
-  validFrom?: string;
+  creationDateTime?: string;
 
   @property({
     type: 'date'
   })
-  validUntil?: string;
+  validFromDateTime?: string;
+
+  @property({
+    type: 'date'
+  })
+  validUntilDateTime?: string;
 
   // Define well-known properties here
 

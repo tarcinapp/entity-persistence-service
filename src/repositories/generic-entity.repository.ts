@@ -1,4 +1,4 @@
-import {inject, uuid} from '@loopback/core';
+import {inject} from '@loopback/core';
 import {DataObject, DefaultCrudRepository} from '@loopback/repository';
 import {EntityDbDataSource} from '../datasources';
 import {GenericEntity, GenericEntityRelations, HttpErrorResponse, SingleError} from '../models';
@@ -51,9 +51,6 @@ export class GenericEntityRepository extends DefaultCrudRepository<
         status: 409,
       });
     }
-
-    entity.id = uuid();
-    entity.validFrom = new Date().toISOString();
 
     return super.create(entity);
   }
