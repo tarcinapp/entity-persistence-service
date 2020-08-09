@@ -38,13 +38,12 @@ export class GenericEntity extends Entity {
   banner?: string;
 
   @property({
-    type: 'date',
-    required: true,
+    type: 'date'
   })
-  validFrom: string;
+  validFrom?: string;
 
   @property({
-    type: 'date',
+    type: 'date'
   })
   validUntil?: string;
 

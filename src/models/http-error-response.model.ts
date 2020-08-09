@@ -20,6 +20,12 @@ export class SingleError extends Model {
   })
   message: string;
 
+  @property({
+    type: 'object',
+    required: true,
+  })
+  info?: object;
+
   constructor(data?: Partial<SingleError>) {
     super(data);
   }
