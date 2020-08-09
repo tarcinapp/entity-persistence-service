@@ -43,13 +43,17 @@ export class GenericEntityRepository extends DefaultCrudRepository<
         details: [new SingleError({
           path: '/name',
           code: 'NAME-ALREADY-EXISTS',
-          message: 'Name already exists'
+          message: 'Name already exists',
+          info: {
+            "violatedUniquenessProperty": "name"
+          }
         })],
         status: 409,
       });
     }
 
     entity.id = uuid();
+    entity.validFrom = new Date().toISOString();
 
     return super.create(entity);
   }
