@@ -71,6 +71,17 @@ export class GenericEntity extends Entity {
   })
   visibility?: string;
 
+
+  @property.array(String, {
+    required: false
+  })
+  ownerUsers?: string[];
+
+  @property.array(String, {
+    required: false
+  })
+  ownerGroups?: string[];
+
   // Define well-known properties here
 
   // Indexer property to allow additional data
