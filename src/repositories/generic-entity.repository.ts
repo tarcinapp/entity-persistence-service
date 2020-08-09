@@ -36,13 +36,16 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     if (activeEntityWithSameName) {
 
       throw new HttpErrorResponse({
-        status: 'Conflict',
         statusCode: 409,
-        errors: [new SingleError({
+        name: "DataUniquenessViolationError",
+        message: "Entity already exists. See error object `details` property for more info.",
+        code: "ENTITY-ALREADY-EXISTS",
+        details: [new SingleError({
+          path: '/name',
           code: 'NAME-ALREADY-EXISTS',
-          message: 'Name already exists',
-          source: '/name'
-        })]
+          message: 'Name already exists'
+        })],
+        status: 409,
       });
     }
 

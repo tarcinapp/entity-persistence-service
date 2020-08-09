@@ -5,6 +5,11 @@ import {getJsonSchema} from '@loopback/rest';
 export class SingleError extends Model {
   @property({
     type: 'string',
+  })
+  path?: string;
+
+  @property({
+    type: 'string',
     required: true,
   })
   code: string;
@@ -14,11 +19,6 @@ export class SingleError extends Model {
     required: true,
   })
   message: string;
-
-  @property({
-    type: 'string',
-  })
-  source?: string;
 
   constructor(data?: Partial<SingleError>) {
     super(data);
@@ -35,21 +35,39 @@ export type SingleErrorWithRelations = SingleError & SingleErrorRelations;
 @model()
 export class HttpErrorResponse extends Model {
   @property({
-    type: 'string',
-    required: true,
-  })
-  status: string;
-
-  @property({
     type: 'number',
     required: true
   })
   statusCode: number;
 
+  @property({
+    type: 'string',
+    required: true
+  })
+  name: string;
+
+  @property({
+    type: 'string',
+    required: true
+  })
+  message: string;
+
+  @property({
+    type: 'string',
+    required: true
+  })
+  code: string;
+
   @property.array(Object, { // <------- We should be able to use '@property.array(SingleError, {' here, according to the documentation. But this usage cause lb4 to fail when creating schema descriptor.
     jsonSchema: getJsonSchema(SingleError)
   })
-  errors: SingleError[];
+  details: SingleError[];
+
+  @property({
+    type: 'number',
+    required: true,
+  })
+  status: number;
 
   constructor(data?: Partial<HttpErrorResponse>) {
     super(data);
