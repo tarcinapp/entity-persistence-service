@@ -31,11 +31,13 @@ export class GenericEntity extends Entity {
 
   @property({
     type: 'string',
+    default: ""
   })
   thumbnail?: string;
 
   @property({
     type: 'string',
+    default: ""
   })
   banner?: string;
 
