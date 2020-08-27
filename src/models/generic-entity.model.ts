@@ -63,8 +63,9 @@ export class GenericEntity extends Entity {
 
   @property({
     type: 'string',
-    description: 'public: anyone can see the entity, if validFromDateTime has a value.' +
-      'private: only the owner user can see the entity' +
+    description: 'public: anyone can see the entity, if validFromDateTime has a value. ' +
+      'protected: only the members of the owner groups can see the entity. ' +
+      'private: only the owner user can see the entity. ' +
       'Note: This option only applies to the user in members role. Higher level' +
       'roles always see all the entities.',
     default: 'public'
