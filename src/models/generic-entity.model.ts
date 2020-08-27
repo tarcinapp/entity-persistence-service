@@ -24,9 +24,10 @@ export class GenericEntity extends Entity {
 
   @property({
     type: 'string',
-    required: true,
+    required: false,
+    default: ""
   })
-  description: string;
+  description?: string;
 
   @property({
     type: 'string',
