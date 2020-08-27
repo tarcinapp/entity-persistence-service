@@ -74,12 +74,14 @@ export class GenericEntity extends Entity {
 
 
   @property.array(String, {
-    required: false
+    required: false,
+    default: []
   })
   ownerUsers?: string[];
 
   @property.array(String, {
-    required: false
+    required: false,
+    default: []
   })
   ownerGroups?: string[];
 
