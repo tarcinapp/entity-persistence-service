@@ -1,4 +1,5 @@
-import {Entity, model, property} from '@loopback/repository';
+import {Entity, hasMany, model, property} from '@loopback/repository';
+import {Relation} from './relation.model';
 
 @model({settings: {strict: false}})
 export class GenericEntity extends Entity {
@@ -85,14 +86,10 @@ export class GenericEntity extends Entity {
     required: false,
     default: []
   })
-  parents?: string[];
-
-  @property.array(String, {
-    required: false,
-    default: []
-  })
   ownerGroups?: string[];
 
+  @hasMany(() => Relation, {keyTo: 'from'})
+  relations: Relation[];
   // Define well-known properties here
 
   // Indexer property to allow additional data

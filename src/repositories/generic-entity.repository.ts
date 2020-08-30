@@ -1,17 +1,23 @@
-import {inject} from '@loopback/core';
-import {DataObject, DefaultCrudRepository} from '@loopback/repository';
+import {inject, Getter} from '@loopback/core';
+import {DataObject, DefaultCrudRepository, repository, HasManyRepositoryFactory} from '@loopback/repository';
 import {EntityDbDataSource} from '../datasources';
-import {GenericEntity, GenericEntityRelations, HttpErrorResponse, SingleError} from '../models';
+import {GenericEntity, GenericEntityRelations, HttpErrorResponse, SingleError, Relation} from '../models';
+import {RelationRepository} from './relation.repository';
 
 export class GenericEntityRepository extends DefaultCrudRepository<
   GenericEntity,
   typeof GenericEntity.prototype.id,
   GenericEntityRelations
   > {
+
+  public readonly relations: HasManyRepositoryFactory<Relation, typeof GenericEntity.prototype.id>;
+
   constructor(
-    @inject('datasources.EntityDb') dataSource: EntityDbDataSource,
+    @inject('datasources.EntityDb') dataSource: EntityDbDataSource, @repository.getter('RelationRepository') protected relationRepositoryGetter: Getter<RelationRepository>,
   ) {
     super(GenericEntity, dataSource);
+    this.relations = this.createHasManyRepositoryFactoryFor('relations', relationRepositoryGetter,);
+    this.registerInclusionResolver('relations', this.relations.inclusionResolver);
   }
 
   async create(entity: DataObject<GenericEntity>) {
