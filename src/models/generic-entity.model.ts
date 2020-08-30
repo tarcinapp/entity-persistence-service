@@ -1,5 +1,6 @@
 import {Entity, hasMany, model, property} from '@loopback/repository';
 import {Relation} from './relation.model';
+import {Reactions} from './reactions.model';
 
 @model({settings: {strict: false}})
 export class GenericEntity extends Entity {
@@ -90,6 +91,9 @@ export class GenericEntity extends Entity {
 
   @hasMany(() => Relation, {keyTo: 'from'})
   relations: Relation[];
+
+  @hasMany(() => Reactions, {keyTo: 'entityId'})
+  reactions: Reactions[];
   // Define well-known properties here
 
   // Indexer property to allow additional data

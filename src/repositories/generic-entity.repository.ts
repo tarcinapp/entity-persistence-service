@@ -1,8 +1,9 @@
 import {inject, Getter} from '@loopback/core';
 import {DataObject, DefaultCrudRepository, repository, HasManyRepositoryFactory} from '@loopback/repository';
 import {EntityDbDataSource} from '../datasources';
-import {GenericEntity, GenericEntityRelations, HttpErrorResponse, SingleError, Relation} from '../models';
+import {GenericEntity, GenericEntityRelations, HttpErrorResponse, SingleError, Relation, Reactions} from '../models';
 import {RelationRepository} from './relation.repository';
+import {ReactionsRepository} from './reactions.repository';
 
 export class GenericEntityRepository extends DefaultCrudRepository<
   GenericEntity,
@@ -12,10 +13,14 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
   public readonly relations: HasManyRepositoryFactory<Relation, typeof GenericEntity.prototype.id>;
 
+  public readonly reactions: HasManyRepositoryFactory<Reactions, typeof GenericEntity.prototype.id>;
+
   constructor(
-    @inject('datasources.EntityDb') dataSource: EntityDbDataSource, @repository.getter('RelationRepository') protected relationRepositoryGetter: Getter<RelationRepository>,
+    @inject('datasources.EntityDb') dataSource: EntityDbDataSource, @repository.getter('RelationRepository') protected relationRepositoryGetter: Getter<RelationRepository>, @repository.getter('ReactionsRepository') protected reactionsRepositoryGetter: Getter<ReactionsRepository>,
   ) {
     super(GenericEntity, dataSource);
+    this.reactions = this.createHasManyRepositoryFactoryFor('reactions', reactionsRepositoryGetter,);
+    this.registerInclusionResolver('reactions', this.reactions.inclusionResolver);
     this.relations = this.createHasManyRepositoryFactoryFor('relations', relationRepositoryGetter,);
     this.registerInclusionResolver('relations', this.relations.inclusionResolver);
   }

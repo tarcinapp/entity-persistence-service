@@ -34,6 +34,25 @@ spec:
       containers:
       - name: entity-persistence
         image: ${CICD_IMAGE}:${CICD_EXECUTION_SEQUENCE}
+        env:
+        - name: ADMIN_ROLE_NAMES
+          value: "tarcinapp_admin,tarcinapp_editor"
+        - name: MEMBER_ROLE_NAMES
+          value: tarcinapp_member
+        - name: ALLOWED_ENTITY_KINDS
+          value: "firma,urun,parti,siyasetci,marka,model"
+        - name: AUTO_APPROVE_ENTITIES_CREATED_BY_MEMBERS
+          value: "false"
+        - name: ALLOWED_REACTION_KINDS
+          value: "comment,like,subcomment,comment_like,comment_dislike"
+        - name: ALLOWED_RELATION_KINDS
+          value: "produces,owner_person,owner_company,brand"
+        - name: AUTO_APPROVE_REACTIONS_CREATED_BY_MEMBERS
+          value: "true"
+        - name: ALLOWED_LIST_TYPES
+          value: "saved_entities,saved_lists,featured_by_members,public_list,featured_by_editors"
+        - name: AUTO_APPROVE_LISTS_CREATED_BY_MEMBERS
+          value: "false"
         ports:
         - containerPort: 3000
         livenessProbe:
