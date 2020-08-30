@@ -75,12 +75,17 @@ export class GenericEntity extends Entity {
   })
   visibility?: string;
 
-
   @property.array(String, {
     required: false,
     default: []
   })
   ownerUsers?: string[];
+
+  @property.array(String, {
+    required: false,
+    default: []
+  })
+  parents?: string[];
 
   @property.array(String, {
     required: false,
