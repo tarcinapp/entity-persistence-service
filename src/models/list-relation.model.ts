@@ -1,12 +1,12 @@
 import {Entity, model, property} from '@loopback/repository';
 
 @model()
-export class Relation extends Entity {
+export class ListRelation extends Entity {
   @property({
     type: 'string',
     id: true,
     generated: false,
-    defaultFn: "uuidv4"
+    default: "uuidv4",
   })
   id?: string;
 
@@ -30,18 +30,18 @@ export class Relation extends Entity {
 
   @property({
     type: 'date',
-    defaultFn: "now"
+    defaultFn: "now",
   })
   creationDateTime?: string;
 
 
-  constructor(data?: Partial<Relation>) {
+  constructor(data?: Partial<ListRelation>) {
     super(data);
   }
 }
 
-export interface RelationRelations {
+export interface ListRelationRelations {
   // describe navigational properties here
 }
 
-export type RelationWithRelations = Relation & RelationRelations;
+export type ListRelationWithRelations = ListRelation & ListRelationRelations;
