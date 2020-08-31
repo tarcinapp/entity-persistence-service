@@ -45,7 +45,7 @@ spec:
               "membersConfig":{
                 "entityKinds": ["urun", "siyasetci"],
                 "autoApproveEntities": true,
-                "listKinds": ["saved_entities", "saved_lists", featured_by_members],
+                "listKinds": ["saved_entities", "saved_lists", "featured_by_members"],
                 "autoApproveLists": ["saved_entities", "saved_lists"],
                 "entityReactionKinds": ["comment", "anger", "subcomment", "comment_like", "comment_dislike"],
                 "autoApproveEntityReactions": ["anger", "comment_like", "comment_dislike"],
