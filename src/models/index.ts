@@ -7,3 +7,4 @@ export * from './reactions.model';
 export * from './list.model';
 export * from './list-entity-relation.model';
 export * from './list-relation.model';
+export * from './list-reactions.model';

@@ -1,7 +1,7 @@
 import {Entity, model, property} from '@loopback/repository';
 
 @model({settings: {strict: false}})
-export class Reactions extends Entity {
+export class ListReactions extends Entity {
   @property({
     type: 'string',
     id: true,
@@ -18,6 +18,7 @@ export class Reactions extends Entity {
 
   @property({
     type: 'string',
+    required: false,
   })
   content?: string;
 
@@ -40,27 +41,27 @@ export class Reactions extends Entity {
   @property({
     type: 'array',
     itemType: 'string',
-    default: []
+    default: [],
   })
   ownerUsers?: string[];
 
   @property({
     type: 'string',
   })
-  entityId?: string;
+  listId?: string;
   // Define well-known properties here
 
   // Indexer property to allow additional data
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [prop: string]: any;
 
-  constructor(data?: Partial<Reactions>) {
+  constructor(data?: Partial<ListReactions>) {
     super(data);
   }
 }
 
-export interface ReactionsRelations {
+export interface ListReactionsRelations {
   // describe navigational properties here
 }
 
-export type ReactionsWithRelations = Reactions & ReactionsRelations;
+export type ListReactionsWithRelations = ListReactions & ListReactionsRelations;
