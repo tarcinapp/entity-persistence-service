@@ -43,16 +43,16 @@ spec:
                 "members": ["tarcinapp_member"]
               },
               "membersConfig":{
-                "entityKinds": ["urun", "siyasetci"],
+                "entityKinds": ["uncategorized"],
                 "autoApproveEntities": true,
                 "listKinds": ["saved_entities", "saved_lists", "featured_by_members"],
                 "autoApproveLists": ["saved_entities", "saved_lists"],
-                "entityReactionKinds": ["comment", "anger", "subcomment", "comment_like", "comment_dislike"],
-                "autoApproveEntityReactions": ["anger", "comment_like", "comment_dislike"],
-                "listReactionKinds": ["comment", "anger", "subcomment", "comment_like", "comment_dislike"],
-                "autoApproveListReactions": ["anger", "comment_like", "comment_dislike"],
-                "entityRelationKinds": ["produces", "owner", "founder"],
-                "listRelationKinds": ["contains"]
+                "entityReactionKinds": ["comment", "like"],
+                "autoApproveEntityReactions": ["comment", "like"],
+                "listReactionKinds": ["comment", "like"],
+                "autoApproveListReactions": ["like", "comment"],
+                "entityRelationKinds": ["children"],
+                "listRelationKinds": ["children"]
               },
               "adminsConfig": {
                 "listKinds": ["public_list", "featured_by_admins"]
