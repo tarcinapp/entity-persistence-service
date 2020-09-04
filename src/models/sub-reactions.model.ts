@@ -49,6 +49,10 @@ export class SubReactions extends Entity {
   })
   reactionId?: string;
 
+  @property({
+    type: 'string',
+  })
+  listReactionId?: string;
   // Define well-known properties here
 
   // Indexer property to allow additional data

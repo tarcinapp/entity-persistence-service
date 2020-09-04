@@ -1,13 +1,12 @@
-import {Entity, model, property, hasMany} from '@loopback/repository';
-import {SubReactions} from './sub-reactions.model';
+import {Entity, model, property} from '@loopback/repository';
 
 @model({settings: {strict: false}})
-export class ListReactions extends Entity {
+export class SubListReactions extends Entity {
   @property({
     type: 'string',
     id: true,
     generated: false,
-    defaultFn: "uuidv4"
+    defaultFn: 'uuidv4'
   })
   id?: string;
 
@@ -19,13 +18,12 @@ export class ListReactions extends Entity {
 
   @property({
     type: 'string',
-    required: false,
   })
   content?: string;
 
   @property({
     type: 'date',
-    defaultFn: "now"
+    defaultFn: 'now'
   })
   creationDateTime?: string;
 
@@ -49,23 +47,21 @@ export class ListReactions extends Entity {
   @property({
     type: 'string',
   })
-  listId?: string;
+  listReactionId?: string;
 
-  @hasMany(() => SubReactions, {keyTo: 'listReactionId'})
-  subReactions: SubReactions[];
   // Define well-known properties here
 
   // Indexer property to allow additional data
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [prop: string]: any;
 
-  constructor(data?: Partial<ListReactions>) {
+  constructor(data?: Partial<SubListReactions>) {
     super(data);
   }
 }
 
-export interface ListReactionsRelations {
+export interface SubListReactionsRelations {
   // describe navigational properties here
 }
 
-export type ListReactionsWithRelations = ListReactions & ListReactionsRelations;
+export type SubListReactionsWithRelations = SubListReactions & SubListReactionsRelations;
