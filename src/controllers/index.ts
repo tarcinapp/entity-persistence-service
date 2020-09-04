@@ -6,3 +6,4 @@ export * from './list.controller';
 export * from './list-generic-entity.controller';
 export * from './list-list-relation.controller';
 export * from './list-list-reactions.controller';
+export * from './list-entity-rel.controller';
