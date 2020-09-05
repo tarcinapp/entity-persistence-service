@@ -15,5 +15,11 @@ stages:
       branch:
         include:
         - dev
+  - applyYamlConfig:
+      path: ./k8s/deployment-live.yaml
+    when:
+      branch:
+        include:
+        - master
 timeout: 60
 notification: {}
