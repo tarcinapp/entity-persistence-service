@@ -7,12 +7,12 @@ stages:
       tag: tarcinapp/entity-persistence-service:${CICD_EXECUTION_SEQUENCE}
       registry: bulutarti.com/private/registry
     env:
-      PLUGIN_MTU: 1450
+      PLUGIN_MTU: "1450"
 - name: Deploy
   steps:
   - applyYamlConfig:
       path: ./deployment.yaml
     env:
-      APP_NAME: entity-persistence
+      TARGET_NAMESPACE: tarcinapp-test
 timeout: 60
 notification: {}
