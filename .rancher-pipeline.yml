@@ -11,5 +11,9 @@ stages:
   steps:
   - applyYamlConfig:
       path: ./k8s/deployment-test.yaml
+    when:
+      branch:
+        include:
+        - dev
 timeout: 60
 notification: {}
