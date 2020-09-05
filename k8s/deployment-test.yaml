@@ -2,7 +2,7 @@ kind: Service
 apiVersion: v1
 metadata:
   name: entity-persistence-service
-  namespace: ${TARGET_NAMESPACE}
+  namespace: tarcinapp-test
 spec:
   selector:
     app: entity-persistence
@@ -16,7 +16,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: entity-persistence-deployment
-  namespace: ${TARGET_NAMESPACE}
+  namespace: tarcinapp-test
   labels:
     app: entity-persistence
 spec:

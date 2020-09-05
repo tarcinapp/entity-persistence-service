@@ -5,14 +5,11 @@ stages:
       dockerfilePath: ./Dockerfile
       buildContext: .
       tag: tarcinapp/entity-persistence-service:${CICD_EXECUTION_SEQUENCE}
-      registry: bulutarti.com/private/registry
     env:
       PLUGIN_MTU: "1450"
 - name: Deploy
   steps:
   - applyYamlConfig:
-      path: ./deployment.yaml
-    env:
-      TARGET_NAMESPACE: tarcinapp-test
+      path: ./k8s/deployment-test.yaml
 timeout: 60
 notification: {}
