@@ -1,8 +1,8 @@
-import {Entity, model, property, hasMany} from '@loopback/repository';
+import {Entity, hasMany, model, property} from '@loopback/repository';
 import {GenericEntity} from './generic-entity.model';
 import {ListEntityRelation} from './list-entity-relation.model';
-import {ListRelation} from './list-relation.model';
 import {ListReactions} from './list-reactions.model';
+import {ListRelation} from './list-relation.model';
 
 @model({settings: {strict: false}})
 export class List extends Entity {
@@ -69,6 +69,12 @@ export class List extends Entity {
     default: []
   })
   ownerUsers?: string[];
+
+  @property.array(String, {
+    required: false,
+    default: []
+  })
+  tags?: string[];
 
   @hasMany(() => GenericEntity, {through: {model: () => ListEntityRelation, keyTo: 'entityId'}})
   genericEntities: GenericEntity[];

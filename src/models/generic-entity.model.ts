@@ -1,6 +1,6 @@
 import {Entity, hasMany, model, property} from '@loopback/repository';
-import {Relation} from './relation.model';
 import {Reactions} from './reactions.model';
+import {Relation} from './relation.model';
 
 @model({settings: {strict: false}})
 export class GenericEntity extends Entity {
@@ -82,6 +82,12 @@ export class GenericEntity extends Entity {
     default: []
   })
   ownerUsers?: string[];
+
+  @property.array(String, {
+    required: false,
+    default: []
+  })
+  tags?: string[];
 
   @property.array(String, {
     required: false,
