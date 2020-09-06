@@ -2,7 +2,7 @@ kind: Service
 apiVersion: v1
 metadata:
   name: entity-persistence-service
-  namespace: tarcinapp
+  namespace: tarcinapp-live
 spec:
   selector:
     app: entity-persistence
@@ -16,7 +16,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: entity-persistence-deployment
-  namespace: tarcinapp
+  namespace: tarcinapp-live
   labels:
     app: entity-persistence
 spec:
@@ -34,30 +34,6 @@ spec:
       containers:
       - name: entity-persistence
         image: ${CICD_IMAGE}:${CICD_EXECUTION_SEQUENCE}
-        env:
-        - name: config.json
-          value: |+
-            {
-              "roles": {
-                "admins": ["tarcinapp_admin"],
-                "members": ["tarcinapp_member"]
-              },
-              "membersConfig":{
-                "entityKinds": ["uncategorized"],
-                "autoApproveEntities": true,
-                "listKinds": ["saved_entities", "saved_lists", "featured_by_members"],
-                "autoApproveLists": ["saved_entities", "saved_lists"],
-                "entityReactionKinds": ["comment", "like"],
-                "autoApproveEntityReactions": ["comment", "like"],
-                "listReactionKinds": ["comment", "like"],
-                "autoApproveListReactions": ["like", "comment"],
-                "entityRelationKinds": ["children"],
-                "listRelationKinds": ["children"]
-              },
-              "adminsConfig": {
-                "listKinds": ["public_list", "featured_by_admins"]
-              }
-            }
         ports:
         - containerPort: 3000
         livenessProbe:
@@ -69,3 +45,16 @@ spec:
           timeoutSeconds: 2
           successThreshold: 1
           failureThreshold: 3
+        volumeMounts:
+        - name: tarcinapp-config-volume
+          mountPath: ./home/node/app/config
+        env:
+        - name: ENV
+          value: live
+      volumes:
+      - name: tarcinapp-config-volume
+        configMap:
+          name: tarcinapp-config
+          items:
+          - key: app.config.json
+            path: app.config.json

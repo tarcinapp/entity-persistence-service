@@ -48,6 +48,9 @@ spec:
         volumeMounts:
         - name: tarcinapp-config-volume
           mountPath: ./home/node/app/config
+        env:
+        - name: ENV
+          value: test
       volumes:
       - name: tarcinapp-config-volume
         configMap:
