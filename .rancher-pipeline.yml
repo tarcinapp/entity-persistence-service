@@ -22,4 +22,10 @@ stages:
         include:
         - master
 timeout: 60
-notification: {}
+notification:
+  recipients:
+  - recipient: '#rancher-pipeline-test'
+    notifier: c-v4f4b:n-vtgsh
+  condition:
+  - Success
+  - Failed
