@@ -28,4 +28,5 @@ notification:
     notifier: c-v4f4b:n-vtgsh
   condition:
   - Success
+  - Changed
   - Failed
