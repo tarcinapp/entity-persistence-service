@@ -47,7 +47,7 @@ spec:
           failureThreshold: 3
         volumeMounts:
         - name: tarcinapp-config-volume
-          mountPath: .home/node/app/config
+          mountPath: ./home/node/app/config
       volumes:
       - name: tarcinapp-config-volume
         configMap:
