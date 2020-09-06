@@ -49,7 +49,7 @@ spec:
         - name: tarcinapp-config-volume
           mountPath: ./config
       volumes:
-      - name: config-volume
+      - name: tarcinapp-config-volume
         configMap:
           name: tarcinapp-config
           items:
