@@ -3,8 +3,8 @@ import {GenericEntity} from './generic-entity.model';
 import {ListEntityRelation} from './list-entity-relation.model';
 import {ListReactions} from './list-reactions.model';
 import {ListRelation} from './list-relation.model';
-import {Tag} from './tag.model';
 import {TagListRelation} from './tag-list-relation.model';
+import {Tag} from './tag.model';
 
 @model({settings: {strict: false}})
 export class List extends Entity {
@@ -62,7 +62,10 @@ export class List extends Entity {
 
   @property({
     type: 'string',
-    default: 'public'
+    default: 'public',
+    jsonSchema: {
+      enum: ['public', 'protected', 'private'],
+    }
   })
   visibility?: string;
 

@@ -1,8 +1,8 @@
 import {Entity, hasMany, model, property} from '@loopback/repository';
 import {Reactions} from './reactions.model';
 import {Relation} from './relation.model';
-import {Tag} from './tag.model';
 import {TagEntityRelation} from './tag-entity-relation.model';
+import {Tag} from './tag.model';
 
 @model({settings: {strict: false}})
 export class GenericEntity extends Entity {
@@ -75,7 +75,10 @@ export class GenericEntity extends Entity {
       'private: only the owner user can see the entity. ' +
       'Note: This option only applies to the user in members role. Higher level' +
       'roles always see all the entities.',
-    default: 'public'
+    default: 'public',
+    jsonSchema: {
+      enum: ['public', 'protected', 'private'],
+    }
   })
   visibility?: string;
 
