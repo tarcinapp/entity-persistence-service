@@ -70,12 +70,6 @@ export class List extends Entity {
   })
   ownerUsers?: string[];
 
-  @property.array(String, {
-    required: false,
-    default: []
-  })
-  tags?: string[];
-
   @hasMany(() => GenericEntity, {through: {model: () => ListEntityRelation, keyTo: 'entityId'}})
   genericEntities: GenericEntity[];
 

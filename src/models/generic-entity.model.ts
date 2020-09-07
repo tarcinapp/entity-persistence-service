@@ -87,12 +87,6 @@ export class GenericEntity extends Entity {
     required: false,
     default: []
   })
-  tags?: string[];
-
-  @property.array(String, {
-    required: false,
-    default: []
-  })
   ownerGroups?: string[];
 
   @hasMany(() => Relation, {keyTo: 'from'})
