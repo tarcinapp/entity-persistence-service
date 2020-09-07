@@ -11,3 +11,4 @@ export * from './list-reactions.model';
 export * from './reaction-relation.model';
 export * from './sub-reactions.model';
 export * from './sub-list-reactions.model';
+export * from './tag.model';
