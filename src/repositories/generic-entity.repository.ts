@@ -1,9 +1,11 @@
 import {inject, Getter} from '@loopback/core';
-import {DataObject, DefaultCrudRepository, repository, HasManyRepositoryFactory} from '@loopback/repository';
+import {DataObject, DefaultCrudRepository, repository, HasManyRepositoryFactory, HasManyThroughRepositoryFactory} from '@loopback/repository';
 import {EntityDbDataSource} from '../datasources';
-import {GenericEntity, GenericEntityRelations, HttpErrorResponse, SingleError, Relation, Reactions} from '../models';
+import {GenericEntity, GenericEntityRelations, HttpErrorResponse, SingleError, Relation, Reactions, Tag, TagEntityRelation} from '../models';
 import {RelationRepository} from './relation.repository';
 import {ReactionsRepository} from './reactions.repository';
+import {TagEntityRelationRepository} from './tag-entity-relation.repository';
+import {TagRepository} from './tag.repository';
 
 export class GenericEntityRepository extends DefaultCrudRepository<
   GenericEntity,
@@ -15,10 +17,16 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
   public readonly reactions: HasManyRepositoryFactory<Reactions, typeof GenericEntity.prototype.id>;
 
+  public readonly tags: HasManyThroughRepositoryFactory<Tag, typeof Tag.prototype.id,
+          TagEntityRelation,
+          typeof GenericEntity.prototype.id
+        >;
+
   constructor(
-    @inject('datasources.EntityDb') dataSource: EntityDbDataSource, @repository.getter('RelationRepository') protected relationRepositoryGetter: Getter<RelationRepository>, @repository.getter('ReactionsRepository') protected reactionsRepositoryGetter: Getter<ReactionsRepository>,
+    @inject('datasources.EntityDb') dataSource: EntityDbDataSource, @repository.getter('RelationRepository') protected relationRepositoryGetter: Getter<RelationRepository>, @repository.getter('ReactionsRepository') protected reactionsRepositoryGetter: Getter<ReactionsRepository>, @repository.getter('TagEntityRelationRepository') protected tagEntityRelationRepositoryGetter: Getter<TagEntityRelationRepository>, @repository.getter('TagRepository') protected tagRepositoryGetter: Getter<TagRepository>,
   ) {
     super(GenericEntity, dataSource);
+    this.tags = this.createHasManyThroughRepositoryFactoryFor('tags', tagRepositoryGetter, tagEntityRelationRepositoryGetter,);
     this.reactions = this.createHasManyRepositoryFactoryFor('reactions', reactionsRepositoryGetter,);
     this.registerInclusionResolver('reactions', this.reactions.inclusionResolver);
     this.relations = this.createHasManyRepositoryFactoryFor('relations', relationRepositoryGetter,);

@@ -10,3 +10,4 @@ export * from './list-entity-rel.controller';
 export * from './reactions-sub-reactions.controller';
 export * from './list-reactions-sub-reactions.controller';
 export * from './tag.controller';
+export * from './generic-entity-tag.controller';
