@@ -12,3 +12,5 @@ export * from './list-reactions-sub-reactions.controller';
 export * from './tag.controller';
 export * from './generic-entity-tag.controller';
 export * from './list-tag.controller';
+export * from './entity-tags-relation.controller';
+export * from './tag-list-relation.controller';
