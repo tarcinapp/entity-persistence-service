@@ -3,6 +3,8 @@ import {GenericEntity} from './generic-entity.model';
 import {ListEntityRelation} from './list-entity-relation.model';
 import {ListReactions} from './list-reactions.model';
 import {ListRelation} from './list-relation.model';
+import {Tag} from './tag.model';
+import {TagListRelation} from './tag-list-relation.model';
 
 @model({settings: {strict: false}})
 export class List extends Entity {
@@ -78,6 +80,9 @@ export class List extends Entity {
 
   @hasMany(() => ListReactions)
   reactions: ListReactions[];
+
+  @hasMany(() => Tag, {through: {model: () => TagListRelation}})
+  tags: Tag[];
   // Define well-known properties here
 
   // Indexer property to allow additional data
