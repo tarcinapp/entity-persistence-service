@@ -29,7 +29,7 @@ export class GenericEntityControllerController {
       }
     },
   })
-  async create(@param.header.string('TarcinappUserID') userId: string,
+  async create(
     @requestBody({
       content: {
         'application/json': {
@@ -42,8 +42,6 @@ export class GenericEntityControllerController {
     })
     genericEntity: Omit<GenericEntity, 'id'>,
   ): Promise<GenericEntity> {
-    // add user id as owner
-    genericEntity.ownerUsers = [userId];
     return this.genericEntityRepository.create(genericEntity);
   }
 
