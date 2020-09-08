@@ -1,9 +1,9 @@
-import {inject, Getter} from '@loopback/core';
-import {DataObject, DefaultCrudRepository, repository, HasManyRepositoryFactory, HasManyThroughRepositoryFactory} from '@loopback/repository';
+import {Getter, inject} from '@loopback/core';
+import {DataObject, DefaultCrudRepository, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, repository} from '@loopback/repository';
 import {EntityDbDataSource} from '../datasources';
-import {GenericEntity, GenericEntityRelations, HttpErrorResponse, SingleError, Relation, Reactions, Tag, TagEntityRelation} from '../models';
-import {RelationRepository} from './relation.repository';
+import {GenericEntity, GenericEntityRelations, HttpErrorResponse, Reactions, Relation, SingleError, Tag, TagEntityRelation} from '../models';
 import {ReactionsRepository} from './reactions.repository';
+import {RelationRepository} from './relation.repository';
 import {TagEntityRelationRepository} from './tag-entity-relation.repository';
 import {TagRepository} from './tag.repository';
 
@@ -18,9 +18,9 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   public readonly reactions: HasManyRepositoryFactory<Reactions, typeof GenericEntity.prototype.id>;
 
   public readonly tags: HasManyThroughRepositoryFactory<Tag, typeof Tag.prototype.id,
-          TagEntityRelation,
-          typeof GenericEntity.prototype.id
-        >;
+    TagEntityRelation,
+    typeof GenericEntity.prototype.id
+  >;
 
   constructor(
     @inject('datasources.EntityDb') dataSource: EntityDbDataSource, @repository.getter('RelationRepository') protected relationRepositoryGetter: Getter<RelationRepository>, @repository.getter('ReactionsRepository') protected reactionsRepositoryGetter: Getter<ReactionsRepository>, @repository.getter('TagEntityRelationRepository') protected tagEntityRelationRepositoryGetter: Getter<TagEntityRelationRepository>, @repository.getter('TagRepository') protected tagRepositoryGetter: Getter<TagRepository>,
