@@ -33,8 +33,7 @@ export class GenericEntity extends Entity {
   description?: string;
 
   @property({
-    type: 'string',
-    default: ""
+    type: 'string'
   })
   thumbnail?: string;
 
