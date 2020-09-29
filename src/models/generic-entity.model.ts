@@ -28,8 +28,7 @@ export class GenericEntity extends Entity {
 
   @property({
     type: 'string',
-    required: false,
-    default: ""
+    required: false
   })
   description?: string;
 
@@ -40,8 +39,7 @@ export class GenericEntity extends Entity {
   thumbnail?: string;
 
   @property({
-    type: 'string',
-    default: ""
+    type: 'string'
   })
   banner?: string;
 
@@ -75,7 +73,7 @@ export class GenericEntity extends Entity {
       'private: only the owner user can see the entity. ' +
       'Note: This option only applies to the user in members role. Higher level' +
       'roles always see all the entities.',
-    default: 'public',
+    default: 'private',
     jsonSchema: {
       enum: ['public', 'protected', 'private'],
     }
