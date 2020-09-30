@@ -50,4 +50,4 @@ spec:
               value: test
           envFrom:
             - configMapRef:
-              name: entity-persistence-service-config
+                name: entity-persistence-service-config
