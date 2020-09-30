@@ -30,31 +30,24 @@ spec:
         app: entity-persistence
     spec:
       imagePullSecrets:
-      - name: pipeline-docker-registry
+        - name: pipeline-docker-registry
       containers:
-      - name: entity-persistence
-        image: ${CICD_IMAGE}:${CICD_EXECUTION_SEQUENCE}
-        ports:
-        - containerPort: 3000
-        livenessProbe:
-          httpGet:
-            path: /ping
-            port: 3000
-          initialDelaySeconds: 3
-          periodSeconds: 60
-          timeoutSeconds: 2
-          successThreshold: 1
-          failureThreshold: 3
-        volumeMounts:
-        - name: tarcinapp-config-volume
-          mountPath: ./home/node/app/config
-        env:
-        - name: ENV
-          value: test
-      volumes:
-      - name: tarcinapp-config-volume
-        configMap:
-          name: tarcinapp-config
-          items:
-          - key: app.config.json
-            path: app.config.json
+        - name: entity-persistence
+          image: ${CICD_IMAGE}:${CICD_EXECUTION_SEQUENCE}
+          ports:
+            - containerPort: 3000
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 3000
+            initialDelaySeconds: 3
+            periodSeconds: 60
+            timeoutSeconds: 2
+            successThreshold: 1
+            failureThreshold: 3
+          env:
+            - name: ENV
+              value: test
+          envFrom:
+            - configMapRef:
+              name: entity-persistence-service-config
