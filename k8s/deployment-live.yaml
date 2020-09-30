@@ -50,4 +50,4 @@ spec:
               value: live
           envFrom:
             - configMapRef:
-              name: entity-persistence-service-config
+                name: entity-persistence-service-config
