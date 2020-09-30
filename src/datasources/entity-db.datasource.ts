@@ -4,12 +4,11 @@ import {juggler} from '@loopback/repository';
 const config = {
   name: 'EntityDb',
   connector: 'mongodb',
-  url: 'mongodb://entityrwappuser:Tarcinapp123!@mongodb:27017/tarcinapp',
-  host: 'mongodb',
-  port: 27017,
-  user: 'entityrwappuser',
-  password: 'Tarcinapp123!',
-  database: 'tarcinapp',
+  host: process.env["db.host"],
+  port: process.env["db.port"],
+  user: process.env["db.user"],
+  password: process.env["db.password"],
+  database: process.env["db.database"],
   useNewUrlParser: true
 };
 
