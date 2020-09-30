@@ -51,3 +51,5 @@ spec:
           envFrom:
             - configMapRef:
                 name: entity-persistence-service-config
+            - secretRef:
+                name: entity-persistence-service-secret
