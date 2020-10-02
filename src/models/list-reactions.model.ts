@@ -1,4 +1,4 @@
-import {Entity, model, property, hasMany} from '@loopback/repository';
+import {Entity, hasMany, model, property} from '@loopback/repository';
 import {SubReactions} from './sub-reactions.model';
 
 @model({settings: {strict: false}})
@@ -36,6 +36,7 @@ export class ListReactions extends Entity {
 
   @property({
     type: 'date',
+    default: null
   })
   validUntilDateTime?: string;
 

@@ -16,6 +16,12 @@ export class Tag extends Entity {
   })
   content: string;
 
+  @property({
+    type: 'date',
+    defaultFn: "now",
+    description: 'This field is filled by server at the time of the creation of the entity.'
+  })
+  creationDateTime?: string;
 
   constructor(data?: Partial<Tag>) {
     super(data);

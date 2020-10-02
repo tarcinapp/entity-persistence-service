@@ -34,6 +34,7 @@ export class SubReactions extends Entity {
 
   @property({
     type: 'date',
+    default: null
   })
   validUntilDateTime?: string;
 
