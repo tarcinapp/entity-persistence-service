@@ -35,9 +35,10 @@ export class Reactions extends Entity {
 
   @property({
     type: 'date',
-    default: null
+    default: null,
+    jsonSchema: {nullable: true}
   })
-  validUntilDateTime?: string;
+  validUntilDateTime?: string | null;
 
   @property({
     type: 'array',

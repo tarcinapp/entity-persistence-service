@@ -63,9 +63,10 @@ export class GenericEntity extends Entity {
   @property({
     type: 'date',
     description: 'This field indicates if the entity is currently active.',
-    default: null
+    default: null,
+    jsonSchema: {nullable: true}
   })
-  validUntilDateTime?: string;
+  validUntilDateTime?: string | null;
 
   @property({
     type: 'string',
