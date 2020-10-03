@@ -19,12 +19,13 @@ uniqueness_entity=name,kind,ownerUsers,field1
 uniqueness_list=name,kind,ownerUsers,field1
 limits_entity=10d,5m,
 limits_list=3s,2m
+autoapprove_entity=true
 
-Auto approve is not implemented as it may change user roles. Does not contain any authorization logic. Authorization logic is delegated to gateway application.
+Auto approve is implemented but can not be configured by user roles as authorization is delegated to gateway.
 
 
 
 [![LoopBack](https://github.com/strongloop/loopback-next/raw/master/docs/site/imgs/branding/Powered-by-LoopBack-Badge-(blue)-@2x.png)](http://loopback.io/)
 
 # Deploying to Kubernetes
-* Create a ConfigMap named tarcinapp-config with key app.config.json and value the json configuration
+*
