@@ -47,6 +47,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
       return;
 
     let fields: string[] = process.env.uniqueness_entity.split(',');
+    //let fields = ['name', 'kind'];
 
     // clear leading and trailing spaces
     _.invokeMap(fields, _.trim);
@@ -102,7 +103,9 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     }
 
     _.forEach(fields, (field) => {
-      where.and = _.set(where.and, field, _.get(entity, field));
+      let clause = {};
+      clause = _.set(clause, field, _.get(entity, field));
+      where.and.push(clause);
     });
 
     let filter: Filter<GenericEntity> = new FilterBuilder()
