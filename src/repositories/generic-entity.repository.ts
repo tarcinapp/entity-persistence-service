@@ -50,7 +50,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     //let fields = ['name', 'kind'];
 
     // clear leading and trailing spaces
-    _.invokeMap(fields, _.trim);
+    fields = _.invokeMap(fields, _.trim);
 
     const where: Where<GenericEntity> = {
       and: [
