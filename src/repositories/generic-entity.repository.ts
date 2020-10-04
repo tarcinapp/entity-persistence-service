@@ -1,5 +1,5 @@
 import {Getter, inject} from '@loopback/core';
-import {DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, repository, Where} from '@loopback/repository';
+import {DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, Options, repository, Where} from '@loopback/repository';
 import * as _ from "lodash";
 import {EntityDbDataSource} from '../datasources';
 import {GenericEntity, GenericEntityRelations, HttpErrorResponse, Reactions, Relation, Tag, TagEntityRelation} from '../models';
@@ -41,16 +41,21 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     return super.create(entity);
   }
 
+  async updateById(id: string, data: DataObject<GenericEntity>, options?: Options) {
+
+    await this.checkUniqueness(data);
+
+    return super.updateById(id, data, options);
+  }
+
   async checkUniqueness(entity: DataObject<GenericEntity>) {
 
     if (!process.env.uniqueness_entity)
       return;
 
-    let fields: string[] = process.env.uniqueness_entity.split(',');
-    //let fields = ['name', 'kind'];
-
-    // clear leading and trailing spaces
-    fields = _.invokeMap(fields, _.trim);
+    let fields: string[] = process.env.uniqueness_entity
+      .replace(/\s/g, '')
+      .split(',');
 
     const where: Where<GenericEntity> = {
       and: [
@@ -109,6 +114,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     });
 
     let filter: Filter<GenericEntity> = new FilterBuilder()
+      .fields('id')
       .where(where)
       .build();
 
