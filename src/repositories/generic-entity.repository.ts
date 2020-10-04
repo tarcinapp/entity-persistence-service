@@ -41,6 +41,13 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     return super.create(entity);
   }
 
+  async replaceById(id: string, data: DataObject<GenericEntity>, options?: Options) {
+
+    await this.checkUniqueness(data);
+
+    return super.replaceById(id, data, options);
+  }
+
   async updateById(id: string, data: DataObject<GenericEntity>, options?: Options) {
 
     await this.checkUniqueness(data);
