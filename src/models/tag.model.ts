@@ -1,4 +1,5 @@
 import {Entity, model, property} from '@loopback/repository';
+import _ from 'lodash';
 
 @model()
 export class Tag extends Entity {
@@ -12,7 +13,10 @@ export class Tag extends Entity {
 
   @property({
     type: 'string',
-    required: true,
+    jsonSchema: {
+      minLength: 2,
+      maxLength: _.parseInt(process.env.validation_tag_length || "50")
+    }
   })
   content: string;
 

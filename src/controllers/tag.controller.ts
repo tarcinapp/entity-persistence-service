@@ -4,17 +4,21 @@ import {
   Filter,
   FilterExcludingWhere,
   repository,
-  Where,
+  Where
 } from '@loopback/repository';
 import {
-  post,
-  param,
-  get,
-  getModelSchemaRef,
-  patch,
+  del, get,
+  getModelSchemaRef, param,
+
+
+  patch, post,
+
+
+
+
   put,
-  del,
-  requestBody,
+
+  requestBody
 } from '@loopback/rest';
 import {Tag} from '../models';
 import {TagRepository} from '../repositories';
@@ -22,7 +26,7 @@ import {TagRepository} from '../repositories';
 export class TagController {
   constructor(
     @repository(TagRepository)
-    public tagRepository : TagRepository,
+    public tagRepository: TagRepository,
   ) {}
 
   @post('/tags', {
@@ -83,28 +87,28 @@ export class TagController {
   ): Promise<Tag[]> {
     return this.tagRepository.find(filter);
   }
-
-  @patch('/tags', {
-    responses: {
-      '200': {
-        description: 'Tag PATCH success count',
-        content: {'application/json': {schema: CountSchema}},
-      },
-    },
-  })
-  async updateAll(
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(Tag, {partial: true}),
+  /*
+    @patch('/tags', {
+      responses: {
+        '200': {
+          description: 'Tag PATCH success count',
+          content: {'application/json': {schema: CountSchema}},
         },
       },
     })
-    tag: Tag,
-    @param.where(Tag) where?: Where<Tag>,
-  ): Promise<Count> {
-    return this.tagRepository.updateAll(tag, where);
-  }
+    async updateAll(
+      @requestBody({
+        content: {
+          'application/json': {
+            schema: getModelSchemaRef(Tag, {partial: true}),
+          },
+        },
+      })
+      tag: Tag,
+      @param.where(Tag) where?: Where<Tag>,
+    ): Promise<Count> {
+      return this.tagRepository.updateAll(tag, where);
+    } */
 
   @get('/tags/{id}', {
     responses: {

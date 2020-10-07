@@ -25,6 +25,7 @@ limits_entity=10d,5m
 limits_list=3s,2m
 limits_entity_reactions=
 limits_list_reactions=
+validation_tag_length=50
 
 
 Auto approve configuration is implemented but this implementation provides very simple auto approving capabilities.
