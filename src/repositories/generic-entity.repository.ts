@@ -23,6 +23,8 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     typeof GenericEntity.prototype.id
   >;
 
+  private static response_limit = _.parseInt(process.env.response_limit_entity || "50");
+
   constructor(
     @inject('datasources.EntityDb') dataSource: EntityDbDataSource, @repository.getter('RelationRepository') protected relationRepositoryGetter: Getter<RelationRepository>, @repository.getter('ReactionsRepository') protected reactionsRepositoryGetter: Getter<ReactionsRepository>, @repository.getter('TagEntityRelationRepository') protected tagEntityRelationRepositoryGetter: Getter<TagEntityRelationRepository>, @repository.getter('TagRepository') protected tagRepositoryGetter: Getter<TagRepository>,
   ) {
@@ -32,6 +34,14 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     this.registerInclusionResolver('reactions', this.reactions.inclusionResolver);
     this.relations = this.createHasManyRepositoryFactoryFor('relations', relationRepositoryGetter,);
     this.registerInclusionResolver('relations', this.relations.inclusionResolver);
+  }
+
+  async find(filter?: Filter<GenericEntity>, options?: Options) {
+
+    if (filter?.limit && filter.limit > GenericEntityRepository.response_limit)
+      filter.limit = GenericEntityRepository.response_limit;
+
+    return super.find(filter, options);
   }
 
   async create(data: DataObject<GenericEntity>) {

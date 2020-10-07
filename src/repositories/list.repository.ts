@@ -30,6 +30,8 @@ export class ListRepository extends DefaultCrudRepository<
     typeof List.prototype.id
   >;
 
+  private static response_limit = _.parseInt(process.env.response_limit_list || "50");
+
   constructor(
     @inject('datasources.EntityDb') dataSource: EntityDbDataSource, @repository.getter('ListEntityRelationRepository') protected listEntityRelationRepositoryGetter: Getter<ListEntityRelationRepository>, @repository.getter('GenericEntityRepository') protected genericEntityRepositoryGetter: Getter<GenericEntityRepository>, @repository.getter('ListRelationRepository') protected listRelationRepositoryGetter: Getter<ListRelationRepository>, @repository.getter('ListReactionsRepository') protected listReactionsRepositoryGetter: Getter<ListReactionsRepository>, @repository.getter('TagListRelationRepository') protected tagListRelationRepositoryGetter: Getter<TagListRelationRepository>, @repository.getter('TagRepository') protected tagRepositoryGetter: Getter<TagRepository>,
   ) {
@@ -40,6 +42,14 @@ export class ListRepository extends DefaultCrudRepository<
     this.relations = this.createHasManyRepositoryFactoryFor('relations', listRelationRepositoryGetter,);
     this.registerInclusionResolver('relations', this.relations.inclusionResolver);
     this.genericEntities = this.createHasManyThroughRepositoryFactoryFor('genericEntities', genericEntityRepositoryGetter, listEntityRelationRepositoryGetter,);
+  }
+
+  async find(filter?: Filter<List>, options?: Options) {
+
+    if (filter?.limit && filter.limit > ListRepository.response_limit)
+      filter.limit = ListRepository.response_limit;
+
+    return super.find(filter, options);
   }
 
   async create(data: DataObject<List>) {

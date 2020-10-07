@@ -1,5 +1,6 @@
 An unopinionated generic entity persistence backend application.
-This application leverages schemaless database with 84 requests.
+This application leverages schemaless database (mongodb) to provide a scalable and highly customizable data persistence layer.
+
 Features:
 entity crud operations
 entity approval
@@ -8,7 +9,7 @@ hierarchical entities
 adding entities to lists
 hierarchical lists
 tagging entities
-reactions to entities and lists
+reactions to entities and lists like comments, likes
 sub reactions to reactions
 
 # Programming Conventions
@@ -29,23 +30,34 @@ Tags does not have updateAll operation as tags content is unique and this is the
 Updating creationDateTime for all tags does not make sense.
 
 # Configuration
-db_host
-db_port
+db_host=localhost
+db_port=27017
 db_user
 db_password
 db_database
-uniqueness_entity=name,kind,ownerUsers,field1
-uniqueness_list=name,kind,ownerUsers,field1
-autoapprove_entity=true
-autoapprove_list=true
-autoapprove_entity_reaction=true
-autoapprove_list_reaction=true
-limits_entity=10d,5m
-limits_list=3s,2m
-limits_entity_reactions=
-limits_list_reactions=
-validation_tag_length=50
 
+uniqueness_entity=name,kind,ownerUsers
+uniqueness_list=name,kind,ownerUsers
+
+autoapprove_entity=false
+autoapprove_list=false
+autoapprove_entity_reaction=false
+autoapprove_list_reaction=false
+
+validation_tag_maxlength=50
+
+These setting limits the number of record can be returned for each data model.
+response_limit_entity=50
+response_limit_list=50
+response_limit_entity_reaction=50
+response_limit_list_reaction=50
+response_limit_tag=50
+
+These setting affects only the creation operation on data model.
+frequency_limits_entity=d10,m5
+frequency_limits_list=s3,m5
+frequency_limits_entity_reactions=
+frequency_limits_list_reactions=
 
 Auto approve configuration is implemented but this implementation provides very simple auto approving capabilities.
 In the need of enabling auto approve under certain conditions, users are encouraged to configure it using gateway policies. By the help of gateway policies, auto approve can be configured using 'kind' of the targeted record, user's roles, etc. For example, you can enable autoapprove when an entity is created by the editor or admin, but disable for regular users.
@@ -55,4 +67,4 @@ In the need of enabling auto approve under certain conditions, users are encoura
 * A configmap and secret sample yaml files are provided
 
 # Configuring for Development
-Create a dev.env file at the root of your workspace folder. Add local database configuration as environment variables to file.
+For VSCode, dreate a dev.env file at the root of your workspace folder. Add local database configuration as environment variables to this file.
