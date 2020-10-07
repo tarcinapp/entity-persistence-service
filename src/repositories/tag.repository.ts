@@ -9,10 +9,21 @@ export class TagRepository extends DefaultCrudRepository<
   typeof Tag.prototype.id,
   TagRelations
   > {
+
+  private static response_limit = _.parseInt(process.env.response_limit_tag || "50");
+
   constructor(
     @inject('datasources.EntityDb') dataSource: EntityDbDataSource,
   ) {
     super(Tag, dataSource);
+  }
+
+  async find(filter?: Filter<Tag>, options?: Options) {
+
+    if (filter?.limit && filter.limit > TagRepository.response_limit)
+      filter.limit = TagRepository.response_limit;
+
+    return super.find(filter, options);
   }
 
   async create(data: DataObject<Tag>) {
