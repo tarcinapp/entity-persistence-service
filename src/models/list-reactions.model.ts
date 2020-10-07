@@ -32,7 +32,6 @@ export class ListReactions extends Entity {
   @property({
     type: 'date',
     defaultFn: process.env.autoapprove_list_reaction ? 'now' : undefined,
-
   })
   validFromDateTime?: string;
 
