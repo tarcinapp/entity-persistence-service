@@ -52,14 +52,16 @@ export class List extends Entity {
 
   @property({
     type: 'date',
+    defaultFn: process.env.autoapprove_list ? 'now' : undefined,
   })
   validFromDateTime?: string;
 
   @property({
     type: 'date',
-    default: null
+    default: null,
+    jsonSchema: {nullable: true}
   })
-  validUntilDateTime?: string;
+  validUntilDateTime?: string | null;
 
   @property({
     type: 'string',

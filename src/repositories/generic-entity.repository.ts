@@ -112,8 +112,6 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
     // TODO: eğer data objesi composite unique indexi oluşturan alanların bir kısmını içeriyorsa, etkilenen kayıtların unique index'i ihlal etme olasılığı var
     // bu durumu nasil yakalayabiliriz bilmiyorum ama
-
-
   }
 
   async checkUniqueness(entity: DataObject<GenericEntity>, fields: string[]) {

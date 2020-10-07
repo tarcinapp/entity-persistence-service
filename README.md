@@ -17,11 +17,18 @@ db_password
 db_database
 uniqueness_entity=name,kind,ownerUsers,field1
 uniqueness_list=name,kind,ownerUsers,field1
-limits_entity=10d,5m,
-limits_list=3s,2m
 autoapprove_entity=true
+autoapprove_list=true
+autoapprove_entity_reactions=true
+autoapprove_list_reactions=true
+limits_entity=10d,5m
+limits_list=3s,2m
+limits_entity_reactions=
+limits_list_reactions=
 
-Auto approve is implemented but can not be configured by user roles as authorization is delegated to gateway.
+
+Auto approve configuration is implemented but this implementation provides very simple auto approving capabilities.
+In the need of enabling auto approve under certain conditions, users are encouraged to configure it using gateway policies. By the help of gateway policies, auto approve can be configured using 'kind' of the targeted record, user's roles, etc. For example, you can enable autoapprove when an entity is created by the editor or admin, but disable for regular users.
 
 
 # Deploying to Kubernetes
