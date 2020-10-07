@@ -1,6 +1,6 @@
 import {Getter, inject} from '@loopback/core';
-import {DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, Options, repository, Where} from '@loopback/repository';
-import * as _ from "lodash";
+import {Count, DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, Options, repository, Where} from '@loopback/repository';
+import _ from "lodash";
 import {EntityDbDataSource} from '../datasources';
 import {GenericEntity, GenericEntityRelations, HttpErrorResponse, Reactions, Relation, Tag, TagEntityRelation} from '../models';
 import {ReactionsRepository} from './reactions.repository';
@@ -34,35 +34,89 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     this.registerInclusionResolver('relations', this.relations.inclusionResolver);
   }
 
-  async create(entity: DataObject<GenericEntity>) {
+  async create(data: DataObject<GenericEntity>) {
 
-    await this.checkUniqueness(entity);
+    if (process.env.uniqueness_entity) {
 
-    return super.create(entity);
+      let fields: string[] = process.env.uniqueness_entity
+        .replace(/\s/g, '')
+        .split(',');
+
+      await this.checkUniqueness(data, fields);
+    }
+
+    return super.create(data);
   }
 
   async replaceById(id: string, data: DataObject<GenericEntity>, options?: Options) {
 
-    await this.checkUniqueness(data);
+    if (process.env.uniqueness_entity) {
+
+      let fields: string[] = process.env.uniqueness_entity
+        .replace(/\s/g, '')
+        .split(',');
+
+      await this.checkUniqueness(data, fields);
+    }
 
     return super.replaceById(id, data, options);
   }
 
   async updateById(id: string, data: DataObject<GenericEntity>, options?: Options) {
 
-    await this.checkUniqueness(data);
+    if (process.env.uniqueness_entity) {
+
+      let fields: string[] = process.env.uniqueness_entity
+        .replace(/\s/g, '')
+        .split(',');
+
+      await this.checkUniqueness(data, fields);
+    }
 
     return super.updateById(id, data, options);
   }
 
-  async checkUniqueness(entity: DataObject<GenericEntity>) {
+  async updateAll(data: DataObject<GenericEntity>, where?: Where<GenericEntity>, options?: Options) {
 
-    if (!process.env.uniqueness_entity)
-      return;
+    if (process.env.uniqueness_entity) {
 
-    let fields: string[] = process.env.uniqueness_entity
-      .replace(/\s/g, '')
-      .split(',');
+      let fields: string[] = process.env.uniqueness_entity
+        .replace(/\s/g, '')
+        .split(',');
+      await this.checkUniquenessForUpdateAll(data, fields, where);
+    }
+
+    return super.updateAll(data, where, options);
+  }
+
+  async checkUniquenessForUpdateAll(data: DataObject<GenericEntity>, fields: string[], where?: Where<GenericEntity>) {
+
+    // data objesi, composite unique index'i olusturan alanlardan hicbirisine sahip degilse, bu islemin unique index'i ihlal etme olasiligi yoktur
+    let hasNoField: boolean = _.every(fields, (f) => {
+      return !_.has(data, f)
+    });
+
+    if (hasNoField) return;
+
+    // eger data objesi, composite unique index'i olusturan alanlarin tamamini iceriyorsa, bu operasyonun birden fazla kaydi etkilememesi gerekir.
+    // yani, where filtresi, bu durumda en fazla '1' sonuc dondurmelidir ki bu adıma izin verebilelim
+    let hasAllFields: boolean = _.every(fields, _.partial(_.has, data));
+
+    if (hasAllFields) {
+      // check if provied where clause returns more than 1 record
+      let count: Count = await this.count(where);
+      if (count.count > 1) {
+        throw "this operation violates unique index";
+      }
+    }
+
+    // TODO: eğer data objesi composite unique indexi oluşturan alanların bir kısmını içeriyorsa, etkilenen kayıtların unique index'i ihlal etme olasılığı var
+    // bu durumu nasil yakalayabiliriz bilmiyorum ama
+
+
+  }
+
+  async checkUniqueness(entity: DataObject<GenericEntity>, fields: string[]) {
 
     const where: Where<GenericEntity> = {
       and: [
