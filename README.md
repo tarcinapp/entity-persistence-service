@@ -1,4 +1,6 @@
-An unopinionated generic entity persistence backend with 85 requests. Features:
+An unopinionated generic entity persistence backend application.
+This application leverages schemaless database with 84 requests.
+Features:
 entity crud operations
 entity approval
 entity uniqueness
@@ -9,7 +11,24 @@ tagging entities
 reactions to entities and lists
 sub reactions to reactions
 
-# configuration
+# Programming Conventions
+All database models have id property and it is generated at server side with guid.
+DateTime fields names are end with 'dateTime'
+Some common field names are:
+visibility
+ownerUsers
+ownerGroups
+creationDateTime
+validFromDateTime
+validUntilDateTime
+
+# Data Model
+
+## Tags
+Tags does not have updateAll operation as tags content is unique and this is the only property that may require an update.
+Updating creationDateTime for all tags does not make sense.
+
+# Configuration
 db_host
 db_port
 db_user
@@ -33,4 +52,7 @@ In the need of enabling auto approve under certain conditions, users are encoura
 
 
 # Deploying to Kubernetes
-*
+* A configmap and secret sample yaml files are provided
+
+# Configuring for Development
+Create a dev.env file at the root of your workspace folder. Add local database configuration as environment variables to file.

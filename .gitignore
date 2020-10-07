@@ -62,3 +62,6 @@ typings/
 
 # Cache used by TypeScript's incremental build
 *.tsbuildinfo
+
+# Environment variables for development only
+dev.env
