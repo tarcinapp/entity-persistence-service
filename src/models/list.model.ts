@@ -71,7 +71,7 @@ export class List extends Entity {
 
   @property({
     type: 'string',
-    default: 'public',
+    default: process.env.visibility_entity || "protected",
     jsonSchema: {
       enum: ['public', 'protected', 'private'],
     }

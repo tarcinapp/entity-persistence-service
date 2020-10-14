@@ -36,15 +36,22 @@ db_user
 db_password
 db_database
 
-uniqueness_entity=name,kind,ownerUsers
-uniqueness_list=name,kind,ownerUsers
+uniqueness_entity=slug,kind,ownerUsers
+uniqueness_list=slug,kind,ownerUsers
 
 autoapprove_entity=false
 autoapprove_list=false
 autoapprove_entity_reaction=false
 autoapprove_list_reaction=false
 
+visibility_entity=protected
+visibility_list=protected
+
+
 validation_tag_maxlength=50
+validation_entityname_maxlength=100
+validation_listname_maxlength=100
+validation_reactioncontent_maxlength=400
 
 These setting limits the number of record can be returned for each data model.
 response_limit_entity=50

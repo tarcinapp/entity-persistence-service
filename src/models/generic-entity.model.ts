@@ -82,7 +82,7 @@ export class GenericEntity extends Entity {
       'private: only the owner user can see the entity. ' +
       'Note: This option only applies to the user in members role. Higher level' +
       'roles always see all the entities.',
-    default: 'private',
+    default: process.env.visibility_entity || "protected",
     jsonSchema: {
       enum: ['public', 'protected', 'private'],
     }
