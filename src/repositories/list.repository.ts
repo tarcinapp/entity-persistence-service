@@ -55,6 +55,8 @@ export class ListRepository extends DefaultCrudRepository<
 
   async create(data: DataObject<List>) {
 
+    await this.checkDataKindFormat(data);
+
     data.slug = slugify(data.name ?? '', {lower: true});
 
     if (process.env.uniqueness_list) {
@@ -70,6 +72,8 @@ export class ListRepository extends DefaultCrudRepository<
   }
 
   async replaceById(id: string, data: DataObject<List>, options?: Options) {
+
+    await this.checkDataKindFormat(data);
 
     // prevent this call to change the slug field
     if (data.slug)
@@ -88,6 +92,8 @@ export class ListRepository extends DefaultCrudRepository<
   }
 
   async updateById(id: string, data: DataObject<List>, options?: Options) {
+
+    await this.checkDataKindFormat(data);
 
     // prevent this call to change the slug field
     if (data.slug)
@@ -110,6 +116,8 @@ export class ListRepository extends DefaultCrudRepository<
   }
 
   async updateAll(data: DataObject<List>, where?: Where<List>, options?: Options) {
+
+    await this.checkDataKindFormat(data);
 
     // prevent this call to change the slug field
     if (data.slug)
@@ -238,5 +246,23 @@ export class ListRepository extends DefaultCrudRepository<
 
     // TODO: eğer data objesi composite unique indexi oluşturan alanların bir kısmını içeriyorsa, etkilenen kayıtların unique index'i ihlal etme olasılığı var
     // bu durumu nasil yakalayabiliriz bilmiyorum ama
+  }
+
+  async checkDataKindFormat(data: DataObject<GenericEntity>) {
+
+    // make sure data kind is slug format
+    if (data.kind) {
+      let slugKind: string = slugify(data.kind, {lower: true});
+
+      if (slugKind != data.kind) {
+        throw new HttpErrorResponse({
+          statusCode: 422,
+          name: "InvalidKindError",
+          message: `Entity kind cannot contain special or uppercase characters. Use '${slugKind}' instead.`,
+          code: "INVALID-ENTITY-KIND",
+          status: 422,
+        });
+      }
+    }
   }
 }
