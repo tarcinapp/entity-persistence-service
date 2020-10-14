@@ -57,6 +57,7 @@
     "i18next": "^19.4.5",
     "lodash": "^4.17.20",
     "loopback-connector-mongodb": "^5.2.3",
+    "slugify": "^1.4.5",
     "tslib": "^2.0.0"
   },
   "devDependencies": {

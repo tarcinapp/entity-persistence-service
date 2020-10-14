@@ -28,6 +28,13 @@ export class GenericEntity extends Entity {
 
   @property({
     type: 'string',
+    required: false,
+  })
+  slug: string;
+
+
+  @property({
+    type: 'string',
     required: false
   })
   description?: string;

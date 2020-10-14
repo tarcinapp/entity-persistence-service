@@ -1,6 +1,7 @@
 import {Getter, inject} from '@loopback/core';
 import {Count, DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, Options, repository, Where} from '@loopback/repository';
 import _ from "lodash";
+import slugify from "slugify";
 import {EntityDbDataSource} from '../datasources';
 import {GenericEntity, GenericEntityRelations, HttpErrorResponse, Reactions, Relation, Tag, TagEntityRelation} from '../models';
 import {ReactionsRepository} from './reactions.repository';
@@ -46,6 +47,8 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
   async create(data: DataObject<GenericEntity>) {
 
+    data.slug = slugify(data.name ?? '', {lower: true});
+
     if (process.env.uniqueness_entity) {
 
       let fields: string[] = process.env.uniqueness_entity
@@ -59,6 +62,12 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   }
 
   async replaceById(id: string, data: DataObject<GenericEntity>, options?: Options) {
+
+    // prevent this call to change the slug field
+    if (data.slug)
+      data.slug = undefined;
+
+    data.slug = slugify(data.name ?? '', {lower: true});
 
     if (process.env.uniqueness_entity) {
 
@@ -74,6 +83,14 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
   async updateById(id: string, data: DataObject<GenericEntity>, options?: Options) {
 
+    // prevent this call to change the slug field
+    if (data.slug)
+      data.slug = undefined;
+
+    if (data.name)
+      data.slug = slugify(data.name, {lower: true});
+
+
     if (process.env.uniqueness_entity) {
 
       let fields: string[] = process.env.uniqueness_entity
@@ -87,6 +104,13 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   }
 
   async updateAll(data: DataObject<GenericEntity>, where?: Where<GenericEntity>, options?: Options) {
+
+    // prevent this call to change the slug field
+    if (data.slug)
+      data.slug = undefined;
+
+    if (data.name)
+      data.slug = slugify(data.name, {lower: true});
 
     if (process.env.uniqueness_entity) {
 
@@ -115,8 +139,15 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     if (hasAllFields) {
       // check if provied where clause returns more than 1 record
       let count: Count = await this.count(where);
+
       if (count.count > 1) {
-        throw "this operation violates unique index";
+        throw new HttpErrorResponse({
+          statusCode: 409,
+          name: "DataUniquenessViolationError",
+          message: "Entity already exists.",
+          code: "ENTITY-ALREADY-EXISTS",
+          status: 409,
+        });
       }
     }
 
