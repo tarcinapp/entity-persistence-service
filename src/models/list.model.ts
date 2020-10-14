@@ -32,6 +32,12 @@ export class List extends Entity {
     type: 'string',
     required: false,
   })
+  slug: string;
+
+  @property({
+    type: 'string',
+    required: false,
+  })
   description?: string;
 
   @property({
