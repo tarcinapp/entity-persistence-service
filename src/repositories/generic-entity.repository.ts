@@ -38,7 +38,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   }
 
   async find(filter?: Filter<GenericEntity>, options?: Options) {
-    
+
     if (filter?.limit && filter.limit > GenericEntityRepository.response_limit)
       filter.limit = GenericEntityRepository.response_limit;
 
@@ -224,7 +224,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
       .fields('id')
       .where(where)
       .build();
-     
+
      **
      * Check if there is an existing entity
      */
