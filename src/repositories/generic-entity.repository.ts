@@ -225,9 +225,9 @@ export class GenericEntityRepository extends DefaultCrudRepository<
       .where(where)
       .build();
 
-     **
-     * Check if there is an existing entity
-     */
+    /**
+    * Check if there is an existing entity
+    */
     const activeEntityWithSameName = await super.findOne(filter);
 
     if (activeEntityWithSameName) {
