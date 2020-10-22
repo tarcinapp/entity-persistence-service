@@ -39,6 +39,8 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
   async find(filter?: Filter<GenericEntity>, options?: Options) {
 
+    console.log(filter);
+
     if (filter?.limit && filter.limit > GenericEntityRepository.response_limit)
       filter.limit = GenericEntityRepository.response_limit;
 
