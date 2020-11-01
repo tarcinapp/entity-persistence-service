@@ -79,6 +79,8 @@ export class GenericEntityRepository extends DefaultCrudRepository<
         .replace(/\s/g, '')
         .split(',');
 
+      // add id to data to check uniqueness
+      data.id = id;
       await this.checkUniqueness(data, fields);
     }
 
@@ -101,6 +103,9 @@ export class GenericEntityRepository extends DefaultCrudRepository<
       let fields: string[] = process.env.uniqueness_entity
         .replace(/\s/g, '')
         .split(',');
+
+      // add id to data to check uniqueness
+      data.id = id;
 
       await this.checkUniqueness(data, fields);
     }
@@ -190,6 +195,16 @@ export class GenericEntityRepository extends DefaultCrudRepository<
         }
       ]
     };
+
+    // if entity.id exists, then this method is invoked from update or replace methods
+    // we must make sure we are not retrieving the same data
+    if (entity.id) {
+      where.and.push({
+        id: {
+          neq: entity.id
+        }
+      });
+    }
 
     if (_.isArray(entity.ownerUsers) && _.includes(fields, 'ownerUsers')) {
 
