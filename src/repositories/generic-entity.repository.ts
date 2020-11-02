@@ -42,6 +42,8 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     if (filter?.limit && filter.limit > GenericEntityRepository.response_limit)
       filter.limit = GenericEntityRepository.response_limit;
 
+    console.log(JSON.stringify(filter));
+
     return super.find(filter, options);
   }
 
