@@ -1,6 +1,7 @@
 import {Getter, inject} from '@loopback/core';
 import {Count, DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, Options, repository, Where} from '@loopback/repository';
 import _ from "lodash";
+import mapKeysDeep from "map-keys-deep-lodash";
 import slugify from "slugify";
 import {EntityDbDataSource} from '../datasources';
 import {GenericEntity, GenericEntityRelations, HttpErrorResponse, Reactions, Relation, Tag, TagEntityRelation} from '../models';
@@ -42,9 +43,16 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     if (filter?.limit && filter.limit > GenericEntityRepository.response_limit)
       filter.limit = GenericEntityRepository.response_limit;
 
-    console.log(JSON.stringify(filter));
+    // we need to modify incoming filter to replace any square brackets in object keys
+    // this is required as 'qs' library has a bug in parsing nested filters
+    // {"[key]": "value"} becomes {"key":"value"}
+    let workaroundFilter = mapKeysDeep(filter, (value: string, key: string) => {
+      return _.replace(key, /\[|\]/g, "");
+    });
 
-    return super.find(filter, options);
+    console.log(workaroundFilter);
+
+    return super.find(workaroundFilter, options);
   }
 
   async create(data: DataObject<GenericEntity>) {
