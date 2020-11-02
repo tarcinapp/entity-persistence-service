@@ -1,7 +1,6 @@
 import {Getter, inject} from '@loopback/core';
 import {Count, DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, Options, repository, Where} from '@loopback/repository';
 import _ from "lodash";
-import mapKeysDeep from "map-keys-deep-lodash";
 import slugify from "slugify";
 import {EntityDbDataSource} from '../datasources';
 import {GenericEntity, GenericEntityRelations, HttpErrorResponse, Reactions, Relation, Tag, TagEntityRelation} from '../models';
@@ -9,6 +8,9 @@ import {ReactionsRepository} from './reactions.repository';
 import {RelationRepository} from './relation.repository';
 import {TagEntityRelationRepository} from './tag-entity-relation.repository';
 import {TagRepository} from './tag.repository';
+
+// this library does not have types
+const mapKeysDeep = require("map-keys-deep-lodash");
 
 export class GenericEntityRepository extends DefaultCrudRepository<
   GenericEntity,
