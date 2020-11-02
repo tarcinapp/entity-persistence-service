@@ -52,7 +52,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
       return _.replace(key, /\[|\]/g, "");
     });
 
-    console.log(workaroundFilter);
+    console.log(JSON.stringify(workaroundFilter));
 
     return super.find(workaroundFilter, options);
   }
