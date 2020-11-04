@@ -63,7 +63,7 @@ export class GenericEntity extends Entity {
       'seen by other members.' +
       'If caller is not a member at the creation time, this field is filled' +
       'automatically by the server.',
-    defaultFn: process.env.autoapprove_entity ? 'now' : undefined,
+    defaultFn: process.env.autoapprove_entity == 'true' ? 'now' : undefined,
   })
   validFromDateTime?: string;
 

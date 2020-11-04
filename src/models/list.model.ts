@@ -58,7 +58,7 @@ export class List extends Entity {
 
   @property({
     type: 'date',
-    defaultFn: process.env.autoapprove_list ? 'now' : undefined,
+    defaultFn: process.env.autoapprove_list == 'true' ? 'now' : undefined,
   })
   validFromDateTime?: string;
 
