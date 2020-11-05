@@ -45,11 +45,6 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     if (filter?.limit && filter.limit > GenericEntityRepository.response_limit)
       filter.limit = GenericEntityRepository.response_limit;
 
-    // handle special use of $null
-    let filterStr = JSON.stringify(filter);
-    filterStr = filterStr.replace(/\"\$null\"/g, "null");
-    filter = JSON.parse(filterStr);
-
     // we need to modify incoming filter to replace any square brackets in object keys
     // this is required as 'qs' library has a bug in parsing nested filters
     // {"[key]": "value"} becomes {"key":"value"}

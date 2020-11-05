@@ -1,7 +1,9 @@
-import {Count, CountSchema, Filter, FilterExcludingWhere, repository, Where} from '@loopback/repository';
+import {Count, CountSchema, Filter, FilterBuilder, FilterExcludingWhere, repository, Where, WhereBuilder} from '@loopback/repository';
 import {del, get, getJsonSchema, getModelSchemaRef, param, patch, post, put, requestBody} from '@loopback/rest';
+import _ from 'lodash';
 import {GenericEntity, HttpErrorResponse} from '../models';
 import {GenericEntityRepository} from '../repositories';
+import {Set, SetFactory} from '../sets/set';
 
 export class GenericEntityControllerController {
   constructor(
@@ -75,8 +77,34 @@ export class GenericEntityControllerController {
     },
   })
   async find(
-    @param.filter(GenericEntity) filter?: Filter<GenericEntity>,
+    @param.query.object('set') set?: Set,
+    @param.filter(GenericEntity) filter?: Filter<GenericEntity>
   ): Promise<GenericEntity[]> {
+
+    if (set) {
+      let setFactory = new SetFactory();
+      let whereBuilder = new WhereBuilder<GenericEntity>();
+      let keys = _.keys(set);
+
+      _.each(keys, (key, i) => {
+        let clause = setFactory.produceWhereClauseFor(key);
+
+        if (i == 0) {
+          whereBuilder = new WhereBuilder(clause)
+        } else {
+          whereBuilder.and(clause);
+        }
+      });
+
+      if (filter?.where) {
+        whereBuilder.and(filter.where);
+      }
+
+      let filterBuilder = new FilterBuilder(filter);
+      filter = filterBuilder.where(whereBuilder.build())
+        .build();
+    }
+
     return this.genericEntityRepository.find(filter);
   }
 
