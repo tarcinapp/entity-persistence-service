@@ -91,13 +91,13 @@ You can use following set queries to shorten the given queries above respectivel
 | Set Name   | Description  |
 | ------------ | ------------- |
 |  publics | Selects all the data where `visibility: public`. |
-| actives  | Selects all the data where validFromDateTime is not null or less than current date time and validUntilDateTime field is either null or greater than the current date time. |
-| inactives  | Selects all data where validUntilDateTime field has a value and its less than the current date time.  |
-|  pendings | Selects all data where validFromDateTime fiels is empty. |
-|  my  | Selects all data where given user id is in the ownerUsers or given group is in the ownerGroups. User ID and groups should be provided through HTTP header. |
-|  day | Selects all data where creationDateTime field is in last 24 hours. |
-|  week | Selects all data where creationDateTime field is in last 7 days.  |
-|  month | Selects all data where creationDateTime field is in last 30 days.   |
+| actives  | Selects all the data where `validFromDateTime` is not null or less than current date time and `validUntilDateTime` field is either null or greater than the current date time. |
+| inactives  | Selects all data where `validUntilDateTime` field has a value and its less than the current date time.  |
+|  pendings | Selects all data where `validFromDateTime` fiels is empty. |
+|  my  | Selects all data where given user id is in the `ownerUsers` or given group is in the `ownerGroups`. User ID and groups should be provided through HTTP header. |
+|  day | Selects all data where `creationDateTime` field is in last 24 hours. |
+|  week | Selects all data where `creationDateTime` field is in last 7 days.  |
+|  month | Selects all data where `creationDateTime` field is in last 30 days.   |
 
 
 # Configuration
