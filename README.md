@@ -1,8 +1,8 @@
 
-An unopinionated REST based microservice backend application built on Loopback 4 framework.  entity-persistence-service Helps you to build your REST based application just in seconds.
-This application leverages schemaless database *(MongoDB) *to provide a scalable and highly customizable data persistence layer. It has a generic data model (entities, lists, reactions, ..) that easily be expanded and configurable through environment variables.
-This approach would support many use case scenarios.
-*For extended validation support, authentication, authorization, rate limiting capabilities, couple this application with the entity-persistence-gateway application.*
+An unopinionated REST based microservice backend application built on Loopback 4 framework.  entity-persistence-service Helps you to build your REST based application just in seconds.  
+This application leverages schemaless database *(MongoDB)* to provide a scalable and highly customizable data persistence layer. It has a generic data model (entities, lists, reactions, ..) that easily be expanded and configurable through environment variables.  
+This approach would support many use case scenarios.  
+*For extended validation support, authentication, authorization, rate limiting capabilities, couple this application with the entity-persistence-gateway application.*  
 ### Overview
 Application has prebuilt data models. See *Data Models* section for details. Each data model can hold arbitrarily structed JSON data along with predefined fields, such as `creationDateTime`, `ownerUsers`, `kind`, etc..
 
