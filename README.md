@@ -8,15 +8,15 @@ Application has prebuilt data models. See *Data Models* section for details. Eac
 
 ![Model Overview](./doc/img/model-overview.png?raw=true "Model Overview")
 
-**Generic Entity**
-The most common data model of the application. Simply represents an object. Object kinds can be differentiate with `kind` field. Such as `kind: book` or `kind: author`
-**List**
-Represents list of a generic entity. A list can have a relationship to many entities. List kinds can be differentiate with `kind` field.
-For example, `kind: favorites`  or `kind:science_fiction`
-**Entity Reaction**
-Represents any event related to an object. For example comment, like, measurement, anger,..
-**List Reaction**
-Represents any event related to a list. For example comment, like, measurement, anger,..
+**Generic Entity**  
+The most common data model of the application. Simply represents an object. Object kinds can be differentiate with `kind` field. Such as `kind: book` or `kind: author`  
+**List**  
+Represents list of a generic entity. A list can have a relationship to many entities. List kinds can be differentiate with `kind` field.  
+For example, `kind: favorites`  or `kind:science_fiction`  
+**Entity Reaction**  
+Represents any event related to an object. For example comment, like, measurement, anger,..  
+**List Reaction**  
+Represents any event related to a list. For example comment, like, measurement, anger,..  
 
 ### Sample Use Cases
 **User Configuration Storage**
