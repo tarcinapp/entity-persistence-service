@@ -1,4 +1,4 @@
-import {Count, CountSchema, Filter, FilterBuilder, FilterExcludingWhere, repository, Where, WhereBuilder} from '@loopback/repository';
+import {AnyObject, Count, CountSchema, Filter, FilterBuilder, FilterExcludingWhere, repository, Where, WhereBuilder} from '@loopback/repository';
 import {del, get, getJsonSchema, getModelSchemaRef, param, patch, post, put, requestBody} from '@loopback/rest';
 import _ from 'lodash';
 import {GenericEntity, HttpErrorResponse} from '../models';
@@ -83,22 +83,44 @@ export class GenericEntityControllerController {
 
     if (set) {
       let setFactory = new SetFactory();
-      let whereBuilder = new WhereBuilder<GenericEntity>();
-      let keys = _.keys(set);
+      let setWhere: any | any[];
+      let whereBuilder: WhereBuilder<GenericEntity> = filter?.where ? new WhereBuilder<GenericEntity>(filter?.where) : new WhereBuilder<GenericEntity>();
+      let buildWhereClauseForSingleCondition = function (parentSet: Set, condition: string): Where<AnyObject>[] | Where<AnyObject> {
 
-      _.each(keys, (key, i) => {
-        let clause = setFactory.produceWhereClauseFor(key);
+        if (condition != 'and' && condition != 'or')
+          return setFactory.produceWhereClauseFor(condition);
 
-        if (i == 0) {
-          whereBuilder = new WhereBuilder(clause)
-        } else {
-          whereBuilder.and(clause);
-        }
-      });
+        let subSetArr = parentSet[condition]
 
-      if (filter?.where) {
-        whereBuilder.and(filter.where);
+        let subClauses = _.map(subSetArr, (subSet) => {
+          let subSetKeys = _.keys(subSet);
+          return buildWhereClauseForConditions(subSet, subSetKeys);
+        });
+
+        let subWhereBuilder = new WhereBuilder<GenericEntity>();
+
+        if (condition == 'and')
+          subWhereBuilder.and(subClauses);
+
+        if (condition == 'or')
+          subWhereBuilder.or(subClauses);
+
+        return subWhereBuilder.build();
+      };
+      let buildWhereClauseForConditions = function (parentSet: Set, conditions: string[]): Where<AnyObject>[] | Where<AnyObject> {
+
+        if (conditions.length == 1)
+          return buildWhereClauseForSingleCondition(parentSet, conditions[0]);
+
+        return _.map(conditions, (condition) => {
+          return buildWhereClauseForSingleCondition(parentSet, condition);
+        });
       }
+
+      let keys = _.keys(set);
+      setWhere = buildWhereClauseForConditions(set, keys);
+
+      whereBuilder.and(setWhere);
 
       let filterBuilder = new FilterBuilder(filter);
       filter = filterBuilder.where(whereBuilder.build())
