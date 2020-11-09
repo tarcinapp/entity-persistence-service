@@ -6,7 +6,7 @@ This approach would support many use case scenarios.
 ### Overview
 Application has prebuilt data models. See *Data Models* section for details. Each data model can hold arbitrarily structed JSON data along with predefined fields, such as `creationDateTime`, `ownerUsers`, `kind`, etc..
 
-![Model Overview](../doc/img/model-overview.png?raw=true "Model Overview")
+![Model Overview](./doc/img/model-overview.png?raw=true "Model Overview")
 
 **Generic Entity**
 The most common data model of the application. Simply represents an object. Object kinds can be differentiate with `kind` field. Such as `kind: book` or `kind: author`
