@@ -83,8 +83,8 @@ export class GenericEntityControllerController {
 
     if (set) {
       let setFactory = new SetFactory();
-      let setWhere: any | any[];
-      let whereBuilder: WhereBuilder<GenericEntity> = filter?.where ? new WhereBuilder<GenericEntity>(filter?.where) : new WhereBuilder<GenericEntity>();
+      let setWhere: Where<AnyObject>[] | Where<AnyObject>;
+      let whereBuilder: WhereBuilder<GenericEntity>;
       let buildWhereClauseForSingleCondition = function (parentSet: Set, condition: string): Where<AnyObject>[] | Where<AnyObject> {
 
         if (condition != 'and' && condition != 'or')
@@ -120,7 +120,12 @@ export class GenericEntityControllerController {
       let keys = _.keys(set);
       setWhere = buildWhereClauseForConditions(set, keys);
 
-      whereBuilder.and(setWhere);
+      if (filter?.where) {
+        whereBuilder = new WhereBuilder<GenericEntity>(filter?.where);
+        whereBuilder.and(setWhere);
+      }
+      else
+        whereBuilder = new WhereBuilder<GenericEntity>(setWhere);
 
       let filterBuilder = new FilterBuilder(filter);
       filter = filterBuilder.where(whereBuilder.build())

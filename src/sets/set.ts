@@ -44,6 +44,9 @@ export class SetFactory {
     if (setName == 'my')
       return this.produceWhereClauseForMy(userId ?? '', groups ?? []);
 
+    if (setName == 'day')
+      return this.produceWhereClauseForDay();
+
     if (setName == 'week')
       return this.produceWhereClauseForWeek();
 
