@@ -185,7 +185,7 @@ export class SetFilterBuilder<T extends object = AnyObject> {
   private setFactory: SetFactory;
 
   constructor(private set: Set, private options?: SetOptions<T>) {
-    this.setFactory = new SetFactory();
+    this.setFactory = new SetFactory(options?.userId, options?.groups);
   }
 
   build(): Filter<AnyObject> {
