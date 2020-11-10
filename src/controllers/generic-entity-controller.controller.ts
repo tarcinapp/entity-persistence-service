@@ -77,12 +77,14 @@ export class GenericEntityControllerController {
     },
   })
   async find(
+    @param.header.string('x-query-userid') userId?: string,
+    @param.header.string('x-query-groups') groups?: string,
     @param.query.object('set') set?: Set,
     @param.filter(GenericEntity) filter?: Filter<GenericEntity>
   ): Promise<GenericEntity[]> {
 
     if (set) {
-      let setFactory = new SetFactory();
+      let setFactory = new SetFactory(userId, groups?.split(','));
       let setWhere: Where<AnyObject>[] | Where<AnyObject>;
       let whereBuilder: WhereBuilder<GenericEntity>;
       let buildWhereClauseForSingleCondition = function (parentSet: Set, condition: string): Where<AnyObject>[] | Where<AnyObject> {

@@ -27,7 +27,11 @@ export interface Set extends Condition, AndClause, OrClause {
 
 export class SetFactory {
 
-  produceWhereClauseFor(setName: string, userId?: string, groups?: string[]): Where<AnyObject> {
+  constructor(private userId?: string, private groups?: string[]) {
+
+  }
+
+  produceWhereClauseFor(setName: string): Where<AnyObject> {
 
     if (setName == 'publics')
       return this.produceWhereClauseForPublics();
@@ -41,8 +45,8 @@ export class SetFactory {
     if (setName == 'pendings')
       return this.produceWhereClauseForPendings();
 
-    if (setName == 'my')
-      return this.produceWhereClauseForMy(userId ?? '', groups ?? []);
+    if (setName == 'my' && this.userId && this.groups)
+      return this.produceWhereClauseForMy(this.userId, this.groups);
 
     if (setName == 'day')
       return this.produceWhereClauseForDay();
