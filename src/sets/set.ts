@@ -203,7 +203,15 @@ export class SetFilterBuilder<T extends object = AnyObject> {
     else
       whereBuilder = new WhereBuilder<AnyObject>(setWhere);
 
-    let filterBuilder = new FilterBuilder<AnyObject>();
+    let filterBuilder: FilterBuilder;
+
+    // add incoming filter to newly created filter
+    if (this.options?.filter)
+      filterBuilder = new FilterBuilder<AnyObject>(this.options?.filter);
+    else
+      filterBuilder = new FilterBuilder<AnyObject>();
+
+    // override with the newly created where with the existing where
     return filterBuilder.where(whereBuilder.build())
       .build();
   }
