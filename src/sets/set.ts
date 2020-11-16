@@ -133,9 +133,16 @@ export class SetFactory {
             ownerUsers: userId
           },
           {
-            ownerGroups: {
-              inq: groups
-            }
+            and: [
+              {
+                ownerGroups: {
+                  inq: groups
+                }
+              },
+              {
+                visibility: 'protected'
+              }
+            ]
           }
         ]
       };
@@ -147,9 +154,16 @@ export class SetFactory {
 
     if (groups)
       return {
-        ownerGroups: {
-          inq: groups
-        }
+        and: [
+          {
+            ownerGroups: {
+              inq: groups
+            }
+          },
+          {
+            visibility: 'protected'
+          }
+        ]
       }
 
     return {};
