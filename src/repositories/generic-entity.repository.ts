@@ -181,6 +181,12 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
   async checkUniqueness(entity: DataObject<GenericEntity>, fields: string[]) {
 
+    // eğer fields arrayinde yer alan fieldların hiç birisi entity de yer almıyorsa
+    // bu operasyonun unique index i bozma olasılığı yoktur
+    let isNoFieldExistOnEntity = _.every(fields, _.negate(_.partial(_.has, entity)));
+    if (isNoFieldExistOnEntity) return;
+
+
     const where: Where<GenericEntity> = {
       and: [
         {
