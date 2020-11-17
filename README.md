@@ -115,10 +115,14 @@ Data uniqueness is configurable with giving the composite-index-like set of fiel
 
 By the help of this configuration you can make an entity record unique per user. In other words, you can define a constraint, for example, saying that a user can only have one record with same kind.
 
+Uniqueness configuration is implemented in application logic. MongoDB has composite unique index feature but this feature supports only one array. Thus, it cannot support ownerUsers and ownerGroups together. Furthermore, MongoDB's unique index on arrays cannot be used to implement 'unique per user' approach as it takes arrays contribute to unique index as a whole.
+
 |  Configration |Description|Default Value| Example Value|
 | ------------ | ------------ | ------------ |------------ |
 | **uniqueness_entity** | Composite index-like comma seperated list of field names of generic entity | -  | slug,kind,ownerUsers |
+| **uniqueness_entity_only_actives** | Set true if you want to enforce uniqueness only in active entities | false  | true |
 | **uniqueness_list** | Composite index-like comma seperated list of field names of list | - | slug,kind,ownerUsers |
+| **uniqueness_list_only_actives** | Set true if you want to enforce uniqueness only in active lists | false  | true |
 
 ### Auto Approve
 |  Configration | Description  |  Default Value | Example Value  |

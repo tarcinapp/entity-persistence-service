@@ -1,9 +1,10 @@
 import {Getter, inject} from '@loopback/core';
-import {Count, DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, Options, repository, Where} from '@loopback/repository';
+import {Count, DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, Options, repository, Where, WhereBuilder} from '@loopback/repository';
 import _ from "lodash";
 import slugify from "slugify";
 import {EntityDbDataSource} from '../datasources';
 import {GenericEntity, GenericEntityRelations, HttpErrorResponse, Reactions, Relation, Tag, TagEntityRelation} from '../models';
+import {SetFactory} from '../sets/set';
 import {ReactionsRepository} from './reactions.repository';
 import {RelationRepository} from './relation.repository';
 import {TagEntityRelationRepository} from './tag-entity-relation.repository';
@@ -69,7 +70,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
         .replace(/\s/g, '')
         .split(',');
 
-      await this.checkUniqueness(data, fields);
+      await this.checkUniquenessForCreate(data, fields);
     }
 
     return super.create(data);
@@ -179,12 +180,77 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     // bu durumu nasil yakalayabiliriz bilmiyorum ama
   }
 
+  async checkUniquenessForCreate(newData: DataObject<GenericEntity>, fields: string[]) {
+
+    /**
+     * if none of the fields given in the fields array argument exist on the newEntity
+     * then this operation can't violate uniqueness
+     */
+    if (_.every(fields, _.negate(_.partial(_.has, newData)))) return;
+
+    // setFactory is used to produce where clause for 'active' records
+    let setFactory = new SetFactory();
+    let whereBuilder: WhereBuilder<GenericEntity>;
+
+    if (process.env.uniqueness_entity_only_actives == "true")
+      whereBuilder = new WhereBuilder<GenericEntity>(setFactory.produceWhereClauseForActives());
+    else
+      whereBuilder = new WhereBuilder<GenericEntity>();
+
+    // add clause to search any record that the owner(s) of newData already have
+    if (_.isArray(newData.ownerUsers) && _.includes(fields, 'ownerUsers')) {
+
+      if (newData.ownerUsers?.length == 1) {
+        whereBuilder.and({
+          ownerUsers: newData.ownerUsers[0]
+        });
+      } else {
+        let subWhereBuilder = new WhereBuilder<GenericEntity>();
+
+        _.forEach(newData.ownerUsers, (ownerUser) => {
+          subWhereBuilder.or({
+            ownerUsers: ownerUser
+          })
+        });
+
+        whereBuilder.and(subWhereBuilder.build());
+      }
+
+      fields = _.pull(fields, 'ownerUsers');
+    }
+
+    _.forEach(fields, (field) => {
+
+      if (_.has(newData, field))
+        whereBuilder.and({
+          [field]: _.get(newData, field)
+        });
+    });
+
+    let filter: Filter<GenericEntity> = new FilterBuilder()
+      .fields('id')
+      .where(whereBuilder.build())
+      .build();
+
+    let anyActiveEntityViolatesUniqueness = await super.findOne(filter);
+
+    if (anyActiveEntityViolatesUniqueness) {
+
+      throw new HttpErrorResponse({
+        statusCode: 409,
+        name: "DataUniquenessViolationError",
+        message: "Entity already exists.",
+        code: "ENTITY-ALREADY-EXISTS",
+        status: 409,
+      });
+    }
+  }
+
   async checkUniqueness(entity: DataObject<GenericEntity>, fields: string[]) {
 
     // eğer fields arrayinde yer alan fieldların hiç birisi entity de yer almıyorsa
     // bu operasyonun unique index i bozma olasılığı yoktur
-    let isNoFieldExistOnEntity = _.every(fields, _.negate(_.partial(_.has, entity)));
-    if (isNoFieldExistOnEntity) return;
+    if (_.every(fields, _.negate(_.partial(_.has, entity)))) return;
 
 
     const where: Where<GenericEntity> = {
