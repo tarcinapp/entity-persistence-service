@@ -1,10 +1,11 @@
 import {Getter, inject} from '@loopback/core';
 import {Count, DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, Options, repository, Where, WhereBuilder} from '@loopback/repository';
-import _ from "lodash";
+import _ from 'lodash';
+import qs from 'qs';
 import slugify from "slugify";
 import {EntityDbDataSource} from '../datasources';
 import {GenericEntity, GenericEntityRelations, HttpErrorResponse, Reactions, Relation, Tag, TagEntityRelation} from '../models';
-import {SetFactory} from '../sets/set';
+import {Set, SetFilterBuilder} from '../sets/set';
 import {ReactionsRepository} from './reactions.repository';
 import {RelationRepository} from './relation.repository';
 import {TagEntityRelationRepository} from './tag-entity-relation.repository';
@@ -64,14 +65,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
     data.slug = slugify(data.name ?? '', {lower: true});
 
-    if (process.env.uniqueness_entity) {
-
-      let fields: string[] = process.env.uniqueness_entity
-        .replace(/\s/g, '')
-        .split(',');
-
-      await this.checkUniquenessForCreate(data, fields);
-    }
+    await this.checkUniquenessForCreate(data);
 
     return super.create(data);
   }
@@ -180,61 +174,55 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     // bu durumu nasil yakalayabiliriz bilmiyorum ama
   }
 
-  async checkUniquenessForCreate(newData: DataObject<GenericEntity>, fields: string[]) {
+  async checkUniquenessForCreate(newData: DataObject<GenericEntity>) {
 
-    /**
-     * if none of the fields given in the fields array argument exist on the newEntity
-     * then this operation can't violate uniqueness
-     */
-    if (_.every(fields, _.negate(_.partial(_.has, newData)))) return;
+    // return if no uniqueness is configured
+    if (!process.env.uniqueness_entity && !process.env.uniqueness_entity_set) return;
 
-    // setFactory is used to produce where clause for 'active' records
-    let setFactory = new SetFactory();
-    let whereBuilder: WhereBuilder<GenericEntity>;
+    let whereBuilder: WhereBuilder<GenericEntity> = new WhereBuilder<GenericEntity>();
 
-    if (process.env.uniqueness_entity_only_actives == "true")
-      whereBuilder = new WhereBuilder<GenericEntity>(setFactory.produceWhereClauseForActives());
-    else
-      whereBuilder = new WhereBuilder<GenericEntity>();
+    // add uniqueness fields if configured
+    if (process.env.uniqueness_entity) {
+      let fields: string[] = process.env.uniqueness_entity
+        .replace(/\s/g, '')
+        .split(',');
 
-    // add clause to search any record that the owner(s) of newData already have
-    if (_.isArray(newData.ownerUsers) && _.includes(fields, 'ownerUsers')) {
+      _.forEach(fields, (field) => {
 
-      if (newData.ownerUsers?.length == 1) {
-        whereBuilder.and({
-          ownerUsers: newData.ownerUsers[0]
-        });
-      } else {
-        let subWhereBuilder = new WhereBuilder<GenericEntity>();
-
-        _.forEach(newData.ownerUsers, (ownerUser) => {
-          subWhereBuilder.or({
-            ownerUsers: ownerUser
-          })
-        });
-
-        whereBuilder.and(subWhereBuilder.build());
-      }
-
-      fields = _.pull(fields, 'ownerUsers');
-    }
-
-    _.forEach(fields, (field) => {
-
-      if (_.has(newData, field))
         whereBuilder.and({
           [field]: _.get(newData, field)
         });
-    });
+      });
+    }
 
-    let filter: Filter<GenericEntity> = new FilterBuilder()
-      .fields('id')
+    let filter = new FilterBuilder<GenericEntity>()
       .where(whereBuilder.build())
+      .fields('id')
       .build();
 
-    let anyActiveEntityViolatesUniqueness = await super.findOne(filter);
+    // add set filter if configured
+    if (process.env.uniqueness_entity_set) {
 
-    if (anyActiveEntityViolatesUniqueness) {
+      let uniquenessStr = process.env.uniqueness_entity_set;
+      uniquenessStr = uniquenessStr.replace(/(set\[.*my\])/g, '$1='
+        + (newData.ownerUsers ? newData.ownerUsers?.join(',') : '')
+        + ';'
+        + (newData.ownerGroups ? newData.ownerGroups?.join(',') : ''));
+
+      let uniquenessSet = (qs.parse(uniquenessStr)).set as Set;
+
+      filter = new SetFilterBuilder<GenericEntity>(uniquenessSet, {
+        filter: filter
+      })
+        .build();
+    }
+
+    // final uniqueness controlling filter
+    console.log('Uniqueness Filter: ', JSON.stringify(filter));
+
+    let existingEntity = await super.findOne(filter);
+
+    if (existingEntity) {
 
       throw new HttpErrorResponse({
         statusCode: 409,

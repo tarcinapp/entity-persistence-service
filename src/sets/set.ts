@@ -31,13 +31,10 @@ export interface Set extends Condition, AndClause, OrClause {
 
 export class SetFactory {
 
-  private my: string[];
-
-  constructor(my: string[]) {
-    this.my = my;
+  constructor(private ownerUsers?: string[], private ownerGroups?: string[]) {
   }
 
-  produceWhereClauseFor(setName: string): Where<AnyObject> {
+  produceWhereClauseFor(setName: string, setValue?: string): Where<AnyObject> {
 
     if (setName == 'publics')
       return this.produceWhereClauseForPublics();
@@ -52,7 +49,7 @@ export class SetFactory {
       return this.produceWhereClauseForPendings();
 
     if (setName == 'my')
-      return this.produceWhereClauseForMy();
+      return this.produceWhereClauseForMy(setValue);
 
     if (setName == 'day')
       return this.produceWhereClauseForDay();
@@ -124,16 +121,21 @@ export class SetFactory {
     };
   }
 
-  produceWhereClauseForMy(): Where<AnyObject> {
+  produceWhereClauseForMy(setValue?: string): Where<AnyObject> {
 
-    let userId = this.my[0];
-    let groups = _.drop(this.my);
+    if (!setValue) return {kind: false}; //impossible
 
-    if (userId && groups.length)
+    let parts = setValue.split(';');
+    let users = parts[0] ? parts[0].split(',') : [];
+    let groups = parts[1] ? parts[1].split(',') : [];
+
+    if (users?.length && groups?.length)
       return {
         or: [
           {
-            ownerUsers: userId
+            ownerUsers: {
+              inq: users
+            }
           },
           {
             and: [
@@ -143,22 +145,23 @@ export class SetFactory {
                 }
               },
               {
-                or: [
-                  {visibility: 'protected'},
-                  {visibility: 'public'}
-                ]
+                visibility: {
+                  neq: 'private'
+                }
               }
             ]
           }
         ]
       };
 
-    if (userId)
+    if (users?.length)
       return {
-        ownerUsers: userId
+        ownerUsers: {
+          inq: users
+        }
       }
 
-    if (groups.length)
+    if (groups?.length)
       return {
         and: [
           {
@@ -167,7 +170,9 @@ export class SetFactory {
             }
           },
           {
-            visibility: 'protected'
+            visibility: {
+              neq: 'private'
+            }
           }
         ]
       }
@@ -205,13 +210,7 @@ export class SetFilterBuilder<T extends object = AnyObject> {
   private setFactory: SetFactory;
 
   constructor(private set: Set, private options?: SetOptions<T>) {
-
-    let my: string[] = [];
-
-    if (set.my)
-      my = set.my.split(',');
-
-    this.setFactory = new SetFactory(my);
+    this.setFactory = new SetFactory();
   }
 
   build(): Filter<AnyObject> {
@@ -245,7 +244,7 @@ export class SetFilterBuilder<T extends object = AnyObject> {
   buildWhereClauseForSingleCondition(parentSet: Set, condition: string): Where<AnyObject>[] | Where<AnyObject> {
 
     if (condition != 'and' && condition != 'or')
-      return this.setFactory.produceWhereClauseFor(condition);
+      return this.setFactory.produceWhereClauseFor(condition, _.get(parentSet, condition));
 
     let subSetArr = parentSet[condition];
 
