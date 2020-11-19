@@ -96,7 +96,7 @@ You can use following set queries to shorten the given queries above respectivel
 | **actives**  | Selects all the data where `validFromDateTime` is not null and less than current date time and `validUntilDateTime` field is either null or greater than the current date time. |
 | **inactives**  | Selects all data where `validUntilDateTime` field has a value and its less than the current date time.  |
 |  **pendings** | Selects all data where `validFromDateTime` fiels is empty. |
-|  **my**  | Selects all data where given user id is in the `ownerUsers` or given group is in the `ownerGroups`. User ID and groups should be provided through HTTP header X-Query-UserId, X-Query-Groups.  Send groups as a comma seperated list of groups string. |
+|  **my**  | Selects all data where given user id is in the `ownerUsers` or given group is in the `ownerGroups`. User ID and groups should be provided as comma seperated value of the query variable: `set[my]=userid,group1,group2` |
 |  **day** | Selects all data where `creationDateTime` field is in last 24 hours. |
 |  **week** | Selects all data where `creationDateTime` field is in last 7 days.  |
 |  **month** | Selects all data where `creationDateTime` field is in last 30 days.   |
@@ -120,9 +120,9 @@ Uniqueness configuration is implemented in application logic. MongoDB has compos
 |  Configration |Description|Default Value| Example Value|
 | ------------ | ------------ | ------------ |------------ |
 | **uniqueness_entity** | Composite index-like comma seperated list of field names of generic entity | -  | slug,kind,ownerUsers |
-| **uniqueness_entity_only_actives** | Set true if you want to enforce uniqueness only in active entities | false  | true |
+| **uniqueness_entity_set** | Specify the scope where the uniqueness should be checked with set queries | -  | set[actives] |
 | **uniqueness_list** | Composite index-like comma seperated list of field names of list | - | slug,kind,ownerUsers |
-| **uniqueness_list_only_actives** | Set true if you want to enforce uniqueness only in active lists | false  | true |
+| **uniqueness_list_set** | Specify the scope where the uniqueness should be checked with set queries | false  | set[publics] |
 
 ### Auto Approve
 |  Configration | Description  |  Default Value | Example Value  |

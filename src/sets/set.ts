@@ -22,9 +22,7 @@ export interface Condition {
 };
 
 export interface SetOptions<T extends object = AnyObject> {
-  filter?: Filter<T>,
-  userId?: string,
-  groups?: string[]
+  filter?: Filter<T>
 }
 
 export interface Set extends Condition, AndClause, OrClause {
@@ -33,8 +31,10 @@ export interface Set extends Condition, AndClause, OrClause {
 
 export class SetFactory {
 
-  constructor(private userId?: string, private groups?: string[]) {
+  private my: string[];
 
+  constructor(my: string[]) {
+    this.my = my;
   }
 
   produceWhereClauseFor(setName: string): Where<AnyObject> {
@@ -52,7 +52,7 @@ export class SetFactory {
       return this.produceWhereClauseForPendings();
 
     if (setName == 'my')
-      return this.produceWhereClauseForMy(this.userId, this.groups);
+      return this.produceWhereClauseForMy();
 
     if (setName == 'day')
       return this.produceWhereClauseForDay();
@@ -124,9 +124,12 @@ export class SetFactory {
     };
   }
 
-  produceWhereClauseForMy(userId?: string, groups?: string[]): Where<AnyObject> {
+  produceWhereClauseForMy(): Where<AnyObject> {
 
-    if (userId && groups)
+    let userId = this.my[0];
+    let groups = _.drop(this.my);
+
+    if (userId && groups.length)
       return {
         or: [
           {
@@ -140,7 +143,10 @@ export class SetFactory {
                 }
               },
               {
-                visibility: 'protected'
+                or: [
+                  {visibility: 'protected'},
+                  {visibility: 'public'}
+                ]
               }
             ]
           }
@@ -152,7 +158,7 @@ export class SetFactory {
         ownerUsers: userId
       }
 
-    if (groups)
+    if (groups.length)
       return {
         and: [
           {
@@ -199,7 +205,13 @@ export class SetFilterBuilder<T extends object = AnyObject> {
   private setFactory: SetFactory;
 
   constructor(private set: Set, private options?: SetOptions<T>) {
-    this.setFactory = new SetFactory(options?.userId, options?.groups);
+
+    let my: string[] = [];
+
+    if (set.my)
+      my = set.my.split(',');
+
+    this.setFactory = new SetFactory(my);
   }
 
   build(): Filter<AnyObject> {

@@ -8,7 +8,7 @@ export class GenericEntityControllerController {
   constructor(
     @repository(GenericEntityRepository)
     public genericEntityRepository: GenericEntityRepository,
-  ) {}
+  ) { }
 
   @post('/generic-entities', {
     responses: {
@@ -76,17 +76,13 @@ export class GenericEntityControllerController {
     },
   })
   async find(
-    @param.header.string('x-query-userid') userId?: string,
-    @param.header.string('x-query-groups') groups?: string,
     @param.query.object('set') set?: Set,
     @param.filter(GenericEntity) filter?: Filter<GenericEntity>
   ): Promise<GenericEntity[]> {
 
     if (set)
       filter = new SetFilterBuilder<GenericEntity>(set, {
-        filter: filter,
-        userId: userId,
-        groups: groups?.split(',')
+        filter: filter
       }).build();
 
     return this.genericEntityRepository.find(filter);
