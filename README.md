@@ -111,16 +111,16 @@ You can use following set queries to shorten the given queries above respectivel
 | **db_password**  | MongoDB password. Provide through k8s secrets  |   |
 | **db_database**  | Name of the database  |  tarcinapp |
 ### Uniqueness
-Data uniqueness is configurable with giving the composite-index-like set of field names. Field types should be primitive types such as string or number. Only exception to this is you can use field `ownerUsers` from default fields as well.
+Data uniqueness is configurable with giving the composite-index-like set of field names. Optionally, you can make uniqueness valid for a subset of records. To enforce uniqueness in a subset of record, you can configure "set" feature of the application. That is, uniqueness can be enforced only between valid or public records as well. You can combine multiple sets with logical operators.
 
-By the help of this configuration you can make an entity record unique per user. In other words, you can define a constraint, for example, saying that a user can only have one record with same kind.
+Field types should be primitive types such as string or number.
 
 Uniqueness configuration is implemented in application logic. MongoDB has composite unique index feature but this feature supports only one array. Thus, it cannot support ownerUsers and ownerGroups together. Furthermore, MongoDB's unique index on arrays cannot be used to implement 'unique per user' approach as it takes arrays contribute to unique index as a whole.
 
 |  Configration |Description|Default Value| Example Value|
 | ------------ | ------------ | ------------ |------------ |
 | **uniqueness_entity** | Composite index-like comma seperated list of field names of generic entity | -  | slug,kind,ownerUsers |
-| **uniqueness_entity_set** | Specify the scope where the uniqueness should be checked with set queries | -  | set[actives] |
+| **uniqueness_entity_set** | Specify the scope where the uniqueness should be checked with set queries. | -  | set[actives] |
 | **uniqueness_list** | Composite index-like comma seperated list of field names of list | - | slug,kind,ownerUsers |
 | **uniqueness_list_set** | Specify the scope where the uniqueness should be checked with set queries | false  | set[publics] |
 
