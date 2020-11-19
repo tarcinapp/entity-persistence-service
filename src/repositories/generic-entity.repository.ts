@@ -47,16 +47,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     if (filter?.limit && filter.limit > GenericEntityRepository.response_limit)
       filter.limit = GenericEntityRepository.response_limit;
 
-    // we need to modify incoming filter to replace any square brackets in object keys
-    // this is required as 'qs' library has a bug in parsing nested filters
-    // {"[key]": "value"} becomes {"key":"value"}
-    let workaroundFilter = mapKeysDeep(filter, (value: string, key: string) => {
-      return _.replace(key, /\[|\]/g, "");
-    });
-
-    console.log(JSON.stringify(workaroundFilter));
-
-    return super.find(workaroundFilter, options);
+    return super.find(filter, options);
   }
 
   async create(data: DataObject<GenericEntity>) {
