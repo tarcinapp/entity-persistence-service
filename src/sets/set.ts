@@ -15,7 +15,7 @@ export interface Condition {
   inactives?: string,
   pendings?: string,
   publics?: string,
-  my?: string,
+  owners?: string,
   day?: string,
   week?: string,
   month?: string
@@ -48,8 +48,8 @@ export class SetFactory {
     if (setName == 'pendings')
       return this.produceWhereClauseForPendings();
 
-    if (setName == 'my')
-      return this.produceWhereClauseForMy(setValue);
+    if (setName == 'owners')
+      return this.produceWhereClauseForOwners(setValue);
 
     if (setName == 'day')
       return this.produceWhereClauseForDay();
@@ -121,7 +121,7 @@ export class SetFactory {
     };
   }
 
-  produceWhereClauseForMy(setValue?: string): Where<AnyObject> {
+  produceWhereClauseForOwners(setValue?: string): Where<AnyObject> {
 
     if (!setValue) return {kind: false}; //impossible
 
@@ -177,7 +177,15 @@ export class SetFactory {
         ]
       }
 
-    return {};
+    let countZeroFilter: Where<AnyObject> = {}
+
+    if (users.length == 0)
+      _.set(countZeroFilter, 'ownerUsersCount', 0);
+
+    if (groups.length == 0)
+      _.set(countZeroFilter, 'ownerGroupsCount', 0);
+
+    return countZeroFilter;
   }
 
   produceWhereClauseForDay(): Where<AnyObject> {

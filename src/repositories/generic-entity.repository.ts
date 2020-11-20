@@ -52,9 +52,11 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
   async create(data: DataObject<GenericEntity>) {
 
-    await this.checkDataKindFormat(data);
+    this.checkDataKindFormat(data);
 
-    data.slug = slugify(data.name ?? '', {lower: true});
+    this.generateSlug(data);
+
+    this.setOwnersCount(data);
 
     await this.checkUniquenessForCreate(data);
 
@@ -63,13 +65,12 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
   async replaceById(id: string, data: DataObject<GenericEntity>, options?: Options) {
 
-    await this.checkDataKindFormat(data);
+    this.checkDataKindFormat(data);
 
     // prevent this call to change the slug field
-    if (data.slug)
-      data.slug = undefined;
+    this.generateSlug(data);
 
-    data.slug = slugify(data.name ?? '', {lower: true});
+    this.setOwnersCount(data);
 
     if (process.env.uniqueness_entity) {
 
@@ -87,11 +88,11 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
   async updateById(id: string, data: DataObject<GenericEntity>, options?: Options) {
 
-    await this.checkDataKindFormat(data);
+    this.checkDataKindFormat(data);
 
-    // prevent this call to change the slug field
-    if (data.slug)
-      data.slug = undefined;
+    this.generateSlug(data);
+
+    this.setOwnersCount(data);
 
     if (data.name)
       data.slug = slugify(data.name, {lower: true});
@@ -113,11 +114,11 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
   async updateAll(data: DataObject<GenericEntity>, where?: Where<GenericEntity>, options?: Options) {
 
-    await this.checkDataKindFormat(data);
+    this.checkDataKindFormat(data);
 
-    // prevent this call to change the slug field
-    if (data.slug)
-      data.slug = undefined;
+    this.generateSlug(data);
+
+    this.setOwnersCount(data);
 
     if (data.name)
       data.slug = slugify(data.name, {lower: true});
@@ -131,6 +132,21 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     }
 
     return super.updateAll(data, where, options);
+  }
+
+  generateSlug(data: DataObject<GenericEntity>) {
+
+    if (data.name)
+      data.slug = slugify(data.name ?? '', {lower: true});
+  }
+
+  setOwnersCount(data: DataObject<GenericEntity>) {
+
+    if (_.isArray(data.ownerUsers))
+      data.ownerUsersCount = data.ownerUsers?.length;
+
+    if (_.isArray(data.ownerGroups))
+      data.ownerGroupsCount = data.ownerGroups?.length;
   }
 
   async checkUniquenessForUpdateAll(data: DataObject<GenericEntity>, fields: string[], where?: Where<GenericEntity>) {
@@ -195,7 +211,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     if (process.env.uniqueness_entity_set) {
 
       let uniquenessStr = process.env.uniqueness_entity_set;
-      uniquenessStr = uniquenessStr.replace(/(set\[.*my\])/g, '$1='
+      uniquenessStr = uniquenessStr.replace(/(set\[.*owners\])/g, '$1='
         + (newData.ownerUsers ? newData.ownerUsers?.join(',') : '')
         + ';'
         + (newData.ownerGroups ? newData.ownerGroups?.join(',') : ''));
@@ -320,7 +336,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     }
   }
 
-  async checkDataKindFormat(data: DataObject<GenericEntity>) {
+  checkDataKindFormat(data: DataObject<GenericEntity>) {
 
     // make sure data kind is slug format
     if (data.kind) {

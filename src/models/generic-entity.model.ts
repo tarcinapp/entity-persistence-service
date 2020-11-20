@@ -101,6 +101,18 @@ export class GenericEntity extends Entity {
   })
   ownerGroups?: string[];
 
+  @property({
+    type: 'number',
+    default: 0
+  })
+  ownerUsersCount?: number;
+
+  @property({
+    type: 'number',
+    default: 0
+  })
+  ownerGroupsCount?: number;
+
   @hasMany(() => Relation, {keyTo: 'from'})
   relations: Relation[];
 
