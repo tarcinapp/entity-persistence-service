@@ -1,10 +1,9 @@
 import {Getter, inject} from '@loopback/core';
-import {AnyObject, Count, DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, Options, repository, Where, WhereBuilder} from '@loopback/repository';
+import {DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, Options, repository, Where, WhereBuilder} from '@loopback/repository';
 import _ from 'lodash';
 import qs from 'qs';
 import slugify from "slugify";
 import {EntityDbDataSource} from '../datasources';
-import {UniquenessValidator} from '../extensions';
 import {Set, SetFilterBuilder} from '../extensions/set';
 import {GenericEntity, GenericEntityRelations, HttpErrorResponse, Reactions, Relation, Tag, TagEntityRelation} from '../models';
 import {ReactionsRepository} from './reactions.repository';
@@ -30,8 +29,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   private static response_limit = _.parseInt(process.env.response_limit_entity || "50");
 
   constructor(
-    @inject('datasources.EntityDb') dataSource: EntityDbDataSource, @repository.getter('RelationRepository') protected relationRepositoryGetter: Getter<RelationRepository>, @repository.getter('ReactionsRepository') protected reactionsRepositoryGetter: Getter<ReactionsRepository>, @repository.getter('TagEntityRelationRepository') protected tagEntityRelationRepositoryGetter: Getter<TagEntityRelationRepository>, @repository.getter('TagRepository') protected tagRepositoryGetter: Getter<TagRepository>,
-    @inject('extensions.uniqueness.validator') private uniquenessValidator: UniquenessValidator
+    @inject('datasources.EntityDb') dataSource: EntityDbDataSource, @repository.getter('RelationRepository') protected relationRepositoryGetter: Getter<RelationRepository>, @repository.getter('ReactionsRepository') protected reactionsRepositoryGetter: Getter<ReactionsRepository>, @repository.getter('TagEntityRelationRepository') protected tagEntityRelationRepositoryGetter: Getter<TagEntityRelationRepository>, @repository.getter('TagRepository') protected tagRepositoryGetter: Getter<TagRepository>
   ) {
     super(GenericEntity, dataSource);
     this.tags = this.createHasManyThroughRepositoryFactoryFor('tags', tagRepositoryGetter, tagEntityRelationRepositoryGetter,);
@@ -42,8 +40,6 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   }
 
   async find(filter?: Filter<GenericEntity>, options?: Options) {
-
-    this.uniquenessValidator.writeSomething();
 
     if (filter?.limit && filter.limit > GenericEntityRepository.response_limit)
       filter.limit = GenericEntityRepository.response_limit;
@@ -101,13 +97,13 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     return super.updateAll(data, where, options);
   }
 
-  generateSlug(data: DataObject<AnyObject>) {
+  private generateSlug(data: DataObject<GenericEntity>) {
 
     if (data.name)
       data.slug = slugify(data.name ?? '', {lower: true});
   }
 
-  setOwnersCount(data: DataObject<AnyObject>) {
+  private setOwnersCount(data: DataObject<GenericEntity>) {
 
     if (_.isArray(data.ownerUsers))
       data.ownerUsersCount = data.ownerUsers?.length;
@@ -116,7 +112,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
       data.ownerGroupsCount = data.ownerGroups?.length;
   }
 
-  checkDataKindFormat(data: DataObject<AnyObject>) {
+  private checkDataKindFormat(data: DataObject<GenericEntity>) {
 
     // make sure data kind is slug format
     if (data.kind) {
@@ -134,41 +130,12 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     }
   }
 
-  async checkUniquenessForUpdateAll(newData: DataObject<AnyObject>, fields: string[], where?: Where<AnyObject>) {
-
-    // data objesi, composite unique index'i olusturan alanlardan hicbirisine sahip degilse, bu islemin unique index'i ihlal etme olasiligi yoktur
-    if (_.every(fields, _.negate(_.partial(_.has, newData))))
-      return;
-
-    // eger data objesi, composite unique index'i olusturan alanlarin tamamini iceriyorsa, bu operasyonun birden fazla kaydi etkilememesi gerekir.
-    // yani, where filtresi, bu durumda en fazla '1' sonuc dondurmelidir ki bu adıma izin verebilelim
-    let hasAllFields: boolean = _.every(fields, _.partial(_.has, newData));
-
-    if (hasAllFields) {
-      // check if provied where clause returns more than 1 record
-      let count: Count = await this.count(where);
-
-      if (count.count > 1) {
-        throw new HttpErrorResponse({
-          statusCode: 409,
-          name: "DataUniquenessViolationError",
-          message: "Entity already exists.",
-          code: "ENTITY-ALREADY-EXISTS",
-          status: 409,
-        });
-      }
-    }
-
-    // TODO: eğer data objesi composite unique indexi oluşturan alanların bir kısmını içeriyorsa, etkilenen kayıtların unique index'i ihlal etme olasılığı var
-    // bu durumu nasil yakalayabiliriz bilmiyorum ama
-  }
-
-  async checkUniquenessForCreate(newData: DataObject<AnyObject>) {
+  private async checkUniquenessForCreate(newData: DataObject<GenericEntity>) {
 
     // return if no uniqueness is configured
     if (!process.env.uniqueness_entity && !process.env.uniqueness_entity_set) return;
 
-    let whereBuilder: WhereBuilder<AnyObject> = new WhereBuilder<AnyObject>();
+    let whereBuilder: WhereBuilder<GenericEntity> = new WhereBuilder<GenericEntity>();
 
     // add uniqueness fields if configured
     if (process.env.uniqueness_entity) {
@@ -184,7 +151,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
       });
     }
 
-    let filter = new FilterBuilder<AnyObject>()
+    let filter = new FilterBuilder<GenericEntity>()
       .where(whereBuilder.build())
       .fields('id')
       .build();
@@ -200,7 +167,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
       let uniquenessSet = (qs.parse(uniquenessStr)).set as Set;
 
-      filter = new SetFilterBuilder<AnyObject>(uniquenessSet, {
+      filter = new SetFilterBuilder<GenericEntity>(uniquenessSet, {
         filter: filter
       })
         .build();
@@ -223,12 +190,12 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     }
   }
 
-  async checkUniquenessForUpdate(id: string, newData: DataObject<AnyObject>) {
+  private async checkUniquenessForUpdate(id: string, newData: DataObject<GenericEntity>) {
 
     // return if no uniqueness is configured
     if (!process.env.uniqueness_entity && !process.env.uniqueness_entity_set) return;
 
-    let whereBuilder: WhereBuilder<AnyObject> = new WhereBuilder<AnyObject>();
+    let whereBuilder: WhereBuilder<GenericEntity> = new WhereBuilder<GenericEntity>();
 
     // add uniqueness fields if configured
     if (process.env.uniqueness_entity) {
@@ -264,7 +231,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
       }
     });
 
-    let filter = new FilterBuilder<AnyObject>()
+    let filter = new FilterBuilder<GenericEntity>()
       .where(whereBuilder.build())
       .fields('id')
       .build();

@@ -1,6 +1,5 @@
 import {RestBindings} from '@loopback/rest';
 import {ApplicationConfig, EntityPersistenceApplication} from './application';
-import {UniquenessBindings, UniquenessValidator} from './extensions';
 
 export * from './application';
 
@@ -11,9 +10,6 @@ export async function main(options: ApplicationConfig = {}) {
     debug: process.env.NODE_ENV != 'production',
     safeFields: ['errorCode', 'message']
   });
-
-  app.bind(UniquenessBindings.VALIDATOR)
-    .toClass(UniquenessValidator);
 
   await app.boot();
   await app.start();
