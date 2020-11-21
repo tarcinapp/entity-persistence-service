@@ -102,11 +102,6 @@ export class List extends Entity {
   })
   ownerGroupsCount?: number;
 
-  @property({
-    type: 'geopoint'
-  })
-  location?: string;
-
   @hasMany(() => GenericEntity, {through: {model: () => ListEntityRelation, keyTo: 'entityId'}})
   genericEntities: GenericEntity[];
 

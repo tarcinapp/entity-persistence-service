@@ -47,11 +47,6 @@ export class SubListReactions extends Entity {
   ownerUsers?: string[];
 
   @property({
-    type: 'geopoint'
-  })
-  location?: string;
-
-  @property({
     type: 'string',
   })
   listReactionId?: string;
