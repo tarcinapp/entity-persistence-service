@@ -1,5 +1,6 @@
 import {RestBindings} from '@loopback/rest';
 import {ApplicationConfig, EntityPersistenceApplication} from './application';
+import {UniquenessBindings, UniquenessValidator} from './extensions';
 
 export * from './application';
 
@@ -11,6 +12,8 @@ export async function main(options: ApplicationConfig = {}) {
     safeFields: ['errorCode', 'message']
   });
 
+  app.bind(UniquenessBindings.VALIDATOR)
+    .toClass(UniquenessValidator);
 
   await app.boot();
   await app.start();

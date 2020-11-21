@@ -4,6 +4,7 @@ import _ from 'lodash';
 import qs from 'qs';
 import slugify from "slugify";
 import {EntityDbDataSource} from '../datasources';
+import {UniquenessValidator} from '../extensions';
 import {Set, SetFilterBuilder} from '../extensions/set';
 import {GenericEntity, GenericEntityRelations, HttpErrorResponse, Reactions, Relation, Tag, TagEntityRelation} from '../models';
 import {ReactionsRepository} from './reactions.repository';
@@ -30,6 +31,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
   constructor(
     @inject('datasources.EntityDb') dataSource: EntityDbDataSource, @repository.getter('RelationRepository') protected relationRepositoryGetter: Getter<RelationRepository>, @repository.getter('ReactionsRepository') protected reactionsRepositoryGetter: Getter<ReactionsRepository>, @repository.getter('TagEntityRelationRepository') protected tagEntityRelationRepositoryGetter: Getter<TagEntityRelationRepository>, @repository.getter('TagRepository') protected tagRepositoryGetter: Getter<TagRepository>,
+    @inject('extensions.uniqueness.validator') private uniquenessValidator: UniquenessValidator
   ) {
     super(GenericEntity, dataSource);
     this.tags = this.createHasManyThroughRepositoryFactoryFor('tags', tagRepositoryGetter, tagEntityRelationRepositoryGetter,);
@@ -40,6 +42,8 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   }
 
   async find(filter?: Filter<GenericEntity>, options?: Options) {
+
+    this.uniquenessValidator.writeSomething();
 
     if (filter?.limit && filter.limit > GenericEntityRepository.response_limit)
       filter.limit = GenericEntityRepository.response_limit;
