@@ -113,6 +113,11 @@ export class GenericEntity extends Entity {
   })
   ownerGroupsCount?: number;
 
+  @property({
+    type: 'geopoint'
+  })
+  location?: string;
+
   @hasMany(() => Relation, {keyTo: 'from'})
   relations: Relation[];
 

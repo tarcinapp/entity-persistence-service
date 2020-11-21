@@ -54,6 +54,11 @@ export class ListReactions extends Entity {
   })
   listId?: string;
 
+  @property({
+    type: 'geopoint'
+  })
+  location?: string;
+
   @hasMany(() => SubReactions, {keyTo: 'listReactionId'})
   subReactions: SubReactions[];
   // Define well-known properties here

@@ -34,6 +34,11 @@ export class Relation extends Entity {
   })
   creationDateTime?: string;
 
+  @property({
+    type: 'geopoint'
+  })
+  location?: string;
+
   // Define well-known properties here
 
   // Indexer property to allow additional data

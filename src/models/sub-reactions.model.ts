@@ -57,6 +57,11 @@ export class SubReactions extends Entity {
   listReactionId?: string;
   // Define well-known properties here
 
+  @property({
+    type: 'geopoint'
+  })
+  location?: string;
+
   // Indexer property to allow additional data
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [prop: string]: any;
