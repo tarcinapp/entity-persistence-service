@@ -4,26 +4,31 @@ import {
   Filter,
   FilterExcludingWhere,
   repository,
-  Where,
+  Where
 } from '@loopback/repository';
 import {
-  post,
-  param,
-  get,
-  getModelSchemaRef,
-  patch,
+  del, get,
+  getModelSchemaRef, param,
+
+
+  patch, post,
+
+
+
+
   put,
-  del,
-  requestBody,
+
+  requestBody
 } from '@loopback/rest';
+import {Set, SetFilterBuilder} from '../extensions';
 import {List} from '../models';
 import {ListRepository} from '../repositories';
 
 export class ListController {
   constructor(
     @repository(ListRepository)
-    public listRepository : ListRepository,
-  ) {}
+    public listRepository: ListRepository,
+  ) { }
 
   @post('/lists', {
     responses: {
@@ -80,7 +85,14 @@ export class ListController {
   })
   async find(
     @param.filter(List) filter?: Filter<List>,
+    @param.query.object('set') set?: Set,
   ): Promise<List[]> {
+
+    if (set)
+      filter = new SetFilterBuilder<List>(set, {
+        filter: filter
+      }).build();
+
     return this.listRepository.find(filter);
   }
 
