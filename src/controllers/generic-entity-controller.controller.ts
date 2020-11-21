@@ -1,8 +1,8 @@
 import {Count, CountSchema, Filter, FilterExcludingWhere, repository, Where} from '@loopback/repository';
 import {del, get, getJsonSchema, getModelSchemaRef, param, patch, post, put, requestBody} from '@loopback/rest';
+import {Set, SetFilterBuilder} from '../extensions/set';
 import {GenericEntity, HttpErrorResponse} from '../models';
 import {GenericEntityRepository} from '../repositories';
-import {Set, SetFilterBuilder} from '../sets/set';
 
 export class GenericEntityControllerController {
   constructor(

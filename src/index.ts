@@ -11,6 +11,7 @@ export async function main(options: ApplicationConfig = {}) {
     safeFields: ['errorCode', 'message']
   });
 
+
   await app.boot();
   await app.start();
 

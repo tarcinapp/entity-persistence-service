@@ -1,18 +1,15 @@
 import {Getter, inject} from '@loopback/core';
-import {Count, DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, Options, repository, Where, WhereBuilder} from '@loopback/repository';
+import {AnyObject, Count, DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, Options, repository, Where, WhereBuilder} from '@loopback/repository';
 import _ from 'lodash';
 import qs from 'qs';
 import slugify from "slugify";
 import {EntityDbDataSource} from '../datasources';
+import {Set, SetFilterBuilder} from '../extensions/set';
 import {GenericEntity, GenericEntityRelations, HttpErrorResponse, Reactions, Relation, Tag, TagEntityRelation} from '../models';
-import {Set, SetFilterBuilder} from '../sets/set';
 import {ReactionsRepository} from './reactions.repository';
 import {RelationRepository} from './relation.repository';
 import {TagEntityRelationRepository} from './tag-entity-relation.repository';
 import {TagRepository} from './tag.repository';
-
-// this library does not have types
-const mapKeysDeep = require("map-keys-deep-lodash");
 
 export class GenericEntityRepository extends DefaultCrudRepository<
   GenericEntity,
@@ -67,7 +64,6 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
     this.checkDataKindFormat(data);
 
-    // prevent this call to change the slug field
     this.generateSlug(data);
 
     this.setOwnersCount(data);
@@ -101,13 +97,13 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     return super.updateAll(data, where, options);
   }
 
-  generateSlug(data: DataObject<GenericEntity>) {
+  generateSlug(data: DataObject<AnyObject>) {
 
     if (data.name)
       data.slug = slugify(data.name ?? '', {lower: true});
   }
 
-  setOwnersCount(data: DataObject<GenericEntity>) {
+  setOwnersCount(data: DataObject<AnyObject>) {
 
     if (_.isArray(data.ownerUsers))
       data.ownerUsersCount = data.ownerUsers?.length;
@@ -116,7 +112,25 @@ export class GenericEntityRepository extends DefaultCrudRepository<
       data.ownerGroupsCount = data.ownerGroups?.length;
   }
 
-  async checkUniquenessForUpdateAll(newData: DataObject<GenericEntity>, fields: string[], where?: Where<GenericEntity>) {
+  checkDataKindFormat(data: DataObject<AnyObject>) {
+
+    // make sure data kind is slug format
+    if (data.kind) {
+      let slugKind: string = slugify(data.kind, {lower: true});
+
+      if (slugKind != data.kind) {
+        throw new HttpErrorResponse({
+          statusCode: 422,
+          name: "InvalidKindError",
+          message: `Entity kind cannot contain special or uppercase characters. Use '${slugKind}' instead.`,
+          code: "INVALID-ENTITY-KIND",
+          status: 422,
+        });
+      }
+    }
+  }
+
+  async checkUniquenessForUpdateAll(newData: DataObject<AnyObject>, fields: string[], where?: Where<AnyObject>) {
 
     // data objesi, composite unique index'i olusturan alanlardan hicbirisine sahip degilse, bu islemin unique index'i ihlal etme olasiligi yoktur
     if (_.every(fields, _.negate(_.partial(_.has, newData))))
@@ -145,12 +159,12 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     // bu durumu nasil yakalayabiliriz bilmiyorum ama
   }
 
-  async checkUniquenessForCreate(newData: DataObject<GenericEntity>) {
+  async checkUniquenessForCreate(newData: DataObject<AnyObject>) {
 
     // return if no uniqueness is configured
     if (!process.env.uniqueness_entity && !process.env.uniqueness_entity_set) return;
 
-    let whereBuilder: WhereBuilder<GenericEntity> = new WhereBuilder<GenericEntity>();
+    let whereBuilder: WhereBuilder<AnyObject> = new WhereBuilder<AnyObject>();
 
     // add uniqueness fields if configured
     if (process.env.uniqueness_entity) {
@@ -166,7 +180,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
       });
     }
 
-    let filter = new FilterBuilder<GenericEntity>()
+    let filter = new FilterBuilder<AnyObject>()
       .where(whereBuilder.build())
       .fields('id')
       .build();
@@ -182,7 +196,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
       let uniquenessSet = (qs.parse(uniquenessStr)).set as Set;
 
-      filter = new SetFilterBuilder<GenericEntity>(uniquenessSet, {
+      filter = new SetFilterBuilder<AnyObject>(uniquenessSet, {
         filter: filter
       })
         .build();
@@ -205,12 +219,12 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     }
   }
 
-  async checkUniquenessForUpdate(id: string, newData: DataObject<GenericEntity>) {
+  async checkUniquenessForUpdate(id: string, newData: DataObject<AnyObject>) {
 
     // return if no uniqueness is configured
     if (!process.env.uniqueness_entity && !process.env.uniqueness_entity_set) return;
 
-    let whereBuilder: WhereBuilder<GenericEntity> = new WhereBuilder<GenericEntity>();
+    let whereBuilder: WhereBuilder<AnyObject> = new WhereBuilder<AnyObject>();
 
     // add uniqueness fields if configured
     if (process.env.uniqueness_entity) {
@@ -246,7 +260,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
       }
     });
 
-    let filter = new FilterBuilder<GenericEntity>()
+    let filter = new FilterBuilder<AnyObject>()
       .where(whereBuilder.build())
       .fields('id')
       .build();
@@ -282,119 +296,6 @@ export class GenericEntityRepository extends DefaultCrudRepository<
         code: "ENTITY-ALREADY-EXISTS",
         status: 409,
       });
-    }
-  }
-
-  async checkUniqueness(entity: DataObject<GenericEntity>, fields: string[]) {
-
-    // eğer fields arrayinde yer alan fieldların hiç birisi entity de yer almıyorsa
-    // bu operasyonun unique index i bozma olasılığı yoktur
-    if (_.every(fields, _.negate(_.partial(_.has, entity)))) return;
-
-
-    const where: Where<GenericEntity> = {
-      and: [
-        {
-          or: [
-            {
-              validUntilDateTime: null
-            },
-            {
-              validUntilDateTime: {
-                gt: Date.now()
-              }
-            }
-          ]
-        },
-        {
-          validFromDateTime: {
-            neq: null
-          }
-        },
-        {
-          validFromDateTime: {
-            lt: Date.now()
-          }
-        }
-      ]
-    };
-
-    // if entity.id exists, then this method is invoked from update or replace methods
-    // we must make sure we are not retrieving the same data
-    if (entity.id) {
-      where.and.push({
-        id: {
-          neq: entity.id
-        }
-      });
-    }
-
-    if (_.isArray(entity.ownerUsers) && _.includes(fields, 'ownerUsers')) {
-
-      if (entity.ownerUsers?.length == 1) {
-        where.and.push({
-          ownerUsers: entity.ownerUsers[0]
-        });
-      }
-
-      if (entity.ownerUsers?.length > 1) {
-        let or: object[] = [];
-
-        _.forEach(entity.ownerUsers, (ownerUser) => {
-          or.push({
-            ownerUsers: ownerUser
-          })
-        });
-
-        where.and.push(or);
-      }
-
-      fields = _.pull(fields, 'ownerUsers');
-    }
-
-    _.forEach(fields, (field) => {
-      let clause = {};
-      clause = _.set(clause, field, _.get(entity, field));
-      where.and.push(clause);
-    });
-
-    let filter: Filter<GenericEntity> = new FilterBuilder()
-      .fields('id')
-      .where(where)
-      .build();
-
-    /**
-    * Check if there is an existing entity
-    */
-    const activeEntityWithSameName = await super.findOne(filter);
-
-    if (activeEntityWithSameName) {
-
-      throw new HttpErrorResponse({
-        statusCode: 409,
-        name: "DataUniquenessViolationError",
-        message: "Entity already exists.",
-        code: "ENTITY-ALREADY-EXISTS",
-        status: 409,
-      });
-    }
-  }
-
-  checkDataKindFormat(data: DataObject<GenericEntity>) {
-
-    // make sure data kind is slug format
-    if (data.kind) {
-      let slugKind: string = slugify(data.kind, {lower: true});
-
-      if (slugKind != data.kind) {
-        throw new HttpErrorResponse({
-          statusCode: 422,
-          name: "InvalidKindError",
-          message: `Entity kind cannot contain special or uppercase characters. Use '${slugKind}' instead.`,
-          code: "INVALID-ENTITY-KIND",
-          status: 422,
-        });
-      }
     }
   }
 }
