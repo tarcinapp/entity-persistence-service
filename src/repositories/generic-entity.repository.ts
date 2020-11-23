@@ -133,13 +133,13 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   private async checkUniquenessForCreate(newData: DataObject<GenericEntity>) {
 
     // return if no uniqueness is configured
-    if (!process.env.uniqueness_entity && !process.env.uniqueness_entity_set) return;
+    if (!process.env.uniqueness_entity_fields && !process.env.uniqueness_entity_set) return;
 
     let whereBuilder: WhereBuilder<GenericEntity> = new WhereBuilder<GenericEntity>();
 
     // add uniqueness fields if configured
-    if (process.env.uniqueness_entity) {
-      let fields: string[] = process.env.uniqueness_entity
+    if (process.env.uniqueness_entity_fields) {
+      let fields: string[] = process.env.uniqueness_entity_fields
         .replace(/\s/g, '')
         .split(',');
 
@@ -193,13 +193,13 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   private async checkUniquenessForUpdate(id: string, newData: DataObject<GenericEntity>) {
 
     // return if no uniqueness is configured
-    if (!process.env.uniqueness_entity && !process.env.uniqueness_entity_set) return;
+    if (!process.env.uniqueness_entity_fields && !process.env.uniqueness_entity_set) return;
 
     let whereBuilder: WhereBuilder<GenericEntity> = new WhereBuilder<GenericEntity>();
 
     // add uniqueness fields if configured
-    if (process.env.uniqueness_entity) {
-      let fields: string[] = process.env.uniqueness_entity
+    if (process.env.uniqueness_entity_fields) {
+      let fields: string[] = process.env.uniqueness_entity_fields
         .replace(/\s/g, '')
         .split(',');
 

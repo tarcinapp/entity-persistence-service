@@ -141,13 +141,13 @@ export class ListRepository extends DefaultCrudRepository<
   private async checkUniquenessForCreate(newData: DataObject<List>) {
 
     // return if no uniqueness is configured
-    if (!process.env.uniqueness_list && !process.env.uniqueness_list_set) return;
+    if (!process.env.uniqueness_list_fields && !process.env.uniqueness_list_set) return;
 
     let whereBuilder: WhereBuilder<List> = new WhereBuilder<List>();
 
     // add uniqueness fields if configured
-    if (process.env.uniqueness_list) {
-      let fields: string[] = process.env.uniqueness_list
+    if (process.env.uniqueness_list_fields) {
+      let fields: string[] = process.env.uniqueness_list_fields
         .replace(/\s/g, '')
         .split(',');
 
@@ -201,13 +201,13 @@ export class ListRepository extends DefaultCrudRepository<
   private async checkUniquenessForUpdate(id: string, newData: DataObject<List>) {
 
     // return if no uniqueness is configured
-    if (!process.env.uniqueness_list && !process.env.uniqueness_list_set) return;
+    if (!process.env.uniqueness_list_fields && !process.env.uniqueness_list_set) return;
 
     let whereBuilder: WhereBuilder<List> = new WhereBuilder<List>();
 
     // add uniqueness fields if configured
-    if (process.env.uniqueness_list) {
-      let fields: string[] = process.env.uniqueness_list
+    if (process.env.uniqueness_list_fields) {
+      let fields: string[] = process.env.uniqueness_list_fields
         .replace(/\s/g, '')
         .split(',');
 

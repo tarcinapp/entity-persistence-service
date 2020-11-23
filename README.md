@@ -119,9 +119,9 @@ Uniqueness configuration is implemented in application logic. MongoDB has compos
 
 |  Configration |Description|Default Value| Example Value|
 | ------------ | ------------ | ------------ |------------ |
-| **uniqueness_entity** | Composite index-like comma seperated list of field names of generic entity | -  | slug,kind,ownerUsers |
+| **uniqueness_entity_fields** | Composite index-like comma seperated list of field names of generic entity | -  | slug,kind,ownerUsers |
 | **uniqueness_entity_set** | Specify the scope where the uniqueness should be checked with set queries. | -  | set[actives] |
-| **uniqueness_list** | Composite index-like comma seperated list of field names of list | - | slug,kind,ownerUsers |
+| **uniqueness_list_fields** | Composite index-like comma seperated list of field names of list | - | slug,kind,ownerUsers |
 | **uniqueness_list_set** | Specify the scope where the uniqueness should be checked with set queries | false  | set[publics] |
 
 ### Auto Approve
