@@ -4,6 +4,7 @@ import _ from 'lodash';
 import qs from 'qs';
 import slugify from "slugify";
 import {EntityDbDataSource} from '../datasources';
+import {UniquenessConfigurationReader} from '../extensions';
 import {Set, SetFilterBuilder} from '../extensions/set';
 import {GenericEntity, GenericEntityRelations, HttpErrorResponse, Reactions, Relation, Tag, TagEntityRelation} from '../models';
 import {ReactionsRepository} from './reactions.repository';
@@ -29,7 +30,8 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   private static response_limit = _.parseInt(process.env.response_limit_entity || "50");
 
   constructor(
-    @inject('datasources.EntityDb') dataSource: EntityDbDataSource, @repository.getter('RelationRepository') protected relationRepositoryGetter: Getter<RelationRepository>, @repository.getter('ReactionsRepository') protected reactionsRepositoryGetter: Getter<ReactionsRepository>, @repository.getter('TagEntityRelationRepository') protected tagEntityRelationRepositoryGetter: Getter<TagEntityRelationRepository>, @repository.getter('TagRepository') protected tagRepositoryGetter: Getter<TagRepository>
+    @inject('datasources.EntityDb') dataSource: EntityDbDataSource, @repository.getter('RelationRepository') protected relationRepositoryGetter: Getter<RelationRepository>, @repository.getter('ReactionsRepository') protected reactionsRepositoryGetter: Getter<ReactionsRepository>, @repository.getter('TagEntityRelationRepository') protected tagEntityRelationRepositoryGetter: Getter<TagEntityRelationRepository>, @repository.getter('TagRepository') protected tagRepositoryGetter: Getter<TagRepository>,
+    @inject('extensions.uniqueness.configurationreader') private uniquenessConfigReader: UniquenessConfigurationReader
   ) {
     super(GenericEntity, dataSource);
     this.tags = this.createHasManyThroughRepositoryFactoryFor('tags', tagRepositoryGetter, tagEntityRelationRepositoryGetter,);
@@ -133,23 +135,22 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   private async checkUniquenessForCreate(newData: DataObject<GenericEntity>) {
 
     // return if no uniqueness is configured
-    if (!process.env.uniqueness_entity_fields && !process.env.uniqueness_entity_set) return;
+    if (!this.uniquenessConfigReader.isUniquenessConfiguredForEntities(newData.kind))
+      return;
 
     let whereBuilder: WhereBuilder<GenericEntity> = new WhereBuilder<GenericEntity>();
 
-    // add uniqueness fields if configured
-    if (process.env.uniqueness_entity_fields) {
-      let fields: string[] = process.env.uniqueness_entity_fields
-        .replace(/\s/g, '')
-        .split(',');
+    // read the fields (name, slug) array for this kind
+    let fields: string[] = this.uniquenessConfigReader.getFieldsForEntities(newData.kind);
+    let set = this.uniquenessConfigReader.getSetForEntities(newData.ownerUsers, newData.ownerGroups, newData.kind);
 
-      _.forEach(fields, (field) => {
+    // add uniqueness fields to where builder
+    _.forEach(fields, (field) => {
 
-        whereBuilder.and({
-          [field]: _.get(newData, field)
-        });
+      whereBuilder.and({
+        [field]: _.get(newData, field)
       });
-    }
+    });
 
     let filter = new FilterBuilder<GenericEntity>()
       .where(whereBuilder.build())
@@ -157,17 +158,8 @@ export class GenericEntityRepository extends DefaultCrudRepository<
       .build();
 
     // add set filter if configured
-    if (process.env.uniqueness_entity_set) {
-
-      let uniquenessStr = process.env.uniqueness_entity_set;
-      uniquenessStr = uniquenessStr.replace(/(set\[.*owners\])/g, '$1='
-        + (newData.ownerUsers ? newData.ownerUsers?.join(',') : '')
-        + ';'
-        + (newData.ownerGroups ? newData.ownerGroups?.join(',') : ''));
-
-      let uniquenessSet = (qs.parse(uniquenessStr)).set as Set;
-
-      filter = new SetFilterBuilder<GenericEntity>(uniquenessSet, {
+    if (set) {
+      filter = new SetFilterBuilder<GenericEntity>(set, {
         filter: filter
       })
         .build();

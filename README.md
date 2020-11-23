@@ -121,17 +121,23 @@ Uniqueness configuration is implemented in application logic. MongoDB has compos
 | ------------ | ------------ | ------------ |------------ |
 | **uniqueness_entity_fields** | Composite index-like comma seperated list of field names of generic entity | -  | slug,kind,ownerUsers |
 | **uniqueness_entity_set** | Specify the scope where the uniqueness should be checked with set queries. | -  | set[actives] |
+| **uniqueness_entity_fields_for_{kind_name}** | Composite index-like comma seperated list of field names of generic entity. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind. | -  | slug,kind,ownerUsers |
+| **uniqueness_entity_set_for_{kind_name}** | Specify the scope where the uniqueness should be checked with set queries. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.| -  | set[actives] |
 | **uniqueness_list_fields** | Composite index-like comma seperated list of field names of list | - | slug,kind,ownerUsers |
 | **uniqueness_list_set** | Specify the scope where the uniqueness should be checked with set queries | false  | set[publics] |
+| **uniqueness_list_fields_for_{kind_name}** | Composite index-like comma seperated list of field names of list. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind. | - | slug,kind,ownerUsers |
+| **uniqueness_list_set_for_{kind_name}** | Specify the scope where the uniqueness should be checked with set queries. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind. | false  | set[publics] |
 
 ### Auto Approve
 |  Configration | Description  |  Default Value | Example Value  |
 | ------------ | ------------ | ------------ | ------------ |
 | **autoapprove_entity**  | If true, `validFromDateTime` field of entity record is automatically filled with the creation datetime. | false  | true  |
 | **autoapprove_list**  | If true, `validFromDateTime` field of list record is automatically filled with the creation datetime.  |  false |  true |
-|  **autoapprove_entity_reaction** |  If true, `validFromDateTime` field of entity reaction record is automatically filled with the creation datetime. | false  | true  |
+| **autoapprove_entity_reaction** |  If true, `validFromDateTime` field of entity reaction record is automatically filled with the creation datetime. | false  | true  |
 |  **autoapprove_list_reaction** | If true, `validFromDateTime` field of list reaction record is automatically filled with the creation datetime.  | false  | true  |
 ### Visibility
+This option only applies when visibility field is not provided. If you want to apply a visibility rule bu user role, please see entity-persistence-gateway.
+
 |  Configuration | Description  |  Default Value | Example Value  |
 | ------------ | ------------ | ------------ | ------------ |
 | **visibility_entity**  | Default value to be filled for `visibility` field while entity creation. | protected  | public, private  |

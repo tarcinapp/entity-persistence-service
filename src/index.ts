@@ -1,5 +1,6 @@
 import {RestBindings} from '@loopback/rest';
 import {ApplicationConfig, EntityPersistenceApplication} from './application';
+import {UniquenessBindings, UniquenessConfigurationReader} from './extensions';
 
 export * from './application';
 
@@ -10,6 +11,10 @@ export async function main(options: ApplicationConfig = {}) {
     debug: process.env.NODE_ENV != 'production',
     safeFields: ['errorCode', 'message']
   });
+
+  // add uniqueness configuration reader to context
+  app.bind(UniquenessBindings.CONFIG_READER)
+    .toClass(UniquenessConfigurationReader);
 
   await app.boot();
   await app.start();
