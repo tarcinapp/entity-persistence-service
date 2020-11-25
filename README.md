@@ -1,4 +1,3 @@
-
 An unopinionated REST based microservice backend application built on Loopback 4 framework.  entity-persistence-service helps you to build your REST based application just in seconds.
 This application leverages schemaless database *(MongoDB)* to provide a scalable and highly customizable data persistence layer. It has a generic data model (entities, lists, reactions, ..) that easily be expanded and configurable through environment variables.
 This approach would support many use case scenarios.
@@ -22,6 +21,7 @@ Application has prebuilt data models. See *Data Models* section for details. Eac
 - customized validations
 - query by location
 - prebuilt queries (sets)
+- Special gateway application
 
 **Generic Entity**
 The most common data model of the application. Simply represents an object. Object kinds can be differentiate with `kind` field.
@@ -177,8 +177,8 @@ Limits can be configured through sets. For instance, you can limit active or pub
 | **record_limit_entity_set_for_{kind_name}**  | A set string where record limits will be applied for a specific kind | 50  |
 | **record_limit_list_count**  | Max lists can be created. | 50  |
 | **record_limit_list_set**  | A set string where record limits will be applied.  | 50  |
-| **record_limit_list_count_for_{kind_name}**  | Max items can be returned from list reaction response.  | 50  |
-| **record_limit_list_set_for_{kind_name}**  | Max items can be returned from list reaction response. | 50  |
+| **record_limit_list_count_for_{kind_name}**  | Max lists can be created for a specific entity kind.  | 50  |
+| **record_limit_list_set_for_{kind_name}**  | A set string where record limits will be applied for a specific kind  | 50  |
 
 Auto approve configuration is implemented but this implementation provides very simple auto approving capabilities.
 In the need of enabling auto approve under certain conditions, users are encouraged to configure it using gateway policies. By the help of gateway policies, auto approve can be configured using 'kind' of the targeted record, user's roles, etc. For example, you can enable autoapprove when an entity is created by the editor or admin, but disable for regular users.
