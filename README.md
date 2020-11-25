@@ -3,29 +3,11 @@ An unopinionated REST based microservice backend application built on Loopback 4
 This application leverages schemaless database *(MongoDB)* to provide a scalable and highly customizable data persistence layer. It has a generic data model (entities, lists, reactions, ..) that easily be expanded and configurable through environment variables.
 This approach would support many use case scenarios.
 *For extended validation support, authentication, authorization, rate limiting capabilities, couple this application with the entity-persistence-gateway application.*
-### Overview
+# Overview
 Application has prebuilt data models. See *Data Models* section for details. Each data model can hold arbitrarily structed JSON data along with predefined fields, such as `creationDateTime`, `ownerUsers`, `kind`, etc..
 
 ![Model Overview](./doc/img/model-overview.png?raw=true "Model Overview")
 
-**Generic Entity**
-The most common data model of the application. Simply represents an object. Object kinds can be differentiate with `kind` field.
-For example `kind: book` or `kind: author`
-**List**
-Represents list of a generic entity. A list can have a relationship to many entities. List kinds can be differentiate with `kind` field.
-For example, `kind: favorites`  or `kind:science_fiction`
-**Entity Reaction**
-Represents any event related to an object. For example comment, like, measurement, anger,..
-**List Reaction**
-Represents any event related to a list. For example comment, like, measurement, anger,..
-
-### Sample Use Cases
-**User Configuration Storage**
-Every user have an entity record kind: config. Name: mobileapp, webui, menu, dashboard, etc. Users can store arbitrary data.
-**IoT Platform**
-Each list is a solution. Each solution has entities in kind: device. Each measurement is a reaction.
-**Movie Database**
-Each movie and each director is an entity. A relationship between directors and movies called 'director'. Users have lists, watchlist, watched. Editors prepare lists '10 you must see movies'.
 ### Features
 - entity crud operations
 - entity approval
@@ -40,6 +22,30 @@ Each movie and each director is an entity. A relationship between directors and 
 - customized validations
 - query by location
 - prebuilt queries (sets)
+
+**Generic Entity**
+The most common data model of the application. Simply represents an object. Object kinds can be differentiate with `kind` field.
+For example `kind: book` or `kind: author`
+**List**
+Represents list of a generic entity. A list can have a relationship to many entities. List kinds can be differentiate with `kind` field.
+For example, `kind: favorites`  or `kind:science_fiction`
+**Entity Reaction**
+Represents any event related to an object. For example comment, like, measurement, anger,..
+**List Reaction**
+Represents any event related to a list. For example comment, like, measurement, anger,..
+
+## Concepts
+### Sets
+### Kind Specific Configurations
+
+## Sample Use Cases
+**User Configuration Storage**
+Every user have an entity record kind: config. Name: mobileapp, webui, menu, dashboard, etc. Users can store arbitrary data.
+**IoT Platform**
+Each list is a solution. Each solution has entities in kind: device. Each measurement is a reaction.
+**Movie Database**
+Each movie and each director is an entity. A relationship between directors and movies called 'director'. Users have lists, watchlist, watched. Editors prepare lists '10 you must see movies'.
+
 ## Data Models
 - Generic Entity
 - Entity Hierarchy
@@ -53,7 +59,7 @@ Each movie and each director is an entity. A relationship between directors and 
 ### Tags
 Tags does not have updateAll operation as tags content is unique and this is the only property that may require an update.
 Updating creationDateTime for all tags does not make sense.
-# Programming Conventions
+## Programming Conventions
 All database models have id property and it is generated at server side with guid.
 DateTime fields names are end with '`dateTime`'
 Here are the list of common field names.
@@ -160,17 +166,17 @@ These setting limits the number of record can be returned for each data model. I
 | **response_limit_list_reaction**  | Max items can be returned from list reaction response. | 50  |
 | **response_limit_tag**  | Max items can be returned from tags response. | 50  |
 ### Record Limits
-These settings limits the number of entities can be created for entities and lists. There is no limits for reactions and tags. But you can configure daily or hourly limits from gateway.
+These settings limits the number of records can be created for entities and lists. There is no limits for reactions and tags. But you can configure daily or hourly limits from gateway.
 Limits can be configured through sets. For instance, you can limit active or public entities a user can have. You can even set these configurations per entity kind by adding `_for_{kindname}` suffix to the configuration name.
 
-|  Configration | Description  |  Default Value |
+|  Configration | Description  |  Example Value |
 | ------------ | ------------ | ------------ |
-| **record_limit_entity_count**  | Max items can be returned from entity response. | 50  |
-| **record_limit_entity_set**  | Max items can be returned from list response.  | 50  |
-| **record_limit_entity_count_for_{kind_name}**  | Max items can be returned from entity reaction response.  | 50  |
-| **record_limit_entity_set_for_{kind_name}**  | Max items can be returned from list reaction response. | 50  |
-| **record_limit_list_count**  | Max items can be returned from list response. | 50  |
-| **record_limit_list_set**  | Max items can be returned from list response.  | 50  |
+| **record_limit_entity_count**  | Max entities can be created. | 100 |
+| **record_limit_entity_set**  | A set string where record limits will be applied. | `set[owners]`  |
+| **record_limit_entity_count_for_{kind_name}**  | Max entities can be created for a specific entity kind. | 100  |
+| **record_limit_entity_set_for_{kind_name}**  | A set string where record limits will be applied for a specific kind | 50  |
+| **record_limit_list_count**  | Max lists can be created. | 50  |
+| **record_limit_list_set**  | A set string where record limits will be applied.  | 50  |
 | **record_limit_list_count_for_{kind_name}**  | Max items can be returned from list reaction response.  | 50  |
 | **record_limit_list_set_for_{kind_name}**  | Max items can be returned from list reaction response. | 50  |
 
