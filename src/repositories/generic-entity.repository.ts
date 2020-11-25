@@ -184,39 +184,36 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
   private async checkUniquenessForUpdate(id: string, newData: DataObject<GenericEntity>) {
 
-    // return if no uniqueness is configured
-    if (!process.env.uniqueness_entity_fields && !process.env.uniqueness_entity_set) return;
+    if (!this.uniquenessConfigReader.isUniquenessConfiguredForEntities(newData.kind))
+      return;
 
     let whereBuilder: WhereBuilder<GenericEntity> = new WhereBuilder<GenericEntity>();
 
-    // add uniqueness fields if configured
-    if (process.env.uniqueness_entity_fields) {
-      let fields: string[] = process.env.uniqueness_entity_fields
-        .replace(/\s/g, '')
-        .split(',');
+    // read the fields (name, slug) array for this kind
+    let fields: string[] = this.uniquenessConfigReader.getFieldsForLists(newData.kind);
+    let set = this.uniquenessConfigReader.getSetForLists(newData.ownerUsers, newData.ownerGroups, newData.kind);
 
-      // if there is at least single field in the fields array that does not present on new data, then we should find it from the db.
-      if (_.some(fields, _.negate(_.partial(_.has, newData)))) {
-        let existingEntity = await super.findById(id);
+     // if there is at least single field in the fields array that does not present on new data, then we should find it from the db.
+     if (_.some(fields, _.negate(_.partial(_.has, newData)))) {
+      let existingEntity = await super.findById(id);
 
-        _.forEach(fields, (field) => {
+      _.forEach(fields, (field) => {
 
-          whereBuilder.and({
-            [field]: _.has(newData, field) ? _.get(newData, field) : _.get(existingEntity, field)
-          });
+        whereBuilder.and({
+          [field]: _.has(newData, field) ? _.get(newData, field) : _.get(existingEntity, field)
         });
+      });
 
-      } else {
-        _.forEach(fields, (field) => {
+    } else {
+      _.forEach(fields, (field) => {
 
-          whereBuilder.and({
-            [field]: _.get(newData, field)
-          });
+        whereBuilder.and({
+          [field]: _.get(newData, field)
         });
-      }
+      });
     }
 
-    //
+    // this is for preventing the same data to be returned
     whereBuilder.and({
       id: {
         neq: id
@@ -229,17 +226,8 @@ export class GenericEntityRepository extends DefaultCrudRepository<
       .build();
 
     // add set filter if configured
-    if (process.env.uniqueness_entity_set) {
-
-      let uniquenessStr = process.env.uniqueness_entity_set;
-      uniquenessStr = uniquenessStr.replace(/(set\[.*owners\])/g, '$1='
-        + (newData.ownerUsers ? newData.ownerUsers?.join(',') : '')
-        + ';'
-        + (newData.ownerGroups ? newData.ownerGroups?.join(',') : ''));
-
-      let uniquenessSet = (qs.parse(uniquenessStr)).set as Set;
-
-      filter = new SetFilterBuilder<GenericEntity>(uniquenessSet, {
+    if (set) {
+      filter = new SetFilterBuilder<GenericEntity>(set, {
         filter: filter
       })
         .build();
