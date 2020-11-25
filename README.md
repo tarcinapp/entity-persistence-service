@@ -134,7 +134,7 @@ Uniqueness configuration is implemented in application logic. MongoDB has compos
 | **autoapprove_entity**  | If true, `validFromDateTime` field of entity record is automatically filled with the creation datetime. | false  | true  |
 | **autoapprove_list**  | If true, `validFromDateTime` field of list record is automatically filled with the creation datetime.  |  false |  true |
 | **autoapprove_entity_reaction** |  If true, `validFromDateTime` field of entity reaction record is automatically filled with the creation datetime. | false  | true  |
-|  **autoapprove_list_reaction** | If true, `validFromDateTime` field of list reaction record is automatically filled with the creation datetime.  | false  | true  |
+| **autoapprove_list_reaction** | If true, `validFromDateTime` field of list reaction record is automatically filled with the creation datetime.  | false  | true  |
 ### Visibility
 This option only applies when visibility field is not provided. If you want to apply a visibility rule bu user role, please see entity-persistence-gateway.
 
@@ -159,6 +159,20 @@ These setting limits the number of record can be returned for each data model. I
 | **response_limit_entity_reaction**  | Max items can be returned from entity reaction response.  | 50  |
 | **response_limit_list_reaction**  | Max items can be returned from list reaction response. | 50  |
 | **response_limit_tag**  | Max items can be returned from tags response. | 50  |
+### Record Limits
+These settings limits the number of entities can be created for entities and lists. There is no limits for reactions and tags. But you can configure daily or hourly limits from gateway.
+Limits can be configured through sets. For instance, you can limit active or public entities a user can have. You can even set these configurations per entity kind by adding `_for_{kindname}` suffix to the configuration name.
+
+|  Configration | Description  |  Default Value |
+| ------------ | ------------ | ------------ |
+| **record_limit_entity_count**  | Max items can be returned from entity response. | 50  |
+| **record_limit_entity_set**  | Max items can be returned from list response.  | 50  |
+| **record_limit_entity_count_for_{kind_name}**  | Max items can be returned from entity reaction response.  | 50  |
+| **record_limit_entity_set_for_{kind_name}**  | Max items can be returned from list reaction response. | 50  |
+| **record_limit_list_count**  | Max items can be returned from list response. | 50  |
+| **record_limit_list_set**  | Max items can be returned from list response.  | 50  |
+| **record_limit_list_count_for_{kind_name}**  | Max items can be returned from list reaction response.  | 50  |
+| **record_limit_list_set_for_{kind_name}**  | Max items can be returned from list reaction response. | 50  |
 
 Auto approve configuration is implemented but this implementation provides very simple auto approving capabilities.
 In the need of enabling auto approve under certain conditions, users are encouraged to configure it using gateway policies. By the help of gateway policies, auto approve can be configured using 'kind' of the targeted record, user's roles, etc. For example, you can enable autoapprove when an entity is created by the editor or admin, but disable for regular users.
