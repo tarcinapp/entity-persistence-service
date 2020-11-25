@@ -1,12 +1,11 @@
 import {Getter, inject} from '@loopback/core';
 import {DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, Options, repository, Where, WhereBuilder} from '@loopback/repository';
 import _ from 'lodash';
-import qs from 'qs';
 import slugify from "slugify";
 import {EntityDbDataSource} from '../datasources';
-import {UniquenessConfigurationReader} from '../extensions';
-import {Set, SetFilterBuilder} from '../extensions/set';
-import {GenericEntity, GenericEntityRelations, HttpErrorResponse, Reactions, Relation, Tag, TagEntityRelation} from '../models';
+import {RecordLimitsConfigurationReader, UniquenessConfigurationReader} from '../extensions';
+import {SetFilterBuilder} from '../extensions/set';
+import {GenericEntity, GenericEntityRelations, HttpErrorResponse, Reactions, Relation, SingleError, Tag, TagEntityRelation} from '../models';
 import {ReactionsRepository} from './reactions.repository';
 import {RelationRepository} from './relation.repository';
 import {TagEntityRelationRepository} from './tag-entity-relation.repository';
@@ -31,7 +30,8 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
   constructor(
     @inject('datasources.EntityDb') dataSource: EntityDbDataSource, @repository.getter('RelationRepository') protected relationRepositoryGetter: Getter<RelationRepository>, @repository.getter('ReactionsRepository') protected reactionsRepositoryGetter: Getter<ReactionsRepository>, @repository.getter('TagEntityRelationRepository') protected tagEntityRelationRepositoryGetter: Getter<TagEntityRelationRepository>, @repository.getter('TagRepository') protected tagRepositoryGetter: Getter<TagRepository>,
-    @inject('extensions.uniqueness.configurationreader') private uniquenessConfigReader: UniquenessConfigurationReader
+    @inject('extensions.uniqueness.configurationreader') private uniquenessConfigReader: UniquenessConfigurationReader,
+    @inject('extensions.record-limits.configurationreader') private recordLimitConfigReader: RecordLimitsConfigurationReader
   ) {
     super(GenericEntity, dataSource);
     this.tags = this.createHasManyThroughRepositoryFactoryFor('tags', tagRepositoryGetter, tagEntityRelationRepositoryGetter,);
@@ -58,6 +58,8 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     this.setOwnersCount(data);
 
     await this.checkUniquenessForCreate(data);
+
+    await this.checkRecordLimits(data);
 
     return super.create(data);
   }
@@ -97,6 +99,52 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     this.setOwnersCount(data);
 
     return super.updateAll(data, where, options);
+  }
+
+  private async checkRecordLimits(newData: DataObject<GenericEntity>) {
+
+    if (!this.recordLimitConfigReader.isRecordLimitsConfiguredForEntities(newData.kind))
+      return;
+
+    let limit = this.recordLimitConfigReader.getRecordLimitsCountForEntities(newData.kind)
+    let set = this.uniquenessConfigReader.getSetForEntities(newData.ownerUsers, newData.ownerGroups, newData.kind);
+    let whereBuilder: WhereBuilder<GenericEntity> = new WhereBuilder<GenericEntity>();
+
+    if (this.recordLimitConfigReader.isLimitConfiguredForKindForEntities(newData.kind))
+      whereBuilder.and({
+        kind: newData.kind
+      });
+
+    let filter = new FilterBuilder<GenericEntity>()
+      .where(whereBuilder.build())
+      .build();
+
+    // add set filter if configured
+    if (set) {
+      filter = new SetFilterBuilder<GenericEntity>(set, {
+        filter: filter
+      })
+        .build();
+    }
+
+    let currentCount = await this.count(filter);
+
+    if (currentCount.count >= limit!) {
+      throw new HttpErrorResponse({
+        statusCode: 403,
+        name: "LimitExceededError",
+        message: `Entity creation limit is exceeded.`,
+        code: "ENTITY-LIMIT-EXCEEDED",
+        status: 403,
+        details: [new SingleError({
+          code: "ENTITY-LIMIT-EXCEEDED",
+          info: {
+            limit: limit
+          }
+        })]
+      });
+    }
+
   }
 
   private generateSlug(data: DataObject<GenericEntity>) {
@@ -193,8 +241,8 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     let fields: string[] = this.uniquenessConfigReader.getFieldsForLists(newData.kind);
     let set = this.uniquenessConfigReader.getSetForLists(newData.ownerUsers, newData.ownerGroups, newData.kind);
 
-     // if there is at least single field in the fields array that does not present on new data, then we should find it from the db.
-     if (_.some(fields, _.negate(_.partial(_.has, newData)))) {
+    // if there is at least single field in the fields array that does not present on new data, then we should find it from the db.
+    if (_.some(fields, _.negate(_.partial(_.has, newData)))) {
       let existingEntity = await super.findById(id);
 
       _.forEach(fields, (field) => {

@@ -16,16 +16,22 @@ export class RecordLimitsConfigurationReader {
   }
 
   public isRecordLimitsConfiguredForEntities(kind?: string) {
-    return _.has(process.env, 'record_limit_entity_count') || _.has(process.env, `record_limit_entity_count_for_${kind}`)
+    return _.has(process.env, 'record_limit_entity_count') || this.isLimitConfiguredForKindForEntities(kind);
+  }
+
+  public isLimitConfiguredForKindForEntities(kind?: string) {
+    return _.has(process.env, `record_limit_entity_count_for_${kind}`);
   }
 
   public getRecordLimitsCountForEntities(kind?: string) {
 
     if (_.has(process.env, `record_limit_entity_count_for_${kind}`)) {
-      return _.get(process.env, `record_limit_entity_count_for_${kind}`);
+      return _.toInteger(_.get(process.env, `record_limit_entity_count_for_${kind}`));
     }
 
-    return _.get(process.env, 'record_limit_entity_count');
+    if (_.has(process.env, `record_limit_entity_count`)) {
+      return _.toInteger(_.get(process.env, `record_limit_entity_count_for_${kind}`));
+    }
   }
 
   public getRecordLimitsSetForEntities(ownerUsers?: (string | undefined)[], ownerGroups?: (string | undefined)[], kind?: string): Set | undefined {
