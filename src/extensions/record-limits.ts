@@ -30,7 +30,7 @@ export class RecordLimitsConfigurationReader {
     }
 
     if (_.has(process.env, `record_limit_entity_count`)) {
-      return _.toInteger(_.get(process.env, `record_limit_entity_count_for_${kind}`));
+      return _.toInteger(_.get(process.env, `record_limit_entity_count`));
     }
   }
 
