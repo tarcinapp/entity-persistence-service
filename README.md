@@ -109,6 +109,15 @@ You can use following set queries to shorten the given queries above respectivel
 
 
 # Configuration
+We can divide configurations into 7 categories:
+* Database configurations
+* Uniqueness configurations
+* Auto approve configurations
+* Default visibility configuration
+* Validation configurations
+* Response limits configurations
+* Record limit configurations
+
 ### Database
 |  Configration |Description|Default Value|
 | ------------ | ------------ | ------------ |
