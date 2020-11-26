@@ -167,7 +167,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   private generateSlug(data: DataObject<GenericEntity>) {
 
     if (data.name)
-      data.slug = slugify(data.name ?? '', {lower: true});
+      data.slug = slugify(data.name ?? '', {lower: true, strict: true});
   }
 
   private setOwnersCount(data: DataObject<GenericEntity>) {
@@ -183,7 +183,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
     // make sure data kind is slug format
     if (data.kind) {
-      let slugKind: string = slugify(data.kind, {lower: true});
+      let slugKind: string = slugify(data.kind, {lower: true, strict: true});
 
       if (slugKind != data.kind) {
         throw new HttpErrorResponse({
