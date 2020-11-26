@@ -72,6 +72,8 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
     this.setOwnersCount(data);
 
+    await this.checkRecordLimits(data);
+
     await this.checkUniquenessForUpdate(id, data);
 
     return super.replaceById(id, data, options);
@@ -85,9 +87,19 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
     this.setOwnersCount(data);
 
+    let mergedData = await this.mergeNewDataWithExisting(id, data);
+
+    await this.checkRecordLimits(mergedData);
+
     await this.checkUniquenessForUpdate(id, data);
 
     return super.updateById(id, data, options);
+  }
+
+  private async mergeNewDataWithExisting(id: string, data: DataObject<GenericEntity>) {
+
+    let existingData = await this.findById(id);
+    return _.defaults({}, data, existingData);
   }
 
   async updateAll(data: DataObject<GenericEntity>, where?: Where<GenericEntity>, options?: Options) {
@@ -107,17 +119,20 @@ export class GenericEntityRepository extends DefaultCrudRepository<
       return;
 
     let limit = this.recordLimitConfigReader.getRecordLimitsCountForEntities(newData.kind)
-    let set = this.uniquenessConfigReader.getSetForEntities(newData.ownerUsers, newData.ownerGroups, newData.kind);
-    let whereBuilder: WhereBuilder<GenericEntity> = new WhereBuilder<GenericEntity>();
+    let set = this.recordLimitConfigReader.getRecordLimitsSetForEntities(newData.ownerUsers, newData.ownerGroups, newData.kind);
+    let filterBuilder: FilterBuilder<GenericEntity>;
 
     if (this.recordLimitConfigReader.isLimitConfiguredForKindForEntities(newData.kind))
-      whereBuilder.and({
-        kind: newData.kind
-      });
+      filterBuilder = new FilterBuilder<GenericEntity>({
+        where: {
+          kind: newData.kind
+        }
+      })
+    else {
+      filterBuilder = new FilterBuilder<GenericEntity>()
+    }
 
-    let filter = new FilterBuilder<GenericEntity>()
-      .where(whereBuilder.build())
-      .build();
+    let filter = filterBuilder.build();
 
     // add set filter if configured
     if (set) {
@@ -127,13 +142,15 @@ export class GenericEntityRepository extends DefaultCrudRepository<
         .build();
     }
 
-    let currentCount = await this.count(filter);
+    console.log("Limit Filter: ", JSON.stringify(filter));
+
+    let currentCount = await this.count(filter.where);
 
     if (currentCount.count >= limit!) {
       throw new HttpErrorResponse({
         statusCode: 403,
         name: "LimitExceededError",
-        message: `Entity creation limit is exceeded.`,
+        message: `Entity limit is exceeded.`,
         code: "ENTITY-LIMIT-EXCEEDED",
         status: 403,
         details: [new SingleError({
@@ -202,7 +219,6 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
     let filter = new FilterBuilder<GenericEntity>()
       .where(whereBuilder.build())
-      .fields('id')
       .build();
 
     // add set filter if configured
@@ -238,28 +254,15 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     let whereBuilder: WhereBuilder<GenericEntity> = new WhereBuilder<GenericEntity>();
 
     // read the fields (name, slug) array for this kind
-    let fields: string[] = this.uniquenessConfigReader.getFieldsForLists(newData.kind);
-    let set = this.uniquenessConfigReader.getSetForLists(newData.ownerUsers, newData.ownerGroups, newData.kind);
+    let fields: string[] = this.uniquenessConfigReader.getFieldsForEntities(newData.kind);
+    let set = this.uniquenessConfigReader.getSetForEntities(newData.ownerUsers, newData.ownerGroups, newData.kind);
 
-    // if there is at least single field in the fields array that does not present on new data, then we should find it from the db.
-    if (_.some(fields, _.negate(_.partial(_.has, newData)))) {
-      let existingEntity = await super.findById(id);
+    _.forEach(fields, (field) => {
 
-      _.forEach(fields, (field) => {
-
-        whereBuilder.and({
-          [field]: _.has(newData, field) ? _.get(newData, field) : _.get(existingEntity, field)
-        });
+      whereBuilder.and({
+        [field]: _.get(newData, field)
       });
-
-    } else {
-      _.forEach(fields, (field) => {
-
-        whereBuilder.and({
-          [field]: _.get(newData, field)
-        });
-      });
-    }
+    });
 
     // this is for preventing the same data to be returned
     whereBuilder.and({
@@ -284,9 +287,9 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     // final uniqueness controlling filter
     console.log('Uniqueness Filter: ', JSON.stringify(filter));
 
-    let existingEntity = await super.findOne(filter);
+    let violatingEntity = await super.findOne(filter);
 
-    if (existingEntity) {
+    if (violatingEntity) {
 
       throw new HttpErrorResponse({
         statusCode: 409,
