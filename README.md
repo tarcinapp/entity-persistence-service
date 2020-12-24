@@ -102,7 +102,7 @@ You can use following set queries to shorten the given queries above respectivel
 | **actives**  | Selects all the data where `validFromDateTime` is not null and less than current date time and `validUntilDateTime` field is either null or greater than the current date time. |
 | **inactives**  | Selects all data where `validUntilDateTime` field has a value and its less than the current date time.  |
 |  **pendings** | Selects all data where `validFromDateTime` fiels is empty. |
-|  **owners**  | Selects all data where given user id is in the `ownerUsers` or given group is in the `ownerGroups`. User ID and groups should be provided as comma seperated value of the query variable: `set[owners]=user1,user2+group1,group2` |
+|  **owners**  | Selects all data where given user id is in the `ownerUsers` or given group is in the `ownerGroups`. User ID and groups should be provided as comma seperated value of the query variable: `set[owners]=user1,user2;group1,group2` |
 |  **day** | Selects all data where `creationDateTime` field is in last 24 hours. |
 |  **week** | Selects all data where `creationDateTime` field is in last 7 days.  |
 |  **month** | Selects all data where `creationDateTime` field is in last 30 days.   |
