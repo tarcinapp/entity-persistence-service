@@ -125,7 +125,7 @@ export class SetFactory {
 
     if (!setValue) return {kind: false}; //impossible
 
-    let parts = setValue.split(';');
+    let parts = setValue.split('+');
     let users = parts[0] ? parts[0].split(',') : [];
     let groups = parts[1] ? parts[1].split(',') : [];
 
