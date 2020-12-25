@@ -1,4 +1,4 @@
-import {Count, CountSchema, Filter, FilterExcludingWhere, repository, Where} from '@loopback/repository';
+import {Count, CountSchema, Filter, FilterBuilder, FilterExcludingWhere, repository, Where} from '@loopback/repository';
 import {del, get, getJsonSchema, getModelSchemaRef, param, patch, post, put, requestBody} from '@loopback/rest';
 import {Set, SetFilterBuilder} from '../extensions/set';
 import {GenericEntity, HttpErrorResponse} from '../models';
@@ -55,9 +55,23 @@ export class GenericEntityControllerController {
     },
   })
   async count(
+    @param.query.object('set') set?: Set,
     @param.where(GenericEntity) where?: Where<GenericEntity>,
   ): Promise<Count> {
-    return this.genericEntityRepository.count(where);
+
+    let filterBuilder = new FilterBuilder<GenericEntity>();
+
+    if (where)
+      filterBuilder.where(where);
+
+    let filter = filterBuilder.build();
+
+    if (set)
+      filter = new SetFilterBuilder<GenericEntity>(set, {
+        filter: filter
+      }).build();
+
+    return this.genericEntityRepository.count(filter.where);
   }
 
   @get('/generic-entities', {
