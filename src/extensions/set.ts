@@ -123,11 +123,22 @@ export class SetFactory {
 
   produceWhereClauseForOwners(setValue?: string): Where<AnyObject> {
 
-    if (!setValue) return {kind: false}; //impossible
+    // if owners set query is used it must have a value, otherwise the filter should return emtpy
+    // todo: maybe we'd like to throw exception here
+    if (!setValue) return {kind: false};
 
-    let parts = setValue.split(';');
-    let users = parts[0] ? parts[0].split(',') : [];
-    let groups = parts[1] ? parts[1].split(',') : [];
+    let matches = setValue.match(/\[([^\]]*)\](?:\[([^\]]*)\])?/);
+
+    // if the value does not match the regex, filter should return emtpy
+    // todo: maybe we'd like to throw exception here too
+    if (matches == null) return {kind: false};
+
+    // matching groups should have exactly three values, otherwise the filter should return emtpy
+    // todo: throw exception here?
+    if (matches.length != 3) return {kind: false};
+
+    let users = matches[1] ? matches[1].split(',') : [];
+    let groups = matches[2] ? matches[2].split(',') : [];
 
     if (users?.length && groups?.length)
       return {
