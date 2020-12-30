@@ -53,6 +53,13 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
   async create(data: DataObject<GenericEntity>) {
 
+    // take the date of now to make sure we have exactly the same date in all date fields
+    let now = new Date().toISOString();
+
+    data.creationDateTime = now;
+    data.lastUpdatedDateTime = now;
+    data.validFromDateTime = process.env.autoapprove_entity == 'true' ? now : undefined;
+
     this.checkDataKindFormat(data);
 
     this.generateSlug(data);
@@ -67,6 +74,9 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   }
 
   async replaceById(id: string, data: DataObject<GenericEntity>, options?: Options) {
+    let now = new Date().toISOString();
+
+    data.lastUpdatedDateTime = now;
 
     this.checkDataKindFormat(data);
 
@@ -83,13 +93,18 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
   async updateById(id: string, data: DataObject<GenericEntity>, options?: Options) {
 
+    let existingData = await this.findById(id);
+    let now = new Date().toISOString();
+    data.lastUpdatedDateTime = now;
+
     this.checkDataKindFormat(data);
 
     this.generateSlug(data);
 
     this.setOwnersCount(data);
 
-    let mergedData = await this.mergeNewDataWithExisting(id, data);
+    // we need to merge existing data with merged data in order to check limits and uniquenesses
+    let mergedData = _.defaults({}, data, existingData);
 
     await this.checkRecordLimits(mergedData);
 
@@ -98,13 +113,10 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     return super.updateById(id, data, options);
   }
 
-  private async mergeNewDataWithExisting(id: string, data: DataObject<GenericEntity>) {
-
-    let existingData = await this.findById(id);
-    return _.defaults({}, data, existingData);
-  }
-
   async updateAll(data: DataObject<GenericEntity>, where?: Where<GenericEntity>, options?: Options) {
+
+    let now = new Date().toISOString();
+    data.lastUpdatedDateTime = now;
 
     this.checkDataKindFormat(data);
 
