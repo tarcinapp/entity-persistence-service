@@ -51,10 +51,15 @@ export class GenericEntity extends Entity {
 
   @property({
     type: 'date',
-    defaultFn: "now",
     description: 'This field is filled by server at the time of the creation of the entity.'
   })
   creationDateTime?: string;
+
+  @property({
+    type: 'date',
+    description: 'This field is filled by server whenever an update operation occurs.'
+  })
+  lastUpdatedDateTime?: string;
 
   @property({
     type: 'date',
@@ -62,8 +67,7 @@ export class GenericEntity extends Entity {
       'Only those entities with validFromDateTime property has a value can be' +
       'seen by other members.' +
       'If caller is not a member at the creation time, this field is filled' +
-      'automatically by the server.',
-    defaultFn: process.env.autoapprove_entity == 'true' ? 'now' : undefined,
+      'automatically by the server.'
   })
   validFromDateTime?: string;
 
