@@ -1,6 +1,9 @@
-An unopinionated REST based microservice backend application built on Loopback 4 framework.  entity-persistence-service helps you to build your REST based application just in seconds.
-This application leverages schemaless database *(MongoDB)* to provide a scalable and highly customizable data persistence layer. It has a generic data model (entities, lists, reactions, ..) that easily be expanded and configurable through environment variables.
-This approach would support many use case scenarios.
+entity-persistence-service is the backend part of the Tarcinapp microservice family.
+
+This microservice is an unopinionated REST based microservice backend application built on Loopback 4 framework.  entity-persistence-service helps you to build your REST based application just in seconds.
+
+This application leverages schemaless database *(MongoDB)* to provide a scalable and highly customizable data persistence layer. It has a generic data model (entities, lists, reactions, ..) with predefined fields (creationDateTime, ownerUsers, kind, etc..) that can easily be expanded to support many usecases.
+
 *For extended validation support, authentication, authorization, rate limiting capabilities, couple this application with the entity-persistence-gateway application.*
 # Overview
 Application has prebuilt data models. See *Data Models* section for details. Each data model can hold arbitrarily structed JSON data along with predefined fields, such as `creationDateTime`, `ownerUsers`, `kind`, etc..
@@ -64,16 +67,23 @@ All database models have id property and it is generated at server side with gui
 DateTime fields names are end with '`dateTime`'
 Here are the list of common field names.
 
-| Field Name | Description |
-|--|--|
-| **kind**| String field represents the kind of the record. As this application built on top of a schemaless database, objects with different kinds can be stored in same collection. This field is using in order to seggregate objects in same collection. |
-| **name**| String field represents the name of the record. Mandatory field. |
-| **slug** | Automatically filled while create or update with the slug format of the value of the name field.|
-| **ownerUsers**| An array of user ids. |
-| **ownerGroups**| An array of user groups. |
-| **creationDateTime**| A date time object automatically filled with the datetime of entity create operation. |
-| **validFromDateTime**| A date time object represents the time when the object is a valid entity. Can be treated as the approval time. There is a configuration to auto approve records at the time of creation. |
-| **validUntilDateTime**| A date time object represents the time when the objects validity ends. Can be used instead of deleting records. |
+| Field Name | Description | Required | Read Only\*
+|--|--|--|--|
+| **kind**| A string field represents the kind of the record.  As this application built on top of a schemaless database, objects with different schemas can be considered as different kinds can be stored in same collection. This field is using in order to seggregate objects in same collection. Most of the configuration parameters can be specialized to be applied on specific kind of objects. | Yes | No
+| **name**| String field represents the name of the record. Mandatory field. | Yes | No
+| **slug** | Automatically filled while create or update with the slug format of the value of the name field.| Yes | Yes
+| **ownerUsers\*\***| An array of user ids. |No|No
+| **ownerGroups\*\***| An array of user groups. |No|No
+| **ownerUsersCount**| A number field keeps the number of items in ownerUsers array |No|Yes
+| **ownerGroupsCount**| A number field keeps the number of items in ownerGroups array |No|Yes
+| **creationDateTime**| A date time object automatically filled with the datetime of entity create operation. |No|No
+| **lastUpdatedDateTime**| A date time object automatically filled with the datetime of any entity update operation. |No|Yes
+| **lastUpdatedBy**| Id of the user who performed the last update operation |No|No
+| **validFromDateTime**| A date time object represents the time when the object is a valid entity. Can be treated as the approval time. There is a configuration to auto approve records at the time of creation. |No|No
+| **validUntilDateTime**| A date time object represents the time when the objects validity ends. Can be used instead of deleting records. |No|No
+
+\*Readonly fields are updated and created by the application. That is, whatever the value you send for those fields is ignored and actual values are calculated at the application logic.
+\*\*These fields are managed by entity-persistence-gateway. That is, values sent for those fields are subjected to authorization. Gateway decides to ignore the value, or use it as it is.
 
 # Prebuilt Filters (Sets)
 As models designed to utilize same set of properties, there may be need of some common queries could be build on top of those properties.
