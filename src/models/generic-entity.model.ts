@@ -93,6 +93,18 @@ export class GenericEntity extends Entity {
   })
   visibility?: string;
 
+  @property({
+    required: false,
+    type: 'string'
+  })
+  lastUpdatedBy?: string;
+
+  @property({
+    required: false,
+    type: 'string'
+  })
+  createdBy?: string;
+
   @property.array(String, {
     required: false,
     default: []
