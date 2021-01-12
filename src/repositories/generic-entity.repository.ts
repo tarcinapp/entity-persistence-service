@@ -56,8 +56,10 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     // take the date of now to make sure we have exactly the same date in all date fields
     let now = new Date().toISOString();
 
-    data.creationDateTime = now;
-    data.lastUpdatedDateTime = now;
+    data.creationDateTime = data.creationDateTime ? data.creationDateTime : now;
+    data.lastUpdatedDateTime = data.lastUpdatedDateTime ? data.lastUpdatedDateTime : now;
+
+    // autoapprove the record if it is configured
     data.validFromDateTime = process.env.autoapprove_entity == 'true' ? now : undefined;
 
     this.checkDataKindFormat(data);
@@ -76,7 +78,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   async replaceById(id: string, data: DataObject<GenericEntity>, options?: Options) {
     let now = new Date().toISOString();
 
-    data.lastUpdatedDateTime = now;
+    data.lastUpdatedDateTime = data.lastUpdatedDateTime ? data.lastUpdatedDateTime : now;
 
     this.checkDataKindFormat(data);
 
@@ -95,7 +97,8 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
     let existingData = await this.findById(id);
     let now = new Date().toISOString();
-    data.lastUpdatedDateTime = now;
+
+    data.lastUpdatedDateTime = data.lastUpdatedDateTime ? data.lastUpdatedDateTime : now;
 
     this.checkDataKindFormat(data);
 

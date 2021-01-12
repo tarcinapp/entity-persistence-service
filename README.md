@@ -77,7 +77,7 @@ Here are the list of common field names.
 | **ownerUsersCount**| A number field keeps the number of items in ownerUsers array |No|Yes
 | **ownerGroupsCount**| A number field keeps the number of items in ownerGroups array |No|Yes
 | **creationDateTime**| A date time object automatically filled with the datetime of entity create operation. It's not read-only to let administrator users change it over gateway. |No|No
-| **lastUpdatedDateTime**| A date time object automatically filled with the datetime of any entity update operation. |No|Yes
+| **lastUpdatedDateTime**| A date time object automatically filled with the datetime of any entity update operation. |No|No
 | **lastUpdatedBy**| Id of the user who performed the last update operation |No|No
 | **validFromDateTime**| A date time object represents the time when the object is a valid entity. Can be treated as the approval time. There is a configuration to auto approve records at the time of creation. |No|No
 | **validUntilDateTime**| A date time object represents the time when the objects validity ends. Can be used instead of deleting records. |No|No
