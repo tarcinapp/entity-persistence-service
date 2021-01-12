@@ -110,9 +110,8 @@ export class UniquenessConfigurationReader {
 
     if (setStr) {
       setStr = setStr.replace(/(set\[.*owners\])/g, '$1='
-        + (ownerUsers ? ownerUsers?.join(',') : '')
-        + ';'
-        + (ownerGroups ? ownerGroups?.join(',') : ''));
+        + '[' + (ownerUsers ? ownerUsers?.join(',') : '') + ']'
+        + '[' + (ownerGroups ? ownerGroups?.join(',') : '') + ']');
 
       return (qs.parse(setStr)).set as Set;
     }
@@ -155,9 +154,8 @@ export class UniquenessConfigurationReader {
 
     if (setStr) {
       setStr = setStr.replace(/(set\[.*owners\])/g, '$1='
-        + (ownerUsers ? ownerUsers?.join(',') : '')
-        + ';'
-        + (ownerGroups ? ownerGroups?.join(',') : ''));
+        + '[' + (ownerUsers ? ownerUsers?.join(',') : '') + ']'
+        + '[' + (ownerGroups ? ownerGroups?.join(',') : '') + ']');
 
       return (qs.parse(setStr)).set as Set;
     }
