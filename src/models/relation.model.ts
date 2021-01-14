@@ -26,7 +26,7 @@ export class Relation extends Entity {
     type: 'string',
     required: true,
   })
-  type: string;
+  kind: string;
 
   @property({
     type: 'date',
@@ -34,6 +34,23 @@ export class Relation extends Entity {
   })
   creationDateTime?: string;
 
+  @property({
+    required: false,
+    type: 'date'
+  })
+  lastUpdatedDateTime?: string;
+
+  @property({
+    required: false,
+    type: 'string'
+  })
+  createdBy?: string;
+
+  @property({
+    required: false,
+    type: 'string'
+  })
+  lastUpdatedBy?: string;
   // Define well-known properties here
 
   // Indexer property to allow additional data

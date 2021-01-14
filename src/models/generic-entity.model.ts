@@ -56,8 +56,8 @@ export class GenericEntity extends Entity {
   creationDateTime?: string;
 
   @property({
-    type: 'date',
-    description: 'This field is filled by server whenever an update operation occurs.'
+    required: false,
+    type: 'date'
   })
   lastUpdatedDateTime?: string;
 
