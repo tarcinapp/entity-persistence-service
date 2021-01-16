@@ -67,7 +67,9 @@ export class GenericEntity extends Entity {
       'Only those entities with validFromDateTime property has a value can be' +
       'seen by other members.' +
       'If caller is not a member at the creation time, this field is filled' +
-      'automatically by the server.'
+      'automatically by the server.',
+    default: null,
+    jsonSchema: {nullable: true}
   })
   validFromDateTime?: string;
 
