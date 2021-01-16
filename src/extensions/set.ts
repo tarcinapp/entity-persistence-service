@@ -60,7 +60,36 @@ export class SetFactory {
     if (setName == 'month')
       return this.produceWhereClauseForMonth();
 
+    if (setName == 'prod')
+      return this.produceWhereClauseForProd(setValue);
+
     return {};
+  }
+
+  produceWhereClauseForProd(setValue: string | undefined): Where<AnyObject> {
+    let clause: Where<AnyObject> = {
+      or: [
+        {
+          and: [
+            this.produceWhereClauseForActives(),
+            this.produceWhereClauseForPublics()
+          ]
+        },
+        {
+          and: [
+            this.produceWhereClauseForOwners(setValue),
+            {
+              or: [
+                this.produceWhereClauseForActives(),
+                this.produceWhereClauseForPendings()
+              ]
+            }
+          ]
+        }
+      ]
+    };
+
+    return clause;
   }
 
   produceWhereClauseForActives(): Where<AnyObject> {
