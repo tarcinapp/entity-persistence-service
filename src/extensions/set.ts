@@ -1,5 +1,5 @@
 import {AnyObject} from '@loopback/repository/dist/common-types';
-import {Filter, FilterBuilder, Where, WhereBuilder} from '@loopback/repository/dist/query';
+import {Filter, FilterBuilder, OrClause as LbOrClause, Where, WhereBuilder} from '@loopback/repository/dist/query';
 import _ from 'lodash';
 
 export interface AndClause {
@@ -127,6 +127,7 @@ export class SetFactory {
     // todo: maybe we'd like to throw exception here
     if (!setValue) return {kind: false};
 
+    // parse value to the groups [ownerUsers array][ownerGroups array]
     let matches = setValue.match(/\[([^\]]*)\](?:\[([^\]]*)\])?/);
 
     // if the value does not match the regex, filter should return emtpy
@@ -140,63 +141,81 @@ export class SetFactory {
     let users = matches[1] ? matches[1].split(',') : [];
     let groups = matches[2] ? matches[2].split(',') : [];
 
-    if (users?.length && groups?.length)
+    let filter: Where<AnyObject> = {}
+
+    /**
+     * If there is both user ids and group names provided
+     * we returning all records matching either of them
+     */
+    if (users?.length && groups?.length) {
       return {
         or: [
-          {
-            ownerUsers: {
-              inq: users
-            }
-          },
-          {
-            and: [
-              {
-                ownerGroups: {
-                  inq: groups
-                }
-              },
-              {
-                visibility: {
-                  neq: 'private'
-                }
-              }
-            ]
-          }
+          this.prepareOwnerUsersClause(users),
+          this.prepareOwnerGroupsClause(groups)
         ]
       };
+    }
 
-    if (users?.length)
-      return {
-        ownerUsers: {
-          inq: users
-        }
-      }
+    if (users?.length) {
+      return this.prepareOwnerUsersClause(users);
+    }
 
-    if (groups?.length)
-      return {
-        and: [
-          {
-            ownerGroups: {
-              inq: groups
-            }
-          },
-          {
-            visibility: {
-              neq: 'private'
-            }
-          }
-        ]
-      }
+    if (groups?.length) {
+      return this.prepareOwnerGroupsClause(groups);
+    }
 
-    let countZeroFilter: Where<AnyObject> = {}
 
+    /**
+     * If there is no user id or group name provided, we return
+     * records with zero user and zero groups
+     */
     if (users.length == 0)
-      _.set(countZeroFilter, 'ownerUsersCount', 0);
+      _.set(filter, 'ownerUsersCount', 0);
 
     if (groups.length == 0)
-      _.set(countZeroFilter, 'ownerGroupsCount', 0);
+      _.set(filter, 'ownerGroupsCount', 0);
 
-    return countZeroFilter;
+    return filter;
+  }
+
+  private prepareOwnerUsersClause(users: string[]): Where<AnyObject> {
+    let ownerUsersClause: LbOrClause<AnyObject> = {
+      or: []
+    };
+
+    ownerUsersClause.or = users.map(user => {
+
+      return {
+        ownerUsers: user
+      }
+    });
+
+    return ownerUsersClause;
+  }
+
+  private prepareOwnerGroupsClause(groups: string[]): Where<AnyObject> {
+    let ownerGroupsClause: Where<AnyObject> = {};
+    let groupNamesClause: LbOrClause<AnyObject> = {
+      or: []
+    };
+
+    groupNamesClause.or = groups.map(group => {
+
+      return {
+        ownerGroups: group
+      }
+    });
+
+    ownerGroupsClause.and = [
+      groupNamesClause,
+      {
+        visibility: {
+          neq: 'private'
+        }
+      }
+    ]
+
+    return ownerGroupsClause;
   }
 
   produceWhereClauseForDay(): Where<AnyObject> {
