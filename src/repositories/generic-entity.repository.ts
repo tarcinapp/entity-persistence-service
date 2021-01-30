@@ -111,7 +111,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
     await this.checkRecordLimits(mergedData);
 
-    await this.checkUniquenessForUpdate(id, data);
+    await this.checkUniquenessForUpdate(id, mergedData);
 
     return super.updateById(id, data, options);
   }
