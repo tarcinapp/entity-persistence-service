@@ -18,12 +18,6 @@ export class ListReactions extends Entity {
   kind: string;
 
   @property({
-    type: 'string',
-    required: false,
-  })
-  content?: string;
-
-  @property({
     type: 'date',
     defaultFn: "now"
   })

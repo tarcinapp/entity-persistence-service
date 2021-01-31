@@ -18,11 +18,6 @@ export class Reactions extends Entity {
   kind: string;
 
   @property({
-    type: 'string',
-  })
-  content?: string;
-
-  @property({
     type: 'date',
     defaultFn: "now"
   })

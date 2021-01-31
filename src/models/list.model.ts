@@ -35,22 +35,6 @@ export class List extends Entity {
   slug: string;
 
   @property({
-    type: 'string',
-    required: false,
-  })
-  description?: string;
-
-  @property({
-    type: 'string',
-  })
-  thumbnail?: string;
-
-  @property({
-    type: 'string',
-  })
-  banner?: string;
-
-  @property({
     type: 'date',
     defaultFn: "now",
   })
