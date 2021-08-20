@@ -2,7 +2,7 @@ entity-persistence-service is the backend part of the Tarcinapp microservice fam
 
 This microservice is an unopinionated REST based microservice backend application built on top of Loopback 4 framework.  entity-persistence-service helps you to build your REST based application just in seconds.
 
-This application leverages schemaless database *(MongoDB)* to provide a scalable and highly customizable data persistence layer. It has a generic data model (entities, lists, reactions, ..) with predefined fields (creationDateTime, ownerUsers, kind, etc..) that can easily be expanded to support many usecases.
+This application leverages schemaless database *(MongoDB)* to provide a scalable and highly customizable data persistence layer. It has a generic data model (entities, lists, reactions, ..) with predefined fields (creationDateTime, ownerUsers, kind, etc..) that can easily be expanded to support many use cases.
 
 *For extended validation support, authentication, authorization, rate limiting capabilities, couple this application with the entity-persistence-gateway application.*
 # Overview
