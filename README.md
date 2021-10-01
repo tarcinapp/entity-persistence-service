@@ -67,24 +67,28 @@ All database models have id property and it is generated at server side with gui
 DateTime fields names are end with '`dateTime`'
 Here are the list of common field names.
 
-| Field Name | Description | Required | Read Only\*
-|--|--|--|--|
-| **kind**| A string field represents the kind of the record.  As this application built on top of a schemaless database, objects with different schemas can be considered as different kinds can be stored in same collection. This field is using in order to seggregate objects in same collection. Most of the configuration parameters can be specialized to be applied on specific kind of objects. | Yes | No
-| **name**| String field represents the name of the record. Mandatory field. | Yes | No
-| **slug** | Automatically filled while create or update with the slug format of the value of the name field.| Yes | Yes
-| **ownerUsers\*\***| An array of user ids. |No|No
-| **ownerGroups\*\***| An array of user groups. |No|No
-| **ownerUsersCount**| A number field keeps the number of items in ownerUsers array |No|Yes
-| **ownerGroupsCount**| A number field keeps the number of items in ownerGroups array |No|Yes
-| **creationDateTime**| A date time object automatically filled with the datetime of entity create operation. It's not read-only to let administrator users change it over gateway. |No|No
-| **lastUpdatedDateTime**| A date time object automatically filled with the datetime of any entity update operation. |No|No
-| **lastUpdatedBy**| Id of the user who performed the last update operation |No|No
-| **validFromDateTime**| A date time object represents the time when the object is a valid entity. Can be treated as the approval time. There is a configuration to auto approve records at the time of creation. |No|No
-| **validUntilDateTime**| A date time object represents the time when the objects validity ends. Can be used instead of deleting records. |No|No
+| Field Name | Description
+|--|--|
+| **kind\***| A string field represents the kind of the record.  As this application built on top of a schemaless database, objects with different schemas can be considered as different kinds can be stored in same collection. This field is using in order to seggregate objects in same collection. Most of the configuration parameters can be specialized to be applied on specific kind of objects.
+| **name\***| String field represents the name of the record. Mandatory field.
+| **slug** | Automatically filled while create or update with the slug format of the value of the name field.
+| **ownerUsers**| An array of user ids.
+| **ownerGroups**| An array of user groups.
+| **ownerUsersCount**| A number field keeps the number of items in ownerUsers array
+| **ownerGroupsCount**| A number field keeps the number of items in ownerGroups array
+| **creationDateTime**| A date time object automatically filled with the datetime of entity create operation. It's not read-only to let administrator users change it over gateway.
+| **lastUpdatedDateTime**| A date time object automatically filled with the datetime of any entity update operation.
+| **lastUpdatedBy**| Id of the user who performed the last update operation
+| **validFromDateTime**| A date time object represents the time when the object is a valid entity. Can be treated as the approval time. There is a configuration to auto approve records at the time of creation.
+| **validUntilDateTime**| A date time object represents the time when the objects validity ends. Can be used instead of deleting records.
 
-\*Readonly fields are updated and created by the application. That is, whatever the value you send for those fields is ignored and actual values are calculated at the application logic.
+**(\*)** Required fields
 
-\*\*These fields are managed by entity-persistence-gateway. That is, values sent for those fields are subjected to authorization. Gateway decides to ignore the value, or use it as it is.
+**Calculated Fields**: `ownerUsersCount` and `ownerGroupsCount` fields are calculated at the application logic ignoring the sent value.  
+**Fields Calculated when Empty**: `slug`, `creationDateTime` and `lastUpdatedDateTime` are calculated at the application logic if it is not specified in the request body. entity-persistence-gateway decides if user is authorized to send these fields by evaluating security policies.  
+**Gateway Managed Fields**: `ownerUsers`, `ownerGroups`, `lastUpdatedBy` fields *may* be modified by entity-persistence-gateway. Gateway decides whether it accept the given value or modify it by evaluating security policies.
+
+**Note:** entity-persistence-gateway can decide if *caller* is authorized to change the value of a field by evaluating security policies.
 
 # Prebuilt Filters (Sets)
 As models designed to utilize same set of properties, there may be need of some common queries could be build on top of those properties.
