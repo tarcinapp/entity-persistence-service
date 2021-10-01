@@ -62,8 +62,8 @@ Each movie and each director is an entity. A relationship between directors and 
 Tags does not have updateAll operation as tags content is unique and this is the only property that may require an update.
 Updating creationDateTime for all tags does not make sense.
 ## Programming Conventions
-All database models have id property and it is generated at server side with guid.
-DateTime fields names are end with '`dateTime`'
+1. All database models have id property and it is generated at server side with guid.
+2. DateTime fields names are end with '`dateTime`'
 Here are the list of common field names.
 
 | Field Name | Description
