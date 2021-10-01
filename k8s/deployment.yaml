@@ -1,0 +1,106 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: entity-persistence-service
+  namespace: tarcinapp-test
+spec:
+  selector:
+    app: entity-persistence
+  type: NodePort
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: entity-persistence-service-config
+  namespace: tarcinapp-test
+data:
+  # Database
+  db_host: "tarcinapp-db"
+  db_port: "27017"
+  db_user: "tarcinapp"
+  db_database: "tarcinapp"
+  # Uniqueness
+  uniqueness_entity_fields: "kind,slug"
+  #uniqueness_entity_set: "set[actives]"
+  #uniqueness_entity_fields_for_{kind_name}: slug,kind,ownerUsers
+  #uniqueness_entity_set_for_{kind_name}: set[actives]
+  #uniqueness_list_set: set[publics]
+  #uniqueness_list_fields_for_{kind_name}: slug,kind,ownerUsers
+  #uniqueness_list_set_for_{kind_name}: set[actives]
+  # Auto Approve
+  #autoapprove_entity: "false"
+  #autoapprove_list: "false"
+  #autoapprove_entity_reaction: "false"
+  #autoapprove_list_reaction: "false"
+  # Visibility
+  #visibility_entity: "protected"
+  #visibility_list: "protected"
+  # Validation
+  #validation_tag_maxlength: "50"
+  #validation_entityname_maxlength: "100"
+  #validation_listname_maxlength: "100"
+  #validation_reactioncontent_maxlength: "400"
+  # Response Limits
+  #response_limit_entity: "50"
+  #response_limit_list: "50"
+  #response_limit_entity_reaction: "50"
+  #response_limit_list_reaction: "50"
+  #response_limit_tag: "50"
+  # Record Limits
+  #record_limit_entity_count: "50"
+  #record_limit_entity_set: "50"
+  #record_limit_entity_count_for_{kind_name}: "50"
+  #record_limit_entity_set_for_{kind_name}: "50"
+  #record_limit_list_count: "50"
+  #record_limit_list_set: "50"
+  #record_limit_list_count_for_{kind_name}: "50"
+  #record_limit_list_set_for_{kind_name}: "50"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: entity-persistence-deployment
+  namespace: tarcinapp-test
+  labels:
+    app: entity-persistence
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: entity-persistence
+  template:
+    metadata:
+      labels:
+        app: entity-persistence
+    spec:
+      imagePullSecrets:
+        - name: pipeline-docker-registry
+      containers:
+        - name: entity-persistence
+          image: localhost:5000/entitypersistenceservice:latest
+          ports:
+            - containerPort: 3000
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 3000
+            initialDelaySeconds: 3
+            periodSeconds: 60
+            timeoutSeconds: 2
+            successThreshold: 1
+            failureThreshold: 3
+          env:
+            - name: ENV
+              value: test
+            - name: db_password
+              valueFrom:
+                secretKeyRef:
+                  key: mongodb-password
+                  name: tarcinapp-db
+          envFrom:
+            - configMapRef:
+                name: entity-persistence-service-config

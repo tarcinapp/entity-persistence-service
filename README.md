@@ -31,7 +31,7 @@ The most common data model of the application. Simply represents an object. Obje
 For example `kind: book` or `kind: author`
 **List**
 Represents list of a generic entity. A list can have a relationship to many entities. List kinds can be differentiate with `kind` field.
-For example, `kind: favorites`  or `kind:science_fiction`
+For example, `kind: favorites`  or `kind: science_fiction`
 **Entity Reaction**
 Represents any event related to an object. For example comment, like, measurement, anger,..
 **List Reaction**
@@ -83,6 +83,7 @@ Here are the list of common field names.
 | **validUntilDateTime**| A date time object represents the time when the objects validity ends. Can be used instead of deleting records. |No|No
 
 \*Readonly fields are updated and created by the application. That is, whatever the value you send for those fields is ignored and actual values are calculated at the application logic.
+
 \*\*These fields are managed by entity-persistence-gateway. That is, values sent for those fields are subjected to authorization. Gateway decides to ignore the value, or use it as it is.
 
 # Prebuilt Filters (Sets)
