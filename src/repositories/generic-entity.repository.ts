@@ -15,7 +15,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   GenericEntity,
   typeof GenericEntity.prototype.id,
   GenericEntityRelations
-  > {
+> {
 
   public readonly relations: HasManyRepositoryFactory<Relation, typeof GenericEntity.prototype.id>;
 
@@ -45,8 +45,6 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
     if (filter?.limit && filter.limit > GenericEntityRepository.response_limit)
       filter.limit = GenericEntityRepository.response_limit;
-
-    console.log(JSON.stringify(filter));
 
     return super.find(filter, options);
   }
@@ -183,7 +181,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
   private generateSlug(data: DataObject<GenericEntity>) {
 
-    if (data.name)
+    if (data.name && !data.slug)
       data.slug = slugify(data.name ?? '', {lower: true, strict: true});
   }
 
