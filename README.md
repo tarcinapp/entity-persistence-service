@@ -209,4 +209,4 @@ In the need of enabling auto approve under certain conditions, users are encoura
 # Deploying to Kubernetes
 * A configmap and secret sample yaml files are provided
 # Configuring for Development
-For VSCode, dreate a dev.env file at the root of your workspace folder. Add local database configuration as environment variables to this file.
+For VSCode, create a dev.env file at the root of your workspace folder. Add local database configuration as environment variables to this file. This file will be read once you start the application in debug mode.
