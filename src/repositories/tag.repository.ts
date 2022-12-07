@@ -8,7 +8,7 @@ export class TagRepository extends DefaultCrudRepository<
   Tag,
   typeof Tag.prototype.id,
   TagRelations
-  > {
+> {
 
   private static response_limit = _.parseInt(process.env.response_limit_tag || "50");
 
@@ -55,7 +55,7 @@ export class TagRepository extends DefaultCrudRepository<
       content: data.content
     };
 
-    let filter: Filter<Tag> = new FilterBuilder()
+    let filter: Filter<Tag> = new FilterBuilder<Tag>()
       .fields('id')
       .where(where)
       .build();

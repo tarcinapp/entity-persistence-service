@@ -1,5 +1,5 @@
+import {Filter, FilterBuilder, OrClause as LbOrClause, Where, WhereBuilder} from '@loopback/repository';
 import {AnyObject} from '@loopback/repository/dist/common-types';
-import {Filter, FilterBuilder, OrClause as LbOrClause, Where, WhereBuilder} from '@loopback/repository/dist/query';
 import _ from 'lodash';
 
 export interface AndClause {
