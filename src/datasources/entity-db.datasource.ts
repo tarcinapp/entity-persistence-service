@@ -4,11 +4,11 @@ import {juggler} from '@loopback/repository';
 const config = {
   name: 'EntityDb',
   connector: 'mongodb',
-  host: process.env["db_host"],
-  port: process.env["db_port"],
-  user: process.env["db_user"],
-  password: process.env["db_password"],
-  database: process.env["db_database"],
+  host: process.env["mongodb_host"],
+  port: process.env["mongodb_port"],
+  user: process.env["mongodb_user"],
+  password: process.env["mongodb_password"],
+  database: process.env["mongodb_database"],
   useNewUrlParser: true
 };
 
