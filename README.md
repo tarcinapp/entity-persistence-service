@@ -120,7 +120,7 @@ You can use following set queries to shorten the given queries above respectivel
 |  **day** | Selects all data where `creationDateTime` field is in last 24 hours. |
 |  **week** | Selects all data where `creationDateTime` field is in last 7 days.  |
 |  **month** | Selects all data where `creationDateTime` field is in last 30 days.   |
-|  **prod** | Combination of multiple sets. This set is returning 'active' and 'public' records and adds this result to 'actives' and 'pendinds' of the given identity. ((set[valids] and set[actives]) or (set[owners] and (set[actives] or set[pendings]))). Thus, identity must be given: set[prod]=[userid1, userid2, ..][groupname1, groupname2, ...]  |
+|  **prod** | Combination of multiple sets. This set is returning 'active' and 'public' records and adds this result to 'actives' and 'pendinds' of the given identity. ((set[publics] and set[actives]) or (set[owners] and (set[actives] or set[pendings]))). Thus, identity must be given: set[prod]=[userid1, userid2, ..][groupname1, groupname2, ...]  |
 
 # Configuration
 We can divide configurations into 7 categories:
