@@ -1,6 +1,6 @@
 import {RestBindings} from '@loopback/rest';
 import {ApplicationConfig, EntityPersistenceApplication} from './application';
-import {UniquenessBindings, UniquenessConfigurationReader} from './extensions';
+import {KindLimitsBindings, KindLimitsConfigurationReader, UniquenessBindings, UniquenessConfigurationReader} from './extensions';
 import {RecordLimitsBindings, RecordLimitsConfigurationReader} from './extensions/record-limits';
 
 export * from './application';
@@ -20,6 +20,10 @@ export async function main(options: ApplicationConfig = {}) {
   // add uniqueness configuration reader to context
   app.bind(RecordLimitsBindings.CONFIG_READER)
     .toClass(RecordLimitsConfigurationReader);
+
+  // add kind limits configuration reader to context
+  app.bind(KindLimitsBindings.CONFIG_READER)
+    .toClass(KindLimitsConfigurationReader);
 
   await app.boot();
   await app.start();

@@ -139,6 +139,14 @@ We can divide configurations into 7 categories:
 | **mongodb_port** |  MongoDB database portname |  27017 |
 | **mongodb_password**  | MongoDB password. Provide through k8s secrets  |   |
 | **mongodb_database**  | Name of the database  |  tarcinapp |
+
+### Allowed Kinds
+You can limit acceptable values for `kind` fields for the records.
+
+| Configuration | Description | Default Value |
+| ------------ | ------------ | ------------ |
+| **entity_kinds** | Comma seperated list of allowed values for kind field of entities.  | authors,books  |
+
 ### Uniqueness
 Data uniqueness is configurable with giving the composite-index-like set of field names. Optionally, you can make uniqueness valid for a subset of records. To enforce uniqueness in a subset of record, you can configure "set" feature of the application. That is, uniqueness can be enforced only between valid or public records as well. You can combine multiple sets with logical operators.
 

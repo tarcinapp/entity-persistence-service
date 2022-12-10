@@ -4,6 +4,7 @@ import _ from 'lodash';
 import slugify from "slugify";
 import {EntityDbDataSource} from '../datasources';
 import {RecordLimitsConfigurationReader, UniquenessConfigurationReader} from '../extensions';
+import {KindLimitsConfigurationReader} from '../extensions/kind-limits';
 import {SetFilterBuilder} from '../extensions/set';
 import {GenericEntity, GenericEntityRelations, HttpErrorResponse, Reactions, Relation, SingleError, Tag, TagEntityRelation} from '../models';
 import {ReactionsRepository} from './reactions.repository';
@@ -31,7 +32,8 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   constructor(
     @inject('datasources.EntityDb') dataSource: EntityDbDataSource, @repository.getter('RelationRepository') protected relationRepositoryGetter: Getter<RelationRepository>, @repository.getter('ReactionsRepository') protected reactionsRepositoryGetter: Getter<ReactionsRepository>, @repository.getter('TagEntityRelationRepository') protected tagEntityRelationRepositoryGetter: Getter<TagEntityRelationRepository>, @repository.getter('TagRepository') protected tagRepositoryGetter: Getter<TagRepository>,
     @inject('extensions.uniqueness.configurationreader') private uniquenessConfigReader: UniquenessConfigurationReader,
-    @inject('extensions.record-limits.configurationreader') private recordLimitConfigReader: RecordLimitsConfigurationReader
+    @inject('extensions.record-limits.configurationreader') private recordLimitConfigReader: RecordLimitsConfigurationReader,
+    @inject('extensions.kind-limits.configurationreader') private kindLimitConfigReader: KindLimitsConfigurationReader
   ) {
     super(GenericEntity, dataSource);
     this.tags = this.createHasManyThroughRepositoryFactoryFor('tags', tagRepositoryGetter, tagEntityRelationRepositoryGetter,);
@@ -51,6 +53,10 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
   async create(data: DataObject<GenericEntity>) {
 
+    this.checkDataKindFormat(data);
+
+    this.checkDataKindValues(data);
+
     // take the date of now to make sure we have exactly the same date in all date fields
     let now = new Date().toISOString();
 
@@ -59,8 +65,6 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
     // autoapprove the record if it is configured
     data.validFromDateTime = process.env.autoapprove_entity == 'true' ? now : undefined;
-
-    this.checkDataKindFormat(data);
 
     this.generateSlug(data);
 
@@ -209,6 +213,27 @@ export class GenericEntityRepository extends DefaultCrudRepository<
           status: 422,
         });
       }
+    }
+  }
+
+  private checkDataKindValues(data: DataObject<GenericEntity>) {
+
+    /** `kind` field is actually required. 
+     * It is impossible for the property to reach here without having a value. 
+     * However, all properties seem optional of `data` as it's type is wrapped with DataObject
+     */
+    let kind = data.kind || '';
+
+    if (!this.kindLimitConfigReader.isKindAcceptableForEntity(kind)) {
+      let validValues = this.kindLimitConfigReader.allowedKindsForEntities;
+
+      throw new HttpErrorResponse({
+        statusCode: 422,
+        name: "InvalidKindError",
+        message: `Entity kind '${data.kind}' is not valid. Use any of these values instead: ${validValues.join(', ')}`,
+        code: "INVALID-ENTITY-KIND",
+        status: 422,
+      });
     }
   }
 
