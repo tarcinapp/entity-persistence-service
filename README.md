@@ -66,20 +66,20 @@ Updating creationDateTime for all tags does not make sense.
 2. DateTime fields names are end with '`dateTime`'
 Here are the list of common field names.
 
-| Field Name | Description
-|--|--|
-| **kind\***| A string field represents the kind of the record.  As this application built on top of a schemaless database, objects with different schemas can be considered as different kinds can be stored in same collection. This field is using in order to seggregate objects in same collection. Most of the configuration parameters can be specialized to be applied on specific kind of objects.
-| **name\***| String field represents the name of the record. Mandatory field.
-| **slug** | Automatically filled while create or update with the slug format of the value of the name field.
-| **ownerUsers**| An array of user ids.
-| **ownerGroups**| An array of user groups.
-| **ownerUsersCount**| A number field keeps the number of items in ownerUsers array
-| **ownerGroupsCount**| A number field keeps the number of items in ownerGroups array
-| **creationDateTime**| A date time object automatically filled with the datetime of entity create operation. It's not read-only to let administrator users change it over gateway.
-| **lastUpdatedDateTime**| A date time object automatically filled with the datetime of any entity update operation.
-| **lastUpdatedBy**| Id of the user who performed the last update operation
-| **validFromDateTime**| A date time object represents the time when the object is a valid entity. Can be treated as the approval time. There is a configuration to auto approve records at the time of creation.
-| **validUntilDateTime**| A date time object represents the time when the objects validity ends. Can be used instead of deleting records.
+| Field Name              | Description                                                                                                                                                                                                                                                                                                                                                                                   |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **kind\***              | A string field represents the kind of the record.  As this application built on top of a schemaless database, objects with different schemas can be considered as different kinds can be stored in same collection. This field is using in order to seggregate objects in same collection. Most of the configuration parameters can be specialized to be applied on specific kind of objects. |
+| **name\***              | String field represents the name of the record. Mandatory field.                                                                                                                                                                                                                                                                                                                              |
+| **slug**                | Automatically filled while create or update with the slug format of the value of the name field.                                                                                                                                                                                                                                                                                              |
+| **ownerUsers**          | An array of user ids.                                                                                                                                                                                                                                                                                                                                                                         |
+| **ownerGroups**         | An array of user groups.                                                                                                                                                                                                                                                                                                                                                                      |
+| **ownerUsersCount**     | A number field keeps the number of items in ownerUsers array                                                                                                                                                                                                                                                                                                                                  |
+| **ownerGroupsCount**    | A number field keeps the number of items in ownerGroups array                                                                                                                                                                                                                                                                                                                                 |
+| **creationDateTime**    | A date time object automatically filled with the datetime of entity create operation. It's not read-only to let administrator users change it over gateway.                                                                                                                                                                                                                                   |
+| **lastUpdatedDateTime** | A date time object automatically filled with the datetime of any entity update operation.                                                                                                                                                                                                                                                                                                     |
+| **lastUpdatedBy**       | Id of the user who performed the last update operation                                                                                                                                                                                                                                                                                                                                        |
+| **validFromDateTime**   | A date time object represents the time when the object is a valid entity. Can be treated as the approval time. There is a configuration to auto approve records at the time of creation.                                                                                                                                                                                                      |
+| **validUntilDateTime**  | A date time object represents the time when the objects validity ends. Can be used instead of deleting records.                                                                                                                                                                                                                                                                               |
 
 **(\*)** Required fields
 
@@ -110,17 +110,17 @@ You can use following set queries to shorten the given queries above respectivel
 * Users can be enforced to work on specific sets. Gateway application helps you to build your sets according to the role based access control policies.
 ### List of Prebuilt Sets
 
-| Set Name   | Description  |
-| ------------ | ------------- |
-|  **publics** | Selects all the data where `visibility: public`. |
-| **actives**  | Selects all the data where `validFromDateTime` is not null and less than current date time and `validUntilDateTime` field is either null or greater than the current date time. |
-| **inactives**  | Selects all data where `validUntilDateTime` field has a value and its less than the current date time.  |
-|  **pendings** | Selects all data where `validFromDateTime` fiels is empty. |
-|  **owners**  | Selects all data where given user id is in the `ownerUsers` or given group is in the `ownerGroups`. User ID and groups should be provided as comma seperated value of the query variable: `set[owners]=[user1,user2][group1,group2]` |
-|  **day** | Selects all data where `creationDateTime` field is in last 24 hours. |
-|  **week** | Selects all data where `creationDateTime` field is in last 7 days.  |
-|  **month** | Selects all data where `creationDateTime` field is in last 30 days.   |
-|  **prod** | Combination of multiple sets. This set is returning 'active' and 'public' records and adds this result to 'actives' and 'pendinds' of the given identity. ((set[publics] and set[actives]) or (set[owners] and (set[actives] or set[pendings]))). Thus, identity must be given: set[prod]=[userid1, userid2, ..][groupname1, groupname2, ...]  |
+| Set Name      | Description                                                                                                                                                                                                                                                                                                                                   |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **publics**   | Selects all the data where `visibility: public`.                                                                                                                                                                                                                                                                                              |
+| **actives**   | Selects all the data where `validFromDateTime` is not null and less than current date time and `validUntilDateTime` field is either null or greater than the current date time.                                                                                                                                                               |
+| **inactives** | Selects all data where `validUntilDateTime` field has a value and its less than the current date time.                                                                                                                                                                                                                                        |
+| **pendings**  | Selects all data where `validFromDateTime` fiels is empty.                                                                                                                                                                                                                                                                                    |
+| **owners**    | Selects all data where given user id is in the `ownerUsers` or given group is in the `ownerGroups`. User ID and groups should be provided as comma seperated value of the query variable: `set[owners]=[user1,user2][group1,group2]`                                                                                                          |
+| **day**       | Selects all data where `creationDateTime` field is in last 24 hours.                                                                                                                                                                                                                                                                          |
+| **week**      | Selects all data where `creationDateTime` field is in last 7 days.                                                                                                                                                                                                                                                                            |
+| **month**     | Selects all data where `creationDateTime` field is in last 30 days.                                                                                                                                                                                                                                                                           |
+| **prod**      | Combination of multiple sets. This set is returning 'active' and 'public' records and adds this result to 'actives' and 'pendinds' of the given identity. ((set[publics] and set[actives]) or (set[owners] and (set[actives] or set[pendings]))). Thus, identity must be given: set[prod]=[userid1, userid2, ..][groupname1, groupname2, ...] |
 
 # Configuration
 We can divide configurations into 7 categories:
@@ -133,19 +133,19 @@ We can divide configurations into 7 categories:
 * Record limit configurations
 
 ### Database
-|  Configration |Description|Default Value|
-| ------------ | ------------ | ------------ |
-| **mongodb_host** | MongoDB database hostname  | localhost  |
-| **mongodb_port** |  MongoDB database portname |  27017 |
-| **mongodb_password**  | MongoDB password. Provide through k8s secrets  |   |
-| **mongodb_database**  | Name of the database  |  tarcinapp |
+| Configration         | Description                                   | Default Value |
+| -------------------- | --------------------------------------------- | ------------- |
+| **mongodb_host**     | MongoDB database hostname                     | localhost     |
+| **mongodb_port**     | MongoDB database portname                     | 27017         |
+| **mongodb_password** | MongoDB password. Provide through k8s secrets |               |
+| **mongodb_database** | Name of the database                          | tarcinapp     |
 
 ### Allowed Kinds
 You can limit acceptable values for `kind` fields for the records.
 
-| Configuration | Description | Default Value |
-| ------------ | ------------ | ------------ |
-| **entity_kinds** | Comma seperated list of allowed values for kind field of entities.  | authors,books  |
+| Configuration    | Description                                                        | Default Value |
+| ---------------- | ------------------------------------------------------------------ | ------------- |
+| **entity_kinds** | Comma seperated list of allowed values for kind field of entities. | authors,books |
 
 ### Uniqueness
 Data uniqueness is configurable with giving the composite-index-like set of field names. Optionally, you can make uniqueness valid for a subset of records. To enforce uniqueness in a subset of record, you can configure "set" feature of the application. That is, uniqueness can be enforced only between valid or public records as well. You can combine multiple sets with logical operators.
@@ -154,62 +154,62 @@ Field types should be primitive types such as string or number.
 
 Uniqueness configuration is implemented in application logic. MongoDB has composite unique index feature but this feature supports only one array. Thus, it cannot support ownerUsers and ownerGroups together. Furthermore, MongoDB's unique index on arrays cannot be used to implement 'unique per user' approach as it takes arrays contribute to unique index as a whole.
 
-|  Configration |Description|Default Value| Example Value|
-| ------------ | ------------ | ------------ |------------ |
-| **uniqueness_entity_fields** | Composite index-like comma seperated list of field names of generic entity | -  | slug,kind,ownerUsers |
-| **uniqueness_entity_set** | Specify the scope where the uniqueness should be checked with set queries. | -  | set[actives] |
-| **uniqueness_entity_fields_for_{kind_name}** | Composite index-like comma seperated list of field names of generic entity. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind. | -  | slug,kind,ownerUsers |
-| **uniqueness_entity_set_for_{kind_name}** | Specify the scope where the uniqueness should be checked with set queries. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.| -  | set[actives] |
-| **uniqueness_list_fields** | Composite index-like comma seperated list of field names of list | - | slug,kind,ownerUsers |
-| **uniqueness_list_set** | Specify the scope where the uniqueness should be checked with set queries | false  | set[publics] |
-| **uniqueness_list_fields_for_{kind_name}** | Composite index-like comma seperated list of field names of list. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind. | - | slug,kind,ownerUsers |
-| **uniqueness_list_set_for_{kind_name}** | Specify the scope where the uniqueness should be checked with set queries. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind. | false  | set[publics] |
+| Configration                                 | Description                                                                                                                                                                                 | Default Value | Example Value        |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | -------------------- |
+| **uniqueness_entity_fields**                 | Composite index-like comma seperated list of field names of generic entity                                                                                                                  | -             | slug,kind,ownerUsers |
+| **uniqueness_entity_set**                    | Specify the scope where the uniqueness should be checked with set queries.                                                                                                                  | -             | set[actives]         |
+| **uniqueness_entity_fields_for_{kind_name}** | Composite index-like comma seperated list of field names of generic entity. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind. | -             | slug,kind,ownerUsers |
+| **uniqueness_entity_set_for_{kind_name}**    | Specify the scope where the uniqueness should be checked with set queries. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.  | -             | set[actives]         |
+| **uniqueness_list_fields**                   | Composite index-like comma seperated list of field names of list                                                                                                                            | -             | slug,kind,ownerUsers |
+| **uniqueness_list_set**                      | Specify the scope where the uniqueness should be checked with set queries                                                                                                                   | false         | set[publics]         |
+| **uniqueness_list_fields_for_{kind_name}**   | Composite index-like comma seperated list of field names of list. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.           | -             | slug,kind,ownerUsers |
+| **uniqueness_list_set_for_{kind_name}**      | Specify the scope where the uniqueness should be checked with set queries. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.  | false         | set[publics]         |
 
 ### Auto Approve
-|  Configration | Description  |  Default Value | Example Value  |
-| ------------ | ------------ | ------------ | ------------ |
-| **autoapprove_entity**  | If true, `validFromDateTime` field of entity record is automatically filled with the creation datetime. | false  | true  |
-| **autoapprove_list**  | If true, `validFromDateTime` field of list record is automatically filled with the creation datetime.  |  false |  true |
-| **autoapprove_entity_reaction** |  If true, `validFromDateTime` field of entity reaction record is automatically filled with the creation datetime. | false  | true  |
-| **autoapprove_list_reaction** | If true, `validFromDateTime` field of list reaction record is automatically filled with the creation datetime.  | false  | true  |
+| Configration                    | Description                                                                                                      | Default Value | Example Value |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------- | ------------- |
+| **autoapprove_entity**          | If true, `validFromDateTime` field of entity record is automatically filled with the creation datetime.          | false         | true          |
+| **autoapprove_list**            | If true, `validFromDateTime` field of list record is automatically filled with the creation datetime.            | false         | true          |
+| **autoapprove_entity_reaction** | If true, `validFromDateTime` field of entity reaction record is automatically filled with the creation datetime. | false         | true          |
+| **autoapprove_list_reaction**   | If true, `validFromDateTime` field of list reaction record is automatically filled with the creation datetime.   | false         | true          |
 ### Visibility
 This option only applies when visibility field is not provided. If you want to apply a visibility rule bu user role, please see entity-persistence-gateway.
 
-|  Configuration | Description  |  Default Value | Example Value  |
-| ------------ | ------------ | ------------ | ------------ |
-| **visibility_entity**  | Default value to be filled for `visibility` field while entity creation. | protected  | public, private  |
-| **visibility_list**  | Default value to be filled for `visibility` field while list creation. | protected  | true  |
+| Configuration         | Description                                                              | Default Value | Example Value   |
+| --------------------- | ------------------------------------------------------------------------ | ------------- | --------------- |
+| **visibility_entity** | Default value to be filled for `visibility` field while entity creation. | protected     | public, private |
+| **visibility_list**   | Default value to be filled for `visibility` field while list creation.   | protected     | true            |
 ### Validation
-|  Configration | Description  |  Default Value |
-| ------------ | ------------ | ------------ |
-| **validation_tag_maxlength**  | Max length limit for tag content. | 50  |
-| **validation_entityname_maxlength**  | Max length limit for entity name. | 100  |
-| **validation_listname_maxlength**  | Max length limit for list name.  | 100  |
-| **validation_reactioncontent_maxlength**  | Max length limit for reaction content. | 400  |
+| Configuration                            | Description                            | Default Value |
+| ---------------------------------------- | -------------------------------------- | ------------- |
+| **validation_tag_maxlength**             | Max length limit for tag content.      | 50            |
+| **validation_entityname_maxlength**      | Max length limit for entity name.      | 100           |
+| **validation_listname_maxlength**        | Max length limit for list name.        | 100           |
+| **validation_reactioncontent_maxlength** | Max length limit for reaction content. | 400           |
 ### Response Limits
 These setting limits the number of record can be returned for each data model. If user asks more items than the limits, it is silently reduced to the limits given the configuration below.
 
-|  Configration | Description  |  Default Value |
-| ------------ | ------------ | ------------ |
-| **response_limit_entity**  | Max items can be returned from entity response. | 50  |
-| **response_limit_list**  | Max items can be returned from list response.  | 50  |
-| **response_limit_entity_reaction**  | Max items can be returned from entity reaction response.  | 50  |
-| **response_limit_list_reaction**  | Max items can be returned from list reaction response. | 50  |
-| **response_limit_tag**  | Max items can be returned from tags response. | 50  |
+| Configration                       | Description                                              | Default Value |
+| ---------------------------------- | -------------------------------------------------------- | ------------- |
+| **response_limit_entity**          | Max items can be returned from entity response.          | 50            |
+| **response_limit_list**            | Max items can be returned from list response.            | 50            |
+| **response_limit_entity_reaction** | Max items can be returned from entity reaction response. | 50            |
+| **response_limit_list_reaction**   | Max items can be returned from list reaction response.   | 50            |
+| **response_limit_tag**             | Max items can be returned from tags response.            | 50            |
 ### Record Limits
 These settings limits the number of records can be created for entities and lists. There is no limits for reactions and tags. But you can configure daily or hourly limits from gateway.
 Limits can be configured through sets. For instance, you can limit active or public entities a user can have. You can even set these configurations per entity kind by adding `_for_{kindname}` suffix to the configuration name.
 
-|  Configration | Description  |  Example Value |
-| ------------ | ------------ | ------------ |
-| **record_limit_entity_count**  | Max entities can be created. | 100 |
-| **record_limit_entity_set**  | A set string where record limits will be applied. | `set[owners]`  |
-| **record_limit_entity_count_for_{kind_name}**  | Max entities can be created for a specific entity kind. | 100  |
-| **record_limit_entity_set_for_{kind_name}**  | A set string where record limits will be applied for a specific kind | 50  |
-| **record_limit_list_count**  | Max lists can be created. | 50  |
-| **record_limit_list_set**  | A set string where record limits will be applied.  | 50  |
-| **record_limit_list_count_for_{kind_name}**  | Max lists can be created for a specific entity kind.  | 50  |
-| **record_limit_list_set_for_{kind_name}**  | A set string where record limits will be applied for a specific kind  | 50  |
+| Configration                                  | Description                                                          | Example Value |
+| --------------------------------------------- | -------------------------------------------------------------------- | ------------- |
+| **record_limit_entity_count**                 | Max entities can be created.                                         | 100           |
+| **record_limit_entity_set**                   | A set string where record limits will be applied.                    | `set[owners]` |
+| **record_limit_entity_count_for_{kind_name}** | Max entities can be created for a specific entity kind.              | 100           |
+| **record_limit_entity_set_for_{kind_name}**   | A set string where record limits will be applied for a specific kind | 50            |
+| **record_limit_list_count**                   | Max lists can be created.                                            | 50            |
+| **record_limit_list_set**                     | A set string where record limits will be applied.                    | 50            |
+| **record_limit_list_count_for_{kind_name}**   | Max lists can be created for a specific entity kind.                 | 50            |
+| **record_limit_list_set_for_{kind_name}**     | A set string where record limits will be applied for a specific kind | 50            |
 
 Auto approve configuration is implemented but this implementation provides very simple auto approving capabilities.
 In the need of enabling auto approve under certain conditions, users are encouraged to configure it using gateway policies. By the help of gateway policies, auto approve can be configured using 'kind' of the targeted record, user's roles, etc. For example, you can enable autoapprove when an entity is created by the editor or admin, but disable for regular users.
@@ -218,3 +218,6 @@ In the need of enabling auto approve under certain conditions, users are encoura
 * A configmap and secret sample yaml files are provided
 # Configuring for Development
 For VSCode, create a dev.env file at the root of your workspace folder. Add local database configuration as environment variables to this file. This file will be read once you start the application in debug mode.
+
+# Development Status
+* Uniqueness, kind limiting (allowed kinds), auto approve, validation, response limits and record limits are fully implemented for generic-entities.
