@@ -1,5 +1,5 @@
 import {Getter, inject} from '@loopback/core';
-import {DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, Options, repository, Where, WhereBuilder} from '@loopback/repository';
+import {DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, Options, Where, WhereBuilder, repository} from '@loopback/repository';
 import _ from 'lodash';
 import slugify from "slugify";
 import {EntityDbDataSource} from '../datasources';
@@ -60,6 +60,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     // take the date of now to make sure we have exactly the same date in all date fields
     let now = new Date().toISOString();
 
+    // use incoming creationDateTime and lastUpdateDateTime if given. Override with default if it does not exist.
     data.creationDateTime = data.creationDateTime ? data.creationDateTime : now;
     data.lastUpdatedDateTime = data.lastUpdatedDateTime ? data.lastUpdatedDateTime : now;
 
