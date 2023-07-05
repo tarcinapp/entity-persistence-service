@@ -45,8 +45,13 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
   async find(filter?: Filter<GenericEntity>, options?: Options) {
 
-    if (filter?.limit && filter.limit > GenericEntityRepository.response_limit)
-      filter.limit = GenericEntityRepository.response_limit;
+    // Calculate the limit value using optional chaining and nullish coalescing
+    // If filter.limit is defined, use its value; otherwise, use GenericEntityRepository.response_limit
+    const limit = filter?.limit || GenericEntityRepository.response_limit;
+
+    // Update the filter object by spreading the existing filter and overwriting the limit property
+    // Ensure that the new limit value does not exceed GenericEntityRepository.response_limit
+    filter = {...filter, limit: Math.min(limit, GenericEntityRepository.response_limit)};
 
     return super.find(filter, options);
   }
@@ -161,8 +166,6 @@ export class GenericEntityRepository extends DefaultCrudRepository<
       })
         .build();
     }
-
-    console.log("Limit Filter: ", JSON.stringify(filter));
 
     let currentCount = await this.count(filter.where);
 
