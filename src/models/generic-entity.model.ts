@@ -1,4 +1,5 @@
 import {Entity, hasMany, model, property} from '@loopback/repository';
+import _ from 'lodash';
 import {Reactions} from './reactions.model';
 import {Relation} from './relation.model';
 import {TagEntityRelation} from './tag-entity-relation.model';
@@ -23,6 +24,10 @@ export class GenericEntity extends Entity {
   @property({
     type: 'string',
     required: true,
+    jsonSchema: {
+      minLength: 2,
+      maxLength: _.parseInt(process.env.validation_entityname_maxlength || "50")
+    }
   })
   name: string;
 
