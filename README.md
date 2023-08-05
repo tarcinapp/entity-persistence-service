@@ -178,7 +178,7 @@ This option only applies when visibility field is not provided. If you want to a
 | Configuration         | Description                                                              | Default Value | Example Value   |
 | --------------------- | ------------------------------------------------------------------------ | ------------- | --------------- |
 | **visibility_entity** | Default value to be filled for `visibility` field while entity creation. | protected     | public, private |
-| **visibility_list**   | Default value to be filled for `visibility` field while list creation.   | protected     | true            |
+| **visibility_list**   | Default value to be filled for `visibility` field while list creation.   | protected     | public, private |
 ### Validation
 | Configuration                            | Description                            | Default Value |
 | ---------------------------------------- | -------------------------------------- | ------------- |
@@ -200,16 +200,16 @@ These setting limits the number of record can be returned for each data model. I
 These settings limits the number of records can be created for entities and lists. There is no limits for reactions and tags. But you can configure daily or hourly limits from gateway.
 Limits can be configured through sets. For instance, you can limit active or public entities a user can have. You can even set these configurations per entity kind by adding `_for_{kindname}` suffix to the configuration name.
 
-| Configration                                  | Description                                                          | Example Value |
-| --------------------------------------------- | -------------------------------------------------------------------- | ------------- |
-| **record_limit_entity_count**                 | Max entities can be created.                                         | 100           |
-| **record_limit_entity_set**                   | A set string where record limits will be applied.                    | `set[owners]` |
-| **record_limit_entity_count_for_{kind_name}** | Max entities can be created for a specific entity kind.              | 100           |
-| **record_limit_entity_set_for_{kind_name}**   | A set string where record limits will be applied for a specific kind | 50            |
-| **record_limit_list_count**                   | Max lists can be created.                                            | 50            |
-| **record_limit_list_set**                     | A set string where record limits will be applied.                    | 50            |
-| **record_limit_list_count_for_{kind_name}**   | Max lists can be created for a specific entity kind.                 | 50            |
-| **record_limit_list_set_for_{kind_name}**     | A set string where record limits will be applied for a specific kind | 50            |
+| Configration                                  | Description                                                          | Example Value   |
+| --------------------------------------------- | -------------------------------------------------------------------- | --------------- |
+| **record_limit_entity_count**                 | Max entities can be created.                                         | 100             |
+| **record_limit_entity_set**                   | A set string where record limits will be applied.                    | `set[audience]` |
+| **record_limit_entity_count_for_{kind_name}** | Max entities can be created for a specific entity kind.              | 100             |
+| **record_limit_entity_set_for_{kind_name}**   | A set string where record limits will be applied for a specific kind | 50              |
+| **record_limit_list_count**                   | Max lists can be created.                                            | 50              |
+| **record_limit_list_set**                     | A set string where record limits will be applied.                    | `set[audience]` |
+| **record_limit_list_count_for_{kind_name}**   | Max lists can be created for a specific entity kind.                 | 50              |
+| **record_limit_list_set_for_{kind_name}**     | A set string where record limits will be applied for a specific kind | 50              |
 
 Auto approve configuration is implemented but this implementation provides very simple auto approving capabilities.
 In the need of enabling auto approve under certain conditions, users are encouraged to configure it using gateway policies. By the help of gateway policies, auto approve can be configured using 'kind' of the targeted record, user's roles, etc. For example, you can enable autoapprove when an entity is created by the editor or admin, but disable for regular users.
@@ -217,7 +217,7 @@ In the need of enabling auto approve under certain conditions, users are encoura
 # Deploying to Kubernetes
 * A configmap and secret sample yaml files are provided
 # Configuring for Development
-For VSCode, create a dev.env file at the root of your workspace folder. Add local database configuration as environment variables to this file. This file will be read once you start the application in debug mode.
+For VSCode, create a dev.env file at the root of your workspace folder. Add local database configuration as environment variables to this file. This file will be read once you start the application in debug mode. Sample .env files can be found under /doc/env folder.
 
 # Development Status
 * Uniqueness, kind limiting (allowed kinds), auto approve, validation, response limits and record limits are fully implemented for generic-entities.
