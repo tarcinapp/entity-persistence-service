@@ -26,7 +26,7 @@
     "posttest": "npm run lint",
     "test:dev": "lb-mocha --allow-console-logs dist/__tests__/**/*.js && npm run posttest",
     "docker:build": "docker build -t entity-persistence-service .",
-    "docker:run": "docker run -p 3000:3000 -d entity-persistence-service",
+    "docker:run": "docker run -p 30003:3000 -d entity-persistence-service",
     "migrate": "node ./dist/migrate",
     "openapi-spec": "node ./dist/openapi-spec",
     "prestart": "npm run build",
