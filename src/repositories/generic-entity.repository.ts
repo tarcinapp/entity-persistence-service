@@ -87,15 +87,18 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   }
 
   async replaceById(id: string, data: DataObject<GenericEntity>, options?: Options) {
+
+    let now = new Date().toISOString();
     let existingData = await this.findById(id);
 
     // set new version
     data.version = (existingData.version ?? 1) + 1;
 
-    let now = new Date().toISOString();
 
     // we may use current date, if it does not exist in the given data
     data.lastUpdatedDateTime = data.lastUpdatedDateTime ? data.lastUpdatedDateTime : now;
+
+    this.checkDataKindValues(data);
 
     this.checkDataKindFormat(data);
 
@@ -131,6 +134,8 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
     // we need to merge existing data with incoming data in order to check limits and uniquenesses
     let mergedData = _.defaults({}, data, existingData);
+
+    this.checkDataKindValues(data);
 
     await this.checkRecordLimits(mergedData);
 
@@ -237,9 +242,11 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
   private checkDataKindValues(data: DataObject<GenericEntity>) {
 
-    /** `kind` field is actually required. 
-     * It is impossible for the property to reach here without having a value. 
-     * However, all properties seem optional of `data` as it's type is wrapped with DataObject
+    /**
+     * This function checks if the 'kind' field in the 'data' object is valid
+     * for the entity. Although 'kind' is required, we ensure it has a value by
+     * this point. If it's not valid, we raise an error with the allowed valid
+     * values for 'kind'.
      */
     let kind = data.kind || '';
 
