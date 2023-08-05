@@ -85,6 +85,13 @@ export class GenericEntity extends Entity {
 
   @property({
     required: false,
+    type: 'number',
+    default: 1
+  })
+  version?: number;
+
+  @property({
+    required: false,
     type: 'string'
   })
   lastUpdatedBy?: string;

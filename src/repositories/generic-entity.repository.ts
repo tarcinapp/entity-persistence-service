@@ -80,12 +80,21 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
     await this.checkRecordLimits(data);
 
+    // set version to 1.
+    data.version = 1;
+
     return super.create(data);
   }
 
   async replaceById(id: string, data: DataObject<GenericEntity>, options?: Options) {
+    let existingData = await this.findById(id);
+
+    // set new version
+    data.version = (existingData.version ?? 1) + 1;
+
     let now = new Date().toISOString();
 
+    // we may use current date, if it does not exist in the given data
     data.lastUpdatedDateTime = data.lastUpdatedDateTime ? data.lastUpdatedDateTime : now;
 
     this.checkDataKindFormat(data);
@@ -104,8 +113,14 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   async updateById(id: string, data: DataObject<GenericEntity>, options?: Options) {
 
     let existingData = await this.findById(id);
+
+    // set new version
+    data.version = (existingData.version ?? 1) + 1;
+
+    // we may use current date, if it does not exist in the given data
     let now = new Date().toISOString();
 
+    // gateway may allow user to modify lastUpdatedDateTime. If it is not given, set `now` as lastUpdatedDateTime.
     data.lastUpdatedDateTime = data.lastUpdatedDateTime ? data.lastUpdatedDateTime : now;
 
     this.checkDataKindFormat(data);
@@ -114,7 +129,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
     this.setOwnersCount(data);
 
-    // we need to merge existing data with merged data in order to check limits and uniquenesses
+    // we need to merge existing data with incoming data in order to check limits and uniquenesses
     let mergedData = _.defaults({}, data, existingData);
 
     await this.checkRecordLimits(mergedData);
