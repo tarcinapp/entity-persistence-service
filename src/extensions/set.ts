@@ -61,16 +61,31 @@ export class SetFactory {
       return this.produceWhereClauseForMonth();
 
     if (setName == 'audience')
-      return this.produceWhereClauseForAudience();
+      return this.produceWhereClauseForAudience(setValue);
 
     return {};
   }
 
-  produceWhereClauseForAudience(): Where<AnyObject> {
+  produceWhereClauseForAudience(setValue: string | undefined): Where<AnyObject> {
     let clause: Where<AnyObject> = {
-      and: [
-        this.produceWhereClauseForActives(),
-        this.produceWhereClauseForPublics()
+      or: [
+        {
+          and: [
+            this.produceWhereClauseForActives(),
+            this.produceWhereClauseForPublics()
+          ]
+        },
+        {
+          and: [
+            this.produceWhereClauseForOwners(setValue),
+            {
+              or: [
+                this.produceWhereClauseForActives(),
+                this.produceWhereClauseForPendings()
+              ]
+            }
+          ]
+        }
       ]
     };
 

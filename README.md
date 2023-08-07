@@ -122,7 +122,7 @@ You can use following set queries to shorten the given queries above respectivel
 | **day**       | Selects all data where `creationDateTime` field is in last 24 hours.                                                                                                                                                                 |
 | **week**      | Selects all data where `creationDateTime` field is in last 7 days.                                                                                                                                                                   |
 | **month**     | Selects all data where `creationDateTime` field is in last 30 days.                                                                                                                                                                  |
-| **audience**  | Combination of multiple sets. This set is returning 'active' and 'public' records.                                                                                                                                                   |
+| **audience**  | Combination of multiple sets. This set is returning 'active' and 'public' records along with users own active and pending records. Thus, it requires user and group id's similiar to the owners set.                                 |
 
 # Configuration
 We can divide configurations into 7 categories:
