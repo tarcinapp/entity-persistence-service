@@ -135,7 +135,9 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     // we need to merge existing data with incoming data in order to check limits and uniquenesses
     let mergedData = _.defaults({}, data, existingData);
 
-    this.checkDataKindValues(data);
+    // check if kind is correct, if it is given
+    if (data.kind)
+      this.checkDataKindValues(data);
 
     await this.checkRecordLimits(mergedData);
 
