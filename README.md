@@ -1,54 +1,36 @@
-entity-persistence-service is the backend part of the Tarcinapp microservice family.
+The Entity Persistence Service serves as the backend for the Tarcinapp microservice family.
 
-This microservice is an unopinionated REST based microservice backend application built on top of Loopback 4 framework.  entity-persistence-service helps you to build your REST based application just in seconds.
+This microservice is a flexible and REST-based backend application built on the Loopback 4 framework. With the Entity Persistence Service, you can effortlessly develop your REST-based application within seconds.
 
-This application leverages schemaless database *(MongoDB)* to provide a scalable and highly customizable data persistence layer. It has a generic data model (entities, lists, reactions, ..) with predefined fields (creationDateTime, ownerUsers, kind, etc..) that can easily be expanded to support many use cases.
+The application utilizes a schemaless database (MongoDB) to create a scalable and highly customizable data persistence layer. It comes with a generic data model (entities, lists, reactions, etc.) containing predefined fields (creationDateTime, ownerUsers, kind, etc.) that can easily adapt to various use cases.
 
-*For extended validation support, authentication, authorization, rate limiting capabilities, couple this application with the entity-persistence-gateway application.*
+For enhanced validation support, authentication, authorization, and rate-limiting capabilities, you can integrate this application with the Entity Persistence Gateway.
 # Overview
-Application has prebuilt data models. See *Data Models* section for details. Each data model can hold arbitrarily structed JSON data along with predefined fields, such as `creationDateTime`, `ownerUsers`, `kind`, etc..
+The application includes prebuilt data models, which are detailed in the *Data Models* section. Each data model can store JSON data with arbitrary structures and comes with predefined fields like `creationDateTime`, `ownerUsers`, `kind`, etc.
+
 
 ![Model Overview](./doc/img/model-overview.png?raw=true "Model Overview")
 
 ### Features
-- entity crud operations
-- entity approval
-- entity uniqueness
-- entity relationships
-- entity ownership
-- adding entities to lists
-- hierarchical lists
-- tagging entities
-- reactions to entities and lists like comments, likes
-- sub reactions to reactions
-- customized validations
-- query by location
-- prebuilt queries (sets)
-- Special gateway application
+The application offers the following features:
 
-**Generic Entity**
-The most common data model of the application. Simply represents an object. Object kinds can be differentiate with `kind` field.  
-For example `kind: book` or `kind: author`.  
-**List**
-Represents list of a generic entity. A list can have a relationship to many entities. List kinds can be differentiate with `kind` field.  
-For example, `kind: favorites`  or `kind: science_fiction`.  
-**Entity Reaction**
-Represents any event related to an object. For example comment, like, measurement, anger,..  
-**List Reaction**
-Represents any event related to a list. For example comment, like, measurement, anger,..  
-## Concepts
-### Sets
-### Kind Specific Configurations
+ * Entity CRUD operations
+ * Entity approval
+ * Entity uniqueness
+ * Entity relationships
+ * Entity ownership
+ * Adding entities to lists
+ * Hierarchical lists
+ * Tagging entities
+ * Reactions to entities and lists, such as comments and likes
+ * Sub-reactions to reactions
+ * Customized validations
+ * Query by location
+ * Prebuilt queries (sets)
+ * Special gateway application
 
-## Sample Use Cases
-**User Configuration Storage**
-Every user have an entity record kind: config. Name: mobileapp, webui, menu, dashboard, etc. Users can store arbitrary data.
-**IoT Platform**
-Each list is a solution. Each solution has entities in kind: device. Each measurement is a reaction.
-**Movie Database**
-Each movie and each director is an entity. A relationship between directors and movies called 'director'. Users have lists, watchlist, watched. Editors prepare lists '10 you must see movies'.
-
-## Data Models
+### Data Model
+The application comes with the following data models:
 - Generic Entity
 - Entity Hierarchy
 - Entity Reaction
@@ -58,9 +40,72 @@ Each movie and each director is an entity. A relationship between directors and 
 - List Reaction
 - List Sub Reaction
 - Tags
+
+**Generic Entity**
+The primary data model used in this application is the Generic Entity, which represents a basic object. The `kind` field is utilized to differentiate between different types of objects. For instance, an object can have a `kind` value of `book` or `author`. This allows for easy categorization and organization of data within the application.
+
+**List**
+The List data model represents a collection of generic entities. A list can have relationships with many entities. List kinds can be distinguished using the `kind` field. For example, a list could have a `kind` value of `favorites` or `science_fiction`. This feature allows for easy categorization and organization of lists within the application.
+
+**Entity Reaction**
+The Entity Reaction data model represents any event related to an object. For example, it can represent actions such as comments, likes, measurements, anger, and more. This flexible feature allows the application to handle a wide range of reactions and interactions associated with entities.
+
+**List Reaction**
+The List Reaction data model represents any event related to a list. For example, it can represent actions such as comments, likes, measurements, anger, and more. This versatile feature enables the application to handle various reactions and interactions associated with lists.
+
+**Tags**
+The Tags data model represents a collection of tags. Tags can be used to categorize and organize entities and lists. For example, a book can have tags such as `science_fiction` or `fantasy`. This feature allows for easy categorization and organization of data within the application.
+
+## Sample Use Cases
+
+1. **User Configuration Storage**  
+  Every user has an entity record with the kind 'config.' Entities are labeled as 'mobileapp,' 'webui,' 'menu,' 'dashboard,' etc., to store arbitrary data for personalized user configurations. For example, the 'menu' entity stores the user's menu preferences, and the 'dashboard' entity stores the user's dashboard preferences.  
+2. **IoT Platform**  
+  Each list in the application represents a solution, and each solution contains entities representing IoT devices with the kind 'device.' The application records measurements as reactions, enabling real-time data tracking and analytics.
+
+3. **Movie Database**  
+  The application manages movies and directors as separate entities. Each movie and director has its own entity, and a relationship named 'director' connects directors with the movies they have directed. Users can create lists like 'watchlist' and 'watched' to organize their movie preferences. Editors can curate special lists like '10 Must-See Movies' for user recommendations.
+
+4. **Task Management System**  
+  The application serves as a task management system, allowing users and teams to efficiently manage tasks and projects. Each task is represented as an entity with attributes like name, description, due date, and assignee. Users can create lists to categorize tasks based on projects or priority levels.
+
+5. **Recipe Management Application**  
+  The application functions as a recipe management tool, helping users discover, save, and organize recipes. Each recipe is represented as an entity with details such as title, ingredients, instructions, and preparation time. Users can create lists like 'favorites' and 'tried recipes' to bookmark recipes they love or have tested.
+
+6. **Fitness Tracker**  
+  The application acts as a fitness tracker, assisting users in monitoring their workouts and progress. Each workout session is represented as an entity with attributes like date, exercise type, duration, and intensity. Users can create lists to categorize workouts based on specific activities or fitness goals.
+
+## Concepts
+### Sets
+Sets are a powerful feature introduced in the application, designed to streamline data filtering and selection. They provide a convenient and flexible way to retrieve specific subsets of data based on predefined conditions or custom logical combinations.
+
+**Features of Sets:**
+
+1. **Combining Sets with Logical Operators:** Sets can be combined using logical operators such as AND, OR, and NOT, enabling users to construct complex queries tailored to their specific needs.
+2. **Default Filtering with Sets:** Users can still apply default filtering to sets. For example, using the query parameter **`set[actives]&filter[where][kind]=config`** allows users to select all active data with a **`kind`** value of **`config`**.
+3. **Enforced Sets for Role-Based Access Control:** Sets can be enforced, ensuring that users work on specific predefined sets. The Gateway application facilitates the creation of sets according to role-based access control policies, enhancing data security and access control.
+
+**List of Prebuilt Sets:**
+The application comes with a set of prebuilt sets to simplify common data selections. Each set is designed to retrieve specific subsets of data based on predefined conditions. Here are the prebuilt sets:
+
+| Set Name  | Description                                                                                                                                                                                                                               |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| publics   | Selects all data with a visibility value of public.                                                                                                                                                                                       |
+| actives   | Selects all data where the validFromDateTime is not null, less than the current date time, and the validUntilDateTime field is either null or greater than the current date time.                                                         |
+| inactives | Selects all data where the validUntilDateTime field has a value and is less than the current date time.                                                                                                                                   |
+| pendings  | Selects all data where the validFromDateTime field is empty.                                                                                                                                                                              |
+| owners    | Selects all data where the given user ID is in the ownerUsers or the given group is in the ownerGroups. User IDs and groups should be provided as comma-separated values in the query variable: set[owners]=[user1,user2][group1,group2]. |
+| day       | Selects all data where the creationDateTime field is within the last 24 hours.                                                                                                                                                            |
+| week      | Selects all data where the creationDateTime field is within the last 7 days.                                                                                                                                                              |
+| month     | Selects all data where the creationDateTime field is within the last 30 days.                                                                                                                                                             |
+| audience  | A combination of multiple sets. This set returns 'active' and 'public' records along with a user's own active and pending records. As a result, it requires user and group IDs similar to the owners set.                                 |
+
+The introduction of sets enhances the application's querying capabilities, allowing users to easily access and manage specific subsets of data based on predefined conditions or customized logical combinations.
+
+
 ### Tags
-Tags does not have updateAll operation as tags content is unique and this is the only property that may require an update.
-Updating creationDateTime for all tags does not make sense.
+The updateAll operation is not available for tags since their content is unique, and the only property that might need updating is the "content" property itself. Updating the creationDateTime for all tags would not be meaningful in this context.
+
 ## Programming Conventions
 1. All database models have id property and it is generated at server side with guid.
 2. DateTime fields names are end with '`dateTime`'
@@ -90,39 +135,6 @@ Here are the list of common field names.
 **Gateway Managed Fields**: `ownerUsers`, `ownerGroups`, `lastUpdatedBy` fields *may* be modified by entity-persistence-gateway. Gateway decides whether it accepts the given value or modify it by evaluating security policies.
 
 **Note:** entity-persistence-gateway can decide if *caller* is authorized to change the value of a field by evaluating security policies.
-
-# Prebuilt Filters (Sets)
-As models designed to utilize same set of properties, there may be need of some common queries could be build on top of those properties.
-For those could be addressed with complex filter queries, this application introduces prebuilt filters, called 'sets'.
-Sets helps you easily build complex filtering queries without stumbling the limits of 'qs' library.
-To give an example to such complex queries:
-* 'Retrieve all active entities'
-* 'Retrieve all public entities and my entities'
-* 'Retrieve all entities created in last 7 days'
-* 'Retrieve all entities waiting for approval'
-
-You can use following set queries to shorten the given queries above respectively:
-- `set[actives]`
-- `set[or][][publics]&set[or][][my]`
-- `set[week]`
-- `set[pendings]`
-### Features of Sets
-* Sets can be combined using logical operators
-* Default filtering can still be applied to the sets. Such as: `set[actives]&filter[where][kind]=config`
-* Users can be enforced to work on specific sets. Gateway application helps you to build your sets according to the role based access control policies.
-### List of Prebuilt Sets
-
-| Set Name      | Description                                                                                                                                                                                                                          |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **publics**   | Selects all the data where `visibility: public`.                                                                                                                                                                                     |
-| **actives**   | Selects all the data where `validFromDateTime` is not null and less than current date time and `validUntilDateTime` field is either null or greater than the current date time.                                                      |
-| **inactives** | Selects all data where `validUntilDateTime` field has a value and its less than the current date time.                                                                                                                               |
-| **pendings**  | Selects all data where `validFromDateTime` fiels is empty.                                                                                                                                                                           |
-| **owners**    | Selects all data where given user id is in the `ownerUsers` or given group is in the `ownerGroups`. User ID and groups should be provided as comma seperated value of the query variable: `set[owners]=[user1,user2][group1,group2]` |
-| **day**       | Selects all data where `creationDateTime` field is in last 24 hours.                                                                                                                                                                 |
-| **week**      | Selects all data where `creationDateTime` field is in last 7 days.                                                                                                                                                                   |
-| **month**     | Selects all data where `creationDateTime` field is in last 30 days.                                                                                                                                                                  |
-| **audience**  | Combination of multiple sets. This set is returning 'active' and 'public' records along with users own active and pending records. Thus, it requires user and group id's similiar to the owners set.                                 |
 
 # Configuration
 We can divide configurations into 7 categories:
