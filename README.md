@@ -150,9 +150,10 @@ We can divide configurations into 7 categories:
 | Configration         | Description                                   | Default Value |
 | -------------------- | --------------------------------------------- | ------------- |
 | **mongodb_host**     | MongoDB database hostname                     | localhost     |
-| **mongodb_port**     | MongoDB database portname                     | 27017         |
-| **mongodb_password** | MongoDB password. Provide through k8s secrets |               |
-| **mongodb_database** | Name of the database                          | tarcinapp     |
+| **mongodb_port**     | MongoDB database port number                  | 27017         |
+| **mongodb_user**     | MongoDB database user                         | tappuser      |
+| **mongodb_password** | MongoDB password. Provide through k8s secrets | tapppass123!  |
+| **mongodb_database** | Name of the database                          | tappdb        |
 
 ### Allowed Kinds
 You can limit acceptable values for `kind` fields for the records.
@@ -232,6 +233,21 @@ In the need of enabling auto approve under certain conditions, users are encoura
 * A configmap and secret sample yaml files are provided
 
 # Configuring for Development
+Prepare a mongodb instance. Create a database and a user/pass who is authorized to access to the database. Note the name of the database, username and password. 
+For example, create a database called tarcinappdb.
+```javascript
+db.createUser({
+  user: "tappuser",
+  pwd: "tapppass123!",
+  roles: [
+    {
+      role: "readWrite",
+      db: "tappdb"
+    }
+  ]
+})
+```
+
 For VSCode, create a dev.env file at the root of your workspace folder. Add local database configuration as environment variables to this file. This file will be read once you start the application in debug mode. Sample .env files can be found under /doc/env folder.
 
 # Development Status
