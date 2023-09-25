@@ -323,9 +323,6 @@ export class GenericEntityRepository extends DefaultCrudRepository<
         .build();
     }
 
-    // final uniqueness controlling filter
-    console.log('Uniqueness Filter: ', JSON.stringify(filter));
-
     let existingEntity = await super.findOne(filter);
 
     if (existingEntity) {
