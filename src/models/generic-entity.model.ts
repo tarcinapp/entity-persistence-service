@@ -126,6 +126,11 @@ export class GenericEntity extends Entity {
   })
   ownerGroupsCount?: number;
 
+  @property({
+    type: 'string'
+  })
+  idempotencyKey?: string | undefined;
+
   @hasMany(() => Relation, {keyTo: 'from'})
   relations: Relation[];
 

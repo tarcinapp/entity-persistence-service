@@ -1,5 +1,6 @@
 import {Getter, inject} from '@loopback/core';
 import {DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, Options, Where, WhereBuilder, repository} from '@loopback/repository';
+import {Request, RestBindings} from '@loopback/rest';
 import _ from 'lodash';
 import slugify from "slugify";
 import {EntityDbDataSource} from '../datasources';
@@ -33,7 +34,8 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     @inject('datasources.EntityDb') dataSource: EntityDbDataSource, @repository.getter('RelationRepository') protected relationRepositoryGetter: Getter<RelationRepository>, @repository.getter('ReactionsRepository') protected reactionsRepositoryGetter: Getter<ReactionsRepository>, @repository.getter('TagEntityRelationRepository') protected tagEntityRelationRepositoryGetter: Getter<TagEntityRelationRepository>, @repository.getter('TagRepository') protected tagRepositoryGetter: Getter<TagRepository>,
     @inject('extensions.uniqueness.configurationreader') private uniquenessConfigReader: UniquenessConfigurationReader,
     @inject('extensions.record-limits.configurationreader') private recordLimitConfigReader: RecordLimitsConfigurationReader,
-    @inject('extensions.kind-limits.configurationreader') private kindLimitConfigReader: KindLimitsConfigurationReader
+    @inject('extensions.kind-limits.configurationreader') private kindLimitConfigReader: KindLimitsConfigurationReader,
+    @inject(RestBindings.Http.REQUEST) private request: Request,
   ) {
     super(GenericEntity, dataSource);
     this.tags = this.createHasManyThroughRepositoryFactoryFor('tags', tagRepositoryGetter, tagEntityRelationRepositoryGetter,);
@@ -57,6 +59,30 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   }
 
   async create(data: DataObject<GenericEntity>) {
+
+    const idempotencyKey: string | undefined = this.request.headers['idempotencykey'] as string | undefined;
+
+    // check if same record already exists
+    if (_.isString(idempotencyKey) && !_.isEmpty(idempotencyKey)) {
+
+      // try to find if a record with this idempotency key is already created
+      const sameRecord = await this.findOne({
+        where: {
+          and: [
+            {
+              idempotencyKey: idempotencyKey
+            }
+          ]
+        }
+      });
+
+      // if record already created return the existing record as if it newly created
+      if (sameRecord) {
+        return sameRecord;
+      }
+    }
+
+    data.idempotencyKey = idempotencyKey;
 
     this.checkDataKindFormat(data);
 

@@ -41,8 +41,9 @@ export class GenericEntityControllerController {
         },
       },
     })
-    genericEntity: Omit<GenericEntity, 'id'>,
+    genericEntity: Omit<GenericEntity, 'id'>
   ): Promise<GenericEntity> {
+
     return this.genericEntityRepository.create(genericEntity);
   }
 
