@@ -79,42 +79,18 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
   async replaceById(id: string, data: DataObject<GenericEntity>, options?: Options) {
 
-    return this.enrichIncomingEntityForReplace(id, data)
-      .then(data => this.validateIncomingEntityForReplace(id, data, options));
+    return this.enrichIncomingEntityForUpdates(id, data)
+      .then(collection => this.validateIncomingEntityForReplace(id, collection.data, options))
+      .then(data => super.replaceById(id, data, options));
   }
 
   async updateById(id: string, data: DataObject<GenericEntity>, options?: Options) {
 
-    let existingData = await this.findById(id);
-
-    // set new version
-    data.version = (existingData.version ?? 1) + 1;
-
-    // we may use current date, if it does not exist in the given data
-    let now = new Date().toISOString();
-
-    // gateway may allow user to modify lastUpdatedDateTime. If it is not given, set `now` as lastUpdatedDateTime.
-    data.lastUpdatedDateTime = data.lastUpdatedDateTime ? data.lastUpdatedDateTime : now;
-
-    this.checkDataKindFormat(data);
-
-    this.generateSlug(data);
-
-    this.setOwnersCount(data);
-
-    // we need to merge existing data with incoming data in order to check limits and uniquenesses
-    let mergedData = _.defaults({}, data, existingData);
-
-    // check if kind is correct, if it is given
-    if (data.kind)
-      this.checkDataKindValues(data);
-
-    //await this.checkRecordLimits(mergedData);
-
-    await this.checkUniquenessForUpdate(id, mergedData);
-
-    return super.updateById(id, data, options);
+    return this.enrichIncomingEntityForUpdates(id, data)
+      .then(collection => this.validateIncomingDataForUpdate(id, collection.existingData, collection.data, options))
+      .then(data => super.updateById(id, data, options));
   }
+
 
   async updateAll(data: DataObject<GenericEntity>, where?: Where<GenericEntity>, options?: Options) {
 
@@ -197,8 +173,27 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
     await uniquenessCheck;
 
-    return super.replaceById(id, data, options);
+    return data;
 
+  }
+
+  private async validateIncomingDataForUpdate(id: string, existingData: DataObject<GenericEntity>, data: DataObject<GenericEntity>, options?: Options) {
+
+    // we need to merge existing data with incoming data in order to check limits and uniquenesses
+    const mergedData = _.defaults({}, data, existingData);
+    const uniquenessCheck = this.checkUniquenessForUpdate(id, mergedData);
+
+    if (data.kind) {
+      this.checkDataKindFormat(data);
+      this.checkDataKindValues(data);
+    }
+
+    this.generateSlug(data);
+    this.setOwnersCount(data);
+
+    await uniquenessCheck;
+
+    return data;
   }
 
   private async enrichIncomingEntityForCreation(data: DataObject<GenericEntity>): Promise<DataObject<GenericEntity>> {
@@ -225,7 +220,14 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     return data;
   }
 
-  private async enrichIncomingEntityForReplace(id: string, data: DataObject<GenericEntity>): Promise<DataObject<GenericEntity>> {
+  /**
+   * Enrich the original record with managed fields where applicable.
+   * This method can be used by replace and update operations as their requirements are same.
+   * @param id Id of the targeted record
+   * @param data Payload of the entity
+   * @returns Enriched entity
+   */
+  private async enrichIncomingEntityForUpdates(id: string, data: DataObject<GenericEntity>) {
 
     return this.findById(id)
       .then(existingData => {
@@ -256,7 +258,10 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
         this.setOwnersCount(data);
 
-        return data;
+        return {
+          data: data,
+          existingData: existingData
+        };
       });
   }
 
@@ -450,7 +455,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     }
 
     // final uniqueness controlling filter
-    console.log('Uniqueness Filter: ', JSON.stringify(filter));
+    //console.log('Uniqueness Filter: ', JSON.stringify(filter));
 
     let violatingEntity = await super.findOne(filter);
 
