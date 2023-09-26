@@ -7,6 +7,12 @@ export namespace KindLimitsBindings {
   );
 }
 
+/**
+ * This class is used to read the configuration made to constraint allowed list of kinds.
+ * Class can be used for entities, lists, reactions, etc..
+ * 
+ * It's implemented only for entities so far.
+ */
 export class KindLimitsConfigurationReader {
 
   // this var keeps if there is a configuration. Validation calls are checking if this value true

@@ -9,6 +9,12 @@ export namespace RecordLimitsBindings {
   );
 }
 
+/**
+ * This class is helper to read configuration made to limit number of records
+ * in the database.
+ * Repository implementation can communicate with this class to generate the scope
+ * to where the limit needs to be applied (set), and to get the limit integer.
+ */
 export class RecordLimitsConfigurationReader {
 
   constructor() {
