@@ -62,54 +62,19 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
     const idempotencyKey: string | undefined = this.request.headers['idempotencykey'] as string | undefined;
 
-    // check if same record already exists
-    if (_.isString(idempotencyKey) && !_.isEmpty(idempotencyKey)) {
+    return this.checkIdempotency(idempotencyKey, data)
+      .then(foundIdempotent => {
 
-      // try to find if a record with this idempotency key is already created
-      const sameRecord = await this.findOne({
-        where: {
-          and: [
-            {
-              idempotencyKey: idempotencyKey
-            }
-          ]
+        if (foundIdempotent) {
+          return foundIdempotent;
         }
+
+        data.idempotencyKey = idempotencyKey;
+
+        // we do not have identical data in the db
+        // go ahead, validate, enrich and create the data
+        return this.createNewEntity(data);
       });
-
-      // if record already created return the existing record as if it newly created
-      if (sameRecord) {
-        return sameRecord;
-      }
-    }
-
-    data.idempotencyKey = idempotencyKey;
-
-    this.checkDataKindFormat(data);
-
-    this.checkDataKindValues(data);
-
-    // take the date of now to make sure we have exactly the same date in all date fields
-    let now = new Date().toISOString();
-
-    // use incoming creationDateTime and lastUpdateDateTime if given. Override with default if it does not exist.
-    data.creationDateTime = data.creationDateTime ? data.creationDateTime : now;
-    data.lastUpdatedDateTime = data.lastUpdatedDateTime ? data.lastUpdatedDateTime : now;
-
-    // autoapprove the record if it is configured
-    data.validFromDateTime = process.env.autoapprove_entity == 'true' ? now : undefined;
-
-    this.generateSlug(data);
-
-    this.setOwnersCount(data);
-
-    await this.checkUniquenessForCreate(data);
-
-    await this.checkRecordLimits(data);
-
-    // set version to 1.
-    data.version = 1;
-
-    return super.create(data);
   }
 
   async replaceById(id: string, data: DataObject<GenericEntity>, options?: Options) {
@@ -132,7 +97,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
     this.setOwnersCount(data);
 
-    await this.checkRecordLimits(data);
+    //await this.checkRecordLimits(data, null);
 
     await this.checkUniquenessForUpdate(id, data);
 
@@ -165,7 +130,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     if (data.kind)
       this.checkDataKindValues(data);
 
-    await this.checkRecordLimits(mergedData);
+    //await this.checkRecordLimits(mergedData);
 
     await this.checkUniquenessForUpdate(id, mergedData);
 
@@ -184,6 +149,89 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     this.setOwnersCount(data);
 
     return super.updateAll(data, where, options);
+  }
+
+  private async checkIdempotency(idempotencyKey: string | undefined, data: DataObject<GenericEntity>): Promise<GenericEntity | null> {
+
+    // check if same record already exists
+    if (_.isString(idempotencyKey) && !_.isEmpty(idempotencyKey)) {
+
+      // try to find if a record with this idempotency key is already created
+      const sameRecord = this.findOne({
+        where: {
+          and: [
+            {
+              idempotencyKey: idempotencyKey
+            }
+          ]
+        }
+      });
+
+      // if record already created return the existing record as if it newly created
+      return sameRecord;
+    }
+
+    return Promise.resolve(null);
+  }
+
+  /**
+   * Validates the incoming data, enriches with managed fields then calls super.create
+   * 
+   * @param data Input object to create entity from.
+   * @returns Newly created entity.
+   */
+  private async createNewEntity(data: DataObject<GenericEntity>): Promise<GenericEntity> {
+
+    /**
+     * TODO: MongoDB connector still does not support transactions.
+     * Comment out here when we receive transaction support.
+     * Then we need to pass the trx to the methods down here.
+     */
+    /*
+    const trxRepo = new DefaultTransactionalRepository(GenericEntity, this.dataSource);
+    const trx = await trxRepo.beginTransaction(IsolationLevel.READ_COMMITTED);
+    */
+
+    return this.enrichIncomingEntity(data)
+      .then(data => this.validateIncomingEntity(data))
+      .then(data => super.create(data));
+  }
+
+  private async validateIncomingEntity(data: DataObject<GenericEntity>): Promise<DataObject<GenericEntity>> {
+
+    this.checkDataKindFormat(data);
+    this.checkDataKindValues(data);
+
+    return Promise.all([
+      this.checkUniquenessForCreate(data),
+      this.checkRecordLimits(data)
+    ]).then(() => {
+      return data;
+    });
+  }
+
+  private async enrichIncomingEntity(data: DataObject<GenericEntity>): Promise<DataObject<GenericEntity>> {
+
+    // take the date of now to make sure we have exactly the same date in all date fields
+    let now = new Date().toISOString();
+
+    // use incoming creationDateTime and lastUpdateDateTime if given. Override with default if it does not exist.
+    data.creationDateTime = data.creationDateTime ? data.creationDateTime : now;
+    data.lastUpdatedDateTime = data.lastUpdatedDateTime ? data.lastUpdatedDateTime : now;
+
+    // autoapprove the record if it is configured
+    data.validFromDateTime = process.env.autoapprove_entity == 'true' ? now : undefined;
+
+    // new data is starting from version 1
+    data.version = 1;
+
+    // prepare slug from the name and set to the record 
+    this.generateSlug(data);
+
+    // set owners count to make searching easier
+    this.setOwnersCount(data);
+
+    return data;
   }
 
   private async checkRecordLimits(newData: DataObject<GenericEntity>) {
