@@ -62,7 +62,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
     const idempotencyKey: string | undefined = this.request.headers['idempotencykey'] as string | undefined;
 
-    return this.checkIdempotency(idempotencyKey, data)
+    return this.checkIdempotencyIfKeyGiven(idempotencyKey)
       .then(foundIdempotent => {
 
         if (foundIdempotent) {
@@ -73,35 +73,14 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
         // we do not have identical data in the db
         // go ahead, validate, enrich and create the data
-        return this.createNewEntity(data);
+        return this.createNewEntityFacade(data);
       });
   }
 
   async replaceById(id: string, data: DataObject<GenericEntity>, options?: Options) {
 
-    let now = new Date().toISOString();
-    let existingData = await this.findById(id);
-
-    // set new version
-    data.version = (existingData.version ?? 1) + 1;
-
-
-    // we may use current date, if it does not exist in the given data
-    data.lastUpdatedDateTime = data.lastUpdatedDateTime ? data.lastUpdatedDateTime : now;
-
-    this.checkDataKindValues(data);
-
-    this.checkDataKindFormat(data);
-
-    this.generateSlug(data);
-
-    this.setOwnersCount(data);
-
-    //await this.checkRecordLimits(data, null);
-
-    await this.checkUniquenessForUpdate(id, data);
-
-    return super.replaceById(id, data, options);
+    return this.enrichIncomingEntityForReplace(id, data)
+      .then(data => this.validateIncomingEntityForReplace(id, data, options));
   }
 
   async updateById(id: string, data: DataObject<GenericEntity>, options?: Options) {
@@ -151,7 +130,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     return super.updateAll(data, where, options);
   }
 
-  private async checkIdempotency(idempotencyKey: string | undefined, data: DataObject<GenericEntity>): Promise<GenericEntity | null> {
+  private async checkIdempotencyIfKeyGiven(idempotencyKey: string | undefined): Promise<GenericEntity | null> {
 
     // check if same record already exists
     if (_.isString(idempotencyKey) && !_.isEmpty(idempotencyKey)) {
@@ -180,7 +159,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
    * @param data Input object to create entity from.
    * @returns Newly created entity.
    */
-  private async createNewEntity(data: DataObject<GenericEntity>): Promise<GenericEntity> {
+  private async createNewEntityFacade(data: DataObject<GenericEntity>): Promise<GenericEntity> {
 
     /**
      * TODO: MongoDB connector still does not support transactions.
@@ -192,12 +171,12 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     const trx = await trxRepo.beginTransaction(IsolationLevel.READ_COMMITTED);
     */
 
-    return this.enrichIncomingEntity(data)
-      .then(data => this.validateIncomingEntity(data))
+    return this.enrichIncomingEntityForCreation(data)
+      .then(data => this.validateIncomingEntityForCreation(data))
       .then(data => super.create(data));
   }
 
-  private async validateIncomingEntity(data: DataObject<GenericEntity>): Promise<DataObject<GenericEntity>> {
+  private async validateIncomingEntityForCreation(data: DataObject<GenericEntity>): Promise<DataObject<GenericEntity>> {
 
     this.checkDataKindFormat(data);
     this.checkDataKindValues(data);
@@ -210,7 +189,19 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     });
   }
 
-  private async enrichIncomingEntity(data: DataObject<GenericEntity>): Promise<DataObject<GenericEntity>> {
+  private async validateIncomingEntityForReplace(id: string, data: DataObject<GenericEntity>, options?: Options) {
+    const uniquenessCheck = this.checkUniquenessForUpdate(id, data);
+
+    this.checkDataKindValues(data);
+    this.checkDataKindFormat(data);
+
+    await uniquenessCheck;
+
+    return super.replaceById(id, data, options);
+
+  }
+
+  private async enrichIncomingEntityForCreation(data: DataObject<GenericEntity>): Promise<DataObject<GenericEntity>> {
 
     // take the date of now to make sure we have exactly the same date in all date fields
     let now = new Date().toISOString();
@@ -232,6 +223,41 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     this.setOwnersCount(data);
 
     return data;
+  }
+
+  private async enrichIncomingEntityForReplace(id: string, data: DataObject<GenericEntity>): Promise<DataObject<GenericEntity>> {
+
+    return this.findById(id)
+      .then(existingData => {
+
+        // check if we have this record in db
+        if (!existingData) {
+          throw new HttpErrorResponse({
+            statusCode: 404,
+            name: "NotFoundError",
+            message: "Entity with id '" + id + "' could not be found.",
+            code: "ENTITY-NOT-FOUND",
+            status: 404
+          });
+        }
+
+        return existingData;
+      })
+      .then(existingData => {
+        let now = new Date().toISOString();
+
+        // set new version
+        data.version = (existingData.version ?? 1) + 1;
+
+        // we may use current date, if it does not exist in the given data
+        data.lastUpdatedDateTime = data.lastUpdatedDateTime ? data.lastUpdatedDateTime : now;
+
+        this.generateSlug(data);
+
+        this.setOwnersCount(data);
+
+        return data;
+      });
   }
 
   private async checkRecordLimits(newData: DataObject<GenericEntity>) {
