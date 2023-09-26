@@ -191,10 +191,12 @@ Uniqueness configuration is implemented in application logic. MongoDB has compos
 ### Visibility
 This option only applies when visibility field is not provided. If you want to apply a visibility rule bu user role, please see entity-persistence-gateway.
 
-| Configuration         | Description                                                              | Default Value | Example Value   |
-| --------------------- | ------------------------------------------------------------------------ | ------------- | --------------- |
-| **visibility_entity** | Default value to be filled for `visibility` field while entity creation. | protected     | public, private |
-| **visibility_list**   | Default value to be filled for `visibility` field while list creation.   | protected     | public, private |
+| Configuration                         | Description                                                                                                                             | Default Value | Example Values  |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------- | --------------- |
+| **visibility_entity**                 | Default value to be filled for `visibility` field while entity creation.                                                                | protected     | public, private |
+| **visibility_entity_for_{kind_name}** | Default value to be filled for `visibility` field while entity creation. This configuration will only be applied to that specific kind. | protected     | public, private |
+| **visibility_list**                   | Default value to be filled for `visibility` field while list creation.                                                                  | protected     | public, private |
+| **visibility_list_for_{kind_name}**   | Default value to be filled for `visibility` field while list creation. This configuration will only be applied to that specific kind.   | protected     | public, private |
 ### Validation
 | Configuration                            | Description                            | Default Value |
 | ---------------------------------------- | -------------------------------------- | ------------- |

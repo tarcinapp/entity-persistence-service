@@ -7,6 +7,7 @@ import {EntityDbDataSource} from '../datasources';
 import {RecordLimitsConfigurationReader, UniquenessConfigurationReader} from '../extensions';
 import {KindLimitsConfigurationReader} from '../extensions/kind-limits';
 import {SetFilterBuilder} from '../extensions/set';
+import {VisibilityConfigurationReader} from '../extensions/visibility';
 import {GenericEntity, GenericEntityRelations, HttpErrorResponse, Reactions, Relation, SingleError, Tag, TagEntityRelation} from '../models';
 import {ReactionsRepository} from './reactions.repository';
 import {RelationRepository} from './relation.repository';
@@ -35,6 +36,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     @inject('extensions.uniqueness.configurationreader') private uniquenessConfigReader: UniquenessConfigurationReader,
     @inject('extensions.record-limits.configurationreader') private recordLimitConfigReader: RecordLimitsConfigurationReader,
     @inject('extensions.kind-limits.configurationreader') private kindLimitConfigReader: KindLimitsConfigurationReader,
+    @inject('extensions.visibility.configurationreader') private visibilityConfigReader: VisibilityConfigurationReader,
     @inject(RestBindings.Http.REQUEST) private request: Request,
   ) {
     super(GenericEntity, dataSource);
@@ -90,7 +92,6 @@ export class GenericEntityRepository extends DefaultCrudRepository<
       .then(collection => this.validateIncomingDataForUpdate(id, collection.existingData, collection.data, options))
       .then(data => super.updateById(id, data, options));
   }
-
 
   async updateAll(data: DataObject<GenericEntity>, where?: Where<GenericEntity>, options?: Options) {
 
@@ -196,6 +197,11 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     return data;
   }
 
+  /**
+   * Adds managed fields to the entity.
+   * @param data Data that is intended to be created
+   * @returns New version of the data which have managed fields are added
+   */
   private async enrichIncomingEntityForCreation(data: DataObject<GenericEntity>): Promise<DataObject<GenericEntity>> {
 
     // take the date of now to make sure we have exactly the same date in all date fields
@@ -210,6 +216,9 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
     // new data is starting from version 1
     data.version = 1;
+
+    // set visibility
+    data.visibility = this.visibilityConfigReader.getVisibilityForEntities(data.kind);
 
     // prepare slug from the name and set to the record 
     this.generateSlug(data);
