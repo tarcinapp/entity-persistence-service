@@ -7,6 +7,7 @@ import {EntityDbDataSource} from '../datasources';
 import {RecordLimitsConfigurationReader, UniquenessConfigurationReader} from '../extensions';
 import {KindLimitsConfigurationReader} from '../extensions/kind-limits';
 import {SetFilterBuilder} from '../extensions/set';
+import {ValidfromConfigurationReader} from '../extensions/validfrom-config-reader';
 import {VisibilityConfigurationReader} from '../extensions/visibility';
 import {GenericEntity, GenericEntityRelations, HttpErrorResponse, Reactions, Relation, SingleError, Tag, TagEntityRelation} from '../models';
 import {ReactionsRepository} from './reactions.repository';
@@ -37,6 +38,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     @inject('extensions.record-limits.configurationreader') private recordLimitConfigReader: RecordLimitsConfigurationReader,
     @inject('extensions.kind-limits.configurationreader') private kindLimitConfigReader: KindLimitsConfigurationReader,
     @inject('extensions.visibility.configurationreader') private visibilityConfigReader: VisibilityConfigurationReader,
+    @inject('extensions.validfrom.configurationreader') private validfromConfigReader: ValidfromConfigurationReader,
     @inject(RestBindings.Http.REQUEST) private request: Request,
   ) {
     super(GenericEntity, dataSource);
@@ -212,7 +214,8 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     data.lastUpdatedDateTime = data.lastUpdatedDateTime ? data.lastUpdatedDateTime : now;
 
     // autoapprove the record if it is configured
-    data.validFromDateTime = process.env.autoapprove_entity == 'true' ? now : undefined;
+
+    data.validFromDateTime = this.validfromConfigReader.getValidFromForEntities(data.kind) ? now : undefined;
 
     // new data is starting from version 1
     data.version = 1;

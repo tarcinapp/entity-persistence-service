@@ -2,6 +2,7 @@ import {RestBindings} from '@loopback/rest';
 import {ApplicationConfig, EntityPersistenceApplication} from './application';
 import {KindLimitsBindings, KindLimitsConfigurationReader, UniquenessBindings, UniquenessConfigurationReader, VisibilityConfigBindings, VisibilityConfigurationReader} from './extensions';
 import {RecordLimitsBindings, RecordLimitsConfigurationReader} from './extensions/record-limits';
+import {ValidFromConfigBindings, ValidfromConfigurationReader} from './extensions/validfrom-config-reader';
 
 export * from './application';
 
@@ -27,6 +28,9 @@ export async function main(options: ApplicationConfig = {}) {
 
   app.bind(VisibilityConfigBindings.CONFIG_READER)
     .toClass(VisibilityConfigurationReader);
+
+  app.bind(ValidFromConfigBindings.CONFIG_READER)
+    .toClass(ValidfromConfigurationReader);
 
   await app.boot();
   await app.start();
