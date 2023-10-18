@@ -1,10 +1,11 @@
 import {Getter, inject} from '@loopback/core';
 import {DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, Options, Where, WhereBuilder, repository} from '@loopback/repository';
 import {Request, RestBindings} from '@loopback/rest';
+import * as crypto from 'crypto';
 import _ from 'lodash';
 import slugify from "slugify";
 import {EntityDbDataSource} from '../datasources';
-import {RecordLimitsConfigurationReader, UniquenessConfigurationReader} from '../extensions';
+import {IdempotencyConfigurationReader, RecordLimitsConfigurationReader, UniquenessConfigurationReader} from '../extensions';
 import {KindLimitsConfigurationReader} from '../extensions/kind-limits';
 import {SetFilterBuilder} from '../extensions/set';
 import {ValidfromConfigurationReader} from '../extensions/validfrom-config-reader';
@@ -14,6 +15,7 @@ import {ReactionsRepository} from './reactions.repository';
 import {RelationRepository} from './relation.repository';
 import {TagEntityRelationRepository} from './tag-entity-relation.repository';
 import {TagRepository} from './tag.repository';
+
 
 export class GenericEntityRepository extends DefaultCrudRepository<
   GenericEntity,
@@ -39,6 +41,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     @inject('extensions.kind-limits.configurationreader') private kindLimitConfigReader: KindLimitsConfigurationReader,
     @inject('extensions.visibility.configurationreader') private visibilityConfigReader: VisibilityConfigurationReader,
     @inject('extensions.validfrom.configurationreader') private validfromConfigReader: ValidfromConfigurationReader,
+    @inject('extensions.idempotency.configurationreader') private idempotencyConfigReader: IdempotencyConfigurationReader,
     @inject(RestBindings.Http.REQUEST) private request: Request,
   ) {
     super(GenericEntity, dataSource);
@@ -64,9 +67,9 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
   async create(data: DataObject<GenericEntity>) {
 
-    const idempotencyKey: string | undefined = this.request.headers['idempotencykey'] as string | undefined;
+    const idempotencyKey = this.calculateIdempotencyKey(data);
 
-    return this.checkIdempotencyIfKeyGiven(idempotencyKey)
+    return this.findIdempotentEntity(idempotencyKey)
       .then(foundIdempotent => {
 
         if (foundIdempotent) {
@@ -109,7 +112,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     return super.updateAll(data, where, options);
   }
 
-  private async checkIdempotencyIfKeyGiven(idempotencyKey: string | undefined): Promise<GenericEntity | null> {
+  private async findIdempotentEntity(idempotencyKey: string | undefined): Promise<GenericEntity | null> {
 
     // check if same record already exists
     if (_.isString(idempotencyKey) && !_.isEmpty(idempotencyKey)) {
@@ -130,6 +133,25 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     }
 
     return Promise.resolve(null);
+  }
+
+  calculateIdempotencyKey(data: DataObject<GenericEntity>) {
+    const idempotencyFields = this.idempotencyConfigReader.getIdempotencyForEntities(data.kind);
+
+    // idempotency is not configured
+    if (idempotencyFields.length === 0) return;
+
+    const fieldValues = idempotencyFields.map((idempotencyField) => {
+      const value = _.get(data, idempotencyField);
+      return typeof value === 'object' ? JSON.stringify(value) : value;
+    });
+
+    const keyString = fieldValues.join(',');
+    const hash = crypto
+      .createHash('sha256')
+      .update(keyString);
+
+    return hash.digest('hex');
   }
 
   /**
