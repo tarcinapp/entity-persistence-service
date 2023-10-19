@@ -280,13 +280,17 @@ export class GenericEntityRepository extends DefaultCrudRepository<
         return existingData;
       })
       .then(existingData => {
-        let now = new Date().toISOString();
+        const now = new Date().toISOString();
+        const idempotencyKey = this.calculateIdempotencyKey(data);
 
         // set new version
         data.version = (existingData.version ?? 1) + 1;
 
         // we may use current date, if it does not exist in the given data
         data.lastUpdatedDateTime = data.lastUpdatedDateTime ? data.lastUpdatedDateTime : now;
+
+        // set idempotencyKey
+        data.idempotencyKey = idempotencyKey;
 
         this.generateSlug(data);
 
