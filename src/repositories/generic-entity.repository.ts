@@ -87,6 +87,16 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   async replaceById(id: string, data: DataObject<GenericEntity>, options?: Options) {
 
     return this.enrichIncomingEntityForUpdates(id, data)
+      .then(collection => {
+
+        // calculate idempotencyKey
+        const idempotencyKey = this.calculateIdempotencyKey(collection.data);
+
+        // set idempotencyKey
+        collection.data.idempotencyKey = idempotencyKey;
+
+        return collection;
+      })
       .then(collection => this.validateIncomingEntityForReplace(id, collection.data, options))
       .then(data => super.replaceById(id, data, options));
   }
@@ -94,6 +104,17 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   async updateById(id: string, data: DataObject<GenericEntity>, options?: Options) {
 
     return this.enrichIncomingEntityForUpdates(id, data)
+      .then(collection => {
+        const mergedData = _.defaults({}, collection.data, collection.existingData);
+
+        // calculate idempotencyKey
+        const idempotencyKey = this.calculateIdempotencyKey(mergedData);
+
+        // set idempotencyKey
+        collection.data.idempotencyKey = idempotencyKey;
+
+        return collection;
+      })
       .then(collection => this.validateIncomingDataForUpdate(id, collection.existingData, collection.data, options))
       .then(data => super.updateById(id, data, options));
   }
@@ -281,16 +302,12 @@ export class GenericEntityRepository extends DefaultCrudRepository<
       })
       .then(existingData => {
         const now = new Date().toISOString();
-        const idempotencyKey = this.calculateIdempotencyKey(data);
 
         // set new version
         data.version = (existingData.version ?? 1) + 1;
 
         // we may use current date, if it does not exist in the given data
         data.lastUpdatedDateTime = data.lastUpdatedDateTime ? data.lastUpdatedDateTime : now;
-
-        // set idempotencyKey
-        data.idempotencyKey = idempotencyKey;
 
         this.generateSlug(data);
 
