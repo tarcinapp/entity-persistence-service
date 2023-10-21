@@ -133,7 +133,7 @@ Here are the list of common field names.
 
 **Calculated Fields**: `version`, `ownerUsersCount` and `ownerGroupsCount` fields are calculated at the application logic ignoring the sent value.  
 **Fields Calculated when Empty**: `slug`, `creationDateTime` and `lastUpdatedDateTime` are calculated at the application logic if it is not specified in the request body. entity-persistence-gateway decides if user is authorized to send these fields by evaluating security policies.  
-**Gateway Managed Fields**: `ownerUsers`, `ownerGroups`, `lastUpdatedBy`, `idempotencyKey` fields *may* be modified by entity-persistence-gateway. Gateway decides whether it accepts the given value or modify it by evaluating security policies.
+**Gateway Managed Fields**: `ownerUsers`, `ownerGroups`, `lastUpdatedBy` fields *may* be modified by entity-persistence-gateway. Gateway decides whether it accepts the given value or modify it by evaluating security policies.
 
 **Note:** entity-persistence-gateway can decide if *caller* is authorized to change the value of a field by evaluating security policies.
 
