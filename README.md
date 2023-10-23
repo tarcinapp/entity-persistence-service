@@ -1,60 +1,82 @@
-The Entity Persistence Service serves as the backend for the Tarcinapp microservice family.
-
-This microservice is a flexible and REST-based backend application built on the Loopback 4 framework. With the Entity Persistence Service, you can effortlessly develop your REST-based application within seconds.
-
-The application utilizes a schemaless database (MongoDB) to create a scalable and highly customizable data persistence layer. It comes with a generic data model (entities, lists, reactions, etc.) containing predefined fields (creationDateTime, ownerUsers, kind, etc.) that can easily adapt to various use cases.
-
-For enhanced validation support, authentication, authorization, and rate-limiting capabilities, you can integrate this application with the Entity Persistence Gateway.
 # Overview
-The application includes prebuilt data models, which are detailed in the *Data Models* section. Each data model can store JSON data with arbitrary structures and comes with predefined fields like `creationDateTime`, `ownerUsers`, `kind`, etc.
+The **Entity Persistence Service** is a flexible REST-based backend, empowered by the Loopback 4 framework, with schemaless MongoDB storage and versatile data modeling for efficient microservices development. 
 
+The **Entity Persistence Service** is a fundamental element of the holistic **Tarcinapp Suite**, which includes a gateway and other layers, providing a secure, unified and efficient application ecosystem.
+
+## What is Tarcinapp Suite?
+The Tarcinapp suite is a comprehensive and flexible application framework, harmoniously blending a suite of interconnected components designed to deliver a seamless and secure microservices architecture.  
+
+At its core is the **Entity Persistence Service**, a versatile and REST-based backend application built on the robust Loopback 4 framework. This service utilizes on a schemaless MongoDB database to provide a scalable and highly adaptable data persistence layer. Offering a generic data model with predefined fields such as `id`, `name`,  `kind`, `lastUpdateDateTime`, `creationDateTime`, `ownerUsers` and more, it effortlessly adapts to diverse use cases.  
+
+The integration with the **Entity Persistence Gateway** empowers users to implement enhanced validation, authentication, authorization, and rate-limiting functionalities, ensuring a secure and efficient environment. Leveraging the power of **Redis**, the application seamlessly manages distributed locks, enabling robust data synchronization and rate limiting. Furthermore, the ecosystem includes the **Open Policy Agent (OPA)** to enforce policies, safeguarding your application against unauthorized access and ensuring compliance with your security and operational requirements. These policies, combined with the entire suite of components, form a cohesive and powerful ecosystem, paving the way for efficient and secure microservice development.
+
+<div style="text-align: center;">
+  ![Tarcinapp Suite Overview](./doc/img/tarcinapp.png?raw=true "Tarcinapp Suite Overview")
+</div>
+
+# Entity Persistence Service Application in Detail
+At its core, this service is equipped with a versatile set of endpoints, each serving a specific purpose in managing and interacting with your data:
+
+* `/generic-entities`: Handle your primary data models with this endpoint, facilitating CRUD (Create, Read, Update, Delete) operations.
+* `/lists`: Create, organize, and manage lists, enabling you to associate related data effortlessly.
+* `/generic-entities/{id}/reactions`: Capture user reactions, comments, likes, and more on specific entities.
+* `/lists/{id}/list-reactions`: Manage reactions, comments, likes, and other interactions associated with your lists.
+* `/generic-entities/{id}/tags`: Add, modify, or remove tags associated with specific entities for efficient data categorization.
+* `/lists/{id}/tags`: Employ tags to categorize and organize your lists efficiently, ensuring effective data management.
+
+## Features
+
+### Essential Data Management
+**Entity CRUD operations**: Perform Create, Read, Update, and Delete operations on entities for fundamental data management.  
+**Entity approval**: Manage data approval processes, ensuring quality control.  
+**Entity uniqueness**: Guarantee data integrity through unique entity constraints.  
+**Entity ownership**: Control data access with well-defined ownership and permissions.  
+
+### Data Organization
+**Entity relationships**: Establish and manage connections between entities.  
+**Hierarchical list**s: Create structured, hierarchical data categorization for organized data management.  
+**Tagging entities**: Efficiently categorize and organize data using tags.  
+
+### User Engagement
+**Reactions to entities and lists**: Enable user interactions through likes, comments, and more.  
+**Sub-reactions to reactions**: Enhance user engagement with detailed reactions.  
+**Entity visibilit**y: Control data access with options for public, private, and protected visibility.  
+**Adding entities to lists**: Organize related data by associating entities with lists. 
+
+### Advanced Data Control
+**Customized validations**: Tailor validation rules to specific use cases.
+**Prebuilt queries**: Simplify data retrieval with predefined query sets.
+**Strong querying capability**: Benefit from Loopback's robust querying capabilities for data analysis.
+
+### Efficiency and Optimization
+**Limiting total records**: Manage data loads by controlling the total number of records.
+**Limiting response items**: Streamline responses by specifying the maximum number of items to return.
+**Automatically Idempotency calculation**: Enhance transaction safety and data consistency with automatic Idempotency calculations.
+
+### Gateway Integration
+**Special gateway application**: Access enhanced features and secure access control through a dedicated gateway: **entity-persistence-gateway**
+
+## Data Model
+The Entity Persistence Service is powered by a set of versatile data models, each serving a unique purpose in organizing and managing your data. These data models lay the foundation for creating and categorizing entities and lists, handling user interactions, and facilitating effective data organization.
+Combined with the diverse capabilities of the Entity Persistence Service, enable you to efficiently manage, categorize, and interact with your data, fostering a dynamic and user-friendly environment.
 
 ![Model Overview](./doc/img/model-overview.png?raw=true "Model Overview")
 
-### Features
-The application offers the following features:
+### Generic Entity
+The Generic Entity data model is at the heart of the Entity Persistence Service, representing fundamental objects within your application. These entities can encompass a wide range of data types, thanks to their schemaless nature. The key distinguishing feature of the Generic Entity is the kind field, which allows for straightforward differentiation between different types of objects. For instance, an entity can be categorized as a 'book' or 'author,' enabling easy data classification and organization. This versatile model serves as the basis for the majority of your data, offering a flexible structure that adapts to various use cases.
 
- * Entity CRUD operations
- * Entity approval
- * Entity uniqueness
- * Entity relationships
- * Entity ownership
- * Adding entities to lists
- * Hierarchical lists
- * Tagging entities
- * Reactions to entities and lists, such as comments and likes
- * Sub-reactions to reactions
- * Customized validations
- * Query by location
- * Prebuilt queries (sets)
- * Special gateway application
+### List
+The List data model is designed to efficiently organize collections of generic entities. A list can establish relationships with multiple entities, providing a mechanism for grouping and categorizing related data. Lists can be categorized using the kind field, allowing for logical organization based on content type or purpose. For example, a list could have a kind value of 'favorites' or 'science_fiction,' streamlining the management and categorization of lists within your application. This model simplifies the task of aggregating data and managing relationships, enhancing the user experience.
 
-### Data Model
-The application comes with the following data models:
-- Generic Entity
-- Entity Hierarchy
-- Entity Reaction
-- Entity Sub Reaction
-- List
-- List Hierarchy
-- List Reaction
-- List Sub Reaction
-- Tags
+### Entity Reaction
+The Entity Reaction data model is responsible for capturing and managing a broad spectrum of events related to objects within your application. It offers the flexibility to represent a wide range of actions and interactions, including comments, likes, measurements, and emotional responses. With this model, your application can handle diverse reactions and interactions associated with entities effectively, enriching user engagement and data interactivity.
 
-**Generic Entity**
-The primary data model used in this application is the Generic Entity, which represents a basic object. The `kind` field is utilized to differentiate between different types of objects. For instance, an object can have a `kind` value of `book` or `author`. This allows for easy categorization and organization of data within the application.
+### List Reaction
+Similar to the Entity Reaction model, the List Reaction data model is tailored to manage events associated with lists. It empowers your application to capture actions like comments, likes, measurements, and reactions linked to lists. This versatility ensures that your application can effectively handle a variety of reactions and interactions related to lists, enhancing user participation and interaction.
 
-**List**
-The List data model represents a collection of generic entities. A list can have relationships with many entities. List kinds can be distinguished using the `kind` field. For example, a list could have a `kind` value of `favorites` or `science_fiction`. This feature allows for easy categorization and organization of lists within the application.
+### Tags
+The Tags data model offers a structured approach to categorizing and organizing entities and lists. Tags act as valuable tools for data classification and grouping. For instance, a book can be assigned tags such as 'science_fiction' or 'fantasy,' simplifying the process of data categorization and organization within your application. This feature is instrumental in streamlining data retrieval and management, making it easier for users to locate and engage with specific content.
 
-**Entity Reaction**
-The Entity Reaction data model represents any event related to an object. For example, it can represent actions such as comments, likes, measurements, anger, and more. This flexible feature allows the application to handle a wide range of reactions and interactions associated with entities.
-
-**List Reaction**
-The List Reaction data model represents any event related to a list. For example, it can represent actions such as comments, likes, measurements, anger, and more. This versatile feature enables the application to handle various reactions and interactions associated with lists.
-
-**Tags**
-The Tags data model represents a collection of tags. Tags can be used to categorize and organize entities and lists. For example, a book can have tags such as `science_fiction` or `fantasy`. This feature allows for easy categorization and organization of data within the application.
 
 ## Sample Use Cases
 
