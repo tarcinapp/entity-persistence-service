@@ -1,9 +1,42 @@
+import {RestBindings} from '@loopback/rest';
 import {ApplicationConfig, EntityPersistenceApplication} from './application';
+import {KindLimitsBindings, KindLimitsConfigurationReader, UniquenessBindings, UniquenessConfigurationReader, VisibilityConfigBindings, VisibilityConfigurationReader} from './extensions';
+import {IdempotencyConfigBindings, IdempotencyConfigurationReader} from './extensions/idempotency-config-reader';
+import {RecordLimitsBindings, RecordLimitsConfigurationReader} from './extensions/record-limits';
+import {ValidFromConfigBindings, ValidfromConfigurationReader} from './extensions/validfrom-config-reader';
 
 export * from './application';
 
 export async function main(options: ApplicationConfig = {}) {
   const app = new EntityPersistenceApplication(options);
+
+  app.bind(RestBindings.ERROR_WRITER_OPTIONS).to({
+    debug: process.env.NODE_ENV != 'production',
+    safeFields: ['errorCode', 'message']
+  });
+
+  // add uniqueness configuration reader to context
+  app.bind(UniquenessBindings.CONFIG_READER)
+    .toClass(UniquenessConfigurationReader);
+
+  // add uniqueness configuration reader to context
+  app.bind(RecordLimitsBindings.CONFIG_READER)
+    .toClass(RecordLimitsConfigurationReader);
+
+  // add kind limits configuration reader to context
+  app.bind(KindLimitsBindings.CONFIG_READER)
+    .toClass(KindLimitsConfigurationReader);
+
+  app.bind(VisibilityConfigBindings.CONFIG_READER)
+    .toClass(VisibilityConfigurationReader);
+
+  app
+    .bind(IdempotencyConfigBindings.CONFIG_READER)
+    .toClass(IdempotencyConfigurationReader)
+
+  app.bind(ValidFromConfigBindings.CONFIG_READER)
+    .toClass(ValidfromConfigurationReader);
+
   await app.boot();
   await app.start();
 
@@ -30,6 +63,9 @@ if (require.main === module) {
         // useful when used with OpenAPI-to-GraphQL to locate your application
         setServersFromRequest: true,
       },
+      expressSettings: {
+        'x-powered-by': false
+      }
     },
   };
   main(config).catch(err => {
