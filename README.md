@@ -10,9 +10,10 @@ At its core is the **Entity Persistence Service**, a versatile and REST-based ba
 
 The integration with the **Entity Persistence Gateway** empowers users to implement enhanced validation, authentication, authorization, and rate-limiting functionalities, ensuring a secure and efficient environment. Leveraging the power of **Redis**, the application seamlessly manages distributed locks, enabling robust data synchronization and rate limiting. Furthermore, the ecosystem includes the **Open Policy Agent (OPA)** to enforce policies, safeguarding your application against unauthorized access and ensuring compliance with your security and operational requirements. These policies, combined with the entire suite of components, form a cohesive and powerful ecosystem, paving the way for efficient and secure microservice development.
 
-<div style="text-align: center;">
-  ![Tarcinapp Suite Overview](./doc/img/tarcinapp.png?raw=true "Tarcinapp Suite Overview")
-</div>
+<p align="center">
+  <img src="./doc/img/tarcinapp.png" alt="Tarcinapp Suite Overview">
+</p>
+
 
 # Entity Persistence Service Application in Detail
 At its core, this service is equipped with a versatile set of endpoints, each serving a specific purpose in managing and interacting with your data:
