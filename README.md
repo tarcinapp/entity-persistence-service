@@ -1,12 +1,12 @@
 # Overview
-The **Entity Persistence Service** is a flexible REST-based backend, empowered by the Loopback 4 framework, with schemaless MongoDB storage and versatile data modeling for efficient microservices development. 
+The **Entity Persistence Service** is a flexible REST-based backend, empowered by the [Loopback 4](https://loopback.io) framework, with schemaless MongoDB storage and versatile data modeling for efficient microservices development. 
 
 The **Entity Persistence Service** is a fundamental element of the holistic **Tarcinapp Suite**, which includes a gateway and other layers, providing a secure, unified and efficient application ecosystem.
 
 ## What is Tarcinapp Suite?
 The Tarcinapp suite is a comprehensive and flexible application framework, harmoniously blending a suite of interconnected components designed to deliver a seamless and secure microservices architecture.  
 
-At its core is the **Entity Persistence Service**, a versatile and REST-based backend application built on the robust Loopback 4 framework. This service utilizes on a schemaless MongoDB database to provide a scalable and highly adaptable data persistence layer. Offering a generic data model with predefined fields such as `id`, `name`,  `kind`, `lastUpdateDateTime`, `creationDateTime`, `ownerUsers` and more, it effortlessly adapts to diverse use cases.  
+At its core is the **Entity Persistence Service**, a versatile and REST-based backend application built on the robust [Loopback 4](https://loopback.io) framework. This service utilizes on a schemaless MongoDB database to provide a scalable and highly adaptable data persistence layer. Offering a generic data model with predefined fields such as `id`, `name`,  `kind`, `lastUpdateDateTime`, `creationDateTime`, `ownerUsers` and more, it effortlessly adapts to diverse use cases.  
 
 The integration with the **Entity Persistence Gateway** empowers users to implement enhanced validation, authentication, authorization, and rate-limiting functionalities, ensuring a secure and efficient environment. Leveraging the power of **Redis**, the application seamlessly manages distributed locks, enabling robust data synchronization and rate limiting. Furthermore, the ecosystem includes the **Open Policy Agent (OPA)** to enforce policies, safeguarding your application against unauthorized access and ensuring compliance with your security and operational requirements. These policies, combined with the entire suite of components, form a cohesive and powerful ecosystem, paving the way for efficient and secure microservice development.
   
@@ -69,14 +69,14 @@ The Tags data model offers a structured approach to categorizing and organizing 
 **Adding entities to lists**: Organize related data by associating entities with lists. 
 
 ### Advanced Data Control
-**Customized validations**: Tailor validation rules to specific use cases.
-**Prebuilt queries**: Simplify data retrieval with predefined query sets.
-**Strong querying capability**: Benefit from Loopback's robust querying capabilities for data analysis.
+**Customized validations**: Tailor validation rules to specific use cases.  
+**Prebuilt queries**: Simplify data retrieval with predefined query sets.  
+**Strong querying capability**: Benefit from Loopback's robust querying capabilities for data analysis.  
 
 ### Efficiency and Optimization
-**Limiting total records**: Manage data loads by controlling the total number of records.
-**Limiting response items**: Streamline responses by specifying the maximum number of items to return.
-**Automatically Idempotency calculation**: Enhance transaction safety and data consistency with automatic Idempotency calculations.
+**Limiting total records**: Manage data loads by controlling the total number of records.  
+**Limiting response items**: Streamline responses by specifying the maximum number of items to return.  
+**Automatically Idempotency calculation**: Enhance transaction safety and data consistency with automatic Idempotency calculations.  
 
 ### Gateway Integration
 **Special gateway application**: Access enhanced features and secure access control through a dedicated gateway: **entity-persistence-gateway**
@@ -163,7 +163,7 @@ Here are the list of common field names.
 **Note:** entity-persistence-gateway can decide if *caller* is authorized to change the value of a field by evaluating security policies.
 
 # Configuration
-We can divide configurations into 7 categories:
+We can divide configurations into 8 categories:
 * Database configurations
 * Uniqueness configurations
 * Auto approve configurations
@@ -171,6 +171,7 @@ We can divide configurations into 7 categories:
 * Validation configurations
 * Response limits configurations
 * Record limit configurations
+* Idempotency configurations
 
 ### Database
 | Configration         | Description                                   | Default Value |
