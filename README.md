@@ -163,8 +163,9 @@ Here are the list of common field names.
 **Note:** entity-persistence-gateway can decide if *caller* is authorized to change the value of a field by evaluating security policies.
 
 # Configuration
-We can divide configurations into 8 categories:
+We can divide configurations into 9 categories:
 * Database configurations
+* Kind configurations
 * Uniqueness configurations
 * Auto approve configurations
 * Default visibility configuration
