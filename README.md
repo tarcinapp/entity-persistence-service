@@ -15,7 +15,15 @@ The Tarcinapp suite is a comprehensive and flexible application framework, harmo
 
 At its core is the **Entity Persistence Service**, an easily adaptable REST-based backend application built on the [Loopback 4](https://loopback.io) framework. This service utilizes on a schemaless MongoDB database to provide a scalable and highly adaptable data persistence layer. Offering a generic data model with predefined fields such as `id`, `name`,  `kind`, `lastUpdateDateTime`, `creationDateTime`, `ownerUsers` and [more](#programming-conventions), it effortlessly adapts to diverse use cases.  
 
-The integration with the **Entity Persistence Gateway** empowers users to implement enhanced validation, authentication, authorization, and rate-limiting functionalities, ensuring a secure and efficient environment. Leveraging the power of **Redis**, the application seamlessly manages distributed locks, enabling robust data synchronization and rate limiting. Furthermore, the ecosystem includes the **Open Policy Agent (OPA)** to enforce policies, safeguarding your application against unauthorized access and ensuring compliance with your security and operational requirements. These policies, combined with the entire suite of components, form a cohesive and powerful ecosystem, paving the way for efficient and secure microservice development.
+The integration with the **Entity Persistence Gateway** empowers users to implement enhanced validation, authentication, authorization, and rate-limiting functionalities, ensuring a secure and efficient environment. Leveraging the power of **Redis**, the application seamlessly manages distributed locks, enabling robust data synchronization and rate limiting. Furthermore, the ecosystem includes the **Open Policy Agent (OPA)** to enforce policies, safeguarding your application against unauthorized access and ensuring compliance with your security and operational requirements. These policies, combined with the entire suite of components, form a cohesive and powerful ecosystem, paving the way for efficient and secure microservice development.  
+Here is an example request and response to the one of the most basic endpoint: `/generic-entities`:
+<p align="left">
+  <img src="./doc/img/request-response.png" alt="Sample request and response">
+</p>  
+
+**Note:** The client's authorization to create an entity, the fields that user can specify, and the fields returned in the response body may vary based on the user's role. The values of managed fields such as `visibility`, `idempotencyKey`, `validFromDateTime`, and `validUntilDateTime` can also be adjusted according to the user's role and the system's configuration.  
+  
+**Note**: Endpoints can be configured with arbitrary values within the gateway component. For example, `/books` can be used for records with `kind: book`, and the field `kind` can be completely omitted from the API interaction.
 
 # Entity Persistence Service Application in Detail
 This service is equipped with a versatile set of endpoints, each serving a specific purpose in managing and interacting with your data:
@@ -166,15 +174,15 @@ Here are the list of common field names.
 
 # Configuration
 We can divide configurations into 9 categories:
-* Database configurations
-* Kind configurations
-* Uniqueness configurations
-* Auto approve configurations
-* Default visibility configuration
-* Validation configurations
-* Response limits configurations
-* Record limit configurations
-* Idempotency configurations
+* [Database configurations](#database)
+* [Kind configurations](#allowed-kinds)
+* [Uniqueness configurations](#uniqueness)
+* [Auto approve configurations](#auto-approve)
+* [Default visibility configuration](#visibility)
+* [Validation configurations](#validation)
+* [Response limits configurations](#response-limits)
+* [Record limit configurations](#record-limits)
+* [Idempotency configurations](#idempotency)
 
 ### Database
 | Configration         | Description                                   | Default Value |
@@ -218,6 +226,7 @@ Uniqueness configuration is implemented in application logic. MongoDB has compos
 | **autoapprove_list**                  | If true, `validFromDateTime` field of list record is automatically filled with the creation datetime.                | false         | true          |
 | **autoapprove_entity_reaction**       | If true, `validFromDateTime` field of entity reaction record is automatically filled with the creation datetime.     | false         | true          |
 | **autoapprove_list_reaction**         | If true, `validFromDateTime` field of list reaction record is automatically filled with the creation datetime.       | false         | true          |
+
 ### Visibility
 This option only applies when visibility field is not provided. If you want to apply a visibility rule bu user role, please see entity-persistence-gateway.
 
@@ -227,6 +236,7 @@ This option only applies when visibility field is not provided. If you want to a
 | **visibility_entity_for_{kind_name}** | Default value to be filled for `visibility` field while entity creation. This configuration will only be applied to that specific kind. | protected     | public, private |
 | **visibility_list**                   | Default value to be filled for `visibility` field while list creation.                                                                  | protected     | public, private |
 | **visibility_list_for_{kind_name}**   | Default value to be filled for `visibility` field while list creation. This configuration will only be applied to that specific kind.   | protected     | public, private |
+
 ### Validation
 | Configuration                            | Description                            | Default Value |
 | ---------------------------------------- | -------------------------------------- | ------------- |
@@ -234,6 +244,7 @@ This option only applies when visibility field is not provided. If you want to a
 | **validation_entityname_maxlength**      | Max length limit for entity name.      | 100           |
 | **validation_listname_maxlength**        | Max length limit for list name.        | 100           |
 | **validation_reactioncontent_maxlength** | Max length limit for reaction content. | 400           |
+
 ### Response Limits
 These setting limits the number of record can be returned for each data model. If user asks more items than the limits, it is silently reduced to the limits given the configuration below.
 
@@ -244,6 +255,7 @@ These setting limits the number of record can be returned for each data model. I
 | **response_limit_entity_reaction** | Max items can be returned from entity reaction response. | 50            |
 | **response_limit_list_reaction**   | Max items can be returned from list reaction response.   | 50            |
 | **response_limit_tag**             | Max items can be returned from tags response.            | 50            |
+
 ### Record Limits
 These settings limits the number of records can be created for entities and lists. There is no limits for reactions and tags. But you can configure daily or hourly limits from gateway.
 Limits can be configured through sets. For instance, you can limit active or public entities a user can have. You can even set these configurations per entity kind by adding `_for_{kindname}` suffix to the configuration name.
@@ -259,8 +271,12 @@ Limits can be configured through sets. For instance, you can limit active or pub
 | **record_limit_list_count_for_{kind_name}**   | Max lists can be created for a specific entity kind.                 | 50              |
 | **record_limit_list_set_for_{kind_name}**     | A set string where record limits will be applied for a specific kind | 50              |
 
-Auto approve configuration is implemented but this implementation provides very simple auto approving capabilities.
-In the need of enabling auto approve under certain conditions, users are encouraged to configure it using gateway policies. By the help of gateway policies, auto approve can be configured using 'kind' of the targeted record, user's roles, etc. For example, you can enable autoapprove when an entity is created by the editor or admin, but disable for regular users.
+### Idempotency
+entity-persistence-service ensures data creation is efficient and predictable. You can define JSON field paths, and the system generates a unique key based on these values. When clients attempt to create records, the system checks if a matching record exists using this key. If found, it returns the result as if it were a new record.
+| Configuration                         | Description                                                                                                                                      | Default Value | Example Values     |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------- | ------------------ |
+| **idempotency_entity**                | comma seperated list of field names for entity records that are contributing to the calculation of idempotency key                               | -             | kind, slug, author |
+| **idempotency_entity_for_{kindName}** | comma seperated list of field names for entity records with kind value is {kindName} that are contributing to the calculation of idempotency key | -             | kind, slug, author |
 
 # Deploying to Kubernetes
 * A configmap and secret sample yaml files are provided
@@ -283,5 +299,10 @@ db.createUser({
 
 For VSCode, create a dev.env file at the root of your workspace folder. Add local database configuration as environment variables to this file. This file will be read once you start the application in debug mode. Sample .env files can be found under /doc/env folder.
 
+# Known Issues
+## 1. Idempotency and Visibility
+   If a user creates a record idempotently, they may receive a success response, even if the previously created idempotent record is set as private. However, due to the visibility settings, the user who attempted to create idempotent recorc won't be able to view private records created by someone else. This can create a situation where it appears as if the data was created successfully, but it may not be visible to whom created it because of the privacy settings. It's essential to be aware of this behavior when working with idempotent data creation and privacy settings.
+   This issue is going to be addressed with making `set`s can contribute to the idempotency calculation.
+
 # Development Status
-* Uniqueness, kind limiting (allowed kinds), auto approve, validation, response limits and record limits are fully implemented for generic-entities.
+* All configurations are fully implemented for generic-entities.
