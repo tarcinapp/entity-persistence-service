@@ -6,15 +6,17 @@ Loopback 4 addresses various aspects of REST API development, yet many real-use 
 The Entity Persistence Service serves as a fundamental component within the **Tarcinapp Suite**, which encompasses a gateway and additional layers. Collectively, the Tarcinapp Suite effectively addresses these real-use case challenges, reducing the time to value for REST-based applications, and making development more efficient and productive.
 
 ## What is Tarcinapp Suite?
+
 The Tarcinapp suite is a comprehensive and flexible application framework, harmoniously blending a suite of interconnected components designed to deliver a seamless and secure microservices architecture. It also provides the flexibility for users to leverage it as an upstream project for their own REST API-based backend implementations, allowing for easy adaptation to their specific requirements and use cases."
+
+<p align="center">
+  <img src="./doc/img/tarcinapp.png" alt="Tarcinapp Suite Overview">
+</p>
 
 At its core is the **Entity Persistence Service**, an easily adaptable REST-based backend application built on the [Loopback 4](https://loopback.io) framework. This service utilizes on a schemaless MongoDB database to provide a scalable and highly adaptable data persistence layer. Offering a generic data model with predefined fields such as `id`, `name`,  `kind`, `lastUpdateDateTime`, `creationDateTime`, `ownerUsers` and more, it effortlessly adapts to diverse use cases.  
 
 The integration with the **Entity Persistence Gateway** empowers users to implement enhanced validation, authentication, authorization, and rate-limiting functionalities, ensuring a secure and efficient environment. Leveraging the power of **Redis**, the application seamlessly manages distributed locks, enabling robust data synchronization and rate limiting. Furthermore, the ecosystem includes the **Open Policy Agent (OPA)** to enforce policies, safeguarding your application against unauthorized access and ensuring compliance with your security and operational requirements. These policies, combined with the entire suite of components, form a cohesive and powerful ecosystem, paving the way for efficient and secure microservice development.
   
-<p align="center">
-  <img src="./doc/img/tarcinapp.png" alt="Tarcinapp Suite Overview">
-</p>
 
 
 # Entity Persistence Service Application in Detail
