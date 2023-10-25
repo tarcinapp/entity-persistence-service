@@ -15,7 +15,15 @@ The Tarcinapp suite is a comprehensive and flexible application framework, harmo
 
 At its core is the **Entity Persistence Service**, an easily adaptable REST-based backend application built on the [Loopback 4](https://loopback.io) framework. This service utilizes on a schemaless MongoDB database to provide a scalable and highly adaptable data persistence layer. Offering a generic data model with predefined fields such as `id`, `name`,  `kind`, `lastUpdateDateTime`, `creationDateTime`, `ownerUsers` and [more](#programming-conventions), it effortlessly adapts to diverse use cases.  
 
-The integration with the **Entity Persistence Gateway** empowers users to implement enhanced validation, authentication, authorization, and rate-limiting functionalities, ensuring a secure and efficient environment. Leveraging the power of **Redis**, the application seamlessly manages distributed locks, enabling robust data synchronization and rate limiting. Furthermore, the ecosystem includes the **Open Policy Agent (OPA)** to enforce policies, safeguarding your application against unauthorized access and ensuring compliance with your security and operational requirements. These policies, combined with the entire suite of components, form a cohesive and powerful ecosystem, paving the way for efficient and secure microservice development.
+The integration with the **Entity Persistence Gateway** empowers users to implement enhanced validation, authentication, authorization, and rate-limiting functionalities, ensuring a secure and efficient environment. Leveraging the power of **Redis**, the application seamlessly manages distributed locks, enabling robust data synchronization and rate limiting. Furthermore, the ecosystem includes the **Open Policy Agent (OPA)** to enforce policies, safeguarding your application against unauthorized access and ensuring compliance with your security and operational requirements. These policies, combined with the entire suite of components, form a cohesive and powerful ecosystem, paving the way for efficient and secure microservice development.  
+Here is an example request and response to the one of the most basic endpoint: `/generic-entities`:
+<p align="left">
+  <img src="./doc/img/request-response.png" alt="Sample request and response">
+</p>  
+
+**Note:** The client's authorization to create an entity, the fields that user can specify, and the fields returned in the response body may vary based on the user's role. The values of managed fields such as `visibility`, `idempotencyKey`, `validFromDateTime`, and `validUntilDateTime` can also be adjusted according to the user's role and the system's configuration.  
+  
+**Note**: Endpoints can be configured with arbitrary values within the gateway component. For example, `/books` can be used for records with `kind: book`, and the field `kind` can be completely omitted from the API interaction.
 
 # Entity Persistence Service Application in Detail
 This service is equipped with a versatile set of endpoints, each serving a specific purpose in managing and interacting with your data:
@@ -264,7 +272,7 @@ Limits can be configured through sets. For instance, you can limit active or pub
 | **record_limit_list_set_for_{kind_name}**     | A set string where record limits will be applied for a specific kind | 50              |
 
 ### Idempotency
-entity-persistence-service ensures data creation is efficient and predictable. You can define JSON field paths, and the system generates a unique key based on these values. When clients attempt to create records, the system checks if a matching record exists using this key. If found, it returns the result as if it were a new record, reducing redundancy and enhancing data operation efficiency.
+entity-persistence-service ensures data creation is efficient and predictable. You can define JSON field paths, and the system generates a unique key based on these values. When clients attempt to create records, the system checks if a matching record exists using this key. If found, it returns the result as if it were a new record.
 | Configuration                         | Description                                                                                                                                      | Default Value | Example Values     |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------- | ------------------ |
 | **idempotency_entity**                | comma seperated list of field names for entity records that are contributing to the calculation of idempotency key                               | -             | kind, slug, author |
