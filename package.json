@@ -1,7 +1,7 @@
 {
-  "name": "application",
+  "name": "entity-persistence-service",
   "version": "1.0.0",
-  "description": "Entity Persistence Service",
+  "description": "A flexible REST backend with Loopback 4, MongoDB, and adaptable data modeling for efficient development. Part of the Tarcinapp Suite.",
   "keywords": [
     "loopback-application",
     "loopback"
@@ -36,8 +36,8 @@
   "repository": {
     "type": "git"
   },
-  "author": "",
-  "license": "",
+  "author": "Kadir Kürşat Tokpunar",
+  "license": "LICENSE.txt",
   "files": [
     "README.md",
     "dist",
