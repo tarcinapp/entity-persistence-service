@@ -1,22 +1,26 @@
 # Overview
-The **Entity Persistence Service** is a flexible REST-based backend, empowered by the [Loopback 4](https://loopback.io) framework, with schemaless MongoDB storage and versatile data modeling for efficient microservices development. 
+The **Entity Persistence Service** is a flexible REST-based backend powered by the Loopback 4 framework. It utilizes schemaless MongoDB storage and offers adaptable data modeling, making it ideal for fast, secure, efficient REST API development.
 
-The **Entity Persistence Service** is a fundamental element of the holistic **Tarcinapp Suite**, which includes a gateway and other layers, providing a secure, unified and efficient application ecosystem.
+Loopback 4 addresses various aspects of REST API development, yet many real-use case considerations remain unaddressed. These include but are not limited to authentication, granular authorization (RBAC), rate limiting, field masking, distributed locking, and more.
+
+The Entity Persistence Service serves as a fundamental component within the **Tarcinapp Suite**, which encompasses a gateway and additional layers. Collectively, the Tarcinapp Suite effectively addresses these real-use case challenges, reducing the time to value for REST-based applications, and making development more efficient and productive.
 
 ## What is Tarcinapp Suite?
-The Tarcinapp suite is a comprehensive and flexible application framework, harmoniously blending a suite of interconnected components designed to deliver a seamless and secure microservices architecture.  
+
+The Tarcinapp suite is a comprehensive and flexible application framework, harmoniously blending a suite of interconnected components designed to deliver a seamless and secure microservices architecture. It also provides the flexibility for users to leverage it as an upstream project for their own REST API-based backend implementations, allowing for easy adaptation to their specific requirements and use cases."
+
 <p align="center">
   <img src="./doc/img/tarcinapp.png" alt="Tarcinapp Suite Overview">
 </p>
 
-At its core is the **Entity Persistence Service**, a versatile and REST-based backend application built on the robust [Loopback 4](https://loopback.io) framework. This service utilizes on a schemaless MongoDB database to provide a scalable and highly adaptable data persistence layer. Offering a generic data model with predefined fields such as `id`, `name`,  `kind`, `lastUpdateDateTime`, `creationDateTime`, `ownerUsers` and more, it effortlessly adapts to diverse use cases.  
+At its core is the **Entity Persistence Service**, an easily adaptable REST-based backend application built on the [Loopback 4](https://loopback.io) framework. This service utilizes on a schemaless MongoDB database to provide a scalable and highly adaptable data persistence layer. Offering a generic data model with predefined fields such as `id`, `name`,  `kind`, `lastUpdateDateTime`, `creationDateTime`, `ownerUsers` and more, it effortlessly adapts to diverse use cases.  
 
 The integration with the **Entity Persistence Gateway** empowers users to implement enhanced validation, authentication, authorization, and rate-limiting functionalities, ensuring a secure and efficient environment. Leveraging the power of **Redis**, the application seamlessly manages distributed locks, enabling robust data synchronization and rate limiting. Furthermore, the ecosystem includes the **Open Policy Agent (OPA)** to enforce policies, safeguarding your application against unauthorized access and ensuring compliance with your security and operational requirements. These policies, combined with the entire suite of components, form a cohesive and powerful ecosystem, paving the way for efficient and secure microservice development.
   
 
 
 # Entity Persistence Service Application in Detail
-At its core, this service is equipped with a versatile set of endpoints, each serving a specific purpose in managing and interacting with your data:
+This service is equipped with a versatile set of endpoints, each serving a specific purpose in managing and interacting with your data:
 
 * `/generic-entities`: Handle your primary data models with this endpoint, facilitating CRUD (Create, Read, Update, Delete) operations.
 * `/lists`: Create, organize, and manage lists, enabling you to associate related data effortlessly.
@@ -163,8 +167,9 @@ Here are the list of common field names.
 **Note:** entity-persistence-gateway can decide if *caller* is authorized to change the value of a field by evaluating security policies.
 
 # Configuration
-We can divide configurations into 8 categories:
+We can divide configurations into 9 categories:
 * Database configurations
+* Kind configurations
 * Uniqueness configurations
 * Auto approve configurations
 * Default visibility configuration
