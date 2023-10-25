@@ -7,7 +7,7 @@ The Entity Persistence Service serves as a fundamental component within the **Ta
 
 ## What is Tarcinapp Suite?
 
-The Tarcinapp suite is a comprehensive and flexible application framework, harmoniously blending a suite of interconnected components designed to deliver a seamless and secure microservices architecture. It also provides the flexibility for users to leverage it as an upstream project for their own REST API-based backend implementations, allowing for easy adaptation to their specific requirements and use cases."
+The Tarcinapp suite is a comprehensive and flexible application framework, harmoniously blending a suite of interconnected components designed to deliver a seamless and secure microservices architecture. It also provides the flexibility for users to leverage it as an upstream project for their own REST API-based backend implementations, allowing for easy adaptation to their specific requirements and use cases.
 
 <p align="center">
   <img src="./doc/img/tarcinapp.png" alt="Tarcinapp Suite Overview">
@@ -69,13 +69,13 @@ The Tags data model offers a structured approach to categorizing and organizing 
 
 ### Data Organization
 **Entity relationships**: Establish and manage connections between entities.  
-**Hierarchical list**s: Create structured, hierarchical data categorization for organized data management.  
+**Hierarchical lists**: Create structured, hierarchical data categorization for organized data management.  
 **Tagging entities**: Efficiently categorize and organize data using tags.  
 
 ### User Engagement
 **Reactions to entities and lists**: Enable user interactions through likes, comments, and more.  
 **Sub-reactions to reactions**: Enhance user engagement with detailed reactions.  
-**Entity visibilit**y: Control data access with options for public, private, and protected visibility.  
+**Entity visibility**: Control data access with options for public, private, and protected visibility.  
 **Adding entities to lists**: Organize related data by associating entities with lists. 
 
 ### Advanced Data Control
@@ -301,7 +301,7 @@ For VSCode, create a dev.env file at the root of your workspace folder. Add loca
 
 # Known Issues
 ## 1. Idempotency and Visibility
-   If a user creates a record idempotently, they may receive a success response, even if the previously created idempotent record is set as private. However, due to the visibility settings, the user who attempted to create idempotent recorc won't be able to view private records created by someone else. This can create a situation where it appears as if the data was created successfully, but it may not be visible to whom created it because of the privacy settings. It's essential to be aware of this behavior when working with idempotent data creation and privacy settings.
+   If a user creates a record idempotently, they may receive a success response, even if the previously created idempotent record is set as private. However, due to the visibility settings, the user who attempted to create idempotent record won't be able to view private records created by someone else. This can create a situation where it appears as if the data was created successfully, but it may not be visible to whom created it because of the privacy settings. It's essential to be aware of this behavior when working with idempotent data creation and privacy settings.
    This issue is going to be addressed with making `set`s can contribute to the idempotency calculation.
 
 # Development Status
