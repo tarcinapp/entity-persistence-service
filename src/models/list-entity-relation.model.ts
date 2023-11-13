@@ -1,6 +1,14 @@
 import {Entity, model, property} from '@loopback/repository';
 
-@model()
+@model({
+  settings: {
+    strict: false,
+    mongodb: {
+      collection: process.env.collection_list || "Lists"
+    }
+  }
+}
+)
 export class ListEntityRelation extends Entity {
   @property({
     type: 'string',

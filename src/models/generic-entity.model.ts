@@ -5,7 +5,14 @@ import {Relation} from './relation.model';
 import {TagEntityRelation} from './tag-entity-relation.model';
 import {Tag} from './tag.model';
 
-@model({settings: {strict: false}})
+@model({
+  settings: {
+    strict: false,
+    mongodb: {
+      collection: process.env.collection_entity || "GenericEntity"
+    }
+  }
+})
 export class GenericEntity extends Entity {
   @property({
     type: 'string',
