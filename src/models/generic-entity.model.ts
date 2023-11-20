@@ -121,6 +121,18 @@ export class GenericEntity extends Entity {
   })
   ownerGroups?: string[];
 
+  @property.array(String, {
+    required: false,
+    default: []
+  })
+  viewerUsers?: string[];
+
+  @property.array(String, {
+    required: false,
+    default: []
+  })
+  viewerGroups?: string[];
+
   @property({
     type: 'number',
     default: 0
@@ -132,6 +144,18 @@ export class GenericEntity extends Entity {
     default: 0
   })
   ownerGroupsCount?: number;
+
+  @property({
+    type: 'number',
+    default: 0
+  })
+  viewerUsersCount?: number;
+
+  @property({
+    type: 'number',
+    default: 0
+  })
+  viewerGroupsCount?: number;
 
   @property({
     type: 'string'

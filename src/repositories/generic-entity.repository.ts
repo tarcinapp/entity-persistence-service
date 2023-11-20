@@ -382,6 +382,12 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
     if (_.isArray(data.ownerGroups))
       data.ownerGroupsCount = data.ownerGroups?.length;
+
+    if (_.isArray(data.viewerUsers))
+      data.viewerUsersCount = data.viewerUsers?.length;
+
+    if (_.isArray(data.viewerGroups))
+      data.viewerGroupsCount = data.viewerGroups?.length;
   }
 
   private checkDataKindFormat(data: DataObject<GenericEntity>) {
