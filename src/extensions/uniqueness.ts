@@ -22,7 +22,7 @@ export class UniquenessConfigurationReader {
 
   // --------------------------------------------------------------------------
 
-  // this setting keeps if uniqueness is configured for all entities in all kinds
+  // this setting keeps if uniqueness is configured for all lists in all kinds
   private static IS_COMMON_LIST_UNIQUENESS_IS_CONFIGURED: boolean | undefined;
 
   // this setting keeps the fields array for all lists in all kinds

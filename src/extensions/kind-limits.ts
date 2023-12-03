@@ -15,6 +15,7 @@ export namespace KindLimitsBindings {
  */
 export class KindLimitsConfigurationReader {
 
+
   // this var keeps if there is a configuration. Validation calls are checking if this value true
   // before executing validation logic. 
   private static IS_KIND_LIMITS_CONFIGURED_FOR_ENTITIES: boolean = false;
@@ -22,6 +23,14 @@ export class KindLimitsConfigurationReader {
   // this var getting initialized at the constructor.
   // keeps acceptable values for entities. Validations are using this array, instead of keep parsing the string at each call.
   private static ALLOWED_KINDS_FOR_ENTITIES: string[] = [];
+
+  // this var keeps if there is a configuration. Validation calls are checking if this value true
+  // before executing validation logic. 
+  private static IS_KIND_LIMITS_CONFIGURED_FOR_LISTS: boolean = false;
+
+  // this var getting initialized at the constructor.
+  // keeps acceptable values for lists. Validations are using this array, instead of keep parsing the string at each call.
+  private static ALLOWED_KINDS_FOR_LISTS: string[] = [];
 
   static {
     this.initKindLimitConfigurations();
@@ -34,6 +43,10 @@ export class KindLimitsConfigurationReader {
     return KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_ENTITIES;
   }
 
+  public get allowedKindsForLists() {
+    return KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_LISTS;
+  }
+
   private static initKindLimitConfigurations() {
 
     if (_.has(process.env, 'entity_kinds')) {
@@ -44,12 +57,28 @@ export class KindLimitsConfigurationReader {
 
       KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_ENTITIES = kinds;
     }
+
+    if (_.has(process.env, 'list_kinds')) {
+      KindLimitsConfigurationReader.IS_KIND_LIMITS_CONFIGURED_FOR_LISTS = true;
+
+      let kinds = _.split(process.env['list_kinds'], ',')
+        .map(_.trim);
+
+      KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_LISTS = kinds;
+    }
   }
 
   public isKindAcceptableForEntity(kind: string) {
 
     if (KindLimitsConfigurationReader.IS_KIND_LIMITS_CONFIGURED_FOR_ENTITIES)
       return KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_ENTITIES.includes(kind);
+
+    return true;
+  }
+
+  public isKindAcceptableForList(kind: string) {
+    if (KindLimitsConfigurationReader.IS_KIND_LIMITS_CONFIGURED_FOR_LISTS)
+      return KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_LISTS.includes(kind);
 
     return true;
   }

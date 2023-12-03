@@ -1,11 +1,14 @@
 import {Getter, inject} from '@loopback/core';
-import {DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, Options, repository, Where, WhereBuilder} from '@loopback/repository';
+import {DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, Options, Where, WhereBuilder, repository} from '@loopback/repository';
+import * as crypto from 'crypto';
 import _ from "lodash";
 import qs from 'qs';
 import slugify from "slugify";
 import {EntityDbDataSource} from '../datasources';
+import {IdempotencyConfigurationReader, KindLimitsConfigurationReader, RecordLimitsConfigurationReader, UniquenessConfigurationReader, VisibilityConfigurationReader} from '../extensions';
 import {Set, SetFilterBuilder} from '../extensions/set';
-import {GenericEntity, HttpErrorResponse, List, ListEntityRelation, ListReactions, ListRelation, ListRelations, Tag, TagListRelation} from '../models';
+import {ValidfromConfigurationReader} from '../extensions/validfrom-config-reader';
+import {GenericEntity, HttpErrorResponse, List, ListEntityRelation, ListReactions, ListRelation, ListRelations, SingleError, Tag, TagListRelation} from '../models';
 import {GenericEntityRepository} from './generic-entity.repository';
 import {ListEntityRelationRepository} from './list-entity-relation.repository';
 import {ListReactionsRepository} from './list-reactions.repository';
@@ -17,7 +20,7 @@ export class ListRepository extends DefaultCrudRepository<
   List,
   typeof List.prototype.id,
   ListRelations
-  > {
+> {
 
   public readonly genericEntities: HasManyThroughRepositoryFactory<GenericEntity, typeof GenericEntity.prototype.id,
     ListEntityRelation,
@@ -36,7 +39,19 @@ export class ListRepository extends DefaultCrudRepository<
   private static response_limit = _.parseInt(process.env.response_limit_list || "50");
 
   constructor(
-    @inject('datasources.EntityDb') dataSource: EntityDbDataSource, @repository.getter('ListEntityRelationRepository') protected listEntityRelationRepositoryGetter: Getter<ListEntityRelationRepository>, @repository.getter('GenericEntityRepository') protected genericEntityRepositoryGetter: Getter<GenericEntityRepository>, @repository.getter('ListRelationRepository') protected listRelationRepositoryGetter: Getter<ListRelationRepository>, @repository.getter('ListReactionsRepository') protected listReactionsRepositoryGetter: Getter<ListReactionsRepository>, @repository.getter('TagListRelationRepository') protected tagListRelationRepositoryGetter: Getter<TagListRelationRepository>, @repository.getter('TagRepository') protected tagRepositoryGetter: Getter<TagRepository>,
+    @inject('datasources.EntityDb') dataSource: EntityDbDataSource,
+    @repository.getter('ListEntityRelationRepository') protected listEntityRelationRepositoryGetter: Getter<ListEntityRelationRepository>,
+    @repository.getter('GenericEntityRepository') protected genericEntityRepositoryGetter: Getter<GenericEntityRepository>,
+    @repository.getter('ListRelationRepository') protected listRelationRepositoryGetter: Getter<ListRelationRepository>,
+    @repository.getter('ListReactionsRepository') protected listReactionsRepositoryGetter: Getter<ListReactionsRepository>,
+    @repository.getter('TagListRelationRepository') protected tagListRelationRepositoryGetter: Getter<TagListRelationRepository>,
+    @repository.getter('TagRepository') protected tagRepositoryGetter: Getter<TagRepository>,
+    @inject('extensions.uniqueness.configurationreader') private uniquenessConfigReader: UniquenessConfigurationReader,
+    @inject('extensions.record-limits.configurationreader') private recordLimitConfigReader: RecordLimitsConfigurationReader,
+    @inject('extensions.kind-limits.configurationreader') private kindLimitConfigReader: KindLimitsConfigurationReader,
+    @inject('extensions.visibility.configurationreader') private visibilityConfigReader: VisibilityConfigurationReader,
+    @inject('extensions.validfrom.configurationreader') private validfromConfigReader: ValidfromConfigurationReader,
+    @inject('extensions.idempotency.configurationreader') private idempotencyConfigReader: IdempotencyConfigurationReader
   ) {
     super(List, dataSource);
     this.tags = this.createHasManyThroughRepositoryFactoryFor('tags', tagRepositoryGetter, tagListRelationRepositoryGetter,);
@@ -49,23 +64,34 @@ export class ListRepository extends DefaultCrudRepository<
 
   async find(filter?: Filter<List>, options?: Options) {
 
-    if (filter?.limit && filter.limit > ListRepository.response_limit)
-      filter.limit = ListRepository.response_limit;
+    // Calculate the limit value using optional chaining and nullish coalescing
+    // If filter.limit is defined, use its value; otherwise, use ListRepository.response_limit
+    const limit = filter?.limit || ListRepository.response_limit;
+
+    // Update the filter object by spreading the existing filter and overwriting the limit property
+    // Ensure that the new limit value does not exceed ListRepository.response_limit
+    filter = {...filter, limit: Math.min(limit, ListRepository.response_limit)};
 
     return super.find(filter, options);
   }
 
   async create(data: DataObject<List>) {
 
-    this.checkDataKindFormat(data);
+    const idempotencyKey = this.calculateIdempotencyKey(data);
 
-    this.generateSlug(data);
+    return this.findIdempotentList(idempotencyKey)
+      .then(foundIdempotent => {
 
-    this.setOwnersCount(data);
+        if (foundIdempotent) {
+          return foundIdempotent;
+        }
 
-    await this.checkUniquenessForCreate(data);
+        data.idempotencyKey = idempotencyKey;
 
-    return super.create(data);
+        // we do not have identical data in the db
+        // go ahead, validate, enrich and create the data
+        return this.createNewListFacade(data);
+      });
   }
 
   async replaceById(id: string, data: DataObject<List>, options?: Options) {
@@ -105,10 +131,170 @@ export class ListRepository extends DefaultCrudRepository<
     return super.updateAll(data, where, options);
   }
 
+  private async findIdempotentList(idempotencyKey: string | undefined): Promise<List | null> {
+
+    // check if same record already exists
+    if (_.isString(idempotencyKey) && !_.isEmpty(idempotencyKey)) {
+
+      // try to find if a record with this idempotency key is already created
+      const sameRecord = this.findOne({
+        where: {
+          and: [
+            {
+              idempotencyKey: idempotencyKey
+            }
+          ]
+        }
+      });
+
+      // if record already created return the existing record as if it newly created
+      return sameRecord;
+    }
+
+    return Promise.resolve(null);
+  }
+
+  calculateIdempotencyKey(data: DataObject<GenericEntity>) {
+    const idempotencyFields = this.idempotencyConfigReader.getIdempotencyForLists(data.kind);
+
+    // idempotency is not configured
+    if (idempotencyFields.length === 0) return;
+
+    const fieldValues = idempotencyFields.map((idempotencyField) => {
+      const value = _.get(data, idempotencyField);
+      return typeof value === 'object' ? JSON.stringify(value) : value;
+    });
+
+    const keyString = fieldValues.join(',');
+    const hash = crypto
+      .createHash('sha256')
+      .update(keyString);
+
+    return hash.digest('hex');
+  }
+
+  /**
+   * Validates the incoming data, enriches with managed fields then calls super.create
+   * 
+   * @param data Input object to create entity from.
+   * @returns Newly created list.
+   */
+  private async createNewListFacade(data: DataObject<List>): Promise<List> {
+
+    /**
+     * TODO: MongoDB connector still does not support transactions.
+     * Comment out here when we receive transaction support.
+     * Then we need to pass the trx to the methods down here.
+     */
+    /*
+    const trxRepo = new DefaultTransactionalRepository(List, this.dataSource);
+    const trx = await trxRepo.beginTransaction(IsolationLevel.READ_COMMITTED);
+    */
+
+    return this.enrichIncomingListForCreation(data)
+      .then(data => this.validateIncomingListForCreation(data))
+      .then(data => super.create(data));
+  }
+
+  private async validateIncomingListForCreation(data: DataObject<List>): Promise<DataObject<List>> {
+
+    this.checkDataKindFormat(data);
+    this.checkDataKindValues(data);
+
+    return Promise.all([
+      this.checkUniquenessForCreate(data),
+      this.checkRecordLimits(data)
+    ]).then(() => {
+      return data;
+    });
+  }
+
+  /**
+  * Adds managed fields to the list.
+  * @param data Data that is intended to be created
+  * @returns New version of the data which have managed fields are added
+  */
+  private async enrichIncomingListForCreation(data: DataObject<List>): Promise<DataObject<List>> {
+
+    // take the date of now to make sure we have exactly the same date in all date fields
+    let now = new Date().toISOString();
+
+    // use incoming creationDateTime and lastUpdateDateTime if given. Override with default if it does not exist.
+    data.creationDateTime = data.creationDateTime ? data.creationDateTime : now;
+    data.lastUpdatedDateTime = data.lastUpdatedDateTime ? data.lastUpdatedDateTime : now;
+
+    // autoapprove the record if it is configured
+
+    data.validFromDateTime = this.validfromConfigReader.getValidFromForLists(data.kind) ? now : undefined;
+
+    // new data is starting from version 1
+    data.version = 1;
+
+    // set visibility
+    data.visibility = this.visibilityConfigReader.getVisibilityForLists(data.kind);
+
+    // prepare slug from the name and set to the record 
+    this.generateSlug(data);
+
+    // set owners count to make searching easier
+    this.setOwnersCount(data);
+
+    return data;
+  }
+
+  private async checkRecordLimits(newData: DataObject<List>) {
+
+    if (!this.recordLimitConfigReader.isRecordLimitsConfiguredForLists(newData.kind))
+      return;
+
+    let limit = this.recordLimitConfigReader.getRecordLimitsCountForLists(newData.kind)
+    let set = this.recordLimitConfigReader.getRecordLimitsSetForLists(newData.ownerUsers, newData.ownerGroups, newData.kind);
+    let filterBuilder: FilterBuilder<List>;
+
+    if (this.recordLimitConfigReader.isLimitConfiguredForKindForLists(newData.kind))
+      filterBuilder = new FilterBuilder<List>({
+        where: {
+          kind: newData.kind
+        }
+      })
+    else {
+      filterBuilder = new FilterBuilder<List>()
+    }
+
+    let filter = filterBuilder.build();
+
+    // add set filter if configured
+    if (set) {
+      filter = new SetFilterBuilder<List>(set, {
+        filter: filter
+      })
+        .build();
+    }
+
+    let currentCount = await this.count(filter.where);
+
+    if (currentCount.count >= limit!) {
+      throw new HttpErrorResponse({
+        statusCode: 403,
+        name: "LimitExceededError",
+        message: `List limit is exceeded.`,
+        code: "LIST-LIMIT-EXCEEDED",
+        status: 403,
+        details: [new SingleError({
+          code: "LIST-LIMIT-EXCEEDED",
+          info: {
+            limit: limit
+          }
+        })]
+      });
+    }
+
+  }
+
   private generateSlug(data: DataObject<List>) {
 
-    if (data.name)
-      data.slug = slugify(data.name ?? '', {lower: true});
+    if (data.name && !data.slug)
+      data.slug = slugify(data.name ?? '', {lower: true, strict: true});
   }
 
   private setOwnersCount(data: DataObject<List>) {
@@ -118,6 +304,12 @@ export class ListRepository extends DefaultCrudRepository<
 
     if (_.isArray(data.ownerGroups))
       data.ownerGroupsCount = data.ownerGroups?.length;
+
+    if (_.isArray(data.viewerUsers))
+      data.viewerUsersCount = data.viewerUsers?.length;
+
+    if (_.isArray(data.viewerGroups))
+      data.viewerGroupsCount = data.viewerGroups?.length;
   }
 
   private checkDataKindFormat(data: DataObject<List>) {
@@ -138,51 +330,60 @@ export class ListRepository extends DefaultCrudRepository<
     }
   }
 
+  private checkDataKindValues(data: DataObject<List>) {
+
+    /**
+     * This function checks if the 'kind' field in the 'data' object is valid
+     * for the list. Although 'kind' is required, we ensure it has a value by
+     * this point. If it's not valid, we raise an error with the allowed valid
+     * values for 'kind'.
+     */
+    let kind = data.kind || '';
+
+    if (!this.kindLimitConfigReader.isKindAcceptableForList(kind)) {
+      let validValues = this.kindLimitConfigReader.allowedKindsForLists;
+
+      throw new HttpErrorResponse({
+        statusCode: 422,
+        name: "InvalidKindError",
+        message: `List kind '${data.kind}' is not valid. Use any of these values instead: ${validValues.join(', ')}`,
+        code: "INVALID-LIST-KIND",
+        status: 422,
+      });
+    }
+  }
+
   private async checkUniquenessForCreate(newData: DataObject<List>) {
 
     // return if no uniqueness is configured
-    if (!process.env.uniqueness_list_fields && !process.env.uniqueness_list_set) return;
+    if (!this.uniquenessConfigReader.isUniquenessConfiguredForLists(newData.kind))
+      return;
 
     let whereBuilder: WhereBuilder<List> = new WhereBuilder<List>();
 
-    // add uniqueness fields if configured
-    if (process.env.uniqueness_list_fields) {
-      let fields: string[] = process.env.uniqueness_list_fields
-        .replace(/\s/g, '')
-        .split(',');
+    // read the fields (name, slug) array for this kind
+    let fields: string[] = this.uniquenessConfigReader.getFieldsForLists(newData.kind);
+    let set = this.uniquenessConfigReader.getSetForLists(newData.ownerUsers, newData.ownerGroups, newData.kind);
 
-      _.forEach(fields, (field) => {
+    // add uniqueness fields to where builder
+    _.forEach(fields, (field) => {
 
-        whereBuilder.and({
-          [field]: _.get(newData, field)
-        });
+      whereBuilder.and({
+        [field]: _.get(newData, field)
       });
-    }
+    });
 
     let filter = new FilterBuilder<List>()
       .where(whereBuilder.build())
-      .fields('id')
       .build();
 
     // add set filter if configured
-    if (process.env.uniqueness_list_set) {
-
-      let uniquenessStr = process.env.uniqueness_list_set;
-      uniquenessStr = uniquenessStr.replace(/(set\[.*owners\])/g, '$1='
-        + (newData.ownerUsers ? newData.ownerUsers?.join(',') : '')
-        + ';'
-        + (newData.ownerGroups ? newData.ownerGroups?.join(',') : ''));
-
-      let uniquenessSet = (qs.parse(uniquenessStr)).set as Set;
-
-      filter = new SetFilterBuilder<List>(uniquenessSet, {
+    if (set) {
+      filter = new SetFilterBuilder<List>(set, {
         filter: filter
       })
         .build();
     }
-
-    // final uniqueness controlling filter
-    console.log('Uniqueness Filter: ', JSON.stringify(filter));
 
     let existingList = await super.findOne(filter);
 
@@ -192,7 +393,7 @@ export class ListRepository extends DefaultCrudRepository<
         statusCode: 409,
         name: "DataUniquenessViolationError",
         message: "List already exists.",
-        code: "LIST-ALREADY-EXISTS",
+        code: "List-ALREADY-EXISTS",
         status: 409,
       });
     }

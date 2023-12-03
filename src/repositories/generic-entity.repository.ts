@@ -1,6 +1,5 @@
 import {Getter, inject} from '@loopback/core';
 import {DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, Options, Where, WhereBuilder, repository} from '@loopback/repository';
-import {Request, RestBindings} from '@loopback/rest';
 import * as crypto from 'crypto';
 import _ from 'lodash';
 import slugify from "slugify";
@@ -35,14 +34,17 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   private static response_limit = _.parseInt(process.env.response_limit_entity || "50");
 
   constructor(
-    @inject('datasources.EntityDb') dataSource: EntityDbDataSource, @repository.getter('RelationRepository') protected relationRepositoryGetter: Getter<RelationRepository>, @repository.getter('ReactionsRepository') protected reactionsRepositoryGetter: Getter<ReactionsRepository>, @repository.getter('TagEntityRelationRepository') protected tagEntityRelationRepositoryGetter: Getter<TagEntityRelationRepository>, @repository.getter('TagRepository') protected tagRepositoryGetter: Getter<TagRepository>,
+    @inject('datasources.EntityDb') dataSource: EntityDbDataSource,
+    @repository.getter('RelationRepository') protected relationRepositoryGetter: Getter<RelationRepository>,
+    @repository.getter('ReactionsRepository') protected reactionsRepositoryGetter: Getter<ReactionsRepository>,
+    @repository.getter('TagEntityRelationRepository') protected tagEntityRelationRepositoryGetter: Getter<TagEntityRelationRepository>,
+    @repository.getter('TagRepository') protected tagRepositoryGetter: Getter<TagRepository>,
     @inject('extensions.uniqueness.configurationreader') private uniquenessConfigReader: UniquenessConfigurationReader,
     @inject('extensions.record-limits.configurationreader') private recordLimitConfigReader: RecordLimitsConfigurationReader,
     @inject('extensions.kind-limits.configurationreader') private kindLimitConfigReader: KindLimitsConfigurationReader,
     @inject('extensions.visibility.configurationreader') private visibilityConfigReader: VisibilityConfigurationReader,
     @inject('extensions.validfrom.configurationreader') private validfromConfigReader: ValidfromConfigurationReader,
-    @inject('extensions.idempotency.configurationreader') private idempotencyConfigReader: IdempotencyConfigurationReader,
-    @inject(RestBindings.Http.REQUEST) private request: Request,
+    @inject('extensions.idempotency.configurationreader') private idempotencyConfigReader: IdempotencyConfigurationReader
   ) {
     super(GenericEntity, dataSource);
     this.tags = this.createHasManyThroughRepositoryFactoryFor('tags', tagRepositoryGetter, tagEntityRelationRepositoryGetter,);

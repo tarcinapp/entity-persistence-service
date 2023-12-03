@@ -10,6 +10,7 @@ export namespace ValidFromConfigBindings {
 export class ValidfromConfigurationReader {
 
   defaultEntityAutoApprove: boolean = false;
+  defaultListAutoApprove: boolean = false;
 
   constructor() {
 
@@ -26,5 +27,18 @@ export class ValidfromConfigurationReader {
     }
 
     return this.defaultEntityAutoApprove;
+  }
+
+  public getValidFromForLists(kind?: string) {
+
+    if (_.has(process.env, `autoapprove_list_for_${kind}`)) {
+      return _.get(process.env, `autoapprove_list_for_${kind}`) == 'true';
+    }
+
+    if (_.has(process.env, `autoapprove_list`)) {
+      return _.get(process.env, `autoapprove_list`) == 'true';
+    }
+
+    return this.defaultListAutoApprove;
   }
 }

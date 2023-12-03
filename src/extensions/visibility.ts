@@ -10,6 +10,7 @@ export namespace VisibilityConfigBindings {
 export class VisibilityConfigurationReader {
 
   defaultEntityVisibility: string = "protected";
+  defaultListVisibility: string = "protected";
 
   /**
    *
@@ -37,5 +38,18 @@ export class VisibilityConfigurationReader {
     }
 
     return this.defaultEntityVisibility;
+  }
+
+  public getVisibilityForLists(kind: string | undefined) {
+
+    if (_.has(process.env, `visibility_list_for_${kind}`)) {
+      return _.get(process.env, `visibility_list_for_${kind}`);
+    }
+
+    if (_.has(process.env, `visibility_list`)) {
+      return _.get(process.env, `visibility_list`);
+    }
+
+    return this.defaultListVisibility;
   }
 }

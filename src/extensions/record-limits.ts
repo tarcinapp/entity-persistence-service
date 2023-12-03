@@ -59,4 +59,45 @@ export class RecordLimitsConfigurationReader {
       return (qs.parse(setStr)).set as Set;
     }
   }
+
+  /////
+
+  public isRecordLimitsConfiguredForLists(kind?: string) {
+    return _.has(process.env, 'record_limit_list_count') || this.isLimitConfiguredForKindForLists(kind);
+  }
+
+  public isLimitConfiguredForKindForLists(kind?: string) {
+    return _.has(process.env, `record_limit_list_count_for_${kind}`);
+  }
+
+  public getRecordLimitsCountForLists(kind?: string) {
+
+    if (_.has(process.env, `record_limit_list_count_for_${kind}`)) {
+      return _.toInteger(_.get(process.env, `record_limit_list_count_for_${kind}`));
+    }
+
+    if (_.has(process.env, `record_limit_list_count`)) {
+      return _.toInteger(_.get(process.env, `record_limit_list_count`));
+    }
+  }
+
+  public getRecordLimitsSetForLists(ownerUsers?: (string | undefined)[], ownerGroups?: (string | undefined)[], kind?: string): Set | undefined {
+
+    let setStr: string | undefined;
+
+    setStr = _.get(process.env, `record_limit_list_set_for_${kind}`);
+
+    if (!setStr) {
+      setStr = _.get(process.env, 'record_limit_list_set');
+    }
+
+    if (setStr) {
+      setStr = setStr.replace(/(set\[.*owners\])/g, '$1='
+        + (ownerUsers ? ownerUsers?.join(',') : '')
+        + ';'
+        + (ownerGroups ? ownerGroups?.join(',') : ''));
+
+      return (qs.parse(setStr)).set as Set;
+    }
+  }
 }
