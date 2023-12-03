@@ -1,4 +1,5 @@
 import {Entity, hasMany, model, property} from '@loopback/repository';
+import _ from 'lodash';
 import {GenericEntity} from './generic-entity.model';
 import {ListEntityRelation} from './list-entity-relation.model';
 import {ListReactions} from './list-reactions.model';
@@ -25,6 +26,10 @@ export class List extends Entity {
   @property({
     type: 'string',
     required: true,
+    jsonSchema: {
+      minLength: 2,
+      maxLength: _.parseInt(process.env.validation_listname_maxlength || "50")
+    }
   })
   name: string;
 
@@ -36,18 +41,31 @@ export class List extends Entity {
 
   @property({
     type: 'date',
-    defaultFn: "now",
+    description: 'This field is filled by server at the time of the creation of the list.'
   })
   creationDateTime?: string;
 
   @property({
+    required: false,
+    type: 'date'
+  })
+  lastUpdatedDateTime?: string;
+
+  @property({
     type: 'date',
-    defaultFn: process.env.autoapprove_list == 'true' ? 'now' : undefined,
+    description: 'This is the list approval time.' +
+      'Only those list with validFromDateTime property has a value can be' +
+      'seen by other members.' +
+      'If caller is not a member at the creation time, this field is filled' +
+      'automatically by the server.',
+    default: null,
+    jsonSchema: {nullable: true}
   })
   validFromDateTime?: string;
 
   @property({
     type: 'date',
+    description: 'This field indicates if the list is currently active.',
     default: null,
     jsonSchema: {nullable: true}
   })
@@ -55,12 +73,36 @@ export class List extends Entity {
 
   @property({
     type: 'string',
-    default: process.env.visibility_entity || "protected",
+    description: 'public: anyone can see the list, if validFromDateTime has a value. ' +
+      'protected: only the members of the owner groups can see the entity. ' +
+      'private: only the owner user can see the entity. ' +
+      'Note: This option only applies to the user in members role. Higher level' +
+      'roles always see all the entities.',
+    default: "protected",
     jsonSchema: {
       enum: ['public', 'protected', 'private'],
     }
   })
   visibility?: string;
+
+  @property({
+    required: false,
+    type: 'number',
+    default: 1
+  })
+  version?: number;
+
+  @property({
+    required: false,
+    type: 'string'
+  })
+  lastUpdatedBy?: string;
+
+  @property({
+    required: false,
+    type: 'string'
+  })
+  createdBy?: string;
 
   @property.array(String, {
     required: false,
@@ -74,6 +116,18 @@ export class List extends Entity {
   })
   ownerGroups?: string[];
 
+  @property.array(String, {
+    required: false,
+    default: []
+  })
+  viewerUsers?: string[];
+
+  @property.array(String, {
+    required: false,
+    default: []
+  })
+  viewerGroups?: string[];
+
   @property({
     type: 'number',
     default: 0
@@ -85,6 +139,23 @@ export class List extends Entity {
     default: 0
   })
   ownerGroupsCount?: number;
+
+  @property({
+    type: 'number',
+    default: 0
+  })
+  viewerUsersCount?: number;
+
+  @property({
+    type: 'number',
+    default: 0
+  })
+  viewerGroupsCount?: number;
+
+  @property({
+    type: 'string'
+  })
+  idempotencyKey?: string | undefined;
 
   @hasMany(() => GenericEntity, {through: {model: () => ListEntityRelation, keyTo: 'entityId'}})
   genericEntities: GenericEntity[];
