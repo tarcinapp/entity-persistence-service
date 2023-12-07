@@ -2,12 +2,14 @@ import {
   Count,
   CountSchema,
   Filter,
+  FilterBuilder,
   FilterExcludingWhere,
   repository,
   Where
 } from '@loopback/repository';
 import {
   del, get,
+  getJsonSchema,
   getModelSchemaRef, param,
 
 
@@ -21,7 +23,7 @@ import {
   requestBody
 } from '@loopback/rest';
 import {Set, SetFilterBuilder} from '../extensions';
-import {List} from '../models';
+import {HttpErrorResponse, List} from '../models';
 import {ListRepository} from '../repositories';
 
 export class ListController {
@@ -36,6 +38,18 @@ export class ListController {
         description: 'List model instance',
         content: {'application/json': {schema: getModelSchemaRef(List)}},
       },
+      '409': {
+        description: 'Entity name already exists.',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse)
+              }
+            }
+          }
+        }
+      }
     },
   })
   async create(
@@ -63,9 +77,23 @@ export class ListController {
     },
   })
   async count(
+    @param.query.object('set') set?: Set,
     @param.where(List) where?: Where<List>,
   ): Promise<Count> {
-    return this.listRepository.count(where);
+
+    let filterBuilder = new FilterBuilder<List>();
+
+    if (where)
+      filterBuilder.where(where);
+
+    let filter = filterBuilder.build();
+
+    if (set)
+      filter = new SetFilterBuilder<List>(set, {
+        filter: filter
+      }).build();
+
+    return this.listRepository.count(filter.where);
   }
 
   @get('/lists', {
