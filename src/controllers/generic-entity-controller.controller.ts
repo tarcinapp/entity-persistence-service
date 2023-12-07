@@ -16,8 +16,32 @@ export class GenericEntityControllerController {
         description: 'GenericEntity model instance',
         content: {'application/json': {schema: getModelSchemaRef(GenericEntity)}},
       },
+      '429': {
+        description: 'Entity limit is exceeded',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse)
+              }
+            }
+          }
+        }
+      },
       '409': {
         description: 'Entity name already exists.',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse)
+              }
+            }
+          }
+        }
+      },
+      '422': {
+        description: 'Unprocessable entity',
         content: {
           'application/json': {
             schema: {
@@ -149,6 +173,30 @@ export class GenericEntityControllerController {
       '204': {
         description: 'GenericEntity PATCH success',
       },
+      '404': {
+        description: 'Entity not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse)
+              }
+            }
+          }
+        }
+      },
+      '422': {
+        description: 'Unprocessable entity',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse)
+              }
+            }
+          }
+        }
+      }
     },
   })
   async updateById(
@@ -170,6 +218,30 @@ export class GenericEntityControllerController {
       '204': {
         description: 'GenericEntity PUT success',
       },
+      '404': {
+        description: 'Entity not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse)
+              }
+            }
+          }
+        }
+      },
+      '422': {
+        description: 'Unprocessable entity',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse)
+              }
+            }
+          }
+        }
+      }
     },
   })
   async replaceById(
@@ -184,6 +256,30 @@ export class GenericEntityControllerController {
       '204': {
         description: 'GenericEntity DELETE success',
       },
+      '404': {
+        description: 'Entity not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse)
+              }
+            }
+          }
+        }
+      },
+      '422': {
+        description: 'Unprocessable entity',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse)
+              }
+            }
+          }
+        }
+      }
     },
   })
   async deleteById(@param.path.string('id') id: string): Promise<void> {
