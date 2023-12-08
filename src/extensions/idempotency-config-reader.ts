@@ -1,4 +1,5 @@
 import {BindingKey} from '@loopback/core';
+import {isEmpty} from 'lodash';
 
 export namespace IdempotencyConfigBindings {
   export const CONFIG_READER = BindingKey.create<IdempotencyConfigurationReader>(
@@ -37,7 +38,7 @@ export class IdempotencyConfigurationReader {
   public getIdempotencyForEntities(kind?: string): string[] {
     let idempotencyConfig = this.getIdempotencyConfigForKindForEntities(kind);
 
-    if (!idempotencyConfig) {
+    if (isEmpty(idempotencyConfig)) {
       idempotencyConfig = this.getIdempotencyConfigForEntities();
     }
 
@@ -47,7 +48,7 @@ export class IdempotencyConfigurationReader {
   public getIdempotencyForLists(kind?: string): string[] {
     let idempotencyConfig = this.getIdempotencyConfigForKindForLists(kind);
 
-    if (!idempotencyConfig) {
+    if (isEmpty(idempotencyConfig)) {
       idempotencyConfig = this.getIdempotencyConfigForLists();
     }
 
