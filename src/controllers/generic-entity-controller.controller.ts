@@ -160,6 +160,18 @@ export class GenericEntityControllerController {
         },
       },
     },
+    '404': {
+      description: 'Entity not found',
+      content: {
+        'application/json': {
+          schema: {
+            properties: {
+              error: getJsonSchema(HttpErrorResponse)
+            }
+          }
+        }
+      }
+    },
   })
   async findById(
     @param.path.string('id') id: string,
@@ -258,18 +270,6 @@ export class GenericEntityControllerController {
       },
       '404': {
         description: 'Entity not found',
-        content: {
-          'application/json': {
-            schema: {
-              properties: {
-                error: getJsonSchema(HttpErrorResponse)
-              }
-            }
-          }
-        }
-      },
-      '422': {
-        description: 'Unprocessable entity',
         content: {
           'application/json': {
             schema: {
