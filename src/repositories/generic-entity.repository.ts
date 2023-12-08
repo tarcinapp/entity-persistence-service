@@ -222,7 +222,6 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     await uniquenessCheck;
 
     return data;
-
   }
 
   private async validateIncomingDataForUpdate(id: string, existingData: DataObject<GenericEntity>, data: DataObject<GenericEntity>, options?: Options) {

@@ -96,31 +96,43 @@ export class ListRepository extends DefaultCrudRepository<
 
   async replaceById(id: string, data: DataObject<List>, options?: Options) {
 
-    this.checkDataKindFormat(data);
+    return this.enrichIncomingListForUpdates(id, data)
+      .then(collection => {
 
-    this.generateSlug(data);
+        // calculate idempotencyKey
+        const idempotencyKey = this.calculateIdempotencyKey(collection.data);
 
-    this.setOwnersCount(data);
+        // set idempotencyKey
+        collection.data.idempotencyKey = idempotencyKey;
 
-    await this.checkUniquenessForUpdate(id, data);
-
-    return super.replaceById(id, data, options);
+        return collection;
+      })
+      .then(collection => this.validateIncomingListForReplace(id, collection.data, options))
+      .then(data => super.replaceById(id, data, options));
   }
 
   async updateById(id: string, data: DataObject<List>, options?: Options) {
 
-    this.checkDataKindFormat(data);
+    return this.enrichIncomingListForUpdates(id, data)
+      .then(collection => {
+        const mergedData = _.defaults({}, collection.data, collection.existingData);
 
-    this.generateSlug(data);
+        // calculate idempotencyKey
+        const idempotencyKey = this.calculateIdempotencyKey(mergedData);
 
-    this.setOwnersCount(data);
+        // set idempotencyKey
+        collection.data.idempotencyKey = idempotencyKey;
 
-    await this.checkUniquenessForUpdate(id, data);
-
-    return super.updateById(id, data, options);
+        return collection;
+      })
+      .then(collection => this.validateIncomingDataForUpdate(id, collection.existingData, collection.data, options))
+      .then(data => super.updateById(id, data, options));
   }
 
   async updateAll(data: DataObject<List>, where?: Where<List>, options?: Options) {
+
+    let now = new Date().toISOString();
+    data.lastUpdatedDateTime = now;
 
     this.checkDataKindFormat(data);
 
@@ -154,7 +166,7 @@ export class ListRepository extends DefaultCrudRepository<
     return Promise.resolve(null);
   }
 
-  calculateIdempotencyKey(data: DataObject<GenericEntity>) {
+  calculateIdempotencyKey(data: DataObject<List>) {
     const idempotencyFields = this.idempotencyConfigReader.getIdempotencyForLists(data.kind);
 
     // idempotency is not configured
@@ -176,7 +188,7 @@ export class ListRepository extends DefaultCrudRepository<
   /**
    * Validates the incoming data, enriches with managed fields then calls super.create
    * 
-   * @param data Input object to create entity from.
+   * @param data Input object to create list from.
    * @returns Newly created list.
    */
   private async createNewListFacade(data: DataObject<List>): Promise<List> {
@@ -207,6 +219,36 @@ export class ListRepository extends DefaultCrudRepository<
     ]).then(() => {
       return data;
     });
+  }
+
+  private async validateIncomingListForReplace(id: string, data: DataObject<List>, options?: Options) {
+    const uniquenessCheck = this.checkUniquenessForUpdate(id, data);
+
+    this.checkDataKindValues(data);
+    this.checkDataKindFormat(data);
+
+    await uniquenessCheck;
+
+    return data;
+  }
+
+  private async validateIncomingDataForUpdate(id: string, existingData: DataObject<List>, data: DataObject<List>, options?: Options) {
+
+    // we need to merge existing data with incoming data in order to check limits and uniquenesses
+    const mergedData = _.defaults({}, data, existingData);
+    const uniquenessCheck = this.checkUniquenessForUpdate(id, mergedData);
+
+    if (data.kind) {
+      this.checkDataKindFormat(data);
+      this.checkDataKindValues(data);
+    }
+
+    this.generateSlug(data);
+    this.setOwnersCount(data);
+
+    await uniquenessCheck;
+
+    return data;
   }
 
   /**
@@ -240,6 +282,51 @@ export class ListRepository extends DefaultCrudRepository<
     this.setOwnersCount(data);
 
     return data;
+  }
+
+  /**
+   * Enrich the original record with managed fields where applicable.
+   * This method can be used by replace and update operations as their requirements are same.
+   * @param id Id of the targeted record
+   * @param data Payload of the list
+   * @returns Enriched list
+   */
+  private async enrichIncomingListForUpdates(id: string, data: DataObject<List>) {
+
+    return this.findById(id)
+      .then(existingData => {
+
+        // check if we have this record in db
+        if (!existingData) {
+          throw new HttpErrorResponse({
+            statusCode: 404,
+            name: "NotFoundError",
+            message: "List with id '" + id + "' could not be found.",
+            code: "LIST-NOT-FOUND",
+            status: 404
+          });
+        }
+
+        return existingData;
+      })
+      .then(existingData => {
+        const now = new Date().toISOString();
+
+        // set new version
+        data.version = (existingData.version ?? 1) + 1;
+
+        // we may use current date, if it does not exist in the given data
+        data.lastUpdatedDateTime = data.lastUpdatedDateTime ? data.lastUpdatedDateTime : now;
+
+        this.generateSlug(data);
+
+        this.setOwnersCount(data);
+
+        return {
+          data: data,
+          existingData: existingData
+        };
+      });
   }
 
   private async checkRecordLimits(newData: DataObject<List>) {
@@ -393,7 +480,7 @@ export class ListRepository extends DefaultCrudRepository<
         statusCode: 409,
         name: "DataUniquenessViolationError",
         message: "List already exists.",
-        code: "List-ALREADY-EXISTS",
+        code: "LIST-ALREADY-EXISTS",
         status: 409,
       });
     }
@@ -465,9 +552,9 @@ export class ListRepository extends DefaultCrudRepository<
     // final uniqueness controlling filter
     console.log('Uniqueness Filter: ', JSON.stringify(filter));
 
-    let existingEntity = await super.findOne(filter);
+    let existingList = await super.findOne(filter);
 
-    if (existingEntity) {
+    if (existingList) {
 
       throw new HttpErrorResponse({
         statusCode: 409,
@@ -478,6 +565,4 @@ export class ListRepository extends DefaultCrudRepository<
       });
     }
   }
-
-
 }
