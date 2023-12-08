@@ -38,6 +38,18 @@ export class ListController {
         description: 'List model instance',
         content: {'application/json': {schema: getModelSchemaRef(List)}},
       },
+      '429': {
+        description: 'List limit is exceeded',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse)
+              }
+            }
+          }
+        }
+      },
       '409': {
         description: 'Entity name already exists.',
         content: {
@@ -51,6 +63,18 @@ export class ListController {
         }
       }
     },
+    '422': {
+      description: 'Unprocessable list',
+      content: {
+        'application/json': {
+          schema: {
+            properties: {
+              error: getJsonSchema(HttpErrorResponse)
+            }
+          }
+        }
+      }
+    }
   })
   async create(
     @requestBody({
@@ -157,6 +181,18 @@ export class ListController {
         },
       },
     },
+    '404': {
+      description: 'List not found',
+      content: {
+        'application/json': {
+          schema: {
+            properties: {
+              error: getJsonSchema(HttpErrorResponse)
+            }
+          }
+        }
+      }
+    },
   })
   async findById(
     @param.path.string('id') id: string,
@@ -170,6 +206,30 @@ export class ListController {
       '204': {
         description: 'List PATCH success',
       },
+      '404': {
+        description: 'List not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse)
+              }
+            }
+          }
+        }
+      },
+      '422': {
+        description: 'Unprocessable entity',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse)
+              }
+            }
+          }
+        }
+      }
     },
   })
   async updateById(
@@ -191,6 +251,30 @@ export class ListController {
       '204': {
         description: 'List PUT success',
       },
+      '404': {
+        description: 'Entity not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse)
+              }
+            }
+          }
+        }
+      },
+      '422': {
+        description: 'Unprocessable entity',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse)
+              }
+            }
+          }
+        }
+      }
     },
   })
   async replaceById(
@@ -205,6 +289,18 @@ export class ListController {
       '204': {
         description: 'List DELETE success',
       },
+      '404': {
+        description: 'Entity not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse)
+              }
+            }
+          }
+        }
+      }
     },
   })
   async deleteById(@param.path.string('id') id: string): Promise<void> {
