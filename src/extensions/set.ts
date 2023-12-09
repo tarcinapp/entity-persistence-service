@@ -32,7 +32,7 @@ export interface OrClause {
  * This interface defines the structure of the 'set' query parameter.
  */
 export interface Set extends Condition, AndClause, OrClause {
-
+  [key: string]: any;
 }
 
 /**

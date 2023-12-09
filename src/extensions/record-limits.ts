@@ -1,7 +1,7 @@
 import {BindingKey} from '@loopback/core';
-import _ from 'lodash';
+import _, {cloneDeepWith, isEmpty} from 'lodash';
 import qs from 'qs';
-import {Set} from '../extensions/set';
+import {Set, UserAndGroupInfo} from '../extensions/set';
 
 export namespace RecordLimitsBindings {
   export const CONFIG_READER = BindingKey.create<RecordLimitsConfigurationReader>(
@@ -51,12 +51,26 @@ export class RecordLimitsConfigurationReader {
     }
 
     if (setStr) {
-      setStr = setStr.replace(/(set\[.*owners\])/g, '$1='
-        + (ownerUsers ? ownerUsers?.join(',') : '')
-        + ';'
-        + (ownerGroups ? ownerGroups?.join(',') : ''));
+      const set = (qs.parse(setStr)).set as Set;
+      const userAndGroupInfo: UserAndGroupInfo = {};
 
-      return (qs.parse(setStr)).set as Set;
+      if (!isEmpty(ownerUsers)) {
+        userAndGroupInfo.userIds = ownerUsers?.join(',')
+      }
+
+      if (!isEmpty(ownerGroups)) {
+        userAndGroupInfo.groupIds = ownerGroups?.join(',')
+      }
+
+      // Use _.cloneDeepWith for inline recursive replacement
+      const updatedSet = cloneDeepWith(set, (v, k) => {
+
+        if (k === 'owners') {
+          return userAndGroupInfo;
+        }
+      })
+
+      return updatedSet as Set;
     }
   }
 
@@ -92,12 +106,26 @@ export class RecordLimitsConfigurationReader {
     }
 
     if (setStr) {
-      setStr = setStr.replace(/(set\[.*owners\])/g, '$1='
-        + (ownerUsers ? ownerUsers?.join(',') : '')
-        + ';'
-        + (ownerGroups ? ownerGroups?.join(',') : ''));
+      const set = (qs.parse(setStr)).set as Set;
+      const userAndGroupInfo: UserAndGroupInfo = {};
 
-      return (qs.parse(setStr)).set as Set;
+      if (!isEmpty(ownerUsers)) {
+        userAndGroupInfo.userIds = ownerUsers?.join(',')
+      }
+
+      if (!isEmpty(ownerGroups)) {
+        userAndGroupInfo.groupIds = ownerGroups?.join(',')
+      }
+
+      // Use _.cloneDeepWith for inline recursive replacement
+      const updatedSet = cloneDeepWith(set, (v, k) => {
+
+        if (k === 'owners') {
+          return userAndGroupInfo;
+        }
+      })
+
+      return updatedSet as Set;
     }
   }
 }

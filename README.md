@@ -282,8 +282,10 @@ Limits can be configured through sets. For instance, you can limit active or pub
 entity-persistence-service ensures data creation is efficient and predictable. You can define JSON field paths, and the system generates a unique key based on these values. When clients attempt to create records, the system checks if a matching record exists using this key. If found, it returns the result as if it were a new record.
 | Configuration                         | Description                                                                                                                                      | Default Value | Example Values     |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------- | ------------------ |
-| **idempotency_entity**                | comma seperated list of field names for entity records that are contributing to the calculation of idempotency key                               | -             | kind, slug, author |
-| **idempotency_entity_for_{kindName}** | comma seperated list of field names for entity records with kind value is {kindName} that are contributing to the calculation of idempotency key | -             | kind, slug, author |
+| **idempotency_entity**                | comma seperated list of field names for entity records that are contributing to the calculation of idempotency key                               | -             | kind, name, author |
+| **idempotency_entity_for_{kindName}** | comma seperated list of field names for entity records with kind value is {kindName} that are contributing to the calculation of idempotency key | -             | kind, name, author |
+  
+Please note that idempotency calculation takes place before populating managed fields. Thus, do not use managed fields as contributor to the idempotency. For instance, use `name` instead of `slug`.
 
 # Deploying to Kubernetes
 * A configmap and secret sample yaml files are provided
