@@ -65,7 +65,7 @@ export class RecordLimitsConfigurationReader {
       // Use _.cloneDeepWith for inline recursive replacement
       const updatedSet = cloneDeepWith(set, (v, k) => {
 
-        if (k === 'owners') {
+        if (k === 'owners' || k === 'audience') {
           return userAndGroupInfo;
         }
       })
@@ -120,7 +120,7 @@ export class RecordLimitsConfigurationReader {
       // Use _.cloneDeepWith for inline recursive replacement
       const updatedSet = cloneDeepWith(set, (v, k) => {
 
-        if (k === 'owners') {
+        if (k === 'owners' || k === 'audience') {
           return userAndGroupInfo;
         }
       })
