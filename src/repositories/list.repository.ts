@@ -362,11 +362,11 @@ export class ListRepository extends DefaultCrudRepository<
 
     if (currentCount.count >= limit!) {
       throw new HttpErrorResponse({
-        statusCode: 403,
+        statusCode: 429,
         name: "LimitExceededError",
         message: `List limit is exceeded.`,
         code: "LIST-LIMIT-EXCEEDED",
-        status: 403,
+        status: 429,
         details: [new SingleError({
           code: "LIST-LIMIT-EXCEEDED",
           info: {
