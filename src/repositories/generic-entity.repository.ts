@@ -31,7 +31,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     typeof GenericEntity.prototype.id
   >;
 
-  private static response_limit = _.parseInt(process.env.response_limit_entity || "50");
+  private static responseLimit = _.parseInt(process.env.response_limit_entity ?? "50");
 
   constructor(
     @inject('datasources.EntityDb') dataSource: EntityDbDataSource,
@@ -58,11 +58,11 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
     // Calculate the limit value using optional chaining and nullish coalescing
     // If filter.limit is defined, use its value; otherwise, use GenericEntityRepository.response_limit
-    const limit = filter?.limit || GenericEntityRepository.response_limit;
+    const limit = filter?.limit ?? GenericEntityRepository.responseLimit;
 
     // Update the filter object by spreading the existing filter and overwriting the limit property
     // Ensure that the new limit value does not exceed GenericEntityRepository.response_limit
-    filter = {...filter, limit: Math.min(limit, GenericEntityRepository.response_limit)};
+    filter = {...filter, limit: Math.min(limit, GenericEntityRepository.responseLimit)};
 
     return super.find(filter, options);
   }
@@ -100,7 +100,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
         return collection;
       })
       .then(collection => this.validateIncomingEntityForReplace(id, collection.data, options))
-      .then(data => super.replaceById(id, data, options));
+      .then(validEnrichedData => super.replaceById(id, validEnrichedData, options));
   }
 
   async updateById(id: string, data: DataObject<GenericEntity>, options?: Options) {
@@ -118,12 +118,12 @@ export class GenericEntityRepository extends DefaultCrudRepository<
         return collection;
       })
       .then(collection => this.validateIncomingDataForUpdate(id, collection.existingData, collection.data, options))
-      .then(data => super.updateById(id, data, options));
+      .then(validEnrichedData => super.updateById(id, validEnrichedData, options));
   }
 
   async updateAll(data: DataObject<GenericEntity>, where?: Where<GenericEntity>, options?: Options) {
 
-    let now = new Date().toISOString();
+    const now = new Date().toISOString();
     data.lastUpdatedDateTime = now;
 
     this.checkDataKindFormat(data);
@@ -196,8 +196,8 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     */
 
     return this.enrichIncomingEntityForCreation(data)
-      .then(data => this.validateIncomingEntityForCreation(data))
-      .then(data => super.create(data));
+      .then(enrichedData => this.validateIncomingEntityForCreation(enrichedData))
+      .then(validEnrichedData => super.create(validEnrichedData));
   }
 
   private async validateIncomingEntityForCreation(data: DataObject<GenericEntity>): Promise<DataObject<GenericEntity>> {
@@ -251,7 +251,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   private async enrichIncomingEntityForCreation(data: DataObject<GenericEntity>): Promise<DataObject<GenericEntity>> {
 
     // take the date of now to make sure we have exactly the same date in all date fields
-    let now = new Date().toISOString();
+    const now = new Date().toISOString();
 
     // use incoming creationDateTime and lastUpdateDateTime if given. Override with default if it does not exist.
     data.creationDateTime = data.creationDateTime ? data.creationDateTime : now;
@@ -326,8 +326,8 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     if (!this.recordLimitConfigReader.isRecordLimitsConfiguredForEntities(newData.kind))
       return;
 
-    let limit = this.recordLimitConfigReader.getRecordLimitsCountForEntities(newData.kind)
-    let set = this.recordLimitConfigReader.getRecordLimitsSetForEntities(newData.ownerUsers, newData.ownerGroups, newData.kind);
+    const limit = this.recordLimitConfigReader.getRecordLimitsCountForEntities(newData.kind)
+    const set = this.recordLimitConfigReader.getRecordLimitsSetForEntities(newData.ownerUsers, newData.ownerGroups, newData.kind);
     let filterBuilder: FilterBuilder<GenericEntity>;
 
     if (this.recordLimitConfigReader.isLimitConfiguredForKindForEntities(newData.kind))
@@ -350,7 +350,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
         .build();
     }
 
-    let currentCount = await this.count(filter.where);
+    const currentCount = await this.count(filter.where);
 
     if (currentCount.count >= limit!) {
       throw new HttpErrorResponse({
@@ -395,9 +395,9 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
     // make sure data kind is slug format
     if (data.kind) {
-      let slugKind: string = slugify(data.kind, {lower: true, strict: true});
+      const slugKind: string = slugify(data.kind, {lower: true, strict: true});
 
-      if (slugKind != data.kind) {
+      if (slugKind !== data.kind) {
         throw new HttpErrorResponse({
           statusCode: 422,
           name: "InvalidKindError",
@@ -417,10 +417,10 @@ export class GenericEntityRepository extends DefaultCrudRepository<
      * this point. If it's not valid, we raise an error with the allowed valid
      * values for 'kind'.
      */
-    let kind = data.kind || '';
+    const kind = data.kind || '';
 
     if (!this.kindLimitConfigReader.isKindAcceptableForEntity(kind)) {
-      let validValues = this.kindLimitConfigReader.allowedKindsForEntities;
+      const validValues = this.kindLimitConfigReader.allowedKindsForEntities;
 
       throw new HttpErrorResponse({
         statusCode: 422,
@@ -438,11 +438,11 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     if (!this.uniquenessConfigReader.isUniquenessConfiguredForEntities(newData.kind))
       return;
 
-    let whereBuilder: WhereBuilder<GenericEntity> = new WhereBuilder<GenericEntity>();
+    const whereBuilder: WhereBuilder<GenericEntity> = new WhereBuilder<GenericEntity>();
 
     // read the fields (name, slug) array for this kind
-    let fields: string[] = this.uniquenessConfigReader.getFieldsForEntities(newData.kind);
-    let set = this.uniquenessConfigReader.getSetForEntities(newData.ownerUsers, newData.ownerGroups, newData.kind);
+    const fields: string[] = this.uniquenessConfigReader.getFieldsForEntities(newData.kind);
+    const set = this.uniquenessConfigReader.getSetForEntities(newData.ownerUsers, newData.ownerGroups, newData.kind);
 
     // add uniqueness fields to where builder
     _.forEach(fields, (field) => {
@@ -464,7 +464,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
         .build();
     }
 
-    let existingEntity = await super.findOne(filter);
+    const existingEntity = await super.findOne(filter);
 
     if (existingEntity) {
 
@@ -483,11 +483,11 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     if (!this.uniquenessConfigReader.isUniquenessConfiguredForEntities(newData.kind))
       return;
 
-    let whereBuilder: WhereBuilder<GenericEntity> = new WhereBuilder<GenericEntity>();
+    const whereBuilder: WhereBuilder<GenericEntity> = new WhereBuilder<GenericEntity>();
 
     // read the fields (name, slug) array for this kind
-    let fields: string[] = this.uniquenessConfigReader.getFieldsForEntities(newData.kind);
-    let set = this.uniquenessConfigReader.getSetForEntities(newData.ownerUsers, newData.ownerGroups, newData.kind);
+    const fields: string[] = this.uniquenessConfigReader.getFieldsForEntities(newData.kind);
+    const set = this.uniquenessConfigReader.getSetForEntities(newData.ownerUsers, newData.ownerGroups, newData.kind);
 
     _.forEach(fields, (field) => {
 
@@ -519,7 +519,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     // final uniqueness controlling filter
     //console.log('Uniqueness Filter: ', JSON.stringify(filter));
 
-    let violatingEntity = await super.findOne(filter);
+    const violatingEntity = await super.findOne(filter);
 
     if (violatingEntity) {
 
