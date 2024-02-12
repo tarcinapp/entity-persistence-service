@@ -9,7 +9,7 @@ import {Tag} from './tag.model';
   settings: {
     strict: false,
     mongodb: {
-      collection: process.env.collection_entity || "GenericEntity"
+      collection: process.env.collection_entity ?? "GenericEntity"
     }
   }
 })
@@ -33,7 +33,7 @@ export class GenericEntity extends Entity {
     required: true,
     jsonSchema: {
       minLength: 2,
-      maxLength: _.parseInt(process.env.validation_entityname_maxlength || "50")
+      maxLength: _.parseInt(process.env.validation_entityname_maxlength ?? "50")
     }
   })
   name: string;
