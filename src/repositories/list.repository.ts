@@ -36,7 +36,7 @@ export class ListRepository extends DefaultCrudRepository<
     typeof List.prototype.id
   >;
 
-  private static response_limit = _.parseInt(process.env.response_limit_list || "50");
+  private static responseLimit = _.parseInt(process.env.response_limit_list ?? "50");
 
   constructor(
     @inject('datasources.EntityDb') dataSource: EntityDbDataSource,
@@ -66,11 +66,11 @@ export class ListRepository extends DefaultCrudRepository<
 
     // Calculate the limit value using optional chaining and nullish coalescing
     // If filter.limit is defined, use its value; otherwise, use ListRepository.response_limit
-    const limit = filter?.limit || ListRepository.response_limit;
+    const limit = filter?.limit ?? ListRepository.responseLimit;
 
     // Update the filter object by spreading the existing filter and overwriting the limit property
     // Ensure that the new limit value does not exceed ListRepository.response_limit
-    filter = {...filter, limit: Math.min(limit, ListRepository.response_limit)};
+    filter = {...filter, limit: Math.min(limit, ListRepository.responseLimit)};
 
     return super.find(filter, options);
   }
@@ -108,7 +108,7 @@ export class ListRepository extends DefaultCrudRepository<
         return collection;
       })
       .then(collection => this.validateIncomingListForReplace(id, collection.data, options))
-      .then(data => super.replaceById(id, data, options));
+      .then(validEnrichedData => super.replaceById(id, validEnrichedData, options));
   }
 
   async updateById(id: string, data: DataObject<List>, options?: Options) {
@@ -126,12 +126,12 @@ export class ListRepository extends DefaultCrudRepository<
         return collection;
       })
       .then(collection => this.validateIncomingDataForUpdate(id, collection.existingData, collection.data, options))
-      .then(data => super.updateById(id, data, options));
+      .then(validEnrichedData => super.updateById(id, validEnrichedData, options));
   }
 
   async updateAll(data: DataObject<List>, where?: Where<List>, options?: Options) {
 
-    let now = new Date().toISOString();
+    const now = new Date().toISOString();
     data.lastUpdatedDateTime = now;
 
     this.checkDataKindFormat(data);
@@ -204,8 +204,8 @@ export class ListRepository extends DefaultCrudRepository<
     */
 
     return this.enrichIncomingListForCreation(data)
-      .then(data => this.validateIncomingListForCreation(data))
-      .then(data => super.create(data));
+      .then(enrichedData => this.validateIncomingListForCreation(enrichedData))
+      .then(validEnrichedData => super.create(validEnrichedData));
   }
 
   private async validateIncomingListForCreation(data: DataObject<List>): Promise<DataObject<List>> {
@@ -259,7 +259,7 @@ export class ListRepository extends DefaultCrudRepository<
   private async enrichIncomingListForCreation(data: DataObject<List>): Promise<DataObject<List>> {
 
     // take the date of now to make sure we have exactly the same date in all date fields
-    let now = new Date().toISOString();
+    const now = new Date().toISOString();
 
     // use incoming creationDateTime and lastUpdateDateTime if given. Override with default if it does not exist.
     data.creationDateTime = data.creationDateTime ? data.creationDateTime : now;
@@ -334,8 +334,8 @@ export class ListRepository extends DefaultCrudRepository<
     if (!this.recordLimitConfigReader.isRecordLimitsConfiguredForLists(newData.kind))
       return;
 
-    let limit = this.recordLimitConfigReader.getRecordLimitsCountForLists(newData.kind)
-    let set = this.recordLimitConfigReader.getRecordLimitsSetForLists(newData.ownerUsers, newData.ownerGroups, newData.kind);
+    const limit = this.recordLimitConfigReader.getRecordLimitsCountForLists(newData.kind)
+    const set = this.recordLimitConfigReader.getRecordLimitsSetForLists(newData.ownerUsers, newData.ownerGroups, newData.kind);
     let filterBuilder: FilterBuilder<List>;
 
     if (this.recordLimitConfigReader.isLimitConfiguredForKindForLists(newData.kind))
@@ -358,7 +358,7 @@ export class ListRepository extends DefaultCrudRepository<
         .build();
     }
 
-    let currentCount = await this.count(filter.where);
+    const currentCount = await this.count(filter.where);
 
     if (currentCount.count >= limit!) {
       throw new HttpErrorResponse({
@@ -403,9 +403,9 @@ export class ListRepository extends DefaultCrudRepository<
 
     // make sure data kind is slug format
     if (data.kind) {
-      let slugKind: string = slugify(data.kind, {lower: true});
+      const slugKind: string = slugify(data.kind, {lower: true});
 
-      if (slugKind != data.kind) {
+      if (slugKind !== data.kind) {
         throw new HttpErrorResponse({
           statusCode: 422,
           name: "InvalidKindError",
@@ -425,10 +425,10 @@ export class ListRepository extends DefaultCrudRepository<
      * this point. If it's not valid, we raise an error with the allowed valid
      * values for 'kind'.
      */
-    let kind = data.kind || '';
+    const kind = data.kind ?? '';
 
     if (!this.kindLimitConfigReader.isKindAcceptableForList(kind)) {
-      let validValues = this.kindLimitConfigReader.allowedKindsForLists;
+      const validValues = this.kindLimitConfigReader.allowedKindsForLists;
 
       throw new HttpErrorResponse({
         statusCode: 422,
@@ -446,11 +446,11 @@ export class ListRepository extends DefaultCrudRepository<
     if (!this.uniquenessConfigReader.isUniquenessConfiguredForLists(newData.kind))
       return;
 
-    let whereBuilder: WhereBuilder<List> = new WhereBuilder<List>();
+    const whereBuilder: WhereBuilder<List> = new WhereBuilder<List>();
 
     // read the fields (name, slug) array for this kind
-    let fields: string[] = this.uniquenessConfigReader.getFieldsForLists(newData.kind);
-    let set = this.uniquenessConfigReader.getSetForLists(newData.ownerUsers, newData.ownerGroups, newData.kind);
+    const fields: string[] = this.uniquenessConfigReader.getFieldsForLists(newData.kind);
+    const set = this.uniquenessConfigReader.getSetForLists(newData.ownerUsers, newData.ownerGroups, newData.kind);
 
     // add uniqueness fields to where builder
     _.forEach(fields, (field) => {
@@ -472,7 +472,7 @@ export class ListRepository extends DefaultCrudRepository<
         .build();
     }
 
-    let existingList = await super.findOne(filter);
+    const existingList = await super.findOne(filter);
 
     if (existingList) {
 
@@ -491,17 +491,17 @@ export class ListRepository extends DefaultCrudRepository<
     // return if no uniqueness is configured
     if (!process.env.uniqueness_list_fields && !process.env.uniqueness_list_set) return;
 
-    let whereBuilder: WhereBuilder<List> = new WhereBuilder<List>();
+    const whereBuilder: WhereBuilder<List> = new WhereBuilder<List>();
 
     // add uniqueness fields if configured
     if (process.env.uniqueness_list_fields) {
-      let fields: string[] = process.env.uniqueness_list_fields
+      const fields: string[] = process.env.uniqueness_list_fields
         .replace(/\s/g, '')
         .split(',');
 
       // if there is at least single field in the fields array that does not present on new data, then we should find it from the db.
       if (_.some(fields, _.negate(_.partial(_.has, newData)))) {
-        let existingList = await super.findById(id);
+        const existingList = await super.findById(id);
 
         _.forEach(fields, (field) => {
 
@@ -541,7 +541,7 @@ export class ListRepository extends DefaultCrudRepository<
         + ';'
         + (newData.ownerGroups ? newData.ownerGroups?.join(',') : ''));
 
-      let uniquenessSet = (qs.parse(uniquenessStr)).set as Set;
+      const uniquenessSet = (qs.parse(uniquenessStr)).set as Set;
 
       filter = new SetFilterBuilder<List>(uniquenessSet, {
         filter: filter
@@ -552,7 +552,7 @@ export class ListRepository extends DefaultCrudRepository<
     // final uniqueness controlling filter
     console.log('Uniqueness Filter: ', JSON.stringify(filter));
 
-    let existingList = await super.findOne(filter);
+    const existingList = await super.findOne(filter);
 
     if (existingList) {
 

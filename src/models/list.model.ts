@@ -28,7 +28,7 @@ export class List extends Entity {
     required: true,
     jsonSchema: {
       minLength: 2,
-      maxLength: _.parseInt(process.env.validation_listname_maxlength || "50")
+      maxLength: _.parseInt(process.env.validation_listname_maxlength ?? "50")
     }
   })
   name: string;
