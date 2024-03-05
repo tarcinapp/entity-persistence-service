@@ -60,6 +60,7 @@ export class ListRepository extends DefaultCrudRepository<
     this.relations = this.createHasManyRepositoryFactoryFor('relations', listRelationRepositoryGetter,);
     this.registerInclusionResolver('relations', this.relations.inclusionResolver);
     this.genericEntities = this.createHasManyThroughRepositoryFactoryFor('genericEntities', genericEntityRepositoryGetter, listEntityRelationRepositoryGetter,);
+    this.registerInclusionResolver('genericEntities', this.genericEntities.inclusionResolver);
   }
 
   async find(filter?: Filter<List>, options?: Options) {

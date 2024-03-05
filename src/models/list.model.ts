@@ -1,6 +1,6 @@
 import {Entity, hasMany, model, property} from '@loopback/repository';
 import _ from 'lodash';
-import {GenericEntity} from './generic-entity.model';
+import {GenericEntity, GenericEntityWithRelations} from './generic-entity.model';
 import {ListEntityRelation} from './list-entity-relation.model';
 import {ListReactions} from './list-reactions.model';
 import {ListRelation} from './list-relation.model';
@@ -180,7 +180,7 @@ export class List extends Entity {
 }
 
 export interface ListRelations {
-  // describe navigational properties here
+  genericEntities?: GenericEntityWithRelations
 }
 
 export type ListWithRelations = List & ListRelations;
