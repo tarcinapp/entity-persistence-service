@@ -29,7 +29,7 @@ import {GenericListRepository} from '../repositories';
 export class GenericListController {
   constructor(
     @repository(GenericListRepository)
-    public listRepository: GenericListRepository,
+    public genericListRepository: GenericListRepository,
   ) { }
 
   @post('/generic-lists', {
@@ -89,7 +89,7 @@ export class GenericListController {
     })
     list: Omit<GenericList, 'id'>,
   ): Promise<GenericList> {
-    return this.listRepository.create(list);
+    return this.genericListRepository.create(list);
   }
 
   @get('/generic-lists/count', {
@@ -117,7 +117,7 @@ export class GenericListController {
         filter: filter
       }).build();
 
-    return this.listRepository.count(filter.where);
+    return this.genericListRepository.count(filter.where);
   }
 
   @get('/generic-lists', {
@@ -145,7 +145,7 @@ export class GenericListController {
         filter: filter
       }).build();
 
-    return this.listRepository.find(filter);
+    return this.genericListRepository.find(filter);
   }
 
   @patch('/generic-lists', {
@@ -167,7 +167,7 @@ export class GenericListController {
     list: GenericList,
     @param.where(GenericList) where?: Where<GenericList>,
   ): Promise<Count> {
-    return this.listRepository.updateAll(list, where);
+    return this.genericListRepository.updateAll(list, where);
   }
 
   @get('/generic-lists/{id}', {
@@ -198,7 +198,7 @@ export class GenericListController {
     @param.path.string('id') id: string,
     @param.filter(GenericList, {exclude: 'where'}) filter?: FilterExcludingWhere<GenericList>
   ): Promise<GenericList> {
-    return this.listRepository.findById(id, filter);
+    return this.genericListRepository.findById(id, filter);
   }
 
   @patch('/generic-lists/{id}', {
@@ -243,7 +243,7 @@ export class GenericListController {
     })
     list: GenericList,
   ): Promise<void> {
-    await this.listRepository.updateById(id, list);
+    await this.genericListRepository.updateById(id, list);
   }
 
   @put('/generic-lists/{id}', {
@@ -281,7 +281,7 @@ export class GenericListController {
     @param.path.string('id') id: string,
     @requestBody() list: GenericList,
   ): Promise<void> {
-    await this.listRepository.replaceById(id, list);
+    await this.genericListRepository.replaceById(id, list);
   }
 
   @del('/generic-lists/{id}', {
@@ -304,6 +304,6 @@ export class GenericListController {
     },
   })
   async deleteById(@param.path.string('id') id: string): Promise<void> {
-    await this.listRepository.deleteById(id);
+    await this.genericListRepository.deleteById(id);
   }
 }
