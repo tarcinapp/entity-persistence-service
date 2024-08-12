@@ -26,13 +26,13 @@ import {Set, SetFilterBuilder} from '../extensions';
 import {GenericList, HttpErrorResponse} from '../models';
 import {GenericListRepository} from '../repositories';
 
-export class ListController {
+export class GenericListController {
   constructor(
     @repository(GenericListRepository)
     public listRepository: GenericListRepository,
   ) { }
 
-  @post('/lists', {
+  @post('/generic-lists', {
     responses: {
       '200': {
         description: 'List model instance',
@@ -92,7 +92,7 @@ export class ListController {
     return this.listRepository.create(list);
   }
 
-  @get('/lists/count', {
+  @get('/generic-lists/count', {
     responses: {
       '200': {
         description: 'List model count',
@@ -120,7 +120,7 @@ export class ListController {
     return this.listRepository.count(filter.where);
   }
 
-  @get('/lists', {
+  @get('/generic-lists', {
     responses: {
       '200': {
         description: 'Array of List model instances',
@@ -148,7 +148,7 @@ export class ListController {
     return this.listRepository.find(filter);
   }
 
-  @patch('/lists', {
+  @patch('/generic-lists', {
     responses: {
       '200': {
         description: 'List PATCH success count',
@@ -170,7 +170,7 @@ export class ListController {
     return this.listRepository.updateAll(list, where);
   }
 
-  @get('/lists/{id}', {
+  @get('/generic-lists/{id}', {
     responses: {
       '200': {
         description: 'List model instance',
@@ -201,7 +201,7 @@ export class ListController {
     return this.listRepository.findById(id, filter);
   }
 
-  @patch('/lists/{id}', {
+  @patch('/generic-lists/{id}', {
     responses: {
       '204': {
         description: 'List PATCH success',
@@ -246,7 +246,7 @@ export class ListController {
     await this.listRepository.updateById(id, list);
   }
 
-  @put('/lists/{id}', {
+  @put('/generic-lists/{id}', {
     responses: {
       '204': {
         description: 'List PUT success',
@@ -284,7 +284,7 @@ export class ListController {
     await this.listRepository.replaceById(id, list);
   }
 
-  @del('/lists/{id}', {
+  @del('/generic-lists/{id}', {
     responses: {
       '204': {
         description: 'List DELETE success',
