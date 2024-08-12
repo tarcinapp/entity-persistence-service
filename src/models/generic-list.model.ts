@@ -157,16 +157,16 @@ export class GenericList extends Entity {
   })
   idempotencyKey?: string | undefined;
 
-  @hasMany(() => GenericEntity, {through: {model: () => ListEntityRelation, keyTo: 'entityId'}})
+  @hasMany(() => GenericEntity, {through: {model: () => ListEntityRelation, keyFrom: 'listId', keyTo: 'entityId'}})
   genericEntities: GenericEntity[];
 
   @hasMany(() => ListRelation, {keyTo: 'from'})
   relations: ListRelation[];
 
-  @hasMany(() => ListReactions)
+  @hasMany(() => ListReactions, {keyTo: 'listId'})
   reactions: ListReactions[];
 
-  @hasMany(() => Tag, {through: {model: () => TagListRelation}})
+  @hasMany(() => Tag, {through: {model: () => TagListRelation, keyFrom: 'listId'}})
   tags: Tag[];
   // Define well-known properties here
 
