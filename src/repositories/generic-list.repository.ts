@@ -16,7 +16,7 @@ import {ListRelationRepository} from './list-relation.repository';
 import {TagListRelationRepository} from './tag-list-relation.repository';
 import {TagRepository} from './tag.repository';
 
-export class ListRepository extends DefaultCrudRepository<
+export class GenericListRepository extends DefaultCrudRepository<
   GenericList,
   typeof GenericList.prototype.id,
   ListRelations
@@ -67,11 +67,11 @@ export class ListRepository extends DefaultCrudRepository<
 
     // Calculate the limit value using optional chaining and nullish coalescing
     // If filter.limit is defined, use its value; otherwise, use ListRepository.response_limit
-    const limit = filter?.limit ?? ListRepository.responseLimit;
+    const limit = filter?.limit ?? GenericListRepository.responseLimit;
 
     // Update the filter object by spreading the existing filter and overwriting the limit property
     // Ensure that the new limit value does not exceed ListRepository.response_limit
-    filter = {...filter, limit: Math.min(limit, ListRepository.responseLimit)};
+    filter = {...filter, limit: Math.min(limit, GenericListRepository.responseLimit)};
 
     return super.find(filter, options);
   }

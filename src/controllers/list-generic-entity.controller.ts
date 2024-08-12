@@ -19,11 +19,11 @@ import {
   GenericEntity,
   GenericList
 } from '../models';
-import {ListRepository} from '../repositories';
+import {GenericListRepository} from '../repositories';
 
 export class ListGenericEntityController {
   constructor(
-    @repository(ListRepository) protected listRepository: ListRepository,
+    @repository(GenericListRepository) protected listRepository: GenericListRepository,
   ) { }
 
   @get('/lists/{id}/generic-entities', {

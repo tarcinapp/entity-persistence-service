@@ -19,11 +19,11 @@ import {
   GenericList,
   ListReactions,
 } from '../models';
-import {ListRepository} from '../repositories';
+import {GenericListRepository} from '../repositories';
 
 export class ListListReactionsController {
   constructor(
-    @repository(ListRepository) protected listRepository: ListRepository,
+    @repository(GenericListRepository) protected listRepository: GenericListRepository,
   ) { }
 
   @get('/lists/{id}/list-reactions', {

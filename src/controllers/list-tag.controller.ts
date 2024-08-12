@@ -19,11 +19,11 @@ import {
   GenericList,
   Tag
 } from '../models';
-import {ListRepository} from '../repositories';
+import {GenericListRepository} from '../repositories';
 
 export class ListTagController {
   constructor(
-    @repository(ListRepository) protected listRepository: ListRepository,
+    @repository(GenericListRepository) protected listRepository: GenericListRepository,
   ) { }
 
   @get('/lists/{id}/tags', {

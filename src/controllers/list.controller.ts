@@ -24,12 +24,12 @@ import {
 } from '@loopback/rest';
 import {Set, SetFilterBuilder} from '../extensions';
 import {GenericList, HttpErrorResponse} from '../models';
-import {ListRepository} from '../repositories';
+import {GenericListRepository} from '../repositories';
 
 export class ListController {
   constructor(
-    @repository(ListRepository)
-    public listRepository: ListRepository,
+    @repository(GenericListRepository)
+    public listRepository: GenericListRepository,
   ) { }
 
   @post('/lists', {
