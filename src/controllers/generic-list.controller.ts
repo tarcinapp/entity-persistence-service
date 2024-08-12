@@ -35,7 +35,7 @@ export class GenericListController {
   @post('/generic-lists', {
     responses: {
       '200': {
-        description: 'List model instance',
+        description: 'Generic List model instance',
         content: {'application/json': {schema: getModelSchemaRef(GenericList)}},
       },
       '429': {
@@ -95,7 +95,7 @@ export class GenericListController {
   @get('/generic-lists/count', {
     responses: {
       '200': {
-        description: 'List model count',
+        description: 'Generic List model count',
         content: {'application/json': {schema: CountSchema}},
       },
     },
@@ -123,7 +123,7 @@ export class GenericListController {
   @get('/generic-lists', {
     responses: {
       '200': {
-        description: 'Array of List model instances',
+        description: 'Array of Generic List model instances',
         content: {
           'application/json': {
             schema: {
@@ -151,7 +151,7 @@ export class GenericListController {
   @patch('/generic-lists', {
     responses: {
       '200': {
-        description: 'List PATCH success count',
+        description: 'Generic List PATCH success count',
         content: {'application/json': {schema: CountSchema}},
       },
     },
@@ -173,7 +173,7 @@ export class GenericListController {
   @get('/generic-lists/{id}', {
     responses: {
       '200': {
-        description: 'List model instance',
+        description: 'Generic List model instance',
         content: {
           'application/json': {
             schema: getModelSchemaRef(GenericList, {includeRelations: true}),
@@ -204,7 +204,7 @@ export class GenericListController {
   @patch('/generic-lists/{id}', {
     responses: {
       '204': {
-        description: 'List PATCH success',
+        description: 'Generic List PATCH success',
       },
       '404': {
         description: 'List not found',
@@ -249,7 +249,7 @@ export class GenericListController {
   @put('/generic-lists/{id}', {
     responses: {
       '204': {
-        description: 'List PUT success',
+        description: 'Generic List PUT success',
       },
       '404': {
         description: 'Entity not found',
@@ -287,7 +287,7 @@ export class GenericListController {
   @del('/generic-lists/{id}', {
     responses: {
       '204': {
-        description: 'List DELETE success',
+        description: 'Generic List DELETE success',
       },
       '404': {
         description: 'Entity not found',
