@@ -5,7 +5,7 @@ import {
   repository,
   Where,
 } from '@loopback/repository';
-  import {
+import {
   del,
   get,
   getModelSchemaRef,
@@ -16,9 +16,8 @@ import {
   requestBody,
 } from '@loopback/rest';
 import {
-List,
-TagListRelation,
-Tag,
+  GenericList,
+  Tag
 } from '../models';
 import {ListRepository} from '../repositories';
 
@@ -55,7 +54,7 @@ export class ListTagController {
     },
   })
   async create(
-    @param.path.string('id') id: typeof List.prototype.id,
+    @param.path.string('id') id: typeof GenericList.prototype.id,
     @requestBody({
       content: {
         'application/json': {

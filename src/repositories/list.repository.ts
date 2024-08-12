@@ -8,7 +8,7 @@ import {EntityDbDataSource} from '../datasources';
 import {IdempotencyConfigurationReader, KindLimitsConfigurationReader, RecordLimitsConfigurationReader, UniquenessConfigurationReader, VisibilityConfigurationReader} from '../extensions';
 import {Set, SetFilterBuilder} from '../extensions/set';
 import {ValidfromConfigurationReader} from '../extensions/validfrom-config-reader';
-import {GenericEntity, HttpErrorResponse, List, ListEntityRelation, ListReactions, ListRelation, ListRelations, SingleError, Tag, TagListRelation} from '../models';
+import {GenericEntity, GenericList, HttpErrorResponse, ListEntityRelation, ListReactions, ListRelation, ListRelations, SingleError, Tag, TagListRelation} from '../models';
 import {GenericEntityRepository} from './generic-entity.repository';
 import {ListEntityRelationRepository} from './list-entity-relation.repository';
 import {ListReactionsRepository} from './list-reactions.repository';
@@ -17,23 +17,23 @@ import {TagListRelationRepository} from './tag-list-relation.repository';
 import {TagRepository} from './tag.repository';
 
 export class ListRepository extends DefaultCrudRepository<
-  List,
-  typeof List.prototype.id,
+  GenericList,
+  typeof GenericList.prototype.id,
   ListRelations
 > {
 
   public readonly genericEntities: HasManyThroughRepositoryFactory<GenericEntity, typeof GenericEntity.prototype.id,
     ListEntityRelation,
-    typeof List.prototype.id
+    typeof GenericList.prototype.id
   >;
 
-  public readonly relations: HasManyRepositoryFactory<ListRelation, typeof List.prototype.id>;
+  public readonly relations: HasManyRepositoryFactory<ListRelation, typeof GenericList.prototype.id>;
 
-  public readonly reactions: HasManyRepositoryFactory<ListReactions, typeof List.prototype.id>;
+  public readonly reactions: HasManyRepositoryFactory<ListReactions, typeof GenericList.prototype.id>;
 
   public readonly tags: HasManyThroughRepositoryFactory<Tag, typeof Tag.prototype.id,
     TagListRelation,
-    typeof List.prototype.id
+    typeof GenericList.prototype.id
   >;
 
   private static responseLimit = _.parseInt(process.env.response_limit_list ?? "50");
@@ -53,7 +53,7 @@ export class ListRepository extends DefaultCrudRepository<
     @inject('extensions.validfrom.configurationreader') private validfromConfigReader: ValidfromConfigurationReader,
     @inject('extensions.idempotency.configurationreader') private idempotencyConfigReader: IdempotencyConfigurationReader
   ) {
-    super(List, dataSource);
+    super(GenericList, dataSource);
     this.tags = this.createHasManyThroughRepositoryFactoryFor('tags', tagRepositoryGetter, tagListRelationRepositoryGetter,);
     this.reactions = this.createHasManyRepositoryFactoryFor('reactions', listReactionsRepositoryGetter,);
     this.registerInclusionResolver('reactions', this.reactions.inclusionResolver);
@@ -63,7 +63,7 @@ export class ListRepository extends DefaultCrudRepository<
     this.registerInclusionResolver('genericEntities', this.genericEntities.inclusionResolver);
   }
 
-  async find(filter?: Filter<List>, options?: Options) {
+  async find(filter?: Filter<GenericList>, options?: Options) {
 
     // Calculate the limit value using optional chaining and nullish coalescing
     // If filter.limit is defined, use its value; otherwise, use ListRepository.response_limit
@@ -76,7 +76,7 @@ export class ListRepository extends DefaultCrudRepository<
     return super.find(filter, options);
   }
 
-  async create(data: DataObject<List>) {
+  async create(data: DataObject<GenericList>) {
 
     const idempotencyKey = this.calculateIdempotencyKey(data);
 
@@ -95,7 +95,7 @@ export class ListRepository extends DefaultCrudRepository<
       });
   }
 
-  async replaceById(id: string, data: DataObject<List>, options?: Options) {
+  async replaceById(id: string, data: DataObject<GenericList>, options?: Options) {
 
     return this.enrichIncomingListForUpdates(id, data)
       .then(collection => {
@@ -112,7 +112,7 @@ export class ListRepository extends DefaultCrudRepository<
       .then(validEnrichedData => super.replaceById(id, validEnrichedData, options));
   }
 
-  async updateById(id: string, data: DataObject<List>, options?: Options) {
+  async updateById(id: string, data: DataObject<GenericList>, options?: Options) {
 
     return this.enrichIncomingListForUpdates(id, data)
       .then(collection => {
@@ -130,7 +130,7 @@ export class ListRepository extends DefaultCrudRepository<
       .then(validEnrichedData => super.updateById(id, validEnrichedData, options));
   }
 
-  async updateAll(data: DataObject<List>, where?: Where<List>, options?: Options) {
+  async updateAll(data: DataObject<GenericList>, where?: Where<GenericList>, options?: Options) {
 
     const now = new Date().toISOString();
     data.lastUpdatedDateTime = now;
@@ -144,7 +144,7 @@ export class ListRepository extends DefaultCrudRepository<
     return super.updateAll(data, where, options);
   }
 
-  private async findIdempotentList(idempotencyKey: string | undefined): Promise<List | null> {
+  private async findIdempotentList(idempotencyKey: string | undefined): Promise<GenericList | null> {
 
     // check if same record already exists
     if (_.isString(idempotencyKey) && !_.isEmpty(idempotencyKey)) {
@@ -167,7 +167,7 @@ export class ListRepository extends DefaultCrudRepository<
     return Promise.resolve(null);
   }
 
-  calculateIdempotencyKey(data: DataObject<List>) {
+  calculateIdempotencyKey(data: DataObject<GenericList>) {
     const idempotencyFields = this.idempotencyConfigReader.getIdempotencyForLists(data.kind);
 
     // idempotency is not configured
@@ -192,7 +192,7 @@ export class ListRepository extends DefaultCrudRepository<
    * @param data Input object to create list from.
    * @returns Newly created list.
    */
-  private async createNewListFacade(data: DataObject<List>): Promise<List> {
+  private async createNewListFacade(data: DataObject<GenericList>): Promise<GenericList> {
 
     /**
      * TODO: MongoDB connector still does not support transactions.
@@ -209,7 +209,7 @@ export class ListRepository extends DefaultCrudRepository<
       .then(validEnrichedData => super.create(validEnrichedData));
   }
 
-  private async validateIncomingListForCreation(data: DataObject<List>): Promise<DataObject<List>> {
+  private async validateIncomingListForCreation(data: DataObject<GenericList>): Promise<DataObject<GenericList>> {
 
     this.checkDataKindFormat(data);
     this.checkDataKindValues(data);
@@ -222,7 +222,7 @@ export class ListRepository extends DefaultCrudRepository<
     });
   }
 
-  private async validateIncomingListForReplace(id: string, data: DataObject<List>, options?: Options) {
+  private async validateIncomingListForReplace(id: string, data: DataObject<GenericList>, options?: Options) {
     const uniquenessCheck = this.checkUniquenessForUpdate(id, data);
 
     this.checkDataKindValues(data);
@@ -233,7 +233,7 @@ export class ListRepository extends DefaultCrudRepository<
     return data;
   }
 
-  private async validateIncomingDataForUpdate(id: string, existingData: DataObject<List>, data: DataObject<List>, options?: Options) {
+  private async validateIncomingDataForUpdate(id: string, existingData: DataObject<GenericList>, data: DataObject<GenericList>, options?: Options) {
 
     // we need to merge existing data with incoming data in order to check limits and uniquenesses
     const mergedData = _.defaults({}, data, existingData);
@@ -257,7 +257,7 @@ export class ListRepository extends DefaultCrudRepository<
   * @param data Data that is intended to be created
   * @returns New version of the data which have managed fields are added
   */
-  private async enrichIncomingListForCreation(data: DataObject<List>): Promise<DataObject<List>> {
+  private async enrichIncomingListForCreation(data: DataObject<GenericList>): Promise<DataObject<GenericList>> {
 
     // take the date of now to make sure we have exactly the same date in all date fields
     const now = new Date().toISOString();
@@ -292,7 +292,7 @@ export class ListRepository extends DefaultCrudRepository<
    * @param data Payload of the list
    * @returns Enriched list
    */
-  private async enrichIncomingListForUpdates(id: string, data: DataObject<List>) {
+  private async enrichIncomingListForUpdates(id: string, data: DataObject<GenericList>) {
 
     return this.findById(id)
       .then(existingData => {
@@ -330,30 +330,30 @@ export class ListRepository extends DefaultCrudRepository<
       });
   }
 
-  private async checkRecordLimits(newData: DataObject<List>) {
+  private async checkRecordLimits(newData: DataObject<GenericList>) {
 
     if (!this.recordLimitConfigReader.isRecordLimitsConfiguredForLists(newData.kind))
       return;
 
     const limit = this.recordLimitConfigReader.getRecordLimitsCountForLists(newData.kind)
     const set = this.recordLimitConfigReader.getRecordLimitsSetForLists(newData.ownerUsers, newData.ownerGroups, newData.kind);
-    let filterBuilder: FilterBuilder<List>;
+    let filterBuilder: FilterBuilder<GenericList>;
 
     if (this.recordLimitConfigReader.isLimitConfiguredForKindForLists(newData.kind))
-      filterBuilder = new FilterBuilder<List>({
+      filterBuilder = new FilterBuilder<GenericList>({
         where: {
           kind: newData.kind
         }
       })
     else {
-      filterBuilder = new FilterBuilder<List>()
+      filterBuilder = new FilterBuilder<GenericList>()
     }
 
     let filter = filterBuilder.build();
 
     // add set filter if configured
     if (set) {
-      filter = new SetFilterBuilder<List>(set, {
+      filter = new SetFilterBuilder<GenericList>(set, {
         filter: filter
       })
         .build();
@@ -379,13 +379,13 @@ export class ListRepository extends DefaultCrudRepository<
 
   }
 
-  private generateSlug(data: DataObject<List>) {
+  private generateSlug(data: DataObject<GenericList>) {
 
     if (data.name && !data.slug)
       data.slug = slugify(data.name ?? '', {lower: true, strict: true});
   }
 
-  private setOwnersCount(data: DataObject<List>) {
+  private setOwnersCount(data: DataObject<GenericList>) {
 
     if (_.isArray(data.ownerUsers))
       data.ownerUsersCount = data.ownerUsers?.length;
@@ -400,7 +400,7 @@ export class ListRepository extends DefaultCrudRepository<
       data.viewerGroupsCount = data.viewerGroups?.length;
   }
 
-  private checkDataKindFormat(data: DataObject<List>) {
+  private checkDataKindFormat(data: DataObject<GenericList>) {
 
     // make sure data kind is slug format
     if (data.kind) {
@@ -418,7 +418,7 @@ export class ListRepository extends DefaultCrudRepository<
     }
   }
 
-  private checkDataKindValues(data: DataObject<List>) {
+  private checkDataKindValues(data: DataObject<GenericList>) {
 
     /**
      * This function checks if the 'kind' field in the 'data' object is valid
@@ -441,13 +441,13 @@ export class ListRepository extends DefaultCrudRepository<
     }
   }
 
-  private async checkUniquenessForCreate(newData: DataObject<List>) {
+  private async checkUniquenessForCreate(newData: DataObject<GenericList>) {
 
     // return if no uniqueness is configured
     if (!this.uniquenessConfigReader.isUniquenessConfiguredForLists(newData.kind))
       return;
 
-    const whereBuilder: WhereBuilder<List> = new WhereBuilder<List>();
+    const whereBuilder: WhereBuilder<GenericList> = new WhereBuilder<GenericList>();
 
     // read the fields (name, slug) array for this kind
     const fields: string[] = this.uniquenessConfigReader.getFieldsForLists(newData.kind);
@@ -461,13 +461,13 @@ export class ListRepository extends DefaultCrudRepository<
       });
     });
 
-    let filter = new FilterBuilder<List>()
+    let filter = new FilterBuilder<GenericList>()
       .where(whereBuilder.build())
       .build();
 
     // add set filter if configured
     if (set) {
-      filter = new SetFilterBuilder<List>(set, {
+      filter = new SetFilterBuilder<GenericList>(set, {
         filter: filter
       })
         .build();
@@ -487,12 +487,12 @@ export class ListRepository extends DefaultCrudRepository<
     }
   }
 
-  private async checkUniquenessForUpdate(id: string, newData: DataObject<List>) {
+  private async checkUniquenessForUpdate(id: string, newData: DataObject<GenericList>) {
 
     // return if no uniqueness is configured
     if (!process.env.uniqueness_list_fields && !process.env.uniqueness_list_set) return;
 
-    const whereBuilder: WhereBuilder<List> = new WhereBuilder<List>();
+    const whereBuilder: WhereBuilder<GenericList> = new WhereBuilder<GenericList>();
 
     // add uniqueness fields if configured
     if (process.env.uniqueness_list_fields) {
@@ -528,7 +528,7 @@ export class ListRepository extends DefaultCrudRepository<
       }
     });
 
-    let filter = new FilterBuilder<List>()
+    let filter = new FilterBuilder<GenericList>()
       .where(whereBuilder.build())
       .fields('id')
       .build();
@@ -544,7 +544,7 @@ export class ListRepository extends DefaultCrudRepository<
 
       const uniquenessSet = (qs.parse(uniquenessStr)).set as Set;
 
-      filter = new SetFilterBuilder<List>(uniquenessSet, {
+      filter = new SetFilterBuilder<GenericList>(uniquenessSet, {
         filter: filter
       })
         .build();

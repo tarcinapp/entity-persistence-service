@@ -16,7 +16,7 @@ import {
   requestBody,
 } from '@loopback/rest';
 import {
-  List,
+  GenericList,
   ListReactions,
 } from '../models';
 import {ListRepository} from '../repositories';
@@ -54,7 +54,7 @@ export class ListListReactionsController {
     },
   })
   async create(
-    @param.path.string('id') id: typeof List.prototype.id,
+    @param.path.string('id') id: typeof GenericList.prototype.id,
     @requestBody({
       content: {
         'application/json': {

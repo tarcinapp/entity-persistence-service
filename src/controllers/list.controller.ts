@@ -23,7 +23,7 @@ import {
   requestBody
 } from '@loopback/rest';
 import {Set, SetFilterBuilder} from '../extensions';
-import {HttpErrorResponse, List} from '../models';
+import {GenericList, HttpErrorResponse} from '../models';
 import {ListRepository} from '../repositories';
 
 export class ListController {
@@ -36,7 +36,7 @@ export class ListController {
     responses: {
       '200': {
         description: 'List model instance',
-        content: {'application/json': {schema: getModelSchemaRef(List)}},
+        content: {'application/json': {schema: getModelSchemaRef(GenericList)}},
       },
       '429': {
         description: 'List limit is exceeded',
@@ -80,15 +80,15 @@ export class ListController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(List, {
+          schema: getModelSchemaRef(GenericList, {
             title: 'NewList',
             exclude: ['id'],
           }),
         },
       },
     })
-    list: Omit<List, 'id'>,
-  ): Promise<List> {
+    list: Omit<GenericList, 'id'>,
+  ): Promise<GenericList> {
     return this.listRepository.create(list);
   }
 
@@ -102,10 +102,10 @@ export class ListController {
   })
   async count(
     @param.query.object('set') set?: Set,
-    @param.where(List) where?: Where<List>,
+    @param.where(GenericList) where?: Where<GenericList>,
   ): Promise<Count> {
 
-    let filterBuilder = new FilterBuilder<List>();
+    const filterBuilder = new FilterBuilder<GenericList>();
 
     if (where)
       filterBuilder.where(where);
@@ -113,7 +113,7 @@ export class ListController {
     let filter = filterBuilder.build();
 
     if (set)
-      filter = new SetFilterBuilder<List>(set, {
+      filter = new SetFilterBuilder<GenericList>(set, {
         filter: filter
       }).build();
 
@@ -128,7 +128,7 @@ export class ListController {
           'application/json': {
             schema: {
               type: 'array',
-              items: getModelSchemaRef(List, {includeRelations: true}),
+              items: getModelSchemaRef(GenericList, {includeRelations: true}),
             },
           },
         },
@@ -136,12 +136,12 @@ export class ListController {
     },
   })
   async find(
-    @param.filter(List) filter?: Filter<List>,
+    @param.filter(GenericList) filter?: Filter<GenericList>,
     @param.query.object('set') set?: Set,
-  ): Promise<List[]> {
+  ): Promise<GenericList[]> {
 
     if (set)
-      filter = new SetFilterBuilder<List>(set, {
+      filter = new SetFilterBuilder<GenericList>(set, {
         filter: filter
       }).build();
 
@@ -160,12 +160,12 @@ export class ListController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(List, {partial: true}),
+          schema: getModelSchemaRef(GenericList, {partial: true}),
         },
       },
     })
-    list: List,
-    @param.where(List) where?: Where<List>,
+    list: GenericList,
+    @param.where(GenericList) where?: Where<GenericList>,
   ): Promise<Count> {
     return this.listRepository.updateAll(list, where);
   }
@@ -176,7 +176,7 @@ export class ListController {
         description: 'List model instance',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(List, {includeRelations: true}),
+            schema: getModelSchemaRef(GenericList, {includeRelations: true}),
           },
         },
       },
@@ -196,8 +196,8 @@ export class ListController {
   })
   async findById(
     @param.path.string('id') id: string,
-    @param.filter(List, {exclude: 'where'}) filter?: FilterExcludingWhere<List>
-  ): Promise<List> {
+    @param.filter(GenericList, {exclude: 'where'}) filter?: FilterExcludingWhere<GenericList>
+  ): Promise<GenericList> {
     return this.listRepository.findById(id, filter);
   }
 
@@ -237,11 +237,11 @@ export class ListController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(List, {partial: true}),
+          schema: getModelSchemaRef(GenericList, {partial: true}),
         },
       },
     })
-    list: List,
+    list: GenericList,
   ): Promise<void> {
     await this.listRepository.updateById(id, list);
   }
@@ -279,7 +279,7 @@ export class ListController {
   })
   async replaceById(
     @param.path.string('id') id: string,
-    @requestBody() list: List,
+    @requestBody() list: GenericList,
   ): Promise<void> {
     await this.listRepository.replaceById(id, list);
   }

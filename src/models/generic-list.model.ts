@@ -8,7 +8,7 @@ import {TagListRelation} from './tag-list-relation.model';
 import {Tag} from './tag.model';
 
 @model({settings: {strict: false}})
-export class List extends Entity {
+export class GenericList extends Entity {
   @property({
     type: 'string',
     id: true,
@@ -174,7 +174,7 @@ export class List extends Entity {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [prop: string]: any;
 
-  constructor(data?: Partial<List>) {
+  constructor(data?: Partial<GenericList>) {
     super(data);
   }
 }
@@ -183,4 +183,4 @@ export interface ListRelations {
   genericEntities?: GenericEntityWithRelations
 }
 
-export type ListWithRelations = List & ListRelations;
+export type ListWithRelations = GenericList & ListRelations;
