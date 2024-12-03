@@ -15,7 +15,7 @@
 		},
 		"ghcr.io/devcontainers/features/git:1": {},
 		"ghcr.io/devcontainers-contrib/features/apt-get-packages:1": {
-			"packages": "telnet,iputils-ping,dnsutils,dnsmasq"
+			"packages": "telnet,iputils-ping,dnsutils"
 		}
 	},
 	// Use this environment variable if you need to bind mount your local source code into a new container.
