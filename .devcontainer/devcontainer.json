@@ -15,7 +15,7 @@
 		},
 		"ghcr.io/devcontainers/features/git:1": {},
 		"ghcr.io/devcontainers-contrib/features/apt-get-packages:1": {
-			"packages": "telnet,iputils-ping,dnsutils"
+			"packages": "telnet,iputils-ping,dnsutils,dnsmasq"
 		}
 	},
 	// Use this environment variable if you need to bind mount your local source code into a new container.
@@ -30,7 +30,7 @@
 		3000
 	],
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "npm install -g @loopback/cli && npm install && echo \"set nocompatible\" >> ~/.vimrc && echo \"address=/.easypanel.host/192.168.1.121\" | sudo tee -a /etc/dnsmasq.conf && sudo service dnsmasq restart && echo \"nameserver 127.0.0.1\" | sudo tee /etc/resolv.conf > /dev/null"
+	"postCreateCommand": "git config pull.rebase false && npm install -g @loopback/cli && npm install && echo \"set nocompatible\" >> ~/.vimrc && echo \"address=/.easypanel.host/192.168.1.121\" | sudo tee -a /etc/dnsmasq.conf && sudo service dnsmasq restart && echo \"nameserver 127.0.0.1\" | sudo tee /etc/resolv.conf > /dev/null"
 	// Configure tool-specific properties.
 	// "customizations": {},
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
