@@ -29,13 +29,13 @@ import {GenericListRepository} from '../repositories';
 export class GenericListController {
   constructor(
     @repository(GenericListRepository)
-    public listRepository: GenericListRepository,
+    public genericListRepository: GenericListRepository,
   ) { }
 
   @post('/generic-lists', {
     responses: {
       '200': {
-        description: 'List model instance',
+        description: 'Generic List model instance',
         content: {'application/json': {schema: getModelSchemaRef(GenericList)}},
       },
       '429': {
@@ -89,13 +89,13 @@ export class GenericListController {
     })
     list: Omit<GenericList, 'id'>,
   ): Promise<GenericList> {
-    return this.listRepository.create(list);
+    return this.genericListRepository.create(list);
   }
 
   @get('/generic-lists/count', {
     responses: {
       '200': {
-        description: 'List model count',
+        description: 'Generic List model count',
         content: {'application/json': {schema: CountSchema}},
       },
     },
@@ -117,13 +117,13 @@ export class GenericListController {
         filter: filter
       }).build();
 
-    return this.listRepository.count(filter.where);
+    return this.genericListRepository.count(filter.where);
   }
 
   @get('/generic-lists', {
     responses: {
       '200': {
-        description: 'Array of List model instances',
+        description: 'Array of Generic List model instances',
         content: {
           'application/json': {
             schema: {
@@ -145,13 +145,13 @@ export class GenericListController {
         filter: filter
       }).build();
 
-    return this.listRepository.find(filter);
+    return this.genericListRepository.find(filter);
   }
 
   @patch('/generic-lists', {
     responses: {
       '200': {
-        description: 'List PATCH success count',
+        description: 'Generic List PATCH success count',
         content: {'application/json': {schema: CountSchema}},
       },
     },
@@ -167,13 +167,13 @@ export class GenericListController {
     list: GenericList,
     @param.where(GenericList) where?: Where<GenericList>,
   ): Promise<Count> {
-    return this.listRepository.updateAll(list, where);
+    return this.genericListRepository.updateAll(list, where);
   }
 
   @get('/generic-lists/{id}', {
     responses: {
       '200': {
-        description: 'List model instance',
+        description: 'Generic List model instance',
         content: {
           'application/json': {
             schema: getModelSchemaRef(GenericList, {includeRelations: true}),
@@ -198,13 +198,13 @@ export class GenericListController {
     @param.path.string('id') id: string,
     @param.filter(GenericList, {exclude: 'where'}) filter?: FilterExcludingWhere<GenericList>
   ): Promise<GenericList> {
-    return this.listRepository.findById(id, filter);
+    return this.genericListRepository.findById(id, filter);
   }
 
   @patch('/generic-lists/{id}', {
     responses: {
       '204': {
-        description: 'List PATCH success',
+        description: 'Generic List PATCH success',
       },
       '404': {
         description: 'List not found',
@@ -243,13 +243,13 @@ export class GenericListController {
     })
     list: GenericList,
   ): Promise<void> {
-    await this.listRepository.updateById(id, list);
+    await this.genericListRepository.updateById(id, list);
   }
 
   @put('/generic-lists/{id}', {
     responses: {
       '204': {
-        description: 'List PUT success',
+        description: 'Generic List PUT success',
       },
       '404': {
         description: 'Entity not found',
@@ -281,13 +281,13 @@ export class GenericListController {
     @param.path.string('id') id: string,
     @requestBody() list: GenericList,
   ): Promise<void> {
-    await this.listRepository.replaceById(id, list);
+    await this.genericListRepository.replaceById(id, list);
   }
 
   @del('/generic-lists/{id}', {
     responses: {
       '204': {
-        description: 'List DELETE success',
+        description: 'Generic List DELETE success',
       },
       '404': {
         description: 'Entity not found',
@@ -304,6 +304,6 @@ export class GenericListController {
     },
   })
   async deleteById(@param.path.string('id') id: string): Promise<void> {
-    await this.listRepository.deleteById(id);
+    await this.genericListRepository.deleteById(id);
   }
 }
