@@ -7,7 +7,14 @@ import {ListRelation} from './list-relation.model';
 import {TagListRelation} from './tag-list-relation.model';
 import {Tag} from './tag.model';
 
-@model({settings: {strict: false}})
+@model({
+  settings: {
+    strict: false,
+    mongodb: {
+      collection: process.env.collection_list ?? "GenericList"
+    }
+  }
+})
 export class GenericList extends Entity {
   @property({
     type: 'string',

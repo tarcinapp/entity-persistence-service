@@ -198,7 +198,7 @@ We can divide configurations into 9 categories:
 | **mongodb_password**  | MongoDB password. Provide through k8s secrets               | tapppass123!    |
 | **mongodb_database**  | Name of the database                                        | tappdb          |
 | **collection_entity** | Name of the collection which generic entities are persisted | GenericEntities |
-| **collection_list**   | Name of the collection which generic entities are persisted | Lists           |
+| **collection_list**   | Name of the collection which generic entities are persisted | GenericLists    |
 
 ### Allowed Kinds
 You can limit acceptable values for `kind` fields for the records.
