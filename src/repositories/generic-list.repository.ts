@@ -551,7 +551,7 @@ export class GenericListRepository extends DefaultCrudRepository<
     }
 
     // final uniqueness controlling filter
-    console.log('Uniqueness Filter: ', JSON.stringify(filter));
+    // console.log('Uniqueness Filter: ', JSON.stringify(filter));
 
     const existingList = await super.findOne(filter);
 
