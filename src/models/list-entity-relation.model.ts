@@ -4,7 +4,7 @@ import {Entity, model, property} from '@loopback/repository';
   settings: {
     strict: false,
     mongodb: {
-      collection: "ListToEntityRelation"
+      collection: "GenericListToEntityRelation"
     }
   }
 }
