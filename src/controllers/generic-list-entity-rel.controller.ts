@@ -16,7 +16,7 @@ import {
   put,
   requestBody,
 } from '@loopback/rest';
-import {ListEntityRelation} from '../models';
+import {GenericListEntityRelation} from '../models';
 import {ListEntityRelationRepository} from '../repositories';
 
 export class GenericListEntityRelController {
@@ -29,7 +29,7 @@ export class GenericListEntityRelController {
     responses: {
       '200': {
         description: 'GenericListEntityRelation model instance',
-        content: {'application/json': {schema: getModelSchemaRef(ListEntityRelation)}},
+        content: {'application/json': {schema: getModelSchemaRef(GenericListEntityRelation)}},
       },
     },
   })
@@ -37,15 +37,15 @@ export class GenericListEntityRelController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(ListEntityRelation, {
+          schema: getModelSchemaRef(GenericListEntityRelation, {
             title: 'NewGenericListEntityRelation',
             exclude: ['id'],
           }),
         },
       },
     })
-    listEntityRelation: Omit<ListEntityRelation, 'id'>,
-  ): Promise<ListEntityRelation> {
+    listEntityRelation: Omit<GenericListEntityRelation, 'id'>,
+  ): Promise<GenericListEntityRelation> {
     return this.genericListEntityRelationRepository.create(listEntityRelation);
   }
 
@@ -58,7 +58,7 @@ export class GenericListEntityRelController {
     },
   })
   async count(
-    @param.where(ListEntityRelation) where?: Where<ListEntityRelation>,
+    @param.where(GenericListEntityRelation) where?: Where<GenericListEntityRelation>,
   ): Promise<Count> {
     return this.genericListEntityRelationRepository.count(where);
   }
@@ -71,7 +71,7 @@ export class GenericListEntityRelController {
           'application/json': {
             schema: {
               type: 'array',
-              items: getModelSchemaRef(ListEntityRelation, {includeRelations: true}),
+              items: getModelSchemaRef(GenericListEntityRelation, {includeRelations: true}),
             },
           },
         },
@@ -79,8 +79,8 @@ export class GenericListEntityRelController {
     },
   })
   async find(
-    @param.filter(ListEntityRelation) filter?: Filter<ListEntityRelation>,
-  ): Promise<ListEntityRelation[]> {
+    @param.filter(GenericListEntityRelation) filter?: Filter<GenericListEntityRelation>,
+  ): Promise<GenericListEntityRelation[]> {
     return this.genericListEntityRelationRepository.find(filter);
   }
 
@@ -96,12 +96,12 @@ export class GenericListEntityRelController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(ListEntityRelation, {partial: true}),
+          schema: getModelSchemaRef(GenericListEntityRelation, {partial: true}),
         },
       },
     })
-    listEntityRelation: ListEntityRelation,
-    @param.where(ListEntityRelation) where?: Where<ListEntityRelation>,
+    listEntityRelation: GenericListEntityRelation,
+    @param.where(GenericListEntityRelation) where?: Where<GenericListEntityRelation>,
   ): Promise<Count> {
     return this.genericListEntityRelationRepository.updateAll(listEntityRelation, where);
   }
@@ -112,7 +112,7 @@ export class GenericListEntityRelController {
         description: 'GenericListEntityRelation model instance',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(ListEntityRelation, {includeRelations: true}),
+            schema: getModelSchemaRef(GenericListEntityRelation, {includeRelations: true}),
           },
         },
       },
@@ -120,8 +120,8 @@ export class GenericListEntityRelController {
   })
   async findById(
     @param.path.string('id') id: string,
-    @param.filter(ListEntityRelation, {exclude: 'where'}) filter?: FilterExcludingWhere<ListEntityRelation>
-  ): Promise<ListEntityRelation> {
+    @param.filter(GenericListEntityRelation, {exclude: 'where'}) filter?: FilterExcludingWhere<GenericListEntityRelation>
+  ): Promise<GenericListEntityRelation> {
     return this.genericListEntityRelationRepository.findById(id, filter);
   }
 
@@ -137,11 +137,11 @@ export class GenericListEntityRelController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(ListEntityRelation, {partial: true}),
+          schema: getModelSchemaRef(GenericListEntityRelation, {partial: true}),
         },
       },
     })
-    listEntityRelation: ListEntityRelation,
+    listEntityRelation: GenericListEntityRelation,
   ): Promise<void> {
     await this.genericListEntityRelationRepository.updateById(id, listEntityRelation);
   }
@@ -155,7 +155,7 @@ export class GenericListEntityRelController {
   })
   async replaceById(
     @param.path.string('id') id: string,
-    @requestBody() listEntityRelation: ListEntityRelation,
+    @requestBody() listEntityRelation: GenericListEntityRelation,
   ): Promise<void> {
     await this.genericListEntityRelationRepository.replaceById(id, listEntityRelation);
   }

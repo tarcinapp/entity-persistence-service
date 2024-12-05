@@ -1,7 +1,7 @@
 import {Entity, hasMany, model, property} from '@loopback/repository';
 import _ from 'lodash';
 import {GenericEntity, GenericEntityWithRelations} from './generic-entity.model';
-import {ListEntityRelation} from './list-entity-relation.model';
+import {GenericListEntityRelation} from './list-entity-relation.model';
 import {ListReactions} from './list-reactions.model';
 import {ListRelation} from './list-relation.model';
 import {TagListRelation} from './tag-list-relation.model';
@@ -164,7 +164,7 @@ export class GenericList extends Entity {
   })
   idempotencyKey?: string | undefined;
 
-  @hasMany(() => GenericEntity, {through: {model: () => ListEntityRelation, keyFrom: 'listId', keyTo: 'entityId'}})
+  @hasMany(() => GenericEntity, {through: {model: () => GenericListEntityRelation, keyFrom: 'listId', keyTo: 'entityId'}})
   genericEntities: GenericEntity[];
 
   @hasMany(() => ListRelation, {keyTo: 'from'})

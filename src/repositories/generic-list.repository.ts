@@ -8,7 +8,7 @@ import {EntityDbDataSource} from '../datasources';
 import {IdempotencyConfigurationReader, KindLimitsConfigurationReader, RecordLimitsConfigurationReader, UniquenessConfigurationReader, VisibilityConfigurationReader} from '../extensions';
 import {Set, SetFilterBuilder} from '../extensions/set';
 import {ValidfromConfigurationReader} from '../extensions/validfrom-config-reader';
-import {GenericEntity, GenericList, HttpErrorResponse, ListEntityRelation, ListReactions, ListRelation, ListRelations, SingleError, Tag, TagListRelation} from '../models';
+import {GenericEntity, GenericList, GenericListEntityRelation, HttpErrorResponse, ListReactions, ListRelation, ListRelations, SingleError, Tag, TagListRelation} from '../models';
 import {GenericEntityRepository} from './generic-entity.repository';
 import {ListEntityRelationRepository} from './list-entity-relation.repository';
 import {ListReactionsRepository} from './list-reactions.repository';
@@ -23,7 +23,7 @@ export class GenericListRepository extends DefaultCrudRepository<
 > {
 
   public readonly genericEntities: HasManyThroughRepositoryFactory<GenericEntity, typeof GenericEntity.prototype.id,
-    ListEntityRelation,
+    GenericListEntityRelation,
     typeof GenericList.prototype.id
   >;
 
