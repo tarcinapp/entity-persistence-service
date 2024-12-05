@@ -7,13 +7,13 @@ import {
   Where,
 } from '@loopback/repository';
 import {
-  post,
-  param,
+  del,
   get,
   getModelSchemaRef,
+  param,
   patch,
+  post,
   put,
-  del,
   requestBody,
 } from '@loopback/rest';
 import {ListEntityRelation} from '../models';
@@ -22,10 +22,10 @@ import {ListEntityRelationRepository} from '../repositories';
 export class ListEntityRelController {
   constructor(
     @repository(ListEntityRelationRepository)
-    public listEntityRelationRepository : ListEntityRelationRepository,
-  ) {}
+    public listEntityRelationRepository: ListEntityRelationRepository,
+  ) { }
 
-  @post('/list-entity-relations', {
+  @post('/generic-list-entity-relations', {
     responses: {
       '200': {
         description: 'ListEntityRelation model instance',
@@ -49,7 +49,7 @@ export class ListEntityRelController {
     return this.listEntityRelationRepository.create(listEntityRelation);
   }
 
-  @get('/list-entity-relations/count', {
+  @get('/generic-list-entity-relations/count', {
     responses: {
       '200': {
         description: 'ListEntityRelation model count',
@@ -63,7 +63,7 @@ export class ListEntityRelController {
     return this.listEntityRelationRepository.count(where);
   }
 
-  @get('/list-entity-relations', {
+  @get('/generic-list-entity-relations', {
     responses: {
       '200': {
         description: 'Array of ListEntityRelation model instances',
@@ -84,7 +84,7 @@ export class ListEntityRelController {
     return this.listEntityRelationRepository.find(filter);
   }
 
-  @patch('/list-entity-relations', {
+  @patch('/generic-list-entity-relations', {
     responses: {
       '200': {
         description: 'ListEntityRelation PATCH success count',
@@ -106,7 +106,7 @@ export class ListEntityRelController {
     return this.listEntityRelationRepository.updateAll(listEntityRelation, where);
   }
 
-  @get('/list-entity-relations/{id}', {
+  @get('/generic-list-entity-relations/{id}', {
     responses: {
       '200': {
         description: 'ListEntityRelation model instance',
@@ -125,7 +125,7 @@ export class ListEntityRelController {
     return this.listEntityRelationRepository.findById(id, filter);
   }
 
-  @patch('/list-entity-relations/{id}', {
+  @patch('/generic-list-entity-relations/{id}', {
     responses: {
       '204': {
         description: 'ListEntityRelation PATCH success',
@@ -146,7 +146,7 @@ export class ListEntityRelController {
     await this.listEntityRelationRepository.updateById(id, listEntityRelation);
   }
 
-  @put('/list-entity-relations/{id}', {
+  @put('/generic-list-entity-relations/{id}', {
     responses: {
       '204': {
         description: 'ListEntityRelation PUT success',
@@ -160,7 +160,7 @@ export class ListEntityRelController {
     await this.listEntityRelationRepository.replaceById(id, listEntityRelation);
   }
 
-  @del('/list-entity-relations/{id}', {
+  @del('/generic-list-entity-relations/{id}', {
     responses: {
       '204': {
         description: 'ListEntityRelation DELETE success',
