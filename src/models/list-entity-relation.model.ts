@@ -7,8 +7,7 @@ import {Entity, model, property} from '@loopback/repository';
       collection: "GenericListToEntityRelation"
     }
   }
-}
-)
+})
 export class GenericListEntityRelation extends Entity {
   @property({
     type: 'string',
