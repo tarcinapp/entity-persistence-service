@@ -38,7 +38,7 @@ export class GenericListEntityRelController {
       content: {
         'application/json': {
           schema: getModelSchemaRef(ListEntityRelation, {
-            title: 'NewListEntityRelation',
+            title: 'NewGenericListEntityRelation',
             exclude: ['id'],
           }),
         },
