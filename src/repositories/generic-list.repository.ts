@@ -10,7 +10,7 @@ import {Set, SetFilterBuilder} from '../extensions/set';
 import {ValidfromConfigurationReader} from '../extensions/validfrom-config-reader';
 import {GenericEntity, GenericList, GenericListEntityRelation, HttpErrorResponse, ListReactions, ListRelation, ListRelations, SingleError, Tag, TagListRelation} from '../models';
 import {GenericEntityRepository} from './generic-entity.repository';
-import {ListEntityRelationRepository} from './list-entity-relation.repository';
+import {GenericListEntityRelationRepository} from './list-entity-relation.repository';
 import {ListReactionsRepository} from './list-reactions.repository';
 import {ListRelationRepository} from './list-relation.repository';
 import {TagListRelationRepository} from './tag-list-relation.repository';
@@ -40,7 +40,7 @@ export class GenericListRepository extends DefaultCrudRepository<
 
   constructor(
     @inject('datasources.EntityDb') dataSource: EntityDbDataSource,
-    @repository.getter('ListEntityRelationRepository') protected listEntityRelationRepositoryGetter: Getter<ListEntityRelationRepository>,
+    @repository.getter('ListEntityRelationRepository') protected listEntityRelationRepositoryGetter: Getter<GenericListEntityRelationRepository>,
     @repository.getter('GenericEntityRepository') protected genericEntityRepositoryGetter: Getter<GenericEntityRepository>,
     @repository.getter('ListRelationRepository') protected listRelationRepositoryGetter: Getter<ListRelationRepository>,
     @repository.getter('ListReactionsRepository') protected listReactionsRepositoryGetter: Getter<ListReactionsRepository>,

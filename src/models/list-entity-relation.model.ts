@@ -46,8 +46,8 @@ export class GenericListEntityRelation extends Entity {
   }
 }
 
-export interface ListEntityRelationRelations {
+export interface GenericListEntityRelationRelations {
   // describe navigational properties here
 }
 
-export type ListEntityRelationWithRelations = GenericListEntityRelation & ListEntityRelationRelations;
+export type ListEntityRelationWithRelations = GenericListEntityRelation & GenericListEntityRelationRelations;

@@ -17,12 +17,12 @@ import {
   requestBody,
 } from '@loopback/rest';
 import {GenericListEntityRelation} from '../models';
-import {ListEntityRelationRepository} from '../repositories';
+import {GenericListEntityRelationRepository} from '../repositories';
 
 export class GenericListEntityRelController {
   constructor(
-    @repository(ListEntityRelationRepository)
-    public genericListEntityRelationRepository: ListEntityRelationRepository,
+    @repository(GenericListEntityRelationRepository)
+    public genericListEntityRelationRepository: GenericListEntityRelationRepository,
   ) { }
 
   @post('/generic-list-entity-relations', {

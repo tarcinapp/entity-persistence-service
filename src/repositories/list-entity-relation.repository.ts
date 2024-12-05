@@ -1,12 +1,12 @@
 import {inject} from '@loopback/core';
 import {DefaultCrudRepository} from '@loopback/repository';
 import {EntityDbDataSource} from '../datasources';
-import {GenericListEntityRelation, ListEntityRelationRelations} from '../models';
+import {GenericListEntityRelation, GenericListEntityRelationRelations} from '../models';
 
-export class ListEntityRelationRepository extends DefaultCrudRepository<
+export class GenericListEntityRelationRepository extends DefaultCrudRepository<
   GenericListEntityRelation,
   typeof GenericListEntityRelation.prototype.id,
-  ListEntityRelationRelations
+  GenericListEntityRelationRelations
 > {
   constructor(
     @inject('datasources.EntityDb') dataSource: EntityDbDataSource,
