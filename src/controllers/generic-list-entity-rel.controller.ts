@@ -19,7 +19,7 @@ import {
 import {ListEntityRelation} from '../models';
 import {ListEntityRelationRepository} from '../repositories';
 
-export class ListEntityRelController {
+export class GenericListEntityRelController {
   constructor(
     @repository(ListEntityRelationRepository)
     public listEntityRelationRepository: ListEntityRelationRepository,
