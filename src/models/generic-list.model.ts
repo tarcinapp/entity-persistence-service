@@ -1,7 +1,7 @@
 import {Entity, hasMany, model, property} from '@loopback/repository';
 import _ from 'lodash';
 import {GenericEntity, GenericEntityWithRelations} from './generic-entity.model';
-import {GenericListEntityRelation} from './list-entity-relation.model';
+import {GenericListEntityRelation} from './generic-list-entity-relation.model';
 import {ListReactions} from './list-reactions.model';
 import {ListRelation} from './list-relation.model';
 import {TagListRelation} from './tag-list-relation.model';
