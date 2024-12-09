@@ -1,6 +1,6 @@
 export * from './generic-entity.repository';
+export * from './generic-list-entity-relation.repository';
 export * from './generic-list.repository';
-export * from './list-entity-relation.repository';
 export * from './list-reactions.repository';
 export * from './list-relation.repository';
 export * from './reactions.repository';

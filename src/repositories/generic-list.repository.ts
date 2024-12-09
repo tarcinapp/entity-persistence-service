@@ -10,7 +10,7 @@ import {Set, SetFilterBuilder} from '../extensions/set';
 import {ValidfromConfigurationReader} from '../extensions/validfrom-config-reader';
 import {GenericEntity, GenericList, GenericListEntityRelation, HttpErrorResponse, ListReactions, ListRelation, ListRelations, SingleError, Tag, TagListRelation} from '../models';
 import {GenericEntityRepository} from './generic-entity.repository';
-import {GenericListEntityRelationRepository} from './list-entity-relation.repository';
+import {GenericListEntityRelationRepository} from './generic-list-entity-relation.repository';
 import {ListReactionsRepository} from './list-reactions.repository';
 import {ListRelationRepository} from './list-relation.repository';
 import {TagListRelationRepository} from './tag-list-relation.repository';
