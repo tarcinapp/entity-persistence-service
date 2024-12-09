@@ -9,7 +9,7 @@ import {Entity, model, property} from '@loopback/repository';
   }
 }
 )
-export class ListEntityRelation extends Entity {
+export class GenericListEntityRelation extends Entity {
   @property({
     type: 'string',
     id: true,
@@ -42,7 +42,7 @@ export class ListEntityRelation extends Entity {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [prop: string]: any;
 
-  constructor(data?: Partial<ListEntityRelation>) {
+  constructor(data?: Partial<GenericListEntityRelation>) {
     super(data);
   }
 }
@@ -51,4 +51,4 @@ export interface ListEntityRelationRelations {
   // describe navigational properties here
 }
 
-export type ListEntityRelationWithRelations = ListEntityRelation & ListEntityRelationRelations;
+export type ListEntityRelationWithRelations = GenericListEntityRelation & ListEntityRelationRelations;
