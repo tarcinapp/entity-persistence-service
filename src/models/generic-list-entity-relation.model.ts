@@ -20,6 +20,45 @@ export class GenericListEntityRelation extends Entity {
   @property({
     type: 'string',
     required: true,
+    default: 'relation'
+  })
+  kind: string;
+
+  @property({
+    type: 'date',
+    description: 'This field is filled by server at the time of the creation of the list.'
+  })
+  creationDateTime?: string;
+
+  @property({
+    required: false,
+    type: 'date'
+  })
+  lastUpdatedDateTime?: string;
+
+  @property({
+    type: 'date',
+    description: 'This is the list approval time.' +
+      'Only those list with validFromDateTime property has a value can be' +
+      'seen by other members.' +
+      'If caller is not a member at the creation time, this field is filled' +
+      'automatically by the server.',
+    default: null,
+    jsonSchema: {nullable: true}
+  })
+  validFromDateTime?: string;
+
+  @property({
+    type: 'date',
+    description: 'This field indicates if the list is currently active.',
+    default: null,
+    jsonSchema: {nullable: true}
+  })
+  validUntilDateTime?: string | null;
+
+  @property({
+    type: 'string',
+    required: true,
   })
   listId: string;
 
@@ -29,11 +68,35 @@ export class GenericListEntityRelation extends Entity {
   })
   entityId: string;
 
+  // Define the 'fromMetadata' field
   @property({
-    type: 'date',
-    defaultFn: "now",
+    type: 'object',
+    description: 'Metadata for the source entity'
   })
-  creationDateTime?: string;
+  fromMetadata?: {
+    validFromDateTime?: string;
+    validUntilDateTime?: string;
+    visibility?: string;
+    ownerUsers?: string[];
+    ownerGroups?: string[];
+    viewerUsers?: string[];
+    viewerGroups?: string[];
+  };
+
+  // Define the 'toMetadata' field
+  @property({
+    type: 'object',
+    description: 'Metadata for the destination entity',
+  })
+  toMetadata?: {
+    validFromDateTime?: string;
+    validUntilDateTime?: string;
+    visibility?: string;
+    ownerUsers?: string[];
+    ownerGroups?: string[];
+    viewerUsers?: string[];
+    viewerGroups?: string[];
+  };
 
   // Define well-known properties here
 
