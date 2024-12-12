@@ -21,12 +21,12 @@ import {
 } from '../models';
 import {GenericEntityRepository} from '../repositories';
 
-export class GenericEntityRelationController {
+export class GenericEntityChildrenController {
   constructor(
     @repository(GenericEntityRepository) protected genericEntityRepository: GenericEntityRepository,
   ) { }
 
-  @get('/generic-entities/{id}/relations', {
+  @get('/generic-entities/{id}/children', {
     responses: {
       '200': {
         description: 'Array of GenericEntity has many Relation',
@@ -45,7 +45,7 @@ export class GenericEntityRelationController {
     return this.genericEntityRepository.relations(id).find(filter);
   }
 
-  @post('/generic-entities/{id}/relations', {
+  @post('/generic-entities/{id}/children', {
     responses: {
       '200': {
         description: 'GenericEntity model instance',
@@ -70,7 +70,7 @@ export class GenericEntityRelationController {
     return this.genericEntityRepository.relations(id).create(relation);
   }
 
-  @patch('/generic-entities/{id}/relations', {
+  @patch('/generic-entities/{id}/children', {
     responses: {
       '200': {
         description: 'GenericEntity.Relation PATCH success count',
@@ -93,7 +93,7 @@ export class GenericEntityRelationController {
     return this.genericEntityRepository.relations(id).patch(relation, where);
   }
 
-  @del('/generic-entities/{id}/relations', {
+  @del('/generic-entities/{id}/children', {
     responses: {
       '200': {
         description: 'GenericEntity.Relation DELETE success count',
