@@ -84,7 +84,7 @@ export class GenericEntityControllerController {
     @param.where(GenericEntity) where?: Where<GenericEntity>,
   ): Promise<Count> {
 
-    let filterBuilder = new FilterBuilder<GenericEntity>();
+    const filterBuilder = new FilterBuilder<GenericEntity>();
 
     if (where)
       filterBuilder.where(where);
@@ -144,9 +144,23 @@ export class GenericEntityControllerController {
       },
     })
     genericEntity: GenericEntity,
+    @param.query.object('set') set?: Set,
     @param.where(GenericEntity) where?: Where<GenericEntity>,
   ): Promise<Count> {
-    return this.genericEntityRepository.updateAll(genericEntity, where);
+
+    const filterBuilder = new FilterBuilder<GenericEntity>();
+
+    if (where)
+      filterBuilder.where(where);
+
+    let filter = filterBuilder.build();
+
+    if (set)
+      filter = new SetFilterBuilder<GenericEntity>(set, {
+        filter: filter
+      }).build();
+
+    return this.genericEntityRepository.updateAll(genericEntity, filter.where);
   }
 
   @get('/generic-entities/{id}', {

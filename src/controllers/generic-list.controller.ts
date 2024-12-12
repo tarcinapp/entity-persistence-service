@@ -165,9 +165,23 @@ export class GenericListController {
       },
     })
     list: GenericList,
+    @param.query.object('set') set?: Set,
     @param.where(GenericList) where?: Where<GenericList>,
   ): Promise<Count> {
-    return this.genericListRepository.updateAll(list, where);
+
+    const filterBuilder = new FilterBuilder<GenericList>();
+
+    if (where)
+      filterBuilder.where(where);
+
+    let filter = filterBuilder.build();
+
+    if (set)
+      filter = new SetFilterBuilder<GenericList>(set, {
+        filter: filter
+      }).build();
+
+    return this.genericListRepository.updateAll(list, filter.where);
   }
 
   @get('/generic-lists/{id}', {
