@@ -19,10 +19,9 @@ export class GenericListEntityRelation extends Entity {
 
   @property({
     type: 'string',
-    required: true,
     default: 'relation'
   })
-  kind: string;
+  kind?: string;
 
   @property({
     type: 'date',
