@@ -26,7 +26,7 @@ export class ListTagController {
     @repository(GenericListRepository) protected listRepository: GenericListRepository,
   ) { }
 
-  @get('/lists/{id}/tags', {
+  @get('/generic-lists/{id}/tags', {
     responses: {
       '200': {
         description: 'Array of List has many Tag through TagListRelation',
@@ -45,7 +45,7 @@ export class ListTagController {
     return this.listRepository.tags(id).find(filter);
   }
 
-  @post('/lists/{id}/tags', {
+  @post('/generic-lists/{id}/tags', {
     responses: {
       '200': {
         description: 'create a Tag model instance',
@@ -69,7 +69,7 @@ export class ListTagController {
     return this.listRepository.tags(id).create(tag);
   }
 
-  @patch('/lists/{id}/tags', {
+  @patch('/generic-lists/{id}/tags', {
     responses: {
       '200': {
         description: 'List.Tag PATCH success count',
@@ -92,7 +92,7 @@ export class ListTagController {
     return this.listRepository.tags(id).patch(tag, where);
   }
 
-  @del('/lists/{id}/tags', {
+  @del('/generic-lists/{id}/tags', {
     responses: {
       '200': {
         description: 'List.Tag DELETE success count',

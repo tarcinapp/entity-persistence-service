@@ -40,7 +40,7 @@ export class GenericListRepository extends DefaultCrudRepository<
 
   constructor(
     @inject('datasources.EntityDb') dataSource: EntityDbDataSource,
-    @repository.getter('ListEntityRelationRepository') protected listEntityRelationRepositoryGetter: Getter<GenericListEntityRelationRepository>,
+    @repository.getter('GenericListEntityRelationRepository') protected listEntityRelationRepositoryGetter: Getter<GenericListEntityRelationRepository>,
     @repository.getter('GenericEntityRepository') protected genericEntityRepositoryGetter: Getter<GenericEntityRepository>,
     @repository.getter('ListRelationRepository') protected listRelationRepositoryGetter: Getter<ListRelationRepository>,
     @repository.getter('ListReactionsRepository') protected listReactionsRepositoryGetter: Getter<ListReactionsRepository>,

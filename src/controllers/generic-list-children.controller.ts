@@ -21,12 +21,12 @@ import {
 } from '../models';
 import {GenericListRepository} from '../repositories';
 
-export class ListListRelationController {
+export class GenericListChildrenController {
   constructor(
     @repository(GenericListRepository) protected listRepository: GenericListRepository,
   ) { }
 
-  @get('/lists/{id}/list-relations', {
+  @get('/generic-lists/{id}/children', {
     responses: {
       '200': {
         description: 'Array of List has many ListRelation',
@@ -45,7 +45,7 @@ export class ListListRelationController {
     return this.listRepository.relations(id).find(filter);
   }
 
-  @post('/lists/{id}/list-relations', {
+  @post('/generic-lists/{id}/children', {
     responses: {
       '200': {
         description: 'List model instance',
@@ -70,7 +70,7 @@ export class ListListRelationController {
     return this.listRepository.relations(id).create(listRelation);
   }
 
-  @patch('/lists/{id}/list-relations', {
+  @patch('/generic-lists/{id}/children', {
     responses: {
       '200': {
         description: 'List.ListRelation PATCH success count',
@@ -93,7 +93,7 @@ export class ListListRelationController {
     return this.listRepository.relations(id).patch(listRelation, where);
   }
 
-  @del('/lists/{id}/list-relations', {
+  @del('/generic-lists/{id}/children', {
     responses: {
       '200': {
         description: 'List.ListRelation DELETE success count',
