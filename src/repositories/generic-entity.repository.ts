@@ -417,7 +417,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
      * this point. If it's not valid, we raise an error with the allowed valid
      * values for 'kind'.
      */
-    const kind = data.kind || '';
+    const kind = data.kind ?? '';
 
     if (!this.kindLimitConfigReader.isKindAcceptableForEntity(kind)) {
       const validValues = this.kindLimitConfigReader.allowedKindsForEntities;
