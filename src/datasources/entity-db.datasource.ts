@@ -4,13 +4,15 @@ import {juggler} from '@loopback/repository';
 const config = {
   name: 'EntityDb',
   connector: 'mongodb',
-  host: process.env["mongodb_host"],
-  port: process.env["mongodb_port"],
-  user: process.env["mongodb_user"],
-  password: process.env["mongodb_password"],
+  host: process.env["mongodb_url"] ? "" : process.env["mongodb_host"],
+  port: process.env["mongodb_url"] ? "" : process.env["mongodb_port"],
+  user: process.env["mongodb_url"] ? "" : process.env["mongodb_user"],
+  password: process.env["mongodb_url"] ? "" : process.env["mongodb_password"],
   database: process.env["mongodb_database"],
+  url: process.env["mongodb_url"] ? null : process.env["mongodb_url"],
   useNewUrlParser: true
 };
+
 
 // Observe application's life cycle to disconnect the datasource when
 // application is stopped. This allows the application to be shut down
