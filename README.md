@@ -204,9 +204,11 @@ We can divide configurations into 9 categories:
 ### Allowed Kinds
 You can limit acceptable values for `kind` fields for the records.
 
-| Configuration    | Description                                                        | Default Value |
-| ---------------- | ------------------------------------------------------------------ | ------------- |
-| **entity_kinds** | Comma seperated list of allowed values for kind field of entities. | authors,books |
+| Configuration             | Description                                                        | Default Value |
+| ------------------------- | ------------------------------------------------------------------ | ------------- |
+| **entity_kinds**          | Comma seperated list of allowed values for kind field of entities. |               |
+| **list_kinds**            | Comma seperated list of allowed values for kind field of entities. |               |
+| **entity_list_rel_kinds** | Comma seperated list of allowed values for kind field of entities. | relation      |
 
 ### Uniqueness
 Data uniqueness is configurable with giving the composite-index-like set of field names. Optionally, you can make uniqueness valid for a subset of records. To enforce uniqueness in a subset of record, you can configure "set" feature of the application. That is, uniqueness can be enforced only between valid or public records as well. You can combine multiple sets with logical operators.
@@ -281,10 +283,15 @@ Limits can be configured through sets. For instance, you can limit active or pub
 
 ### Idempotency
 entity-persistence-service ensures data creation is efficient and predictable. You can define JSON field paths, and the system generates a unique key based on these values. When clients attempt to create records, the system checks if a matching record exists using this key. If found, it returns the result as if it were a new record.
-| Configuration                         | Description                                                                                                                                      | Default Value | Example Values     |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------- | ------------------ |
-| **idempotency_entity**                | comma seperated list of field names for entity records that are contributing to the calculation of idempotency key                               | -             | kind, name, author |
-| **idempotency_entity_for_{kindName}** | comma seperated list of field names for entity records with kind value is {kindName} that are contributing to the calculation of idempotency key | -             | kind, name, author |
+| Configuration                                  | Description                                                                                                                                      | Default Value | Example Values         |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------- | ---------------------- |
+| **idempotency_entity**                         | comma seperated list of field names for entity records that are contributing to the calculation of idempotency key                               | -             | kind, slug, author     |
+| **idempotency_entity_for_{kindName}**          | comma seperated list of field names for entity records with kind value is {kindName} that are contributing to the calculation of idempotency key | -             | kind, slug, author     |
+| **idempotency_list**                           | comma seperated list of field names for list records that are contributing to the calculation of idempotency key                                 | -             | kind, slug             |
+| **idempotency_list_for_{kindName}**            | comma seperated list of field names for list records with kind value is {kindName} that are contributing to the calculation of idempotency key   | -             | kind, slug, author     |
+| **idempotency_list_entity_rel**                | comma seperated list of field names for entity records that are contributing to the calculation of idempotency key                               | -             | kind, listId, entityId |
+| **idempotency_list_entity_rel_for_{kindName}** | comma seperated list of field names for entity records with kind value is {kindName} that are contributing to the calculation of idempotency key | -             | kind, listId, entityId |
+
   
 Please note that idempotency calculation takes place before populating managed fields. Thus, do not use managed fields as contributor to the idempotency. For instance, use `name` instead of `slug`.
 

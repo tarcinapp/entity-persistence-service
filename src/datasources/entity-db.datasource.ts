@@ -9,7 +9,7 @@ const config = {
   user: process.env["mongodb_url"] ? "" : process.env["mongodb_user"],
   password: process.env["mongodb_url"] ? "" : process.env["mongodb_password"],
   database: process.env["mongodb_database"],
-  url: process.env["mongodb_url"] ? null : process.env["mongodb_url"],
+  url: process.env["mongodb_url"],
   useNewUrlParser: true
 };
 
