@@ -29,11 +29,11 @@ Here is an example request and response to the one of the most basic endpoint: `
 This service is equipped with a versatile set of endpoints, each serving a specific purpose in managing and interacting with your data:
 
 * `/generic-entities`: Handle your primary data models with this endpoint, facilitating CRUD (Create, Read, Update, Delete) operations.
-* `/lists`: Create, organize, and manage lists, enabling you to associate related data effortlessly.
+* `/generic-lists`: Create, organize, and manage lists, enabling you to associate related data effortlessly.
 * `/generic-entities/{id}/reactions`: Capture user reactions, comments, likes, and more on specific entities.
-* `/lists/{id}/list-reactions`: Manage reactions, comments, likes, and other interactions associated with your lists.
+* `/generic-lists/{id}/list-reactions`: Manage reactions, comments, likes, and other interactions associated with your lists.
 * `/generic-entities/{id}/tags`: Add, modify, or remove tags associated with specific entities for efficient data categorization.
-* `/lists/{id}/tags`: Employ tags to categorize and organize your lists efficiently, ensuring effective data management.
+* `/generic-lists/{id}/tags`: Employ tags to categorize and organize your lists efficiently, ensuring effective data management.
 
 ## Data Model
 The Entity Persistence Service is coming with a set of data models, each serving a unique purpose in organizing and managing your data. These data models lay the foundation for creating and categorizing entities and lists, handling user interactions, and facilitating effective data organization.
