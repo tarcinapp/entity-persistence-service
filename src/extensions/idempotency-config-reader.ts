@@ -8,8 +8,10 @@ export namespace IdempotencyConfigBindings {
 }
 
 export class IdempotencyConfigurationReader {
-  defaultEntityIdempotency: string[] = [];
+
   defaultListIdempotency: string[] = [];
+  defaultEntityIdempotency: string[] = [];
+  defaultListEntityRelIdempotency: string[] = [];
 
   constructor() { }
 
@@ -55,6 +57,16 @@ export class IdempotencyConfigurationReader {
     return idempotencyConfig || this.defaultListIdempotency;
   }
 
+  public getIdempotencyForListEntityRels(kind?: string): string[] {
+    let idempotencyConfig = this.getIdempotencyConfigForKindForListEntityRel(kind);
+
+    if(isEmpty(idempotencyConfig)) {
+      idempotencyConfig = this.getIdempotencyConfigForListEntityRel();
+    }
+
+    return idempotencyConfig || this.defaultListEntityRelIdempotency;
+  }
+
   private getIdempotencyConfigForKindForEntities(kind?: string): string[] {
     const config = process.env[`idempotency_entity_for_${kind}`];
     return config ? config.split(',').map((fieldPath) => fieldPath.trim()) : [];
@@ -73,5 +85,16 @@ export class IdempotencyConfigurationReader {
   private getIdempotencyConfigForLists(): string[] {
     const config = process.env['idempotency_list'];
     return config ? config.split(',').map((fieldPath) => fieldPath.trim()) : [];
+  }
+
+  private getIdempotencyConfigForKindForListEntityRel(kind?: string): string[] {
+    const config = process.env[`idempotency_list_entity_rel_for_${kind}`];
+    return config ? config.split(',').map((fieldPath) => fieldPath.trim()) : [];
+  }
+
+  private getIdempotencyConfigForListEntityRel(): string[] {
+    const config = process.env['idempotency_list_entity_rel'];
+
+    return config ? config.split(',').map((fieldPath) => fieldPath.trim()) : []
   }
 }
