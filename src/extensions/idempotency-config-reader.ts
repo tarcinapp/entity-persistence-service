@@ -60,7 +60,7 @@ export class IdempotencyConfigurationReader {
   public getIdempotencyForListEntityRels(kind?: string): string[] {
     let idempotencyConfig = this.getIdempotencyConfigForKindForListEntityRel(kind);
 
-    if(isEmpty(idempotencyConfig)) {
+    if (isEmpty(idempotencyConfig)) {
       idempotencyConfig = this.getIdempotencyConfigForListEntityRel();
     }
 

@@ -1,10 +1,11 @@
-import {inject} from '@loopback/core';
-import {DataObject, DefaultCrudRepository} from '@loopback/repository';
+import {Getter, inject} from '@loopback/core';
+import {DataObject, DefaultCrudRepository, repository} from '@loopback/repository';
 import * as crypto from 'crypto';
+import _ from 'lodash';
 import {EntityDbDataSource} from '../datasources';
 import {IdempotencyConfigurationReader} from '../extensions';
 import {GenericListEntityRelation, GenericListEntityRelationRelations} from '../models';
-import _ from 'lodash';
+import {GenericEntityRepository} from './generic-entity.repository';
 
 export class GenericListEntityRelationRepository extends DefaultCrudRepository<
   GenericListEntityRelation,
@@ -13,22 +14,28 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
 > {
   constructor(
     @inject('datasources.EntityDb') dataSource: EntityDbDataSource,
+    @repository.getter('GenericEntityRepository') protected genericEntityRepositoryGetter: Getter<GenericEntityRepository>,
     @inject('extensions.idempotency.configurationreader') private idempotencyConfigReader: IdempotencyConfigurationReader
   ) {
     super(GenericListEntityRelation, dataSource);
   }
 
   async create(data: DataObject<GenericListEntityRelation>) {
-
     const idempotencyKey = this.calculateIdempotencyKey(data);
+    const genericEntityRepo = this.genericEntityRepositoryGetter();
+    //    const genericListRepo = this.
 
-    console.log(idempotencyKey);
+    genericEntityRepo.then((repo) => repo.findById(data.entityId))
+      .then(e => console.log(e))
+      .catch(e => console.log(e));
+
+
 
     return super.create(data);
   }
 
   calculateIdempotencyKey(data: DataObject<GenericListEntityRelation>) {
-    const idempotencyFields = this.idempotencyConfigReader.getIdempotencyForLists(data.kind);
+    const idempotencyFields = this.idempotencyConfigReader.getIdempotencyForListEntityRels(data.kind);
 
     // idempotency is not configured
     if (idempotencyFields.length === 0) return;
