@@ -40,18 +40,42 @@ export class GenericListRepository extends DefaultCrudRepository<
 
   constructor(
     @inject('datasources.EntityDb') dataSource: EntityDbDataSource,
-    @repository.getter('GenericListEntityRelationRepository') protected listEntityRelationRepositoryGetter: Getter<GenericListEntityRelationRepository>,
-    @repository.getter('GenericEntityRepository') protected genericEntityRepositoryGetter: Getter<GenericEntityRepository>,
-    @repository.getter('ListRelationRepository') protected listRelationRepositoryGetter: Getter<ListRelationRepository>,
-    @repository.getter('ListReactionsRepository') protected listReactionsRepositoryGetter: Getter<ListReactionsRepository>,
-    @repository.getter('TagListRelationRepository') protected tagListRelationRepositoryGetter: Getter<TagListRelationRepository>,
-    @repository.getter('TagRepository') protected tagRepositoryGetter: Getter<TagRepository>,
-    @inject('extensions.uniqueness.configurationreader') private uniquenessConfigReader: UniquenessConfigurationReader,
-    @inject('extensions.record-limits.configurationreader') private recordLimitConfigReader: RecordLimitsConfigurationReader,
-    @inject('extensions.kind-limits.configurationreader') private kindLimitConfigReader: KindLimitsConfigurationReader,
-    @inject('extensions.visibility.configurationreader') private visibilityConfigReader: VisibilityConfigurationReader,
-    @inject('extensions.validfrom.configurationreader') private validfromConfigReader: ValidfromConfigurationReader,
-    @inject('extensions.idempotency.configurationreader') private idempotencyConfigReader: IdempotencyConfigurationReader
+    @repository.getter('GenericListEntityRelationRepository')
+    protected listEntityRelationRepositoryGetter: Getter<GenericListEntityRelationRepository>,
+
+    @repository.getter('GenericEntityRepository')
+    protected genericEntityRepositoryGetter: Getter<GenericEntityRepository>,
+
+    @repository.getter('ListRelationRepository')
+    protected listRelationRepositoryGetter: Getter<ListRelationRepository>,
+
+    @repository.getter('ListReactionsRepository')
+    protected listReactionsRepositoryGetter: Getter<ListReactionsRepository>,
+
+    @repository.getter('TagListRelationRepository')
+    protected tagListRelationRepositoryGetter: Getter<TagListRelationRepository>,
+
+    @repository.getter('TagRepository')
+    protected tagRepositoryGetter: Getter<TagRepository>,
+
+    @inject('extensions.uniqueness.configurationreader')
+    private uniquenessConfigReader: UniquenessConfigurationReader,
+
+    @inject('extensions.record-limits.configurationreader')
+    private recordLimitConfigReader: RecordLimitsConfigurationReader,
+
+    @inject('extensions.kind-limits.configurationreader')
+    private kindLimitConfigReader: KindLimitsConfigurationReader,
+
+    @inject('extensions.visibility.configurationreader')
+    private visibilityConfigReader: VisibilityConfigurationReader,
+
+    @inject('extensions.validfrom.configurationreader')
+    private validfromConfigReader: ValidfromConfigurationReader,
+
+    @inject('extensions.idempotency.configurationreader')
+    private idempotencyConfigReader: IdempotencyConfigurationReader
+
   ) {
     super(GenericList, dataSource);
     this.tags = this.createHasManyThroughRepositoryFactoryFor('tags', tagRepositoryGetter, tagListRelationRepositoryGetter,);
