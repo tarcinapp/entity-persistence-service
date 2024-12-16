@@ -1,5 +1,5 @@
 import {Getter, inject} from '@loopback/core';
-import {DataObject, DefaultCrudRepository, Filter, FilterBuilder, Options, repository, Where, WhereBuilder} from '@loopback/repository';
+import {DataObject, DefaultCrudRepository, Filter, FilterBuilder, FilterExcludingWhere, Options, repository, Where, WhereBuilder} from '@loopback/repository';
 import * as crypto from 'crypto';
 import _ from 'lodash';
 import qs from 'qs';
@@ -115,7 +115,61 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
     });
   }
 
+  async findById(
+    id: string, filter?: FilterExcludingWhere<GenericListEntityRelation>, options?: Options
+  ): Promise<GenericListEntityRelation> {
 
+    // Fetch a single raw relation from the database
+    return super.findById(id, filter, options).then((rawRelation) => {
+
+      if (!rawRelation) {
+        throw new HttpErrorResponse({
+          statusCode: 404,
+          name: "NotFoundError",
+          message: "Relation with id '" + id + "' could not be found.",
+          code: "RELATION-NOT-FOUND",
+          status: 404
+        });
+      }
+
+      // Fetch required metadata for the list and entity
+      return Promise.all([
+        this.genericListRepositoryGetter().then((repo) =>
+          repo.findById(rawRelation.listId).catch(() => null)
+        ),
+        this.genericEntityRepositoryGetter().then((repo) =>
+          repo.findById(rawRelation.entityId).catch(() => null)
+        ),
+      ]).then(([listMetadata, entityMetadata]) => {
+        // Enrich the raw relation with metadata
+        rawRelation.fromMetadata = listMetadata
+          ? {
+            validFromDateTime: listMetadata.validFromDateTime,
+            validUntilDateTime: listMetadata.validUntilDateTime,
+            visibility: listMetadata.visibility,
+            ownerUsers: listMetadata.ownerUsers,
+            ownerGroups: listMetadata.ownerGroups,
+            viewerUsers: listMetadata.viewerUsers,
+            viewerGroups: listMetadata.viewerGroups,
+          }
+          : null;
+
+        rawRelation.toMetadata = entityMetadata
+          ? {
+            validFromDateTime: entityMetadata.validFromDateTime,
+            validUntilDateTime: entityMetadata.validUntilDateTime,
+            visibility: entityMetadata.visibility,
+            ownerUsers: entityMetadata.ownerUsers,
+            ownerGroups: entityMetadata.ownerGroups,
+            viewerUsers: entityMetadata.viewerUsers,
+            viewerGroups: entityMetadata.viewerGroups,
+          }
+          : null;
+
+        return rawRelation;
+      });
+    });
+  }
 
   /**
    * Create a new relation ensuring idempotency and validation.
