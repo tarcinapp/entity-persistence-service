@@ -97,7 +97,29 @@ export class GenericListEntityRelation extends Entity {
     viewerGroups?: string[];
   };
 
-  // Define well-known properties here
+  @property({
+    type: 'string'
+  })
+  idempotencyKey?: string | undefined;
+
+  @property({
+    required: false,
+    type: 'number',
+    default: 1
+  })
+  version?: number;
+
+  @property({
+    required: false,
+    type: 'string'
+  })
+  lastUpdatedBy?: string;
+
+  @property({
+    required: false,
+    type: 'string'
+  })
+  createdBy?: string;
 
   // Indexer property to allow additional data
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
