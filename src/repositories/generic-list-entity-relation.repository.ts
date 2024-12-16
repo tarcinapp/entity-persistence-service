@@ -1,5 +1,5 @@
 import {Getter, inject} from '@loopback/core';
-import {DataObject, DefaultCrudRepository, FilterBuilder, repository, WhereBuilder} from '@loopback/repository';
+import {DataObject, DefaultCrudRepository, Filter, FilterBuilder, Options, repository, WhereBuilder} from '@loopback/repository';
 import * as crypto from 'crypto';
 import _ from 'lodash';
 import {EntityDbDataSource} from '../datasources';
@@ -14,6 +14,9 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
   typeof GenericListEntityRelation.prototype.id,
   GenericListEntityRelationRelations
 > {
+
+  private static responseLimit = _.parseInt(process.env.response_limit_list_entity_rel ?? "50");
+
   constructor(
     @inject('datasources.EntityDb')
     dataSource: EntityDbDataSource,
@@ -40,6 +43,19 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
     private uniquenessConfigReader: UniquenessConfigurationReader
   ) {
     super(GenericListEntityRelation, dataSource);
+  }
+
+  async find(filter?: Filter<GenericListEntityRelation>, options?: Options) {
+
+    // Calculate the limit value using optional chaining and nullish coalescing
+    // If filter.limit is defined, use its value; otherwise, use GenericListEntityRelationRepository.response_limit
+    const limit = filter?.limit ?? GenericListEntityRelationRepository.responseLimit;
+
+    // Update the filter object by spreading the existing filter and overwriting the limit property
+    // Ensure that the new limit value does not exceed ListRepository.response_limit
+    filter = {...filter, limit: Math.min(limit, GenericListEntityRelationRepository.responseLimit)};
+
+    return super.find(filter, options);
   }
 
   /**

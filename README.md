@@ -294,6 +294,7 @@ These setting limits the number of record can be returned for each data model. I
 | ---------------------------------- | -------------------------------------------------------- | ------------- |
 | **response_limit_entity**          | Max items can be returned from entity response.          | 50            |
 | **response_limit_list**            | Max items can be returned from list response.            | 50            |
+| **response_limit_list_entity_rel**            | Max items can be returned from list response.            | 50            |
 | **response_limit_entity_reaction** | Max items can be returned from entity reaction response. | 50            |
 | **response_limit_list_reaction**   | Max items can be returned from list reaction response.   | 50            |
 | **response_limit_tag**             | Max items can be returned from tags response.            | 50            |
