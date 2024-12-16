@@ -74,6 +74,16 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
     });
   }
 
+  async updateAll(data: DataObject<GenericListEntityRelation>, where?: Where<GenericListEntityRelation>, options?: Options) {
+
+    const now = new Date().toISOString();
+    data.lastUpdatedDateTime = now;
+
+    this.checkDataKindFormat(data);
+
+    return super.updateAll(data, where, options);
+  }
+
   /**
    * Handle creation flow: Enrich, validate, and store relation.
    */
