@@ -47,18 +47,75 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
     super(GenericListEntityRelation, dataSource);
   }
 
-  async find(filter?: Filter<GenericListEntityRelation>, options?: Options) {
-
-    // Calculate the limit value using optional chaining and nullish coalescing
-    // If filter.limit is defined, use its value; otherwise, use GenericListEntityRelationRepository.response_limit
+  async find(
+    filter?: Filter<GenericListEntityRelation>,
+    options?: Options
+  ): Promise<(GenericListEntityRelation & GenericListEntityRelationRelations)[]> {
     const limit = filter?.limit ?? GenericListEntityRelationRepository.responseLimit;
 
-    // Update the filter object by spreading the existing filter and overwriting the limit property
-    // Ensure that the new limit value does not exceed ListRepository.response_limit
+    // Ensure the filter respects the response limit
     filter = {...filter, limit: Math.min(limit, GenericListEntityRelationRepository.responseLimit)};
 
-    return super.find(filter, options);
+    // Fetch raw relations from the database
+    return super.find(filter, options).then((rawRelations) => {
+      if (!rawRelations.length) {
+        return [];
+      }
+
+      // Collect all listIds and entityIds from the raw relations
+      const listIds = rawRelations.map((relation) => relation.listId);
+      const entityIds = rawRelations.map((relation) => relation.entityId);
+
+      // Fetch required metadata for all lists and entities in a single query
+      return Promise.all([
+        this.genericListRepositoryGetter().then((repo) =>
+          repo.find({where: {id: {inq: listIds}}})
+        ),
+        this.genericEntityRepositoryGetter().then((repo) =>
+          repo.find({where: {id: {inq: entityIds}}})
+        ),
+      ]).then(([listMetadata, entityMetadata]) => {
+        // Create maps for quick lookup by id
+        const listMetadataMap = new Map(listMetadata.map((list) => [list.id, list]));
+        const entityMetadataMap = new Map(entityMetadata.map((entity) => [entity.id, entity]));
+
+        // Enrich raw relations with metadata
+        return rawRelations.map((relation) => {
+          const list = listMetadataMap.get(relation.listId);
+          const entity = entityMetadataMap.get(relation.entityId);
+
+          // Mutate the existing relation object
+          relation.fromMetadata = list
+            ? {
+              validFromDateTime: list.validFromDateTime,
+              validUntilDateTime: list.validUntilDateTime,
+              visibility: list.visibility,
+              ownerUsers: list.ownerUsers,
+              ownerGroups: list.ownerGroups,
+              viewerUsers: list.viewerUsers,
+              viewerGroups: list.viewerGroups,
+            }
+            : null;
+
+          relation.toMetadata = entity
+            ? {
+              validFromDateTime: entity.validFromDateTime,
+              validUntilDateTime: entity.validUntilDateTime,
+              visibility: entity.visibility,
+              ownerUsers: entity.ownerUsers,
+              ownerGroups: entity.ownerGroups,
+              viewerUsers: entity.viewerUsers,
+              viewerGroups: entity.viewerGroups,
+            }
+            : null;
+
+          return relation; // Return the mutated object
+        });
+      });
+    });
   }
+
+
 
   /**
    * Create a new relation ensuring idempotency and validation.

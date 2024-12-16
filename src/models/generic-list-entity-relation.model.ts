@@ -74,7 +74,7 @@ export class GenericListEntityRelation extends Entity {
   })
   fromMetadata?: {
     validFromDateTime?: string;
-    validUntilDateTime?: string;
+    validUntilDateTime?: string | null;
     visibility?: string;
     ownerUsers?: string[];
     ownerGroups?: string[];
@@ -89,7 +89,7 @@ export class GenericListEntityRelation extends Entity {
   })
   toMetadata?: {
     validFromDateTime?: string;
-    validUntilDateTime?: string;
+    validUntilDateTime?: string | null;
     visibility?: string;
     ownerUsers?: string[];
     ownerGroups?: string[];
