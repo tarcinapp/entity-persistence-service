@@ -80,7 +80,7 @@ export class GenericListEntityRelation extends Entity {
     ownerGroups?: string[];
     viewerUsers?: string[];
     viewerGroups?: string[];
-  };
+  } | null;
 
   // Define the 'toMetadata' field
   @property({
@@ -95,7 +95,7 @@ export class GenericListEntityRelation extends Entity {
     ownerGroups?: string[];
     viewerUsers?: string[];
     viewerGroups?: string[];
-  };
+  } | null;
 
   @property({
     type: 'string'

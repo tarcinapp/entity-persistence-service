@@ -1,9 +1,11 @@
 import {Getter, inject} from '@loopback/core';
-import {DataObject, DefaultCrudRepository, Filter, FilterBuilder, Options, repository, WhereBuilder} from '@loopback/repository';
+import {DataObject, DefaultCrudRepository, Filter, FilterBuilder, Options, repository, Where, WhereBuilder} from '@loopback/repository';
 import * as crypto from 'crypto';
 import _ from 'lodash';
+import qs from 'qs';
 import {EntityDbDataSource} from '../datasources';
 import {IdempotencyConfigurationReader, KindLimitsConfigurationReader, RecordLimitsConfigurationReader, SetFilterBuilder, UniquenessConfigurationReader} from '../extensions';
+import {Set} from '../extensions/set';
 import {ValidfromConfigurationReader} from '../extensions/validfrom-config-reader';
 import {GenericListEntityRelation, GenericListEntityRelationRelations, HttpErrorResponse, SingleError} from '../models';
 import {GenericEntityRepository} from './generic-entity.repository';
@@ -95,7 +97,11 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
 
     return this.enrichIncomingRelForUpdates(id, data)
       .then(collection => {
-        const mergedData = _.defaults({}, collection.data, collection.existingData);
+        const mergedData = _.assign(
+          {},
+          collection.existingData && _.pickBy(collection.existingData, (value) => value != null),
+          collection.data
+        );
 
         // calculate idempotencyKey
         const idempotencyKey = this.calculateIdempotencyKey(mergedData);
@@ -110,7 +116,6 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
   }
 
   async updateAll(data: DataObject<GenericListEntityRelation>, where?: Where<GenericListEntityRelation>, options?: Options) {
-
     const now = new Date().toISOString();
     data.lastUpdatedDateTime = now;
 
@@ -146,6 +151,146 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
         this.checkRecordLimits(data)
       ])
       .then(() => data);
+  }
+
+  async enrichIncomingRelForUpdates(id: string, data: DataObject<GenericListEntityRelation>) {
+    const existingData = await this.findById(id);
+
+    // check if we have this record in db
+    if (!existingData) {
+      throw new HttpErrorResponse({
+        statusCode: 404,
+        name: "NotFoundError",
+        message: "Relation with id '" + id + "' could not be found.",
+        code: "RELATION-NOT-FOUND",
+        status: 404
+      });
+    }
+
+    const now = new Date().toISOString();
+
+    // set new version
+    data.version = (existingData.version ?? 1) + 1;
+
+    // we may use current date, if it does not exist in the given data
+    data.lastUpdatedDateTime = data.lastUpdatedDateTime ? data.lastUpdatedDateTime : now;
+
+    return {
+      data: data,
+      existingData: existingData
+    };
+  }
+
+  async validateIncomingRelForUpdate(id: string, existingData: DataObject<GenericListEntityRelation>, data: DataObject<GenericListEntityRelation>, options?: Options) {
+    // we need to merge existing data with incoming data in order to check limits and uniquenesses
+    const mergedData = _.assign(
+      {},
+      existingData && _.pickBy(existingData, (value) => value != null),
+      data
+    );
+
+    if (mergedData.kind) {
+      this.checkDataKindFormat(mergedData);
+      this.checkDataKindValues(mergedData);
+    }
+
+    return Promise.all([
+      this.checkUniquenessForUpdate(id, mergedData),
+      this.checkDependantsExistence(mergedData)
+    ])
+      .then(() => data);
+  }
+
+  async validateIncomingRelForReplace(id: string, data: DataObject<GenericListEntityRelation>, options?: Options) {
+
+    this.checkDataKindValues(data);
+    this.checkDataKindFormat(data);
+
+    return Promise.all([
+      this.checkDependantsExistence(data),
+      this.checkUniquenessForUpdate(id, data)
+    ])
+      .then(() => data);
+  }
+
+  private async checkUniquenessForUpdate(id: string, newData: DataObject<GenericListEntityRelation>) {
+
+    // return if no uniqueness is configured
+    if (!process.env.uniqueness_list_entity_rel_fields && !process.env.uniqueness_list_entity_rel_set) return;
+
+    const whereBuilder: WhereBuilder<GenericListEntityRelation> = new WhereBuilder<GenericListEntityRelation>();
+
+    // add uniqueness fields if configured
+    if (process.env.uniqueness_list_entity_rel_fields) {
+      const fields: string[] = process.env.uniqueness_list_entity_rel_fields
+        .replace(/\s/g, '')
+        .split(',');
+
+      // if there is at least single field in the fields array that does not present on new data, then we should find it from the db.
+      if (_.some(fields, _.negate(_.partial(_.has, newData)))) {
+        const existingRel = await super.findById(id);
+
+        _.forEach(fields, (field) => {
+
+          whereBuilder.and({
+            [field]: _.has(newData, field) ? _.get(newData, field) : _.get(existingRel, field)
+          });
+        });
+
+      } else {
+        _.forEach(fields, (field) => {
+
+          whereBuilder.and({
+            [field]: _.get(newData, field)
+          });
+        });
+      }
+    }
+
+    //
+    whereBuilder.and({
+      id: {
+        neq: id
+      }
+    });
+
+    let filter = new FilterBuilder<GenericListEntityRelation>()
+      .where(whereBuilder.build())
+      .fields('id')
+      .build();
+
+    // add set filter if configured
+    if (process.env.uniqueness_list_entity_set) {
+
+      let uniquenessStr = process.env.uniqueness_list_entity_set;
+      uniquenessStr = uniquenessStr.replace(/(set\[.*owners\])/g, '$1='
+        + (newData.ownerUsers ? newData.ownerUsers?.join(',') : '')
+        + ';'
+        + (newData.ownerGroups ? newData.ownerGroups?.join(',') : ''));
+
+      const uniquenessSet = (qs.parse(uniquenessStr)).set as Set;
+
+      filter = new SetFilterBuilder<GenericListEntityRelation>(uniquenessSet, {
+        filter: filter
+      })
+        .build();
+    }
+
+    // final uniqueness controlling filter
+    // console.log('Uniqueness Filter: ', JSON.stringify(filter));
+
+    const existingList = await super.findOne(filter);
+
+    if (existingList) {
+
+      throw new HttpErrorResponse({
+        statusCode: 409,
+        name: "DataUniquenessViolationError",
+        message: "List already exists.",
+        code: "LIST-ALREADY-EXISTS",
+        status: 409,
+      });
+    }
   }
 
   private async checkRecordLimits(

@@ -227,7 +227,11 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   private async validateIncomingDataForUpdate(id: string, existingData: DataObject<GenericEntity>, data: DataObject<GenericEntity>, options?: Options) {
 
     // we need to merge existing data with incoming data in order to check limits and uniquenesses
-    const mergedData = _.defaults({}, data, existingData);
+    const mergedData = _.assign(
+      {},
+      existingData && _.pickBy(existingData, (value) => value != null),
+      data
+    );
     const uniquenessCheck = this.checkUniquenessForUpdate(id, mergedData);
 
     if (data.kind) {
