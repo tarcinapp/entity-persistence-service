@@ -74,6 +74,41 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
     });
   }
 
+  async replaceById(id: string, data: DataObject<GenericListEntityRelation>, options?: Options) {
+
+    return this.enrichIncomingRelForUpdates(id, data)
+      .then(collection => {
+
+        // calculate idempotencyKey
+        const idempotencyKey = this.calculateIdempotencyKey(collection.data);
+
+        // set idempotencyKey
+        collection.data.idempotencyKey = idempotencyKey;
+
+        return collection;
+      })
+      .then(collection => this.validateIncomingRelForReplace(id, collection.data, options))
+      .then(validEnrichedData => super.replaceById(id, validEnrichedData, options));
+  }
+
+  async updateById(id: string, data: DataObject<GenericListEntityRelation>, options?: Options) {
+
+    return this.enrichIncomingRelForUpdates(id, data)
+      .then(collection => {
+        const mergedData = _.defaults({}, collection.data, collection.existingData);
+
+        // calculate idempotencyKey
+        const idempotencyKey = this.calculateIdempotencyKey(mergedData);
+
+        // set idempotencyKey
+        collection.data.idempotencyKey = idempotencyKey;
+
+        return collection;
+      })
+      .then(collection => this.validateIncomingRelForUpdate(id, collection.existingData, collection.data, options))
+      .then(validEnrichedData => super.updateById(id, validEnrichedData, options));
+  }
+
   async updateAll(data: DataObject<GenericListEntityRelation>, where?: Where<GenericListEntityRelation>, options?: Options) {
 
     const now = new Date().toISOString();
