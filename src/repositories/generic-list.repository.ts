@@ -119,39 +119,64 @@ export class GenericListRepository extends DefaultCrudRepository<
       });
   }
 
-  async replaceById(id: string, data: DataObject<GenericList>, options?: Options) {
+  async find(filter?: Filter<GenericListEntityRelation>, options?: Options) {
+    // Calculate the limit value using optional chaining and nullish coalescing
+    const limit = filter?.limit ?? GenericListEntityRelationRepository.responseLimit;
 
-    return this.enrichIncomingListForUpdates(id, data)
-      .then(collection => {
+    // Update the filter object by spreading the existing filter and overwriting the limit property
+    filter = {...filter, limit: Math.min(limit, GenericListEntityRelationRepository.responseLimit)};
 
-        // calculate idempotencyKey
-        const idempotencyKey = this.calculateIdempotencyKey(collection.data);
+    // Fetch the raw relations from the database
+    const rawRelations = await super.find(filter, options);
 
-        // set idempotencyKey
-        collection.data.idempotencyKey = idempotencyKey;
+    // If no relations found, return empty array
+    if (!rawRelations.length) {
+      return [];
+    }
 
-        return collection;
+    // Fetch required repositories for list and entity
+    const [genericListRepo, genericEntityRepo] = await Promise.all([
+      this.genericListRepositoryGetter(),
+      this.genericEntityRepositoryGetter(),
+    ]);
+
+    // Process each relation to enrich with fromMetadata and toMetadata
+    const enrichedRelations = await Promise.all(
+      rawRelations.map(async (relation) => {
+        const [listMetadata, entityMetadata] = await Promise.all([
+          genericListRepo.findById(relation.listId).catch(() => null),
+          genericEntityRepo.findById(relation.entityId).catch(() => null),
+        ]);
+
+        return {
+          ...relation,
+          fromMetadata: listMetadata
+            ? {
+              validFromDateTime: listMetadata.validFromDateTime,
+              validUntilDateTime: listMetadata.validUntilDateTime,
+              visibility: listMetadata.visibility,
+              ownerUsers: listMetadata.ownerUsers,
+              ownerGroups: listMetadata.ownerGroups,
+              viewerUsers: listMetadata.viewerUsers,
+              viewerGroups: listMetadata.viewerGroups,
+            }
+            : null,
+          toMetadata: entityMetadata
+            ? {
+              validFromDateTime: entityMetadata.validFromDateTime,
+              validUntilDateTime: entityMetadata.validUntilDateTime,
+              visibility: entityMetadata.visibility,
+              ownerUsers: entityMetadata.ownerUsers,
+              ownerGroups: entityMetadata.ownerGroups,
+              viewerUsers: entityMetadata.viewerUsers,
+              viewerGroups: entityMetadata.viewerGroups,
+            }
+            : null,
+        };
       })
-      .then(collection => this.validateIncomingListForReplace(id, collection.data, options))
-      .then(validEnrichedData => super.replaceById(id, validEnrichedData, options));
-  }
+    );
 
-  async updateById(id: string, data: DataObject<GenericList>, options?: Options) {
-
-    return this.enrichIncomingListForUpdates(id, data)
-      .then(collection => {
-        const mergedData = _.defaults({}, collection.data, collection.existingData);
-
-        // calculate idempotencyKey
-        const idempotencyKey = this.calculateIdempotencyKey(mergedData);
-
-        // set idempotencyKey
-        collection.data.idempotencyKey = idempotencyKey;
-
-        return collection;
-      })
-      .then(collection => this.validateIncomingDataForUpdate(id, collection.existingData, collection.data, options))
-      .then(validEnrichedData => super.updateById(id, validEnrichedData, options));
+    return enrichedRelations;
   }
 
   async updateAll(data: DataObject<GenericList>, where?: Where<GenericList>, options?: Options) {
