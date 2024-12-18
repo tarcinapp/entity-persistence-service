@@ -218,7 +218,8 @@ We can divide configurations into 9 categories:
 | **mongodb_database**  | Name of the database                                        | tappdb          |
 | **mongodb_url**       | Connection URL can be used instead of host, port and user   | localhost       |
 | **collection_entity** | Name of the collection which generic entities are persisted | GenericEntities |
-| **collection_list**   | Name of the collection which generic entities are persisted | GenericLists    |
+| **collection_list**   | Name of the collection which generic lists are persisted | GenericLists    |
+| **collection_list_list_entity_rel**   | Name of the collection which relationships between list and entity are persisted | GenericLists    |
 
 ### Allowed Kinds
 
@@ -227,8 +228,8 @@ You can limit acceptable values for `kind` fields for the records.
 | Configuration             | Description                                                        | Default Value |
 | ------------------------- | ------------------------------------------------------------------ | ------------- |
 | **entity_kinds**          | Comma seperated list of allowed values for kind field of entities. |               |
-| **list_kinds**            | Comma seperated list of allowed values for kind field of entities. |               |
-| **entity_list_rel_kinds** | Comma seperated list of allowed values for kind field of entities. | relation      |
+| **list_kinds**            | Comma seperated list of allowed values for kind field of lists. |               |
+| **list_entity_rel_kinds** | Comma seperated list of allowed values for kind field of list to entity relationships. | relation      |
 
 ### Uniqueness
 
