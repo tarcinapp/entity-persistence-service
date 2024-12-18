@@ -1,5 +1,5 @@
 import {Getter, inject} from '@loopback/core';
-import {DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, Options, Where, WhereBuilder, repository} from '@loopback/repository';
+import {DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, InclusionResolver, Options, Where, WhereBuilder, repository} from '@loopback/repository';
 import * as crypto from 'crypto';
 import _ from "lodash";
 import qs from 'qs';
@@ -9,6 +9,7 @@ import {IdempotencyConfigurationReader, KindLimitsConfigurationReader, RecordLim
 import {Set, SetFilterBuilder} from '../extensions/set';
 import {ValidfromConfigurationReader} from '../extensions/validfrom-config-reader';
 import {GenericEntity, GenericList, GenericListEntityRelation, HttpErrorResponse, ListReactions, ListRelation, ListRelations, SingleError, Tag, TagListRelation} from '../models';
+import {CustomListEntityRelRepository} from './custom-list-entity-rel.repository';
 import {GenericEntityRepository} from './generic-entity.repository';
 import {GenericListEntityRelationRepository} from './generic-list-entity-relation.repository';
 import {ListReactionsRepository} from './list-reactions.repository';
@@ -58,6 +59,9 @@ export class GenericListRepository extends DefaultCrudRepository<
     @repository.getter('TagRepository')
     protected tagRepositoryGetter: Getter<TagRepository>,
 
+    @repository.getter('CustomListEntityRelRepository')
+    protected customListEntityRelRepositoryGetter: Getter<CustomListEntityRelRepository>,
+
     @inject('extensions.uniqueness.configurationreader')
     private uniquenessConfigReader: UniquenessConfigurationReader,
 
@@ -83,8 +87,58 @@ export class GenericListRepository extends DefaultCrudRepository<
     this.registerInclusionResolver('reactions', this.reactions.inclusionResolver);
     this.relations = this.createHasManyRepositoryFactoryFor('relations', listRelationRepositoryGetter,);
     this.registerInclusionResolver('relations', this.relations.inclusionResolver);
-    this.genericEntities = this.createHasManyThroughRepositoryFactoryFor('genericEntities', genericEntityRepositoryGetter, listEntityRelationRepositoryGetter,);
+
+    // Kendi factory fonksiyonumuzu oluşturuyoruz
+    const customGenericEntitiesFactoryFn = (listId: typeof GenericList.prototype.id) => {
+      const repo = new CustomListEntityRelRepository(
+        this.genericEntityRepositoryGetter,
+        this.listEntityRelationRepositoryGetter,
+        this.dataSource,
+      );
+      // Custom repo içinde sourceId set edilebilir olması gerekiyor
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (repo as any).sourceId = listId;
+      return repo;
+    };
+
+    // inclusionResolver örneği:
+    const inclusionResolver: InclusionResolver<GenericList, GenericEntity> = async (
+      sourceEntities,
+      inclusion,
+      options,
+    ) => {
+      const listIds = sourceEntities.map(e => e.id!);
+      const throughRepo = await this.listEntityRelationRepositoryGetter();
+      const throughRecords = await throughRepo.find({where: {listId: {inq: listIds}}}, options);
+
+      const entityIds = throughRecords.map(r => r.entityId);
+      const entityRepo = await this.genericEntityRepositoryGetter();
+      const targetEntities = await entityRepo.find({where: {id: {inq: entityIds}}}, options);
+
+      return sourceEntities.map(src => {
+        const related = throughRecords
+          .filter(tr => tr.listId === src.id)
+          .map(tr => targetEntities.find(t => t.id === tr.entityId))
+          .filter((t): t is GenericEntity => !!t);
+        return related;
+      });
+    };
+
+    // Factory fonksiyonuna inclusionResolver ekleyerek HasManyThroughRepositoryFactory haline getir
+    const customGenericEntitiesFactory = Object.assign(customGenericEntitiesFactoryFn, {
+      inclusionResolver,
+    }) as unknown as HasManyThroughRepositoryFactory<
+      GenericEntity,
+      typeof GenericEntity.prototype.id,
+      GenericListEntityRelation,
+      typeof GenericList.prototype.id
+    >;
+
+    // Artık kendi factory'nizi kullanabilirsiniz
+    this.genericEntities = customGenericEntitiesFactory;
     this.registerInclusionResolver('genericEntities', this.genericEntities.inclusionResolver);
+
+    //this.registerInclusionResolver('genericEntities', this.createHasManyThroughRepositoryFactoryFor('genericEntities', genericEntityRepositoryGetter, listEntityRelationRepositoryGetter,).inclusionResolver);
   }
 
   async find(filter?: Filter<GenericList>, options?: Options) {
