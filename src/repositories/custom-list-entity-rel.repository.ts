@@ -1,97 +1,71 @@
 import {inject} from '@loopback/context';
 import {
-  DefaultHasManyThroughRepository,
+  DefaultCrudRepository,
   Filter,
   Getter,
-  juggler,
   Options,
   repository
 } from '@loopback/repository';
+import {EntityDbDataSource} from '../datasources';
 import {
   GenericEntity,
+  GenericEntityRelations,
+  GenericList,
   GenericListEntityRelation
 } from '../models';
 import {GenericEntityRepository} from './generic-entity.repository';
 import {GenericListEntityRelationRepository} from './generic-list-entity-relation.repository';
 
-export class CustomListEntityRelRepository extends DefaultHasManyThroughRepository<
+export class CustomListEntityRelRepository extends DefaultCrudRepository<
   GenericEntity,
   typeof GenericEntity.prototype.id,
-  GenericEntityRepository,
-  GenericListEntityRelation,
-  typeof GenericListEntityRelation.prototype.id,
-  GenericListEntityRelationRepository
+  GenericEntityRelations
 > {
 
-  protected sourceId: typeof GenericEntity.prototype.id;
+  protected sourceListId: typeof GenericList.prototype.id;
 
   constructor(
+    @inject('datasources.EntityDb') dataSource: EntityDbDataSource,
+
     @repository.getter('GenericEntityRepository')
     protected genericEntityRepositoryGetter: Getter<GenericEntityRepository>,
 
     @repository.getter('GenericListEntityRelationRepository')
-    protected genericListEntityRepositoryGetter: Getter<GenericListEntityRelationRepository>,
-
-    @inject('datasources.db')
-    protected dataSource: juggler.DataSource,
+    protected genericListEntityRepositoryGetter: Getter<GenericListEntityRelationRepository>
   ) {
-    super(
-      // getTargetRepository
-      genericEntityRepositoryGetter,
-
-      // getThroughRepository
-      genericListEntityRepositoryGetter,
-
-      // getTargetConstraintFromThroughModels: throughInstances -> target filter constraint
-      (throughInstances: GenericListEntityRelation[]) => {
-        const fkValues = throughInstances.map(inst => inst.entityId);
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const constraint: any =
-          fkValues.length === 1
-            ? {entityId: fkValues[0]}
-            : {entityId: {inq: fkValues}};
-
-        return constraint;
-      },
-
-      // getTargetKeys: throughInstances -> targetIDs array
-      (throughInstances: GenericListEntityRelation[]) => {
-        return throughInstances.map(inst => inst.entityId);
-      },
-
-      // getThroughConstraintFromSource: based on this.sourceId -> through filter by listId
-      () => {
-        return {listId: this.sourceId};
-      },
-
-      // getTargetIds: targetInstances -> extract target entity IDs
-      (targetInstances: GenericEntity[]) => {
-        return targetInstances.map(t => t.id!);
-      },
-
-      // getThroughConstraintFromTarget: targetIDs -> filter through by entityId
-      (fkValues: (typeof GenericEntity.prototype.id)[]) => {
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const constraint: any =
-          fkValues.length === 1
-            ? {entityId: fkValues[0]}
-            : {entityId: {inq: fkValues}};
-
-        // Sadece ilk ID'yi alarak eşitlik kıyaslaması yapın
-        return constraint;
-      },
-
-      // targetResolver
-      () => GenericEntity,
-      // throughResolver
-      () => GenericListEntityRelation,
-    );
+    super(GenericEntity, dataSource);
   }
 
 
-  async find(filter?: Filter<GenericEntity>, options?: Options) {
-    return super.find(filter, options);
+  async find(
+    filter?: Filter<GenericEntity>,
+    filterThrough?: Filter<GenericListEntityRelation>,
+    options?: Options
+  ): Promise<GenericEntity[]> {
+    const listEntityRelationRepo = await this.genericListEntityRepositoryGetter();
+    const relations = await listEntityRelationRepo.find({
+      where: {
+        ...filterThrough?.where,
+        listId: this.sourceListId,
+      },
+      fields: {entityId: true},
+    });
+
+    if (!relations.length) {
+      return [];
+    }
+
+    const entityIds = relations.map(rel => rel.entityId);
+    const enhancedFilter: Filter<GenericEntity> = {
+      ...filter,
+      where: {
+        ...filter?.where,
+        id: {inq: entityIds}, // Yalnızca ilişkili entity'ler
+      },
+    };
+
+    // 4. Hedef Modelde (`GenericEntity`) Filtreleme Yap ve Sonuçları Döndür
+    return super.find(enhancedFilter, options);
   }
+
 }

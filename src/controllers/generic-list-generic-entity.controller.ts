@@ -29,7 +29,7 @@ export class GenericListGenericEntityController {
   @get('/generic-lists/{id}/generic-entities', {
     responses: {
       '200': {
-        description: 'Array of List has many GenericEntity through ListEntityRelation',
+        description: 'Array of GenericList has many GenericEntity through ListEntityRelation',
         content: {
           'application/json': {
             schema: {type: 'array', items: getModelSchemaRef(GenericEntity)},
@@ -41,8 +41,9 @@ export class GenericListGenericEntityController {
   async find(
     @param.path.string('id') id: string,
     @param.query.object('filter') filter?: Filter<GenericEntity>,
+    @param.query.object('filterThrough') filterThrough?: Filter<GenericEntity>,
   ): Promise<GenericEntity[]> {
-    return this.listRepository.genericEntities(id).find(filter);
+    return this.listRepository.genericEntities(id).find(filter, filterThrough);
   }
 
   @post('/generic-lists/{id}/generic-entities', {
@@ -72,7 +73,7 @@ export class GenericListGenericEntityController {
   @patch('/generic-lists/{id}/generic-entities', {
     responses: {
       '200': {
-        description: 'List.GenericEntity PATCH success count',
+        description: 'GenericList.GenericEntity PATCH success count',
         content: {'application/json': {schema: CountSchema}},
       },
     },
@@ -89,13 +90,13 @@ export class GenericListGenericEntityController {
     genericEntity: Partial<GenericEntity>,
     @param.query.object('where', getWhereSchemaFor(GenericEntity)) where?: Where<GenericEntity>,
   ): Promise<Count> {
-    return this.listRepository.genericEntities(id).patch(genericEntity, where);
+    return this.listRepository.genericEntities(id).updateAll(genericEntity, where);
   }
 
   @del('/generic-lists/{id}/generic-entities', {
     responses: {
       '200': {
-        description: 'List.GenericEntity DELETE success count',
+        description: 'GenericList.GenericEntity DELETE success count',
         content: {'application/json': {schema: CountSchema}},
       },
     },
@@ -104,6 +105,6 @@ export class GenericListGenericEntityController {
     @param.path.string('id') id: string,
     @param.query.object('where', getWhereSchemaFor(GenericEntity)) where?: Where<GenericEntity>,
   ): Promise<Count> {
-    return this.listRepository.genericEntities(id).delete(where);
+    return this.listRepository.genericEntities(id).deleteAll(where);
   }
 }
