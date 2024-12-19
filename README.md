@@ -32,6 +32,7 @@ This service is equipped with a versatile set of endpoints, each serving a speci
 
 * `/generic-entities`: Handle your primary data models with this endpoint, facilitating CRUD (Create, Read, Update, Delete) operations.
 * `/generic-lists`: Create, organize, and manage lists, enabling you to associate related data effortlessly.
+* `/generic-lists/{listId}/generic-entities`: Create, organize, and manage lists, enabling you to associate related data effortlessly.
 * `/generic-entities/{id}/reactions`: Capture user reactions, comments, likes, and more on specific entities.
 * `/generic-lists/{id}/list-reactions`: Manage reactions, comments, likes, and other interactions associated with your lists.
 * `/generic-entities/{id}/tags`: Add, modify, or remove tags associated with specific entities for efficient data categorization.
@@ -53,6 +54,84 @@ The Generic Entity data model is at the heart of the Entity Persistence Service,
 ### List
 
 The List data model is designed to efficiently organize collections of generic entities. A list can establish relationships with multiple entities, providing a mechanism for grouping and categorizing related data. Lists can be categorized using the kind field, allowing for logical organization based on content type or purpose. For example, a list could have a kind value of 'favorites' or 'science_fiction,' streamlining the management and categorization of lists within your application. This model simplifies the task of aggregating data and managing relationships, enhancing the user experience.
+
+#### List-Entity Relation
+
+Lists and entities are connected through the `GenericListGenericEntityRel` model. Having a seperated model for the relation helps user to store arbitrary data about the relation with the relation object. Relation objects have a dedicated endpoint, just like lists and entities. To interact with relation objects you can call `/generic-list-entity-relations` endpoint.
+
+Model of the relation object is as follows:
+
+```json
+{
+  "kind": "string",
+  "creationDateTime": "2024-12-19T12:56:59.656Z",
+  "lastUpdatedDateTime": "2024-12-19T12:56:59.656Z",
+  "validFromDateTime": "2024-12-19T12:56:59.656Z",
+  "validUntilDateTime": "2024-12-19T12:56:59.656Z",
+  "listId": "string",
+  "entityId": "string",
+  "fromMetadata": {},
+  "toMetadata": {},
+  "idempotencyKey": "string",
+  "version": 0,
+  "lastUpdatedBy": "string",
+  "createdBy": "string",
+  "additionalProp1": {}
+}
+```
+
+* You can query (get), create (post), replace (put), update (patch), delete (delete) entities through lists calling the endpoint: `/generic-list-entity-relations`.
+* This endpoint supports `sets` just like other endpoints like `/generic-lists` and `/generic-entities`.
+* Uniqueness, default visibility, idempotency, auto-approve, record-limit, response-limit settings can be configured for individual relationship records.
+
+**Note:** Creation or update operations always require existence of the list and entity specified by the ids.
+
+With the help of the relationship between lists and entities users can interact with entities under a specific list calling this endpoint: `/generic-lists/{listId}/generic-entities`.
+
+A sample response to the `/generic-list-entity-relations` endpoint is as follows:
+
+```json
+[
+    {
+        "id": "a6d5f090-76ba-45c3-8ea2-9785f2237382",
+        "kind": "relation",
+        "lastUpdatedDateTime": "2024-12-16T17:42:01.522Z",
+        "validFromDateTime": null,
+        "validUntilDateTime": null,
+        "listId": "e24ad71e-9041-4570-affe-04db7aca2efb",
+        "entityId": "408d809c-ff00-4969-b8a0-01b8a64aa359",
+        "fromMetadata": {
+            "validFromDateTime": null,
+            "validUntilDateTime": null,
+            "visibility": "protected",
+            "ownerUsers": [
+                "user-id-1",
+                "user-id-2"
+            ],
+            "ownerGroups": [],
+            "viewerUsers": [],
+            "viewerGroups": []
+        },
+        "toMetadata": {
+            "validFromDateTime": null,
+            "validUntilDateTime": null,
+            "visibility": "private",
+            "ownerUsers": [],
+            "ownerGroups": [],
+            "viewerUsers": [],
+            "viewerGroups": []
+        },
+        "idempotencyKey": "8e2a163a534476cd85db0a59dc5300ea2ee4f2494d4788ee77357cb30f8ef15c",
+        "version": 4,
+        "arbitraryProperty": "foo"
+    }
+]
+```
+
+Notice fields like `fromMetadata` and `toMetadata` fields are are added to the response along with managed fields.  
+  
+`fromMetadata`: This field includes metadata (managed fields) of the source object, which is the list in this case.
+`toMetadata`: This field includes metadata (managed fields) of the target objcet, which is the entity in this case.  
 
 ### Entity Reaction
 
