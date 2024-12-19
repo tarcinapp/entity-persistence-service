@@ -84,10 +84,6 @@ Model of the relation object is as follows:
 * This endpoint supports `sets` just like other endpoints like `/generic-lists` and `/generic-entities`.
 * Uniqueness, default visibility, idempotency, auto-approve, record-limit, response-limit settings can be configured for individual relationship records.
 
-**Note:** Creation or update operations always require existence of the list and entity specified by the ids.
-
-With the help of the relationship between lists and entities users can interact with entities under a specific list calling this endpoint: `/generic-lists/{listId}/generic-entities`.
-
 A sample response to the `/generic-list-entity-relations` endpoint is as follows:
 
 ```json
@@ -132,6 +128,13 @@ Notice fields like `fromMetadata` and `toMetadata` fields are are added to the r
   
 `fromMetadata`: This field includes metadata (managed fields) of the source object, which is the list in this case.
 `toMetadata`: This field includes metadata (managed fields) of the target objcet, which is the entity in this case.  
+
+**Note:** Creation or update operations always require existence of the list and entity specified by the ids.
+
+With the help of the relationship between lists and entities users can interact with entities under a specific list calling this endpoint: `/generic-lists/{listId}/generic-entities`.
+
+A sample response of the `GET` call to the `/generic-lists/{listId}/generic-entities` endpoint is as follows:
+
 
 ### Entity Reaction
 
