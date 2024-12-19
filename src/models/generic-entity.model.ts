@@ -1,5 +1,6 @@
-import {Entity, hasMany, model, property} from '@loopback/repository';
+import {hasMany, model, property} from '@loopback/repository';
 import _ from 'lodash';
+import {RelationTargetBase} from './base/relation-target-base.model';
 import {Reactions} from './reactions.model';
 import {Relation} from './relation.model';
 import {TagEntityRelation} from './tag-entity-relation.model';
@@ -13,7 +14,7 @@ import {Tag} from './tag.model';
     }
   }
 })
-export class GenericEntity extends Entity {
+export class GenericEntity extends RelationTargetBase {
   @property({
     type: 'string',
     id: true,

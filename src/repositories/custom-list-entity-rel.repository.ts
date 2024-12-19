@@ -42,30 +42,43 @@ export class CustomListEntityRelRepository extends DefaultCrudRepository<
     filterThrough?: Filter<GenericListEntityRelation>,
     options?: Options
   ): Promise<GenericEntity[]> {
-    const listEntityRelationRepo = await this.genericListEntityRepositoryGetter();
-    const relations = await listEntityRelationRepo.find({
-      where: {
-        ...filterThrough?.where,
-        listId: this.sourceListId,
-      },
-      fields: {entityId: true},
-    });
+    // Get the through repository
+    const genericListEntityRelationRepo = await this.genericListEntityRepositoryGetter();
 
-    if (!relations.length) {
-      return [];
-    }
+    // Fetch relations matching the source list ID and filterThrough
+    const throughFilter = {
+      where: {listId: this.sourceListId, ...filterThrough?.where},
+      fields: filterThrough?.fields,
+      include: filterThrough?.include,
+    };
+    const relations = await genericListEntityRelationRepo.find(throughFilter, options);
 
+    // Extract target entity IDs from relations
     const entityIds = relations.map(rel => rel.entityId);
-    const enhancedFilter: Filter<GenericEntity> = {
+
+    // Update the filter to only include entities matching the IDs
+    const updatedFilter = {
       ...filter,
-      where: {
-        ...filter?.where,
-        id: {inq: entityIds}, // Yalnızca ilişkili entity'ler
-      },
+      where: {...filter?.where, id: {inq: entityIds}},
     };
 
-    // 4. Hedef Modelde (`GenericEntity`) Filtreleme Yap ve Sonuçları Döndür
-    return super.find(enhancedFilter, options);
+    // Fetch entities matching the updated filter
+    const entities = await super.find(updatedFilter, options);
+
+    // Map relation metadata to entities, excluding `toMetadata`
+    return entities.map(entity => {
+      const relation = relations.find(rel => rel.entityId === entity.id);
+      if (relation) {
+        // Exclude `toMetadata` while retaining other properties
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const {toMetadata, entityId, listId, ...relationWithoutToMetadata} = relation;
+
+        entity.relationMetadata = {
+          ...relationWithoutToMetadata,
+        };
+      }
+      return entity;
+    });
   }
 
 }
