@@ -45,7 +45,7 @@ export class GenericListGenericEntityController {
     @param.path.string('id') id: string,
     @param.query.object('set') set?: Set,
     @param.query.object('filter') filter?: Filter<GenericEntity>,
-    @param.query.object('set') setThrough?: Set,
+    @param.query.object('setThrough') setThrough?: Set,
     @param.query.object('filterThrough') filterThrough?: Filter<GenericEntity>,
   ): Promise<GenericEntity[]> {
 
