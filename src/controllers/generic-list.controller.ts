@@ -23,6 +23,7 @@ import {
   requestBody
 } from '@loopback/rest';
 import {Set, SetFilterBuilder} from '../extensions';
+import {sanitizeFilterFields} from '../helpers/filter.helper';
 import {GenericList, HttpErrorResponse} from '../models';
 import {GenericListRepository} from '../repositories';
 
@@ -144,6 +145,8 @@ export class GenericListController {
       filter = new SetFilterBuilder<GenericList>(set, {
         filter: filter
       }).build();
+
+    sanitizeFilterFields(filter);
 
     return this.genericListRepository.find(filter);
   }

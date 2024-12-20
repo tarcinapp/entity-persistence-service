@@ -1,6 +1,7 @@
 import {Count, CountSchema, Filter, FilterBuilder, FilterExcludingWhere, repository, Where} from '@loopback/repository';
 import {del, get, getJsonSchema, getModelSchemaRef, param, patch, post, put, requestBody} from '@loopback/rest';
 import {Set, SetFilterBuilder} from '../extensions/set';
+import {sanitizeFilterFields} from '../helpers/filter.helper';
 import {GenericEntity, HttpErrorResponse} from '../models';
 import {GenericEntityRepository} from '../repositories';
 
@@ -123,6 +124,8 @@ export class GenericEntityControllerController {
       filter = new SetFilterBuilder<GenericEntity>(set, {
         filter: filter
       }).build();
+
+    sanitizeFilterFields(filter);
 
     return this.genericEntityRepository.find(filter);
   }
