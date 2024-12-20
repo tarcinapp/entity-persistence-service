@@ -135,6 +135,9 @@ With the help of the relationship between lists and entities users can interact 
 
 A sample response of the `GET` call to the `/generic-lists/{listId}/generic-entities` endpoint is as follows:
 
+```json
+
+```
 
 ### Entity Reaction
 
