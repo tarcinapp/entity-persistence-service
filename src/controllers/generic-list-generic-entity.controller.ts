@@ -2,6 +2,7 @@ import {
   Count,
   CountSchema,
   Filter,
+  FilterBuilder,
   repository,
   Where
 } from '@loopback/repository';
@@ -15,6 +16,7 @@ import {
   post,
   requestBody,
 } from '@loopback/rest';
+import {Set, SetFilterBuilder} from '../extensions/set';
 import {sanitizeFilterFields} from '../helpers/filter.helper';
 import {
   GenericEntity,
@@ -41,9 +43,21 @@ export class GenericListGenericEntityController {
   })
   async find(
     @param.path.string('id') id: string,
+    @param.query.object('set') set?: Set,
     @param.query.object('filter') filter?: Filter<GenericEntity>,
+    @param.query.object('set') setThrough?: Set,
     @param.query.object('filterThrough') filterThrough?: Filter<GenericEntity>,
   ): Promise<GenericEntity[]> {
+
+    if (set)
+      filter = new SetFilterBuilder<GenericEntity>(set, {
+        filter: filter
+      }).build();
+
+    if (setThrough)
+      filterThrough = new SetFilterBuilder<GenericEntity>(setThrough, {
+        filter: filter
+      }).build();
 
     sanitizeFilterFields(filter);
     sanitizeFilterFields(filterThrough);
@@ -108,8 +122,22 @@ export class GenericListGenericEntityController {
   })
   async delete(
     @param.path.string('id') id: string,
+    @param.query.object('set') set?: Set,
     @param.query.object('where', getWhereSchemaFor(GenericEntity)) where?: Where<GenericEntity>,
   ): Promise<Count> {
-    return this.listRepository.genericEntities(id).deleteAll(where);
+
+    const filterBuilder = new FilterBuilder<GenericEntity>();
+
+    if (where)
+      filterBuilder.where(where);
+
+    let filter = filterBuilder.build();
+
+    if (set)
+      filter = new SetFilterBuilder<GenericEntity>(set, {
+        filter: filter
+      }).build();
+
+    return this.listRepository.genericEntities(id).deleteAll(filter.where);
   }
 }
