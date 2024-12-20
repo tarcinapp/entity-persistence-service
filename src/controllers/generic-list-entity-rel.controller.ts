@@ -16,6 +16,8 @@ import {
   put,
   requestBody,
 } from '@loopback/rest';
+import {Set, SetFilterBuilder} from '../extensions/set';
+import {sanitizeFilterFields} from '../helpers/filter.helper';
 import {GenericListEntityRelation} from '../models';
 import {GenericListEntityRelationRepository} from '../repositories';
 
@@ -79,8 +81,17 @@ export class GenericListEntityRelController {
     },
   })
   async find(
+    @param.query.object('set') set?: Set,
     @param.filter(GenericListEntityRelation) filter?: Filter<GenericListEntityRelation>,
   ): Promise<GenericListEntityRelation[]> {
+
+    if (set)
+      filter = new SetFilterBuilder<GenericListEntityRelation>(set, {
+        filter: filter
+      }).build();
+
+    sanitizeFilterFields(filter);
+
     return this.genericListEntityRelationRepository.find(filter);
   }
 
