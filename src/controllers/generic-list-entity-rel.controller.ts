@@ -2,6 +2,7 @@ import {
   Count,
   CountSchema,
   Filter,
+  FilterBuilder,
   FilterExcludingWhere,
   repository,
   Where,
@@ -61,8 +62,22 @@ export class GenericListEntityRelController {
   })
   async count(
     @param.where(GenericListEntityRelation) where?: Where<GenericListEntityRelation>,
+    @param.query.object('set') set?: Set,
   ): Promise<Count> {
-    return this.genericListEntityRelationRepository.count(where);
+
+    const filterBuilder = new FilterBuilder<GenericListEntityRelation>();
+
+    if (where)
+      filterBuilder.where(where);
+
+    let filter = filterBuilder.build();
+
+    if (set)
+      filter = new SetFilterBuilder<GenericListEntityRelation>(set, {
+        filter: filter
+      }).build();
+
+    return this.genericListEntityRelationRepository.count(filter.where);
   }
 
   @get('/generic-list-entity-relations', {
