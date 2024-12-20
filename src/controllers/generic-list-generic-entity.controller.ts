@@ -3,7 +3,7 @@ import {
   CountSchema,
   Filter,
   repository,
-  Where,
+  Where
 } from '@loopback/repository';
 import {
   del,
@@ -15,6 +15,7 @@ import {
   post,
   requestBody,
 } from '@loopback/rest';
+import {sanitizeFilterFields} from '../helpers/filter.helper';
 import {
   GenericEntity,
   GenericList
@@ -43,6 +44,10 @@ export class GenericListGenericEntityController {
     @param.query.object('filter') filter?: Filter<GenericEntity>,
     @param.query.object('filterThrough') filterThrough?: Filter<GenericEntity>,
   ): Promise<GenericEntity[]> {
+
+    sanitizeFilterFields(filter);
+    sanitizeFilterFields(filterThrough);
+
     return this.listRepository.genericEntities(id).find(filter, filterThrough);
   }
 
