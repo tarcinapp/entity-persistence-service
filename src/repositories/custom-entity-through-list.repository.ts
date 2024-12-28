@@ -18,7 +18,7 @@ import {
 import {GenericEntityRepository} from './generic-entity.repository';
 import {GenericListEntityRelationRepository} from './generic-list-entity-relation.repository';
 
-export class CustomListEntityRelRepository extends DefaultCrudRepository<
+export class CustomEntityThroughListRepository extends DefaultCrudRepository<
   GenericEntity,
   typeof GenericEntity.prototype.id,
   GenericEntityRelations

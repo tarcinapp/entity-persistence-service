@@ -9,7 +9,7 @@ import {IdempotencyConfigurationReader, KindLimitsConfigurationReader, RecordLim
 import {Set, SetFilterBuilder} from '../extensions/set';
 import {ValidfromConfigurationReader} from '../extensions/validfrom-config-reader';
 import {GenericEntity, GenericEntityRelations, GenericList, HttpErrorResponse, ListReactions, ListRelation, ListRelations, SingleError, Tag, TagListRelation} from '../models';
-import {CustomListEntityRelRepository} from './custom-entity-through-list.repository';
+import {CustomEntityThroughListRepository} from './custom-entity-through-list.repository';
 import {GenericEntityRepository} from './generic-entity.repository';
 import {GenericListEntityRelationRepository} from './generic-list-entity-relation.repository';
 import {ListReactionsRepository} from './list-reactions.repository';
@@ -63,7 +63,7 @@ export class GenericListRepository extends DefaultCrudRepository<
     protected tagRepositoryGetter: Getter<TagRepository>,
 
     @repository.getter('CustomListEntityRelRepository')
-    protected customListEntityRelRepositoryGetter: Getter<CustomListEntityRelRepository>,
+    protected customListEntityRelRepositoryGetter: Getter<CustomEntityThroughListRepository>,
 
     @inject('extensions.uniqueness.configurationreader')
     private uniquenessConfigReader: UniquenessConfigurationReader,
@@ -92,7 +92,7 @@ export class GenericListRepository extends DefaultCrudRepository<
     this.registerInclusionResolver('relations', this.relations.inclusionResolver);
 
     this.genericEntities = (listId: typeof GenericList.prototype.id) => {
-      const repo = new CustomListEntityRelRepository(
+      const repo = new CustomEntityThroughListRepository(
         this.dataSource,
         this.genericEntityRepositoryGetter,
         this.listEntityRelationRepositoryGetter,
