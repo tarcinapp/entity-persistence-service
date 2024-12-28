@@ -9,7 +9,7 @@ import {IdempotencyConfigurationReader, KindLimitsConfigurationReader, RecordLim
 import {Set, SetFilterBuilder} from '../extensions/set';
 import {ValidfromConfigurationReader} from '../extensions/validfrom-config-reader';
 import {GenericEntity, GenericEntityRelations, GenericList, HttpErrorResponse, ListReactions, ListRelation, ListRelations, SingleError, Tag, TagListRelation} from '../models';
-import {CustomListEntityRelRepository} from './custom-list-entity-rel.repository';
+import {CustomListEntityRelRepository} from './custom-entity-through-list.repository';
 import {GenericEntityRepository} from './generic-entity.repository';
 import {GenericListEntityRelationRepository} from './generic-list-entity-relation.repository';
 import {ListReactionsRepository} from './list-reactions.repository';

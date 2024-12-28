@@ -1,5 +1,6 @@
 import {inject} from '@loopback/context';
 import {
+  DataObject,
   DefaultCrudRepository,
   Filter,
   Getter,
@@ -71,7 +72,7 @@ export class CustomListEntityRelRepository extends DefaultCrudRepository<
         // if entityId explicitly given as false, remove it
         fields = _.omitBy(filterThrough.fields, (v, k) => k === 'entityId' && v === false);
 
-        // if entityId explicitly given as false, remove it
+        // if listId explicitly given as false, remove it
         fields = _.omitBy(fields, (v, k) => k === 'listId' && v === false);
       }
     } else {
@@ -114,6 +115,10 @@ export class CustomListEntityRelRepository extends DefaultCrudRepository<
       }
       return entity;
     });
+  }
+
+  async create(data: DataObject<GenericEntity>) {
+    return super.create(data);
   }
 
 }
