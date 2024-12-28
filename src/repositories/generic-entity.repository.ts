@@ -88,7 +88,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
   async replaceById(id: string, data: DataObject<GenericEntity>, options?: Options) {
 
-    return this.enrichIncomingEntityForUpdates(id, data)
+    return this.modifyIncomingEntityForUpdates(id, data)
       .then(collection => {
 
         // calculate idempotencyKey
@@ -105,7 +105,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
   async updateById(id: string, data: DataObject<GenericEntity>, options?: Options) {
 
-    return this.enrichIncomingEntityForUpdates(id, data)
+    return this.modifyIncomingEntityForUpdates(id, data)
       .then(collection => {
         const mergedData = _.defaults({}, collection.data, collection.existingData);
 
@@ -130,7 +130,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
     this.generateSlug(data);
 
-    this.setOwnersCount(data);
+    this.setCountFields(data);
 
     return super.updateAll(data, where, options);
   }
@@ -195,7 +195,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     const trx = await trxRepo.beginTransaction(IsolationLevel.READ_COMMITTED);
     */
 
-    return this.enrichIncomingEntityForCreation(data)
+    return this.modifyIncomingEntityForCreation(data)
       .then(enrichedData => this.validateIncomingEntityForCreation(enrichedData))
       .then(validEnrichedData => super.create(validEnrichedData));
   }
@@ -240,7 +240,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     }
 
     this.generateSlug(data);
-    this.setOwnersCount(data);
+    this.setCountFields(data);
 
     await uniquenessCheck;
 
@@ -248,11 +248,29 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   }
 
   /**
-   * Adds managed fields to the entity.
+   * Modifies the incoming payload according to the managed fields policies and configuration.
+   * ---
+   * Sets these fields if absent: 
+   * - slug 
+   * - creationDateTime
+   * - lastUpdatedDateTime
+   * - validFromDateTime (according to the configuration)
+   * 
+   * Always sets these fields ignoring their incoming values: 
+   * - version
+   * - visibility (according to the configuration)
+   * - ownerGroupsCount
+   * - ownerUsersCount
+   * - viewerUsersCount
+   * - viewerGroupsCount
+   * 
+   * Always clears these fields as they are readonly through relation.
+   * - relationMetadata
+   * 
    * @param data Data that is intended to be created
    * @returns New version of the data which have managed fields are added
    */
-  private async enrichIncomingEntityForCreation(data: DataObject<GenericEntity>): Promise<DataObject<GenericEntity>> {
+  private async modifyIncomingEntityForCreation(data: DataObject<GenericEntity>): Promise<DataObject<GenericEntity>> {
 
     // take the date of now to make sure we have exactly the same date in all date fields
     const now = new Date().toISOString();
@@ -262,7 +280,6 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     data.lastUpdatedDateTime = data.lastUpdatedDateTime ? data.lastUpdatedDateTime : now;
 
     // autoapprove the record if it is configured
-
     data.validFromDateTime = this.validfromConfigReader.getValidFromForEntities(data.kind) ? now : undefined;
 
     // new data is starting from version 1
@@ -275,19 +292,21 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     this.generateSlug(data);
 
     // set owners count to make searching easier
-    this.setOwnersCount(data);
+    this.setCountFields(data);
+
+    _.unset(data, 'relationMetadata');
 
     return data;
   }
 
   /**
-   * Enrich the original record with managed fields where applicable.
+   * Modifies the original record with managed fields where applicable.
    * This method can be used by replace and update operations as their requirements are same.
    * @param id Id of the targeted record
    * @param data Payload of the entity
    * @returns Enriched entity
    */
-  private async enrichIncomingEntityForUpdates(id: string, data: DataObject<GenericEntity>) {
+  private async modifyIncomingEntityForUpdates(id: string, data: DataObject<GenericEntity>) {
 
     return this.findById(id)
       .then(existingData => {
@@ -316,7 +335,9 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
         this.generateSlug(data);
 
-        this.setOwnersCount(data);
+        this.setCountFields(data);
+
+        _.unset(data, 'relationMetadata');
 
         return {
           data: data,
@@ -380,7 +401,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
       data.slug = slugify(data.name ?? '', {lower: true, strict: true});
   }
 
-  private setOwnersCount(data: DataObject<GenericEntity>) {
+  private setCountFields(data: DataObject<GenericEntity>) {
 
     if (_.isArray(data.ownerUsers))
       data.ownerUsersCount = data.ownerUsers?.length;
