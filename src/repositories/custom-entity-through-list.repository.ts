@@ -2,6 +2,7 @@ import {inject} from '@loopback/context';
 import {
   DataObject,
   DefaultCrudRepository,
+  Fields,
   Filter,
   Getter,
   Options,
@@ -13,7 +14,7 @@ import {
   GenericEntity,
   GenericEntityRelations,
   GenericList,
-  GenericListEntityRelation
+  GenericListToEntityRelation
 } from '../models';
 import {GenericEntityRepository} from './generic-entity.repository';
 import {GenericListEntityRelationRepository} from './generic-list-entity-relation.repository';
@@ -41,18 +42,18 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
 
   async find(
     filter?: Filter<GenericEntity>,
-    filterThrough?: Filter<GenericListEntityRelation>,
+    filterThrough?: Filter<GenericListToEntityRelation>,
     options?: Options
   ): Promise<GenericEntity[]> {
     // Get the through repository
     const genericListEntityRelationRepo = await this.genericListEntityRepositoryGetter();
 
     // Calculate fields logic
-    let fields;
+    let fields: Fields<GenericListToEntityRelation> | undefined;
 
     if (Array.isArray(filterThrough?.fields)) {
       // If fields is an array, ensure listId and entityId exists
-      fields = _.union(fields, ['entityId', 'listId']);
+      fields = _.union(filterThrough?.fields, ['_entityId', '_listId']);
     } else if (filterThrough?.fields) {
       // If fields is an object
       const fieldValues = Object.values(filterThrough.fields);
@@ -76,21 +77,20 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
         fields = _.omitBy(fields, (v, k) => k === 'listId' && v === false);
       }
     } else {
-      // If fields is undefined, leave it undefined
-      fields = undefined;
+      fields = undefined
     }
 
     // Define the throughFilter object
     const throughFilter = {
-      where: {listId: this.sourceListId, ...filterThrough?.where},
-      ...(fields ? {fields: fields} : {}), // Only set fields if it's defined
+      where: {_listId: this.sourceListId, ...filterThrough?.where},
+      ...(fields !== undefined ? {fields: fields} : {}), // Only set fields if it's defined
       include: filterThrough?.include,
     };
 
     const relations = await genericListEntityRelationRepo.find(throughFilter, options);
 
     // Extract target entity IDs from relations
-    const entityIds = relations.map(rel => rel.entityId);
+    const entityIds = relations.map(rel => rel._entityId);
 
     // Update the filter to only include entities matching the IDs
     const updatedFilter = {
@@ -103,21 +103,32 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
 
     // Map relation metadata to entities, excluding `toMetadata`
     return entities.map(entity => {
-      const relation = relations.find(rel => rel.entityId === entity.id);
+      const relation = relations.find(rel => rel._entityId === entity.id);
       if (relation) {
         // Exclude `toMetadata` while retaining other properties
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const {toMetadata, entityId, listId, ...relationWithoutToMetadata} = relation;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/naming-convention
+        const {_toMetadata, _entityId, _listId, ...relationWithoutToMetadata} = relation;
 
         entity.relationMetadata = {
-          ...relationWithoutToMetadata,
+          _id: relation._id,
+          _kind: relation._kind,
+          _validFromDateTime: relation._validFromDateTime,
+          _validUntilDateTime: relation._validUntilDateTime
         };
       }
       return entity;
     });
   }
 
+  /**
+   * Creates the generic entity first, then the relation calling the repositories of these individual records.
+   * @param data Generic Entity
+   * @returns Created Generic Entity
+   */
   async create(data: DataObject<GenericEntity>) {
+    // const relationMetadata = 
+    // const genericEntitiesRepo = await this.genericEntityRepositoryGetter();
+    // const genericListEntityRelationRepo = await this.genericListEntityRepositoryGetter();
     return super.create(data);
   }
 

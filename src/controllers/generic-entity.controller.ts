@@ -61,7 +61,7 @@ export class GenericEntityControllerController {
         'application/json': {
           schema: getModelSchemaRef(GenericEntity, {
             title: 'NewGenericEntity',
-            exclude: ['id'],
+            exclude: ['id', 'slug', 'ownerUsersCount', 'ownerGroupsCount', 'viewerUsersCount', 'viewerGroupsCount', 'relationMetadata', 'version', 'idempotencyKey',],
           }),
         },
       },

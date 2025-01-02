@@ -7,13 +7,13 @@ import {EntityDbDataSource} from '../datasources';
 import {IdempotencyConfigurationReader, KindLimitsConfigurationReader, RecordLimitsConfigurationReader, SetFilterBuilder, UniquenessConfigurationReader} from '../extensions';
 import {Set} from '../extensions/set';
 import {ValidfromConfigurationReader} from '../extensions/validfrom-config-reader';
-import {GenericListEntityRelation, GenericListEntityRelationRelations, HttpErrorResponse, SingleError} from '../models';
+import {GenericListEntityRelationRelations, GenericListToEntityRelation, HttpErrorResponse, SingleError} from '../models';
 import {GenericEntityRepository} from './generic-entity.repository';
 import {GenericListRepository} from './generic-list.repository';
 
 export class GenericListEntityRelationRepository extends DefaultCrudRepository<
-  GenericListEntityRelation,
-  typeof GenericListEntityRelation.prototype.id,
+  GenericListToEntityRelation,
+  typeof GenericListToEntityRelation.prototype._id,
   GenericListEntityRelationRelations
 > {
 
@@ -44,13 +44,13 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
     @inject('extensions.uniqueness.configurationreader')
     private uniquenessConfigReader: UniquenessConfigurationReader
   ) {
-    super(GenericListEntityRelation, dataSource);
+    super(GenericListToEntityRelation, dataSource);
   }
 
   async find(
-    filter?: Filter<GenericListEntityRelation>,
+    filter?: Filter<GenericListToEntityRelation>,
     options?: Options
-  ): Promise<(GenericListEntityRelation & GenericListEntityRelationRelations)[]> {
+  ): Promise<(GenericListToEntityRelation & GenericListEntityRelationRelations)[]> {
     const limit = filter?.limit ?? GenericListEntityRelationRepository.responseLimit;
 
     // Ensure the filter respects the response limit
@@ -63,8 +63,8 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
       }
 
       // Collect all listIds and entityIds from the raw relations
-      const listIds = rawRelations.map((relation) => relation.listId);
-      const entityIds = rawRelations.map((relation) => relation.entityId);
+      const listIds = rawRelations.map((relation) => relation._listId);
+      const entityIds = rawRelations.map((relation) => relation._entityId);
 
       // Fetch required metadata for all lists and entities in a single query
       return Promise.all([
@@ -81,33 +81,34 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
 
         // Enrich raw relations with metadata
         return rawRelations.map((relation) => {
-          const list = listMetadataMap.get(relation.listId);
-          const entity = entityMetadataMap.get(relation.entityId);
+          const list = listMetadataMap.get(relation._listId);
+          const entity = entityMetadataMap.get(relation._entityId);
 
-          // Mutate the existing relation object
-          relation.fromMetadata = list
-            ? {
-              validFromDateTime: list.validFromDateTime,
-              validUntilDateTime: list.validUntilDateTime,
-              visibility: list.visibility,
-              ownerUsers: list.ownerUsers,
-              ownerGroups: list.ownerGroups,
-              viewerUsers: list.viewerUsers,
-              viewerGroups: list.viewerGroups,
-            }
-            : null;
+          if (list !== undefined)
 
-          relation.toMetadata = entity
-            ? {
-              validFromDateTime: entity.validFromDateTime,
-              validUntilDateTime: entity.validUntilDateTime,
-              visibility: entity.visibility,
-              ownerUsers: entity.ownerUsers,
-              ownerGroups: entity.ownerGroups,
-              viewerUsers: entity.viewerUsers,
-              viewerGroups: entity.viewerGroups,
-            }
-            : null;
+            // Mutate the existing relation object
+            relation._fromMetadata = {
+              _kind: list.kind,
+              _validFromDateTime: list.validFromDateTime,
+              _validUntilDateTime: list.validUntilDateTime,
+              _ownerUsers: list.ownerUsers,
+              _ownerGroups: list.ownerGroups,
+              _viewerUsers: list.viewerUsers,
+              _viewerGroups: list.viewerGroups,
+              _visibility: list.visibility,
+            };
+
+          if (entity !== undefined)
+            relation._toMetadata = {
+              _kind: entity.kind,
+              _validFromDateTime: entity.validFromDateTime,
+              _validUntilDateTime: entity.validUntilDateTime,
+              _visibility: entity.visibility,
+              _ownerUsers: entity.ownerUsers,
+              _ownerGroups: entity.ownerGroups,
+              _viewerUsers: entity.viewerUsers,
+              _viewerGroups: entity.viewerGroups,
+            };
 
           return relation; // Return the mutated object
         });
@@ -116,11 +117,11 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
   }
 
   async findById(
-    id: string, filter?: FilterExcludingWhere<GenericListEntityRelation>, options?: Options
-  ): Promise<GenericListEntityRelation> {
+    id: string, filter?: FilterExcludingWhere<GenericListToEntityRelation>, options?: Options
+  ): Promise<GenericListToEntityRelation> {
 
     // Fetch a single raw relation from the database
-    return super.findById(id, filter, options).then((rawRelation) => {
+    return super.findById(id, filter, options).then(async (rawRelation) => {
 
       if (!rawRelation) {
         throw new HttpErrorResponse({
@@ -133,48 +134,45 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
       }
 
       // Fetch required metadata for the list and entity
-      return Promise.all([
-        this.genericListRepositoryGetter().then((repo) =>
-          repo.findById(rawRelation.listId).catch(() => null)
+      const [listMetadata, entityMetadata] = await Promise.all([
+        this.genericListRepositoryGetter().then((listRepo) => listRepo.findById(rawRelation._listId).catch(() => null)
         ),
-        this.genericEntityRepositoryGetter().then((repo) =>
-          repo.findById(rawRelation.entityId).catch(() => null)
+        this.genericEntityRepositoryGetter().then((entityRepo) => entityRepo.findById(rawRelation._entityId).catch(() => null)
         ),
-      ]).then(([listMetadata, entityMetadata]) => {
-        // Enrich the raw relation with metadata
-        rawRelation.fromMetadata = listMetadata
-          ? {
-            validFromDateTime: listMetadata.validFromDateTime,
-            validUntilDateTime: listMetadata.validUntilDateTime,
-            visibility: listMetadata.visibility,
-            ownerUsers: listMetadata.ownerUsers,
-            ownerGroups: listMetadata.ownerGroups,
-            viewerUsers: listMetadata.viewerUsers,
-            viewerGroups: listMetadata.viewerGroups,
-          }
-          : null;
+      ]);
 
-        rawRelation.toMetadata = entityMetadata
-          ? {
-            validFromDateTime: entityMetadata.validFromDateTime,
-            validUntilDateTime: entityMetadata.validUntilDateTime,
-            visibility: entityMetadata.visibility,
-            ownerUsers: entityMetadata.ownerUsers,
-            ownerGroups: entityMetadata.ownerGroups,
-            viewerUsers: entityMetadata.viewerUsers,
-            viewerGroups: entityMetadata.viewerGroups,
-          }
-          : null;
+      // Enrich the raw relation with metadata
+      if (listMetadata)
+        rawRelation._fromMetadata = {
+          _kind: listMetadata.kind,
+          _validFromDateTime: listMetadata.validFromDateTime,
+          _validUntilDateTime: listMetadata.validUntilDateTime,
+          _visibility: listMetadata.visibility,
+          _ownerUsers: listMetadata.ownerUsers,
+          _ownerGroups: listMetadata.ownerGroups,
+          _viewerUsers: listMetadata.viewerUsers,
+          _viewerGroups: listMetadata.viewerGroups,
+        };
 
-        return rawRelation;
-      });
+      if (entityMetadata)
+        rawRelation._toMetadata = {
+          _kind: entityMetadata.kind,
+          _validFromDateTime: entityMetadata.validFromDateTime,
+          _validUntilDateTime: entityMetadata.validUntilDateTime,
+          _visibility: entityMetadata.visibility,
+          _ownerUsers: entityMetadata.ownerUsers,
+          _ownerGroups: entityMetadata.ownerGroups,
+          _viewerUsers: entityMetadata.viewerUsers,
+          _viewerGroups: entityMetadata.viewerGroups,
+        };
+      return rawRelation;
     });
   }
 
   /**
    * Create a new relation ensuring idempotency and validation.
    */
-  async create(data: DataObject<GenericListEntityRelation>) {
+  async create(data: DataObject<GenericListToEntityRelation>) {
     const idempotencyKey = this.calculateIdempotencyKey(data);
 
     return this.findIdempotentRelation(idempotencyKey).then(foundIdempotent => {
@@ -182,12 +180,12 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
         return foundIdempotent;
       }
 
-      data.idempotencyKey = idempotencyKey;
+      data._idempotencyKey = idempotencyKey;
       return this.createNewRelationFacade(data);
     });
   }
 
-  async replaceById(id: string, data: DataObject<GenericListEntityRelation>, options?: Options) {
+  async replaceById(id: string, data: DataObject<GenericListToEntityRelation>, options?: Options) {
 
     return this.enrichIncomingRelForUpdates(id, data)
       .then(collection => {
@@ -196,7 +194,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
         const idempotencyKey = this.calculateIdempotencyKey(collection.data);
 
         // set idempotencyKey
-        collection.data.idempotencyKey = idempotencyKey;
+        collection.data._idempotencyKey = idempotencyKey;
 
         return collection;
       })
@@ -204,7 +202,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
       .then(validEnrichedData => super.replaceById(id, validEnrichedData, options));
   }
 
-  async updateById(id: string, data: DataObject<GenericListEntityRelation>, options?: Options) {
+  async updateById(id: string, data: DataObject<GenericListToEntityRelation>, options?: Options) {
 
     return this.enrichIncomingRelForUpdates(id, data)
       .then(collection => {
@@ -218,7 +216,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
         const idempotencyKey = this.calculateIdempotencyKey(mergedData);
 
         // set idempotencyKey
-        collection.data.idempotencyKey = idempotencyKey;
+        collection.data._idempotencyKey = idempotencyKey;
 
         return collection;
       })
@@ -226,9 +224,9 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
       .then(validEnrichedData => super.updateById(id, validEnrichedData, options));
   }
 
-  async updateAll(data: DataObject<GenericListEntityRelation>, where?: Where<GenericListEntityRelation>, options?: Options) {
+  async updateAll(data: DataObject<GenericListToEntityRelation>, where?: Where<GenericListToEntityRelation>, options?: Options) {
     const now = new Date().toISOString();
-    data.lastUpdatedDateTime = now;
+    data._lastUpdatedDateTime = now;
 
     this.checkDataKindFormat(data);
 
@@ -239,8 +237,8 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
    * Handle creation flow: Enrich, validate, and store relation.
    */
   async createNewRelationFacade(
-    data: DataObject<GenericListEntityRelation>
-  ): Promise<GenericListEntityRelation> {
+    data: DataObject<GenericListToEntityRelation>
+  ): Promise<GenericListToEntityRelation> {
     return this.enrichIncomingRelationForCreation(data)
       .then(enrichedData => this.validateIncomingRelationForCreation(enrichedData))
       .then(validEnrichedData => super.create(validEnrichedData));
@@ -250,8 +248,8 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
    * Ensure data validity by verifying referenced IDs, uniqueness, and formatting.
    */
   async validateIncomingRelationForCreation(
-    data: DataObject<GenericListEntityRelation>
-  ): Promise<DataObject<GenericListEntityRelation>> {
+    data: DataObject<GenericListToEntityRelation>
+  ): Promise<DataObject<GenericListToEntityRelation>> {
     this.checkDataKindValues(data);
     this.checkDataKindFormat(data);
 
@@ -264,7 +262,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
       .then(() => data);
   }
 
-  async enrichIncomingRelForUpdates(id: string, data: DataObject<GenericListEntityRelation>) {
+  async enrichIncomingRelForUpdates(id: string, data: DataObject<GenericListToEntityRelation>) {
     const existingData = await this.findById(id);
 
     // check if we have this record in db
@@ -281,10 +279,10 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
     const now = new Date().toISOString();
 
     // set new version
-    data.version = (existingData.version ?? 1) + 1;
+    data._version = (existingData._version ?? 1) + 1;
 
     // we may use current date, if it does not exist in the given data
-    data.lastUpdatedDateTime = data.lastUpdatedDateTime ? data.lastUpdatedDateTime : now;
+    data._lastUpdatedDateTime = data._lastUpdatedDateTime ? data._lastUpdatedDateTime : now;
 
     return {
       data: data,
@@ -292,7 +290,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
     };
   }
 
-  async validateIncomingRelForUpdate(id: string, existingData: DataObject<GenericListEntityRelation>, data: DataObject<GenericListEntityRelation>, options?: Options) {
+  async validateIncomingRelForUpdate(id: string, existingData: DataObject<GenericListToEntityRelation>, data: DataObject<GenericListToEntityRelation>, options?: Options) {
     // we need to merge existing data with incoming data in order to check limits and uniquenesses
     const mergedData = _.assign(
       {},
@@ -300,7 +298,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
       data
     );
 
-    if (mergedData.kind) {
+    if (mergedData._kind) {
       this.checkDataKindFormat(mergedData);
       this.checkDataKindValues(mergedData);
     }
@@ -312,7 +310,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
       .then(() => data);
   }
 
-  async validateIncomingRelForReplace(id: string, data: DataObject<GenericListEntityRelation>, options?: Options) {
+  async validateIncomingRelForReplace(id: string, data: DataObject<GenericListToEntityRelation>, options?: Options) {
 
     this.checkDataKindValues(data);
     this.checkDataKindFormat(data);
@@ -324,12 +322,12 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
       .then(() => data);
   }
 
-  private async checkUniquenessForUpdate(id: string, newData: DataObject<GenericListEntityRelation>) {
+  private async checkUniquenessForUpdate(id: string, newData: DataObject<GenericListToEntityRelation>) {
 
     // return if no uniqueness is configured
     if (!process.env.uniqueness_list_entity_rel_fields && !process.env.uniqueness_list_entity_rel_set) return;
 
-    const whereBuilder: WhereBuilder<GenericListEntityRelation> = new WhereBuilder<GenericListEntityRelation>();
+    const whereBuilder: WhereBuilder<GenericListToEntityRelation> = new WhereBuilder<GenericListToEntityRelation>();
 
     // add uniqueness fields if configured
     if (process.env.uniqueness_list_entity_rel_fields) {
@@ -360,28 +358,23 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
 
     //
     whereBuilder.and({
-      id: {
+      _id: {
         neq: id
       }
     });
 
-    let filter = new FilterBuilder<GenericListEntityRelation>()
+    let filter = new FilterBuilder<GenericListToEntityRelation>()
       .where(whereBuilder.build())
-      .fields('id')
+      .fields('_id')
       .build();
 
     // add set filter if configured
     if (process.env.uniqueness_list_entity_set) {
 
-      let uniquenessStr = process.env.uniqueness_list_entity_set;
-      uniquenessStr = uniquenessStr.replace(/(set\[.*owners\])/g, '$1='
-        + (newData.ownerUsers ? newData.ownerUsers?.join(',') : '')
-        + ';'
-        + (newData.ownerGroups ? newData.ownerGroups?.join(',') : ''));
-
+      const uniquenessStr = process.env.uniqueness_list_entity_set;
       const uniquenessSet = (qs.parse(uniquenessStr)).set as Set;
 
-      filter = new SetFilterBuilder<GenericListEntityRelation>(uniquenessSet, {
+      filter = new SetFilterBuilder<GenericListToEntityRelation>(uniquenessSet, {
         filter: filter
       })
         .build();
@@ -405,38 +398,36 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
   }
 
   private async checkRecordLimits(
-    newData: DataObject<GenericListEntityRelation>
+    newData: DataObject<GenericListToEntityRelation>
   ) {
     // Check if record limits are configured for the given kind
-    if (!this.recordLimitConfigReader.isRecordLimitsConfiguredForListEntityRelations(newData.kind)) {
+    if (!this.recordLimitConfigReader.isRecordLimitsConfiguredForListEntityRelations(newData._kind)) {
       return;
     }
 
     // Retrieve the limit and set based on the environment configurations
-    const limit = this.recordLimitConfigReader.getRecordLimitsCountForListEntityRelations(newData.kind);
+    const limit = this.recordLimitConfigReader.getRecordLimitsCountForListEntityRelations(newData._kind);
     const set = this.recordLimitConfigReader.getRecordLimitsSetForListEntityRelations(
-      newData.ownerUsers,
-      newData.ownerGroups,
-      newData.kind
+      newData._kind
     );
 
     // Build the initial filter
-    let filterBuilder: FilterBuilder<GenericListEntityRelation>;
-    if (this.recordLimitConfigReader.isLimitConfiguredForKindForListEntityRelations(newData.kind)) {
-      filterBuilder = new FilterBuilder<GenericListEntityRelation>({
+    let filterBuilder: FilterBuilder<GenericListToEntityRelation>;
+    if (this.recordLimitConfigReader.isLimitConfiguredForKindForListEntityRelations(newData._kind)) {
+      filterBuilder = new FilterBuilder<GenericListToEntityRelation>({
         where: {
-          kind: newData.kind,
+          _kind: newData._kind,
         },
       });
     } else {
-      filterBuilder = new FilterBuilder<GenericListEntityRelation>();
+      filterBuilder = new FilterBuilder<GenericListToEntityRelation>();
     }
 
     let filter = filterBuilder.build();
 
     // Apply set filter if configured
     if (set) {
-      filter = new SetFilterBuilder<GenericListEntityRelation>(set, {
+      filter = new SetFilterBuilder<GenericListToEntityRelation>(set, {
         filter: filter,
       }).build();
     }
@@ -464,7 +455,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
 
 
   async checkDependantsExistence(
-    data: DataObject<GenericListEntityRelation>
+    data: DataObject<GenericListToEntityRelation>
   ) {
     const [genericEntityRepo, genericListRepo] = await Promise.all([
       this.genericEntityRepositoryGetter(),
@@ -473,22 +464,22 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
 
     // Check if related entity and list exist
     await Promise.all([
-      genericEntityRepo.findById(data.entityId).catch(() => {
+      genericEntityRepo.findById(data._entityId).catch(() => {
 
         throw new HttpErrorResponse({
           statusCode: 404,
           name: "NotFoundError",
-          message: "Entity with id '" + data.entityId + "' could not be found.",
+          message: "Entity with id '" + data._entityId + "' could not be found.",
           code: "ENTITY-NOT-FOUND",
           status: 404
         });
       }),
-      genericListRepo.findById(data.listId).catch(() => {
+      genericListRepo.findById(data._listId).catch(() => {
 
         throw new HttpErrorResponse({
           statusCode: 404,
           name: "NotFoundError",
-          message: "List with id '" + data.listId + "' could not be found.",
+          message: "List with id '" + data._listId + "' could not be found.",
           code: "LIST-NOT-FOUND",
           status: 404
         });
@@ -500,17 +491,17 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
    * Add system fields and prepare data for storage.
    */
   enrichIncomingRelationForCreation(
-    data: DataObject<GenericListEntityRelation>
-  ): Promise<DataObject<GenericListEntityRelation>> {
+    data: DataObject<GenericListToEntityRelation>
+  ): Promise<DataObject<GenericListToEntityRelation>> {
     const now = new Date().toISOString();
 
-    data.kind = data.kind ?? 'relation';
-    data.creationDateTime = data.creationDateTime ?? now;
-    data.lastUpdatedDateTime = data.lastUpdatedDateTime ?? now;
-    data.version = 1;
+    data._kind = data._kind ?? 'relation';
+    data._createdDateTime = data._createdDateTime ?? now;
+    data._lastUpdatedDateTime = data._lastUpdatedDateTime ?? now;
+    data._version = 1;
 
     // auto approve
-    data.validFromDateTime = this.validfromConfigReader.getValidFromForListEntityRelations(data.kind) ? now : undefined;
+    data._validFromDateTime = this.validfromConfigReader.getValidFromForListEntityRelations(data._kind) ? now : undefined;
 
     return Promise.resolve(data);
   }
@@ -518,8 +509,8 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
   /**
    * Calculate idempotency key for deduplication.
    */
-  calculateIdempotencyKey(data: DataObject<GenericListEntityRelation>) {
-    const idempotencyFields = this.idempotencyConfigReader.getIdempotencyForListEntityRels(data.kind);
+  calculateIdempotencyKey(data: DataObject<GenericListToEntityRelation>) {
+    const idempotencyFields = this.idempotencyConfigReader.getIdempotencyForListEntityRels(data._kind);
 
     if (idempotencyFields.length === 0) return undefined;
 
@@ -538,10 +529,10 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
    */
   private async findIdempotentRelation(
     idempotencyKey: string | undefined
-  ): Promise<GenericListEntityRelation | null> {
+  ): Promise<GenericListToEntityRelation | null> {
     if (_.isString(idempotencyKey) && !_.isEmpty(idempotencyKey)) {
       return this.findOne({
-        where: {idempotencyKey},
+        where: {_idempotencyKey: idempotencyKey},
       });
     }
     return null;
@@ -550,11 +541,11 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
   /**
    * Ensure data kind is properly formatted.
    */
-  private checkDataKindFormat(data: DataObject<GenericListEntityRelation>) {
+  private checkDataKindFormat(data: DataObject<GenericListToEntityRelation>) {
 
-    if (data.kind) {
-      const formattedKind = _.kebabCase(data.kind);
-      if (formattedKind !== data.kind) {
+    if (data._kind) {
+      const formattedKind = _.kebabCase(data._kind);
+      if (formattedKind !== data._kind) {
         throw new Error(`Invalid kind format: Use '${formattedKind}' instead.`);
       }
     }
@@ -563,7 +554,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
   /**
    * Ensure data kind values are valid.
    */
-  private checkDataKindValues(data: DataObject<GenericListEntityRelation>) {
+  private checkDataKindValues(data: DataObject<GenericListToEntityRelation>) {
 
     /**
      * This function checks if the 'kind' field in the 'data' object is valid
@@ -571,7 +562,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
      * this point. If it's not valid, we raise an error with the allowed valid
      * values for 'kind'.
     */
-    const kind = data.kind ?? '';
+    const kind = data._kind ?? '';
 
     if (!this.kindLimitConfigReader.isKindAcceptableForListEntityRelations(kind)) {
       const validValues = this.kindLimitConfigReader.allowedKindsForEntityListRelations;
@@ -579,7 +570,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
       throw new HttpErrorResponse({
         statusCode: 422,
         name: "InvalidKindError",
-        message: `Relation kind '${data.kind}' is not valid. Use any of these values instead: ${validValues.join(', ')}`,
+        message: `Relation kind '${data._kind}' is not valid. Use any of these values instead: ${validValues.join(', ')}`,
         code: "INVALID-RELATION-KIND",
         status: 422,
       });
@@ -589,17 +580,17 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
   /**
    * Ensure the uniqueness of the relation.
    */
-  private async checkUniquenessForRelation(data: DataObject<GenericListEntityRelation>) {
+  private async checkUniquenessForRelation(data: DataObject<GenericListToEntityRelation>) {
     // Return if no uniqueness is configured
-    if (!this.uniquenessConfigReader.isUniquenessConfiguredForListEntityRelations(data.kind)) {
+    if (!this.uniquenessConfigReader.isUniquenessConfiguredForListEntityRelations(data._kind)) {
       return;
     }
 
-    const whereBuilder: WhereBuilder<GenericListEntityRelation> = new WhereBuilder<GenericListEntityRelation>();
+    const whereBuilder: WhereBuilder<GenericListToEntityRelation> = new WhereBuilder<GenericListToEntityRelation>();
 
     // Read the uniqueness fields for this kind
-    const fields: string[] = this.uniquenessConfigReader.getFieldsForListEntityRelations(data.kind);
-    const set = this.uniquenessConfigReader.getSetForListEntityRelations(data.ownerUsers, data.ownerGroups, data.kind);
+    const fields: string[] = this.uniquenessConfigReader.getFieldsForListEntityRelations(data._kind);
+    const set = this.uniquenessConfigReader.getSetForListEntityRelations(data._kind);
 
     // Add uniqueness fields to the where builder
     _.forEach(fields, (field) => {
@@ -608,13 +599,13 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
       });
     });
 
-    let filter = new FilterBuilder<GenericListEntityRelation>()
+    let filter = new FilterBuilder<GenericListToEntityRelation>()
       .where(whereBuilder.build())
       .build();
 
     // Add set filter if configured
     if (set) {
-      filter = new SetFilterBuilder<GenericListEntityRelation>(set, {
+      filter = new SetFilterBuilder<GenericListToEntityRelation>(set, {
         filter: filter,
       }).build();
     }

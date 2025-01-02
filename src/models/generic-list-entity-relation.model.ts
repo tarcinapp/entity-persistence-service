@@ -1,4 +1,7 @@
-import {Entity, model, property} from '@loopback/repository';
+import {model, property} from '@loopback/repository';
+import {ModelWithIdBase} from './base-models/model-with-id-base.model';
+import {RecordsCommonBase} from './base-models/records-common-base.model';
+import {SourceAndTargetMetadata} from './base-types/source-and-target-metadata.type';
 
 @model({
   settings: {
@@ -8,124 +11,39 @@ import {Entity, model, property} from '@loopback/repository';
     }
   }
 })
-export class GenericListEntityRelation extends Entity {
-  @property({
-    type: 'string',
-    id: true,
-    generated: false,
-    defaultFn: "uuidv4",
-  })
-  id?: string;
-
-  @property({
-    type: 'string',
-    default: 'relation'
-  })
-  kind?: string;
-
-  @property({
-    type: 'date',
-    description: 'This field is filled by server at the time of the creation of the list.'
-  })
-  creationDateTime?: string;
-
-  @property({
-    required: false,
-    type: 'date'
-  })
-  lastUpdatedDateTime?: string;
-
-  @property({
-    type: 'date',
-    description: 'This is the list approval time.' +
-      'Only those list with validFromDateTime property has a value can be' +
-      'seen by other members.' +
-      'If caller is not a member at the creation time, this field is filled' +
-      'automatically by the server.',
-    default: null,
-    jsonSchema: {nullable: true}
-  })
-  validFromDateTime?: string;
-
-  @property({
-    type: 'date',
-    description: 'This field indicates if the list is currently active.',
-    default: null,
-    jsonSchema: {nullable: true}
-  })
-  validUntilDateTime?: string | null;
+export class GenericListToEntityRelation extends RecordsCommonBase {
 
   @property({
     type: 'string',
     required: true,
   })
-  listId: string;
+  _listId: ModelWithIdBase["_id"];
 
   @property({
     type: 'string',
     required: true,
   })
-  entityId: string;
+  _entityId: ModelWithIdBase["_id"];
 
   // Define the 'fromMetadata' field
   @property({
     type: 'object',
     description: 'Metadata for the source entity'
   })
-  fromMetadata?: {
-    validFromDateTime?: string;
-    validUntilDateTime?: string | null;
-    visibility?: string;
-    ownerUsers?: string[];
-    ownerGroups?: string[];
-    viewerUsers?: string[];
-    viewerGroups?: string[];
-  } | null;
+  _fromMetadata: SourceAndTargetMetadata;
 
   // Define the 'toMetadata' field
   @property({
     type: 'object',
     description: 'Metadata for the destination entity',
   })
-  toMetadata?: {
-    validFromDateTime?: string;
-    validUntilDateTime?: string | null;
-    visibility?: string;
-    ownerUsers?: string[];
-    ownerGroups?: string[];
-    viewerUsers?: string[];
-    viewerGroups?: string[];
-  } | null;
-
-  @property({
-    type: 'string'
-  })
-  idempotencyKey?: string | undefined;
-
-  @property({
-    required: false,
-    type: 'number',
-    default: 1
-  })
-  version?: number;
-
-  @property({
-    required: false,
-    type: 'string'
-  })
-  lastUpdatedBy?: string;
-
-  @property({
-    required: false,
-    type: 'string'
-  })
-  createdBy?: string;
+  _toMetadata: SourceAndTargetMetadata;
 
   // Indexer property to allow additional data
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [prop: string]: any;
+  //[prop: string]: any;
 
-  constructor(data?: Partial<GenericListEntityRelation>) {
+  constructor(data?: Partial<GenericListToEntityRelation>) {
     super(data);
   }
 }
@@ -134,4 +52,4 @@ export interface GenericListEntityRelationRelations {
   // describe navigational properties here
 }
 
-export type ListEntityRelationWithRelations = GenericListEntityRelation & GenericListEntityRelationRelations;
+export type ListEntityRelationWithRelations = GenericListToEntityRelation & GenericListEntityRelationRelations;

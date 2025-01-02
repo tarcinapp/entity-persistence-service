@@ -149,7 +149,7 @@ export class RecordLimitsConfigurationReader {
     }
   }
 
-  public getRecordLimitsSetForListEntityRelations(ownerUsers?: (string | undefined)[], ownerGroups?: (string | undefined)[], kind?: string): Set | undefined {
+  public getRecordLimitsSetForListEntityRelations(kind?: string): Set | undefined {
 
     let setStr: string | undefined;
 
@@ -161,25 +161,7 @@ export class RecordLimitsConfigurationReader {
 
     if (setStr) {
       const set = (qs.parse(setStr)).set as Set;
-      const userAndGroupInfo: UserAndGroupInfo = {};
-
-      if (!isEmpty(ownerUsers)) {
-        userAndGroupInfo.userIds = ownerUsers?.join(',')
-      }
-
-      if (!isEmpty(ownerGroups)) {
-        userAndGroupInfo.groupIds = ownerGroups?.join(',')
-      }
-
-      // Use _.cloneDeepWith for inline recursive replacement
-      const updatedSet = cloneDeepWith(set, (v, k) => {
-
-        if (k === 'owners' || k === 'audience') {
-          return userAndGroupInfo;
-        }
-      })
-
-      return updatedSet as Set;
+      return set;
     }
   }
 }

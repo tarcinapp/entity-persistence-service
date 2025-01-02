@@ -63,20 +63,20 @@ Model of the relation object is as follows:
 
 ```json
 {
-  "kind": "string",
-  "creationDateTime": "2024-12-19T12:56:59.656Z",
-  "lastUpdatedDateTime": "2024-12-19T12:56:59.656Z",
-  "validFromDateTime": "2024-12-19T12:56:59.656Z",
-  "validUntilDateTime": "2024-12-19T12:56:59.656Z",
-  "listId": "string",
-  "entityId": "string",
-  "fromMetadata": {},
-  "toMetadata": {},
-  "idempotencyKey": "string",
-  "version": 0,
-  "lastUpdatedBy": "string",
-  "createdBy": "string",
-  "additionalProp1": {}
+  "_kind": "string",
+  "_creationDateTime": "2024-12-19T12:56:59.656Z",
+  "_lastUpdatedDateTime": "2024-12-19T12:56:59.656Z",
+  "_validFromDateTime": "2024-12-19T12:56:59.656Z",
+  "_validUntilDateTime": "2024-12-19T12:56:59.656Z",
+  "_listId": "string",
+  "_entityId": "string",
+  "_fromMetadata": {},
+  "_toMetadata": {},
+  "_idempotencyKey": "string",
+  "_version": 0,
+  "_lastUpdatedBy": "string",
+  "_createdBy": "string",
+  "_additionalProp1": {}
 }
 ```
 
@@ -89,45 +89,45 @@ A sample response to the `/generic-list-entity-relations` endpoint is as follows
 ```json
 [
     {
-        "id": "a6d5f090-76ba-45c3-8ea2-9785f2237382",
-        "kind": "relation",
-        "lastUpdatedDateTime": "2024-12-16T17:42:01.522Z",
-        "validFromDateTime": null,
-        "validUntilDateTime": null,
-        "listId": "e24ad71e-9041-4570-affe-04db7aca2efb",
-        "entityId": "408d809c-ff00-4969-b8a0-01b8a64aa359",
-        "fromMetadata": {
-            "validFromDateTime": null,
-            "validUntilDateTime": null,
-            "visibility": "protected",
-            "ownerUsers": [
+        "_id": "a6d5f090-76ba-45c3-8ea2-9785f2237382",
+        "_kind": "relation",
+        "_lastUpdatedDateTime": "2024-12-16T17:42:01.522Z",
+        "_validFromDateTime": null,
+        "_validUntilDateTime": null,
+        "_listId": "e24ad71e-9041-4570-affe-04db7aca2efb",
+        "_entityId": "408d809c-ff00-4969-b8a0-01b8a64aa359",
+        "_fromMetadata": {
+            "_validFromDateTime": null,
+            "_validUntilDateTime": null,
+            "_visibility": "protected",
+            "_ownerUsers": [
                 "user-id-1",
                 "user-id-2"
             ],
-            "ownerGroups": [],
-            "viewerUsers": [],
-            "viewerGroups": []
+            "_ownerGroups": [],
+            "_viewerUsers": [],
+            "_viewerGroups": []
         },
-        "toMetadata": {
-            "validFromDateTime": null,
-            "validUntilDateTime": null,
-            "visibility": "private",
-            "ownerUsers": [],
-            "ownerGroups": [],
-            "viewerUsers": [],
-            "viewerGroups": []
+        "_toMetadata": {
+            "_validFromDateTime": null,
+            "_validUntilDateTime": null,
+            "_visibility": "private",
+            "_ownerUsers": [],
+            "_ownerGroups": [],
+            "_viewerUsers": [],
+            "_viewerGroups": []
         },
-        "idempotencyKey": "8e2a163a534476cd85db0a59dc5300ea2ee4f2494d4788ee77357cb30f8ef15c",
-        "version": 4,
-        "arbitraryProperty": "foo"
+        "_idempotencyKey": "8e2a163a534476cd85db0a59dc5300ea2ee4f2494d4788ee77357cb30f8ef15c",
+        "_version": 4,
+        "_arbitraryProperty": "foo"
     }
 ]
 ```
 
-Notice fields like `fromMetadata` and `toMetadata` fields are are added to the response along with managed fields.  
+Notice fields like `_fromMetadata` and `_toMetadata` fields are are added to the response along with managed fields.  
   
-`fromMetadata`: This field includes metadata (managed fields) of the source object, which is the list in this case.
-`toMetadata`: This field includes metadata (managed fields) of the target objcet, which is the entity in this case.  
+`_fromMetadata`: This field includes metadata (managed fields) of the source object, which is the list in this case.
+`_toMetadata`: This field includes metadata (managed fields) of the target objcet, which is the entity in this case.  
 
 **Note:** Creation or update operations always require existence of the list and entity specified by the ids.
 
@@ -234,12 +234,12 @@ The application comes with a set of prebuilt sets to simplify common data select
 
 | Set Name  | Description                                                                                                                                                                                                                                                                                  |
 | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| publics   | Selects all data with a visibility value of public.                                                                                                                                                                                                                                          |
-| actives   | Selects all data where the validFromDateTime is not null, less than the current date time, and the validUntilDateTime field is either null or greater than the current date time.                                                                                                            |
-| inactives | Selects all data where the validUntilDateTime field has a value and is less than the current date time.                                                                                                                                                                                      |
-| pendings  | Selects all data where the validFromDateTime field is empty.                                                                                                                                                                                                                                 |
-| owners    | Selects all data where the given user ID is in the ownerUsers or the given group is in the ownerGroups. User IDs and groups should be provided as comma-separated values in the query variable: set[owners][userIds]=userId1,userId2&set[owners][groupIds]=groupId1,groupId2.                |
-| viewers   | Selects all data where the given user ID is in the viewerUsers or the given group is in the viewerGroups. User IDs and groups should be provided as comma-separated values in the query variable: set[viewers][userIds]=userId1,userId2&set[viewers][groupIds]=groupId1,groupId2.            |
+| publics   | Selects all data with a visibility (visibility) value of public.                                                                                                                                                                                                                                          |
+| actives   | Selects all data where the _validFromDateTime is not null, less than the current date time, and the_validUntilDateTime field is either null or greater than the current date time.                                                                                                            |
+| inactives | Selects all data where the _validUntilDateTime field has a value and is less than the current date time.                                                                                                                                                                                      |
+| pendings  | Selects all data where the _validFromDateTime field is empty.                                                                                                                                                                                                                                 |
+| owners    | Selects all data where the given user ID is in the _ownerUsers or the given group is in the_ownerGroups. User IDs and groups should be provided as comma-separated values in the query variable: set[owners][userIds]=userId1,userId2&set[owners][groupIds]=groupId1,groupId2.                |
+| viewers   | Selects all data where the given user ID is in the _viewerUsers or the given group is in the_viewerGroups. User IDs and groups should be provided as comma-separated values in the query variable: set[viewers][userIds]=userId1,userId2&set[viewers][groupIds]=groupId1,groupId2.            |
 | day       | Selects all data where the creationDateTime field is within the last 24 hours.                                                                                                                                                                                                               |
 | week      | Selects all data where the creationDateTime field is within the last 7 days.                                                                                                                                                                                                                 |
 | month     | Selects all data where the creationDateTime field is within the last 30 days.                                                                                                                                                                                                                |
@@ -259,31 +259,31 @@ Here are the list of common field names.
 
 | Field Name              | Description                                                                                                                                                                                                                                                                                                                                                                                   |
 | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **kind\***              | A string field represents the kind of the record.  As this application built on top of a schemaless database, objects with different schemas can be considered as different kinds can be stored in same collection. This field is using in order to seggregate objects in same collection. Most of the configuration parameters can be specialized to be applied on specific kind of objects. |
-| **name\***              | String field represents the name of the record. Mandatory field.                                                                                                                                                                                                                                                                                                                              |
-| **slug**                | Automatically filled while create or update with the slug format of the value of the name field.                                                                                                                                                                                                                                                                                              |
-| **visibility**          | Record's visibility level. Can be either `private`, `protected` or `public`.                                                                                                                                                                                                                                                                                                                  |
-| **version**             | A number field that automatically incremented each update and replace operation. Note: `version` is not incremented if record is updated with `updateAll` operation.                                                                                                                                                                                                                          |
-| **ownerUsers**          | An array of user ids.                                                                                                                                                                                                                                                                                                                                                                         |
-| **ownerGroups**         | An array of user groups.                                                                                                                                                                                                                                                                                                                                                                      |
-| **ownerUsersCount**     | A number field keeps the number of items in ownerUsers array                                                                                                                                                                                                                                                                                                                                  |
-| **ownerGroupsCount**    | A number field keeps the number of items in ownerGroups array                                                                                                                                                                                                                                                                                                                                 |
-| **viewerUsers**         | An array of user ids.                                                                                                                                                                                                                                                                                                                                                                         |
-| **viewerGroups**        | An array of user groups.                                                                                                                                                                                                                                                                                                                                                                      |
-| **viewerUsersCount**    | A number field keeps the number of items in viewerUsers array                                                                                                                                                                                                                                                                                                                                 |
-| **viewerGroupsCount**   | A number field keeps the number of items in viewerGroups array                                                                                                                                                                                                                                                                                                                                |
-| **creationDateTime**    | A date time object automatically filled with the datetime of entity create operation. It's not read-only to let administrator users change it over gateway.                                                                                                                                                                                                                                   |
-| **lastUpdatedDateTime** | A date time object automatically filled with the datetime of any entity update operation.                                                                                                                                                                                                                                                                                                     |
-| **lastUpdatedBy**       | Id of the user who performed the last update operation                                                                                                                                                                                                                                                                                                                                        |
-| **validFromDateTime**   | A date time object represents the time when the object is a valid entity. Can be treated as the approval time. There is a configuration to auto approve records at the time of creation.                                                                                                                                                                                                      |
-| **validUntilDateTime**  | A date time object represents the time when the objects validity ends. Can be used instead of deleting records.                                                                                                                                                                                                                                                                               |
-| **idempotencyKey**      | A hashed string field should be computed using the record's fields, which are designed to enhance the record's uniqueness.                                                                                                                                                                                                                                                                    |
+| **_kind\***              | A string field represents the kind of the record.  As this application built on top of a schemaless database, objects with different schemas can be considered as different kinds can be stored in same collection. This field is using in order to seggregate objects in same collection. Most of the configuration parameters can be specialized to be applied on specific kind of objects. |
+| **_name\***              | String field represents the name of the record. Mandatory field.                                                                                                                                                                                                                                                                                                                              |
+| **_slug**                | Automatically filled while create or update with the slug format of the value of the name field.                                                                                                                                                                                                                                                                                              |
+| **_visibility**          | Record's visibility level. Can be either `private`, `protected` or `public`.                                                                                                                                                                                                                                                                                                                  |
+| **_version**             | A number field that automatically incremented each update and replace operation. Note: `_version` is not incremented if record is updated with `updateAll` operation.                                                                                                                                                                                                                          |
+| **_ownerUsers**          | An array of user ids.                                                                                                                                                                                                                                                                                                                                                                         |
+| **_ownerGroups**         | An array of user groups.                                                                                                                                                                                                                                                                                                                                                                      |
+| **_ownerUsersCount**     | A number field keeps the number of items in ownerUsers array                                                                                                                                                                                                                                                                                                                                  |
+| **_ownerGroupsCount**    | A number field keeps the number of items in ownerGroups array                                                                                                                                                                                                                                                                                                                                 |
+| **_viewerUsers**         | An array of user ids.                                                                                                                                                                                                                                                                                                                                                                         |
+| **_viewerGroups**        | An array of user groups.                                                                                                                                                                                                                                                                                                                                                                      |
+| **_viewerUsersCount**    | A number field keeps the number of items in viewerUsers array                                                                                                                                                                                                                                                                                                                                 |
+| **_viewerGroupsCount**   | A number field keeps the number of items in viewerGroups array                                                                                                                                                                                                                                                                                                                                |
+| **_creationDateTime**    | A date time object automatically filled with the datetime of entity create operation. It's not read-only to let administrator users change it over gateway.                                                                                                                                                                                                                                   |
+| **_lastUpdatedDateTime** | A date time object automatically filled with the datetime of any entity update operation.                                                                                                                                                                                                                                                                                                     |
+| **_lastUpdatedBy**       | Id of the user who performed the last update operation                                                                                                                                                                                                                                                                                                                                        |
+| **_validFromDateTime**   | A date time object represents the time when the object is a valid entity. Can be treated as the approval time. There is a configuration to auto approve records at the time of creation.                                                                                                                                                                                                      |
+| **_validUntilDateTime**  | A date time object represents the time when the objects validity ends. Can be used instead of deleting records.                                                                                                                                                                                                                                                                               |
+| **_idempotencyKey**      | A hashed string field should be computed using the record's fields, which are designed to enhance the record's uniqueness.                                                                                                                                                                                                                                                                    |
 
 **(\*)** Required fields
 
-**Calculated Fields**: `version`, `ownerUsersCount` and `ownerGroupsCount` fields are calculated at the application logic ignoring the sent value.  
-**Fields Calculated when Empty**: `slug`, `creationDateTime` and `lastUpdatedDateTime` are calculated at the application logic if it is not specified in the request body. entity-persistence-gateway decides if user is authorized to send these fields by evaluating security policies.  
-**Gateway Managed Fields**: `ownerUsers`, `ownerGroups`, `lastUpdatedBy` fields *may* be modified by entity-persistence-gateway. Gateway decides whether it accepts the given value or modify it by evaluating security policies.
+**Calculated Fields**: `_version`, `_ownerUsersCount` and `_ownerGroupsCount` fields are calculated at the application logic ignoring the sent value.  
+**Fields Calculated when Empty**: `_slug`, `_creationDateTime` and `_lastUpdatedDateTime` are calculated at the application logic if it is not specified in the request body. entity-persistence-gateway decides if user is authorized to send these fields by evaluating security policies.  
+**Gateway Managed Fields**: `_ownerUsers`, `_ownerGroups`, `_lastUpdatedBy` fields *may* be modified by entity-persistence-gateway. Gateway decides whether it accepts the given value or modify it by evaluating security policies.
 
 **Note:** entity-persistence-gateway can decide if *caller* is authorized to change the value of a field by evaluating security policies.
 
@@ -343,9 +343,9 @@ Uniqueness configuration is implemented in application logic. MongoDB has compos
 | **uniqueness_list_set**                      | Specify the scope where the uniqueness should be checked with set queries                                                                                                                   | false         | set[publics]         |
 | **uniqueness_list_fields_for_{kind_name}**   | Composite index-like comma seperated list of field names of list. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.           | -             | slug,kind,ownerUsers |
 | **uniqueness_list_set_for_{kind_name}**      | Specify the scope where the uniqueness should be checked with set queries. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.  | false         | set[publics]         |
-| **uniqueness_list_entity_rel_fields**                   | Composite index-like comma seperated list of field names of the relation                                                                                                                            | -             | slug,kind,ownerUsers |
+| **uniqueness_list_entity_rel_fields**                   | Composite index-like comma seperated list of field names of the relation                                                                                                                            | -             | slug,kind |
 | **uniqueness_list_entity_rel_set**                      | Specify the scope where the uniqueness should be checked with set queries                                                                                                                   | false         | set[publics]         |
-| **uniqueness_list_entity_rel_fields_for_{kind_name}**   | Composite index-like comma seperated list of field names of the relation. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.           | -             | slug,kind,ownerUsers |
+| **uniqueness_list_entity_rel_fields_for_{kind_name}**   | Composite index-like comma seperated list of field names of the relation. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.           | -             | slug,kind |
 | **uniqueness_list_entity_rel_set_for_{kind_name}**      | Specify the scope where the uniqueness should be checked with set queries. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.  | false         | set[publics]         |
 
 ### Auto Approve
@@ -377,8 +377,6 @@ This option only applies when visibility field is not provided. If you want to a
 | Configuration                            | Description                            | Default Value |
 | ---------------------------------------- | -------------------------------------- | ------------- |
 | **validation_tag_maxlength**             | Max length limit for tag content.      | 50            |
-| **validation_entityname_maxlength**      | Max length limit for entity name.      | 100           |
-| **validation_listname_maxlength**        | Max length limit for list name.        | 100           |
 | **validation_reactioncontent_maxlength** | Max length limit for reaction content. | 400           |
 
 ### Response Limits
