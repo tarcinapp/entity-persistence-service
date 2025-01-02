@@ -72,12 +72,12 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
           repo.find({where: {id: {inq: listIds}}})
         ),
         this.genericEntityRepositoryGetter().then((repo) =>
-          repo.find({where: {id: {inq: entityIds}}})
+          repo.find({where: {_id: {inq: entityIds}}})
         ),
       ]).then(([listMetadata, entityMetadata]) => {
         // Create maps for quick lookup by id
         const listMetadataMap = new Map(listMetadata.map((list) => [list.id, list]));
-        const entityMetadataMap = new Map(entityMetadata.map((entity) => [entity.id, entity]));
+        const entityMetadataMap = new Map(entityMetadata.map((entity) => [entity._id, entity]));
 
         // Enrich raw relations with metadata
         return rawRelations.map((relation) => {
@@ -100,14 +100,14 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
 
           if (entity !== undefined)
             relation._toMetadata = {
-              _kind: entity.kind,
-              _validFromDateTime: entity.validFromDateTime,
-              _validUntilDateTime: entity.validUntilDateTime,
-              _visibility: entity.visibility,
-              _ownerUsers: entity.ownerUsers,
-              _ownerGroups: entity.ownerGroups,
-              _viewerUsers: entity.viewerUsers,
-              _viewerGroups: entity.viewerGroups,
+              _kind: entity._kind,
+              _validFromDateTime: entity._validFromDateTime,
+              _validUntilDateTime: entity._validUntilDateTime,
+              _visibility: entity._visibility,
+              _ownerUsers: entity._ownerUsers,
+              _ownerGroups: entity._ownerGroups,
+              _viewerUsers: entity._viewerUsers,
+              _viewerGroups: entity._viewerGroups,
             };
 
           return relation; // Return the mutated object
@@ -156,14 +156,14 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
 
       if (entityMetadata)
         rawRelation._toMetadata = {
-          _kind: entityMetadata.kind,
-          _validFromDateTime: entityMetadata.validFromDateTime,
-          _validUntilDateTime: entityMetadata.validUntilDateTime,
-          _visibility: entityMetadata.visibility,
-          _ownerUsers: entityMetadata.ownerUsers,
-          _ownerGroups: entityMetadata.ownerGroups,
-          _viewerUsers: entityMetadata.viewerUsers,
-          _viewerGroups: entityMetadata.viewerGroups,
+          _kind: entityMetadata._kind,
+          _validFromDateTime: entityMetadata._validFromDateTime,
+          _validUntilDateTime: entityMetadata._validUntilDateTime,
+          _visibility: entityMetadata._visibility,
+          _ownerUsers: entityMetadata._ownerUsers,
+          _ownerGroups: entityMetadata._ownerGroups,
+          _viewerUsers: entityMetadata._viewerUsers,
+          _viewerGroups: entityMetadata._viewerGroups,
         };
       return rawRelation;
     });

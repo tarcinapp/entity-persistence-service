@@ -80,7 +80,7 @@ export class GenericListGenericEntityController {
         'application/json': {
           schema: getModelSchemaRef(GenericEntity, {
             title: 'NewGenericEntityInList',
-            exclude: ['id'],
+            exclude: ['_id'],
           }),
         },
       },

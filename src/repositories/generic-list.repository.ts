@@ -27,7 +27,7 @@ export class GenericListRepository extends DefaultCrudRepository<
     listId: typeof GenericList.prototype.id
   ) => DefaultCrudRepository<
     GenericEntity,
-    typeof GenericEntity.prototype.id,
+    typeof GenericEntity.prototype._id,
     GenericEntityRelations
   >;
 

@@ -61,7 +61,7 @@ export class GenericEntityControllerController {
         'application/json': {
           schema: getModelSchemaRef(GenericEntity, {
             title: 'NewGenericEntity',
-            exclude: ['id', 'slug', 'ownerUsersCount', 'ownerGroupsCount', 'viewerUsersCount', 'viewerGroupsCount', 'relationMetadata', 'version', 'idempotencyKey',],
+            exclude: ['_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_relationMetadata', '_version', '_idempotencyKey',],
           }),
         },
       },
@@ -233,7 +233,11 @@ export class GenericEntityControllerController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(GenericEntity, {partial: true}),
+          schema: getModelSchemaRef(GenericEntity, {
+            title: 'PatchGenericEntity',
+            partial: true,
+            exclude: ['_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_relationMetadata', '_version', '_idempotencyKey',],
+          }),
         },
       },
     })
@@ -275,7 +279,17 @@ export class GenericEntityControllerController {
   })
   async replaceById(
     @param.path.string('id') id: string,
-    @requestBody() genericEntity: GenericEntity,
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(GenericEntity, {
+            title: 'ReplaceGenericEntity',
+            exclude: ['_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_relationMetadata', '_version', '_idempotencyKey',],
+          }),
+        },
+      },
+    })
+    genericEntity: GenericEntity,
   ): Promise<void> {
     await this.genericEntityRepository.replaceById(id, genericEntity);
   }

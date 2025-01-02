@@ -54,13 +54,13 @@ export class GenericEntityReactionsController {
     },
   })
   async create(
-    @param.path.string('id') id: typeof GenericEntity.prototype.id,
+    @param.path.string('id') id: typeof GenericEntity.prototype._id,
     @requestBody({
       content: {
         'application/json': {
           schema: getModelSchemaRef(Reactions, {
             title: 'NewReactionsInGenericEntity',
-            exclude: ['id'],
+            exclude: ['_id'],
             optional: ['entityId']
           }),
         },

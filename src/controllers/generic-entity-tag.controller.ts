@@ -54,7 +54,7 @@ export class GenericEntityTagController {
     },
   })
   async create(
-    @param.path.string('id') id: typeof GenericEntity.prototype.id,
+    @param.path.string('id') id: typeof GenericEntity.prototype._id,
     @requestBody({
       content: {
         'application/json': {

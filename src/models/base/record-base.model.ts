@@ -7,6 +7,7 @@ import {Entity, model, property} from '@loopback/repository';
   }
 })
 export class RecordBaseModel extends Entity {
+
   @property({
     type: 'string',
     id: true,

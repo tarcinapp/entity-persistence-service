@@ -21,7 +21,7 @@ import {GenericListEntityRelationRepository} from './generic-list-entity-relatio
 
 export class CustomEntityThroughListRepository extends DefaultCrudRepository<
   GenericEntity,
-  typeof GenericEntity.prototype.id,
+  typeof GenericEntity.prototype._id,
   GenericEntityRelations
 > {
 
@@ -95,7 +95,7 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
     // Update the filter to only include entities matching the IDs
     const updatedFilter = {
       ...filter,
-      where: {...filter?.where, id: {inq: entityIds}},
+      where: {...filter?.where, _id: {inq: entityIds}},
     };
 
     // Fetch entities matching the updated filter
@@ -103,13 +103,13 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
 
     // Map relation metadata to entities, excluding `toMetadata`
     return entities.map(entity => {
-      const relation = relations.find(rel => rel._entityId === entity.id);
+      const relation = relations.find(rel => rel._entityId === entity._id);
       if (relation) {
         // Exclude `toMetadata` while retaining other properties
         // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/naming-convention
         const {_toMetadata, _entityId, _listId, ...relationWithoutToMetadata} = relation;
 
-        entity.relationMetadata = {
+        entity._relationMetadata = {
           _id: relation._id,
           _kind: relation._kind,
           _validFromDateTime: relation._validFromDateTime,

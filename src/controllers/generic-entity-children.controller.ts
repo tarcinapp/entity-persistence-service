@@ -54,13 +54,13 @@ export class GenericEntityChildrenController {
     },
   })
   async create(
-    @param.path.string('id') id: typeof GenericEntity.prototype.id,
+    @param.path.string('id') id: typeof GenericEntity.prototype._id,
     @requestBody({
       content: {
         'application/json': {
           schema: getModelSchemaRef(Relation, {
             title: 'NewRelationInGenericEntity',
-            exclude: ['id'],
+            exclude: ['_id'],
             optional: ['from']
           }),
         },
