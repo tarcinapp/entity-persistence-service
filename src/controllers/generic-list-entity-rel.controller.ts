@@ -42,7 +42,7 @@ export class GenericListEntityRelController {
         'application/json': {
           schema: getModelSchemaRef(GenericListToEntityRelation, {
             title: 'NewGenericListEntityRelation',
-            exclude: ['_id'],
+            exclude: ['_id', '_fromMetadata', '_toMetadata', '_version', '_idempotencyKey'],
           }),
         },
       },
@@ -122,7 +122,10 @@ export class GenericListEntityRelController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(GenericListToEntityRelation, {partial: true}),
+          schema: getModelSchemaRef(GenericListToEntityRelation, {
+            exclude: ['_id', '_fromMetadata', '_toMetadata', '_version', '_idempotencyKey'],
+            partial: true
+          }),
         },
       },
     })
@@ -163,7 +166,10 @@ export class GenericListEntityRelController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(GenericListToEntityRelation, {partial: true}),
+          schema: getModelSchemaRef(GenericListToEntityRelation, {
+            exclude: ['_id', '_fromMetadata', '_toMetadata', '_version', '_idempotencyKey'],
+            partial: true
+          }),
         },
       },
     })
@@ -181,7 +187,11 @@ export class GenericListEntityRelController {
   })
   async replaceById(
     @param.path.string('id') id: string,
-    @requestBody() listEntityRelation: GenericListToEntityRelation,
+    @requestBody({
+      content: {
+        exclude: ['_id', '_fromMetadata', '_toMetadata', '_version', '_idempotencyKey'],
+      }
+    }) listEntityRelation: GenericListToEntityRelation,
   ): Promise<void> {
     await this.genericListEntityRelationRepository.replaceById(id, listEntityRelation);
   }
