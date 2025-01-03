@@ -54,7 +54,7 @@ export class ListListReactionsController {
     },
   })
   async create(
-    @param.path.string('id') id: typeof GenericList.prototype.id,
+    @param.path.string('id') id: typeof GenericList.prototype._id,
     @requestBody({
       content: {
         'application/json': {

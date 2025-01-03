@@ -9,7 +9,7 @@ import {KindLimitsConfigurationReader} from '../extensions/kind-limits';
 import {SetFilterBuilder} from '../extensions/set';
 import {ValidfromConfigurationReader} from '../extensions/validfrom-config-reader';
 import {VisibilityConfigurationReader} from '../extensions/visibility';
-import {GenericEntity, GenericEntityRelations, HttpErrorResponse, Reactions, Relation, SingleError, Tag, TagEntityRelation} from '../models';
+import {EntityRelation, GenericEntity, GenericEntityRelations, HttpErrorResponse, Reactions, SingleError, Tag, TagEntityRelation} from '../models';
 import {ReactionsRepository} from './reactions.repository';
 import {RelationRepository} from './relation.repository';
 import {TagEntityRelationRepository} from './tag-entity-relation.repository';
@@ -22,7 +22,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   GenericEntityRelations
 > {
 
-  public readonly relations: HasManyRepositoryFactory<Relation, typeof GenericEntity.prototype._id>;
+  public readonly children: HasManyRepositoryFactory<EntityRelation, typeof GenericEntity.prototype._id>;
 
   public readonly reactions: HasManyRepositoryFactory<Reactions, typeof GenericEntity.prototype._id>;
 
@@ -50,8 +50,8 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     this.tags = this.createHasManyThroughRepositoryFactoryFor('tags', tagRepositoryGetter, tagEntityRelationRepositoryGetter,);
     this.reactions = this.createHasManyRepositoryFactoryFor('reactions', reactionsRepositoryGetter,);
     this.registerInclusionResolver('reactions', this.reactions.inclusionResolver);
-    this.relations = this.createHasManyRepositoryFactoryFor('relations', relationRepositoryGetter,);
-    this.registerInclusionResolver('relations', this.relations.inclusionResolver);
+    this.children = this.createHasManyRepositoryFactoryFor('_children', relationRepositoryGetter,);
+    this.registerInclusionResolver('_children', this.children.inclusionResolver);
   }
 
   async find(filter?: Filter<GenericEntity>, options?: Options) {

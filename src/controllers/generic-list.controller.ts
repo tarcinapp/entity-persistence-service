@@ -83,7 +83,7 @@ export class GenericListController {
         'application/json': {
           schema: getModelSchemaRef(GenericList, {
             title: 'NewList',
-            exclude: ['id'],
+            exclude: ['_id'],
           }),
         },
       },

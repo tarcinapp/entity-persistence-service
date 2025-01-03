@@ -1,7 +1,7 @@
 import {Entity, model, property} from '@loopback/repository';
 
 @model()
-export class Relation extends Entity {
+export class EntityRelation extends Entity {
   @property({
     type: 'string',
     id: true,
@@ -57,7 +57,7 @@ export class Relation extends Entity {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [prop: string]: any;
 
-  constructor(data?: Partial<Relation>) {
+  constructor(data?: Partial<EntityRelation>) {
     super(data);
   }
 }
@@ -66,4 +66,4 @@ export interface RelationRelations {
   // describe navigational properties here
 }
 
-export type RelationWithRelations = Relation & RelationRelations;
+export type RelationWithRelations = EntityRelation & RelationRelations;

@@ -2,7 +2,7 @@ import {hasMany, model, property} from '@loopback/repository';
 import {ListEntityCommonBase} from './base-models/list-entity-common-base.model';
 import {RelationMetadataType} from './base-types/relation-metadata-under-entity.type';
 import {Reactions} from './reactions.model';
-import {Relation} from './relation.model';
+import {EntityRelation} from './relation.model';
 import {TagEntityRelation} from './tag-entity-relation.model';
 import {Tag} from './tag.model';
 
@@ -22,8 +22,8 @@ export class GenericEntity extends ListEntityCommonBase {
   })
   _relationMetadata?: RelationMetadataType
 
-  @hasMany(() => Relation, {keyTo: 'from'})
-  relations: Relation[];
+  @hasMany(() => EntityRelation, {keyTo: 'from'})
+  _children: EntityRelation[];
 
   @hasMany(() => Reactions, {keyTo: 'entityId'})
   reactions: Reactions[];

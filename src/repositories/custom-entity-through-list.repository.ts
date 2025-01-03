@@ -25,7 +25,7 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
   GenericEntityRelations
 > {
 
-  protected sourceListId: typeof GenericList.prototype.id;
+  protected sourceListId: typeof GenericList.prototype._id;
 
   constructor(
     @inject('datasources.EntityDb') dataSource: EntityDbDataSource,

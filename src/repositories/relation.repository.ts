@@ -1,16 +1,16 @@
-import {DefaultCrudRepository} from '@loopback/repository';
-import {Relation, RelationRelations} from '../models';
-import {EntityDbDataSource} from '../datasources';
 import {inject} from '@loopback/core';
+import {DefaultCrudRepository} from '@loopback/repository';
+import {EntityDbDataSource} from '../datasources';
+import {EntityRelation, RelationRelations} from '../models';
 
 export class RelationRepository extends DefaultCrudRepository<
-  Relation,
-  typeof Relation.prototype.id,
+  EntityRelation,
+  typeof EntityRelation.prototype.id,
   RelationRelations
 > {
   constructor(
     @inject('datasources.EntityDb') dataSource: EntityDbDataSource,
   ) {
-    super(Relation, dataSource);
+    super(EntityRelation, dataSource);
   }
 }

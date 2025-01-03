@@ -42,7 +42,7 @@ export class GenericListChildrenController {
     @param.path.string('id') id: string,
     @param.query.object('filter') filter?: Filter<ListRelation>,
   ): Promise<ListRelation[]> {
-    return this.listRepository.relations(id).find(filter);
+    return this.listRepository.children(id).find(filter);
   }
 
   @post('/generic-lists/{id}/children', {
@@ -54,7 +54,7 @@ export class GenericListChildrenController {
     },
   })
   async create(
-    @param.path.string('id') id: typeof GenericList.prototype.id,
+    @param.path.string('id') id: typeof GenericList.prototype._id,
     @requestBody({
       content: {
         'application/json': {
@@ -67,7 +67,7 @@ export class GenericListChildrenController {
       },
     }) listRelation: Omit<ListRelation, 'id'>,
   ): Promise<ListRelation> {
-    return this.listRepository.relations(id).create(listRelation);
+    return this.listRepository.children(id).create(listRelation);
   }
 
   @patch('/generic-lists/{id}/children', {
@@ -90,7 +90,7 @@ export class GenericListChildrenController {
     listRelation: Partial<ListRelation>,
     @param.query.object('where', getWhereSchemaFor(ListRelation)) where?: Where<ListRelation>,
   ): Promise<Count> {
-    return this.listRepository.relations(id).patch(listRelation, where);
+    return this.listRepository.children(id).patch(listRelation, where);
   }
 
   @del('/generic-lists/{id}/children', {
@@ -105,6 +105,6 @@ export class GenericListChildrenController {
     @param.path.string('id') id: string,
     @param.query.object('where', getWhereSchemaFor(ListRelation)) where?: Where<ListRelation>,
   ): Promise<Count> {
-    return this.listRepository.relations(id).delete(where);
+    return this.listRepository.children(id).delete(where);
   }
 }

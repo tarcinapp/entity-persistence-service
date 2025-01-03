@@ -19,25 +19,25 @@ import {TagRepository} from './tag.repository';
 
 export class GenericListRepository extends DefaultCrudRepository<
   GenericList,
-  typeof GenericList.prototype.id,
+  typeof GenericList.prototype._id,
   ListRelations
 > {
 
   public readonly genericEntities: (
-    listId: typeof GenericList.prototype.id
+    listId: typeof GenericList.prototype._id
   ) => DefaultCrudRepository<
     GenericEntity,
     typeof GenericEntity.prototype._id,
     GenericEntityRelations
   >;
 
-  public readonly relations: HasManyRepositoryFactory<ListRelation, typeof GenericList.prototype.id>;
+  public readonly children: HasManyRepositoryFactory<ListRelation, typeof GenericList.prototype._id>;
 
-  public readonly reactions: HasManyRepositoryFactory<ListReactions, typeof GenericList.prototype.id>;
+  public readonly reactions: HasManyRepositoryFactory<ListReactions, typeof GenericList.prototype._id>;
 
   public readonly tags: HasManyThroughRepositoryFactory<Tag, typeof Tag.prototype.id,
     TagListRelation,
-    typeof GenericList.prototype.id
+    typeof GenericList.prototype._id
   >;
 
   private static responseLimit = _.parseInt(process.env.response_limit_list ?? "50");
@@ -88,10 +88,10 @@ export class GenericListRepository extends DefaultCrudRepository<
     this.tags = this.createHasManyThroughRepositoryFactoryFor('tags', tagRepositoryGetter, tagListRelationRepositoryGetter,);
     this.reactions = this.createHasManyRepositoryFactoryFor('reactions', listReactionsRepositoryGetter);
     this.registerInclusionResolver('reactions', this.reactions.inclusionResolver);
-    this.relations = this.createHasManyRepositoryFactoryFor('relations', listRelationRepositoryGetter);
-    this.registerInclusionResolver('relations', this.relations.inclusionResolver);
+    this.children = this.createHasManyRepositoryFactoryFor('_children', listRelationRepositoryGetter);
+    this.registerInclusionResolver('_children', this.children.inclusionResolver);
 
-    this.genericEntities = (listId: typeof GenericList.prototype.id) => {
+    this.genericEntities = (listId: typeof GenericList.prototype._id) => {
       const repo = new CustomEntityThroughListRepository(
         this.dataSource,
         this.genericEntityRepositoryGetter,
@@ -128,7 +128,7 @@ export class GenericListRepository extends DefaultCrudRepository<
           return foundIdempotent;
         }
 
-        data.idempotencyKey = idempotencyKey;
+        data._idempotencyKey = idempotencyKey;
 
         // we do not have identical data in the db
         // go ahead, validate, enrich and create the data
@@ -139,7 +139,7 @@ export class GenericListRepository extends DefaultCrudRepository<
   async updateAll(data: DataObject<GenericList>, where?: Where<GenericList>, options?: Options) {
 
     const now = new Date().toISOString();
-    data.lastUpdatedDateTime = now;
+    data._lastUpdatedDateTime = now;
 
     this.checkDataKindFormat(data);
 
@@ -160,7 +160,7 @@ export class GenericListRepository extends DefaultCrudRepository<
         where: {
           and: [
             {
-              idempotencyKey: idempotencyKey
+              _idempotencyKey: idempotencyKey
             }
           ]
         }
@@ -174,7 +174,7 @@ export class GenericListRepository extends DefaultCrudRepository<
   }
 
   calculateIdempotencyKey(data: DataObject<GenericList>) {
-    const idempotencyFields = this.idempotencyConfigReader.getIdempotencyForLists(data.kind);
+    const idempotencyFields = this.idempotencyConfigReader.getIdempotencyForLists(data._kind);
 
     // idempotency is not configured
     if (idempotencyFields.length === 0) return;
@@ -245,7 +245,7 @@ export class GenericListRepository extends DefaultCrudRepository<
     const mergedData = _.defaults({}, data, existingData);
     const uniquenessCheck = this.checkUniquenessForUpdate(id, mergedData);
 
-    if (data.kind) {
+    if (data._kind) {
       this.checkDataKindFormat(data);
       this.checkDataKindValues(data);
     }
@@ -269,18 +269,18 @@ export class GenericListRepository extends DefaultCrudRepository<
     const now = new Date().toISOString();
 
     // use incoming creationDateTime and lastUpdateDateTime if given. Override with default if it does not exist.
-    data.creationDateTime = data.creationDateTime ? data.creationDateTime : now;
-    data.lastUpdatedDateTime = data.lastUpdatedDateTime ? data.lastUpdatedDateTime : now;
+    data._createdDateTime = data._createdDateTime ? data._createdDateTime : now;
+    data._lastUpdatedDateTime = data._lastUpdatedDateTime ? data._lastUpdatedDateTime : now;
 
     // autoapprove the record if it is configured
 
-    data.validFromDateTime = this.validfromConfigReader.getValidFromForLists(data.kind) ? now : undefined;
+    data._validFromDateTime = this.validfromConfigReader.getValidFromForLists(data._kind) ? now : undefined;
 
     // new data is starting from version 1
-    data.version = 1;
+    data._version = 1;
 
     // set visibility
-    data.visibility = this.visibilityConfigReader.getVisibilityForLists(data.kind);
+    data._visibility = this.visibilityConfigReader.getVisibilityForLists(data._kind);
 
     // prepare slug from the name and set to the record 
     this.generateSlug(data);
@@ -320,10 +320,10 @@ export class GenericListRepository extends DefaultCrudRepository<
         const now = new Date().toISOString();
 
         // set new version
-        data.version = (existingData.version ?? 1) + 1;
+        data._version = (existingData._version ?? 1) + 1;
 
         // we may use current date, if it does not exist in the given data
-        data.lastUpdatedDateTime = data.lastUpdatedDateTime ? data.lastUpdatedDateTime : now;
+        data._lastUpdatedDateTime = data._lastUpdatedDateTime ? data._lastUpdatedDateTime : now;
 
         this.generateSlug(data);
 
@@ -338,17 +338,17 @@ export class GenericListRepository extends DefaultCrudRepository<
 
   private async checkRecordLimits(newData: DataObject<GenericList>) {
 
-    if (!this.recordLimitConfigReader.isRecordLimitsConfiguredForLists(newData.kind))
+    if (!this.recordLimitConfigReader.isRecordLimitsConfiguredForLists(newData._kind))
       return;
 
-    const limit = this.recordLimitConfigReader.getRecordLimitsCountForLists(newData.kind)
-    const set = this.recordLimitConfigReader.getRecordLimitsSetForLists(newData.ownerUsers, newData.ownerGroups, newData.kind);
+    const limit = this.recordLimitConfigReader.getRecordLimitsCountForLists(newData._kind)
+    const set = this.recordLimitConfigReader.getRecordLimitsSetForLists(newData._ownerUsers, newData._ownerGroups, newData._kind);
     let filterBuilder: FilterBuilder<GenericList>;
 
-    if (this.recordLimitConfigReader.isLimitConfiguredForKindForLists(newData.kind))
+    if (this.recordLimitConfigReader.isLimitConfiguredForKindForLists(newData._kind))
       filterBuilder = new FilterBuilder<GenericList>({
         where: {
-          kind: newData.kind
+          _kind: newData._kind
         }
       })
     else {
@@ -387,32 +387,32 @@ export class GenericListRepository extends DefaultCrudRepository<
 
   private generateSlug(data: DataObject<GenericList>) {
 
-    if (data.name && !data.slug)
-      data.slug = slugify(data.name ?? '', {lower: true, strict: true});
+    if (data._name && !data._slug)
+      data._slug = slugify(data._name ?? '', {lower: true, strict: true});
   }
 
   private setOwnersCount(data: DataObject<GenericList>) {
 
-    if (_.isArray(data.ownerUsers))
-      data.ownerUsersCount = data.ownerUsers?.length;
+    if (_.isArray(data._ownerUsers))
+      data._ownerUsersCount = data._ownerUsers?.length;
 
-    if (_.isArray(data.ownerGroups))
-      data.ownerGroupsCount = data.ownerGroups?.length;
+    if (_.isArray(data._ownerGroups))
+      data._ownerGroupsCount = data._ownerGroups?.length;
 
-    if (_.isArray(data.viewerUsers))
-      data.viewerUsersCount = data.viewerUsers?.length;
+    if (_.isArray(data._viewerUsers))
+      data._viewerUsersCount = data._viewerUsers?.length;
 
-    if (_.isArray(data.viewerGroups))
-      data.viewerGroupsCount = data.viewerGroups?.length;
+    if (_.isArray(data._viewerGroups))
+      data._viewerGroupsCount = data._viewerGroups?.length;
   }
 
   private checkDataKindFormat(data: DataObject<GenericList>) {
 
     // make sure data kind is slug format
-    if (data.kind) {
-      const slugKind: string = slugify(data.kind, {lower: true});
+    if (data._kind) {
+      const slugKind: string = slugify(data._kind, {lower: true});
 
-      if (slugKind !== data.kind) {
+      if (slugKind !== data._kind) {
         throw new HttpErrorResponse({
           statusCode: 422,
           name: "InvalidKindError",
@@ -432,7 +432,7 @@ export class GenericListRepository extends DefaultCrudRepository<
      * this point. If it's not valid, we raise an error with the allowed valid
      * values for 'kind'.
      */
-    const kind = data.kind ?? '';
+    const kind = data._kind ?? '';
 
     if (!this.kindLimitConfigReader.isKindAcceptableForList(kind)) {
       const validValues = this.kindLimitConfigReader.allowedKindsForLists;
@@ -440,7 +440,7 @@ export class GenericListRepository extends DefaultCrudRepository<
       throw new HttpErrorResponse({
         statusCode: 422,
         name: "InvalidKindError",
-        message: `List kind '${data.kind}' is not valid. Use any of these values instead: ${validValues.join(', ')}`,
+        message: `List kind '${data._kind}' is not valid. Use any of these values instead: ${validValues.join(', ')}`,
         code: "INVALID-LIST-KIND",
         status: 422,
       });
@@ -450,14 +450,14 @@ export class GenericListRepository extends DefaultCrudRepository<
   private async checkUniquenessForCreate(newData: DataObject<GenericList>) {
 
     // return if no uniqueness is configured
-    if (!this.uniquenessConfigReader.isUniquenessConfiguredForLists(newData.kind))
+    if (!this.uniquenessConfigReader.isUniquenessConfiguredForLists(newData._kind))
       return;
 
     const whereBuilder: WhereBuilder<GenericList> = new WhereBuilder<GenericList>();
 
     // read the fields (name, slug) array for this kind
-    const fields: string[] = this.uniquenessConfigReader.getFieldsForLists(newData.kind);
-    const set = this.uniquenessConfigReader.getSetForLists(newData.ownerUsers, newData.ownerGroups, newData.kind);
+    const fields: string[] = this.uniquenessConfigReader.getFieldsForLists(newData._kind);
+    const set = this.uniquenessConfigReader.getSetForLists(newData._ownerUsers, newData._ownerGroups, newData._kind);
 
     // add uniqueness fields to where builder
     _.forEach(fields, (field) => {
@@ -529,14 +529,14 @@ export class GenericListRepository extends DefaultCrudRepository<
 
     //
     whereBuilder.and({
-      id: {
+      _id: {
         neq: id
       }
     });
 
     let filter = new FilterBuilder<GenericList>()
       .where(whereBuilder.build())
-      .fields('id')
+      .fields('_id')
       .build();
 
     // add set filter if configured
@@ -544,9 +544,9 @@ export class GenericListRepository extends DefaultCrudRepository<
 
       let uniquenessStr = process.env.uniqueness_list_set;
       uniquenessStr = uniquenessStr.replace(/(set\[.*owners\])/g, '$1='
-        + (newData.ownerUsers ? newData.ownerUsers?.join(',') : '')
+        + (newData._ownerUsers ? newData._ownerUsers?.join(',') : '')
         + ';'
-        + (newData.ownerGroups ? newData.ownerGroups?.join(',') : ''));
+        + (newData._ownerGroups ? newData._ownerGroups?.join(',') : ''));
 
       const uniquenessSet = (qs.parse(uniquenessStr)).set as Set;
 

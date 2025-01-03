@@ -69,14 +69,14 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
       // Fetch required metadata for all lists and entities in a single query
       return Promise.all([
         this.genericListRepositoryGetter().then((repo) =>
-          repo.find({where: {id: {inq: listIds}}})
+          repo.find({where: {_id: {inq: listIds}}})
         ),
         this.genericEntityRepositoryGetter().then((repo) =>
           repo.find({where: {_id: {inq: entityIds}}})
         ),
       ]).then(([listMetadata, entityMetadata]) => {
         // Create maps for quick lookup by id
-        const listMetadataMap = new Map(listMetadata.map((list) => [list.id, list]));
+        const listMetadataMap = new Map(listMetadata.map((list) => [list._id, list]));
         const entityMetadataMap = new Map(entityMetadata.map((entity) => [entity._id, entity]));
 
         // Enrich raw relations with metadata
@@ -88,14 +88,14 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
 
             // Mutate the existing relation object
             relation._fromMetadata = {
-              _kind: list.kind,
-              _validFromDateTime: list.validFromDateTime,
-              _validUntilDateTime: list.validUntilDateTime,
-              _ownerUsers: list.ownerUsers,
-              _ownerGroups: list.ownerGroups,
-              _viewerUsers: list.viewerUsers,
-              _viewerGroups: list.viewerGroups,
-              _visibility: list.visibility,
+              _kind: list._kind,
+              _validFromDateTime: list._validFromDateTime,
+              _validUntilDateTime: list._validUntilDateTime,
+              _ownerUsers: list._ownerUsers,
+              _ownerGroups: list._ownerGroups,
+              _viewerUsers: list._viewerUsers,
+              _viewerGroups: list._viewerGroups,
+              _visibility: list._visibility,
             };
 
           if (entity !== undefined)
@@ -144,14 +144,14 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
       // Enrich the raw relation with metadata
       if (listMetadata)
         rawRelation._fromMetadata = {
-          _kind: listMetadata.kind,
-          _validFromDateTime: listMetadata.validFromDateTime,
-          _validUntilDateTime: listMetadata.validUntilDateTime,
-          _visibility: listMetadata.visibility,
-          _ownerUsers: listMetadata.ownerUsers,
-          _ownerGroups: listMetadata.ownerGroups,
-          _viewerUsers: listMetadata.viewerUsers,
-          _viewerGroups: listMetadata.viewerGroups,
+          _kind: listMetadata._kind,
+          _validFromDateTime: listMetadata._validFromDateTime,
+          _validUntilDateTime: listMetadata._validUntilDateTime,
+          _visibility: listMetadata._visibility,
+          _ownerUsers: listMetadata._ownerUsers,
+          _ownerGroups: listMetadata._ownerGroups,
+          _viewerUsers: listMetadata._viewerUsers,
+          _viewerGroups: listMetadata._viewerGroups,
         };
 
       if (entityMetadata)
