@@ -19,7 +19,7 @@ export class GenericList extends ListEntityCommonBase {
 
 
   @hasMany(() => GenericEntity, {through: {model: () => GenericListToEntityRelation, keyFrom: '_listId', keyTo: '_entityId'}})
-  genericEntities: GenericEntity[];
+  _genericEntities: GenericEntity[];
 
   @hasMany(() => ListRelation, {keyTo: 'from'})
   _children: ListRelation[];

@@ -85,6 +85,7 @@ export class GenericListRepository extends DefaultCrudRepository<
 
   ) {
     super(GenericList, dataSource);
+
     this.tags = this.createHasManyThroughRepositoryFactoryFor('tags', tagRepositoryGetter, tagListRelationRepositoryGetter,);
     this.reactions = this.createHasManyRepositoryFactoryFor('reactions', listReactionsRepositoryGetter);
     this.registerInclusionResolver('reactions', this.reactions.inclusionResolver);
@@ -102,6 +103,9 @@ export class GenericListRepository extends DefaultCrudRepository<
       (repo as any).sourceId = listId;
       return repo;
     };
+    const genericEntitiesInclusionResolver = this.createHasManyThroughRepositoryFactoryFor('_genericEntities', genericEntityRepositoryGetter, listEntityRelationRepositoryGetter).inclusionResolver
+
+    this.registerInclusionResolver('_genericEntities', genericEntitiesInclusionResolver);
   }
 
   async find(filter?: Filter<GenericList>, options?: Options) {
