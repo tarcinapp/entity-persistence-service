@@ -12,7 +12,7 @@ import _ from 'lodash';
 import {EntityDbDataSource} from '../datasources';
 import {
   GenericEntity,
-  GenericEntityRelations,
+  GenericEntityWithRelations,
   GenericList,
   GenericListToEntityRelation
 } from '../models';
@@ -22,7 +22,7 @@ import {GenericListEntityRelationRepository} from './generic-list-entity-relatio
 export class CustomEntityThroughListRepository extends DefaultCrudRepository<
   GenericEntity,
   typeof GenericEntity.prototype._id,
-  GenericEntityRelations
+  GenericEntityWithRelations
 > {
 
   protected sourceListId: typeof GenericList.prototype._id;
@@ -122,13 +122,25 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
 
   /**
    * Creates the generic entity first, then the relation calling the repositories of these individual records.
+   * Deletes the entity if the relation creation fails.
    * @param data Generic Entity
    * @returns Created Generic Entity
    */
-  async create(data: DataObject<GenericEntity>) {
-    // const genericEntitiesRepo = await this.genericEntityRepositoryGetter();
-    // const genericListEntityRelationRepo = await this.genericListEntityRepositoryGetter();
-    return super.create(data);
-  }
+  async create(data: DataObject<GenericEntity>, options?: Options): Promise<GenericEntity> {
+    const genericEntitiesRepo = await this.genericEntityRepositoryGetter();
+    const genericListEntityRelationRepo = await this.genericListEntityRepositoryGetter();
 
+    const entity = await genericEntitiesRepo.create(data, options);
+
+    try {
+      await genericListEntityRelationRepo.create({
+        _entityId: entity._id,
+        _listId: this.sourceListId
+      }, options);
+    } catch (err) {
+      await genericEntitiesRepo.deleteById(entity._id, options);
+      throw err;
+    }
+    return entity;
+  }
 }

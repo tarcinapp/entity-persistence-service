@@ -8,7 +8,7 @@ import {EntityDbDataSource} from '../datasources';
 import {IdempotencyConfigurationReader, KindLimitsConfigurationReader, RecordLimitsConfigurationReader, UniquenessConfigurationReader, VisibilityConfigurationReader} from '../extensions';
 import {Set, SetFilterBuilder} from '../extensions/set';
 import {ValidfromConfigurationReader} from '../extensions/validfrom-config-reader';
-import {GenericEntity, GenericEntityRelations, GenericList, HttpErrorResponse, ListReactions, ListRelation, ListRelations, SingleError, Tag, TagListRelation} from '../models';
+import {GenericList, HttpErrorResponse, ListReactions, ListRelation, ListRelations, SingleError, Tag, TagListRelation} from '../models';
 import {CustomEntityThroughListRepository} from './custom-entity-through-list.repository';
 import {GenericEntityRepository} from './generic-entity.repository';
 import {GenericListEntityRelationRepository} from './generic-list-entity-relation.repository';
@@ -25,11 +25,7 @@ export class GenericListRepository extends DefaultCrudRepository<
 
   public readonly genericEntities: (
     listId: typeof GenericList.prototype._id
-  ) => DefaultCrudRepository<
-    GenericEntity,
-    typeof GenericEntity.prototype._id,
-    GenericEntityRelations
-  >;
+  ) => CustomEntityThroughListRepository;
 
   public readonly children: HasManyRepositoryFactory<ListRelation, typeof GenericList.prototype._id>;
 
@@ -100,7 +96,7 @@ export class GenericListRepository extends DefaultCrudRepository<
       );
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (repo as any).sourceId = listId;
+      (repo as any).sourceListId = listId;
       return repo;
     };
     const genericEntitiesInclusionResolver = this.createHasManyThroughRepositoryFactoryFor('_genericEntities', genericEntityRepositoryGetter, listEntityRelationRepositoryGetter).inclusionResolver

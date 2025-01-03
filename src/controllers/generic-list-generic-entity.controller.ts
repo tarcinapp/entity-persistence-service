@@ -20,7 +20,8 @@ import {Set, SetFilterBuilder} from '../extensions/set';
 import {sanitizeFilterFields} from '../helpers/filter.helper';
 import {
   GenericEntity,
-  GenericList
+  GenericList,
+  GenericListToEntityRelation
 } from '../models';
 import {GenericListRepository} from '../repositories';
 
@@ -46,7 +47,7 @@ export class GenericListGenericEntityController {
     @param.query.object('set') set?: Set,
     @param.query.object('filter') filter?: Filter<GenericEntity>,
     @param.query.object('setThrough') setThrough?: Set,
-    @param.query.object('filterThrough') filterThrough?: Filter<GenericEntity>,
+    @param.query.object('filterThrough') filterThrough?: Filter<GenericListToEntityRelation>,
   ): Promise<GenericEntity[]> {
 
     if (set)
@@ -55,8 +56,8 @@ export class GenericListGenericEntityController {
       }).build();
 
     if (setThrough)
-      filterThrough = new SetFilterBuilder<GenericEntity>(setThrough, {
-        filter: filter
+      filterThrough = new SetFilterBuilder<GenericListToEntityRelation>(setThrough, {
+        filter: filterThrough
       }).build();
 
     sanitizeFilterFields(filter);

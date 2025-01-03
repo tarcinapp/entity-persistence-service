@@ -180,7 +180,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
   /**
    * Create a new relation ensuring idempotency and validation.
    */
-  async create(data: DataObject<GenericListToEntityRelation>) {
+  async create(data: DataObject<GenericListToEntityRelation>, options?: Options) {
     const idempotencyKey = this.calculateIdempotencyKey(data);
 
     return this.findIdempotentRelation(idempotencyKey).then(foundIdempotent => {

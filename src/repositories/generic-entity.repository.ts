@@ -67,7 +67,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     return super.find(filter, options);
   }
 
-  async create(data: DataObject<GenericEntity>) {
+  async create(data: DataObject<GenericEntity>, options?: Options) {
 
     const idempotencyKey = this.calculateIdempotencyKey(data);
 
