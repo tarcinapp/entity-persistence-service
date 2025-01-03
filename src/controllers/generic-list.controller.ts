@@ -52,7 +52,7 @@ export class GenericListController {
         }
       },
       '409': {
-        description: 'Entity name already exists.',
+        description: 'List name already exists.',
         content: {
           'application/json': {
             schema: {
@@ -83,7 +83,7 @@ export class GenericListController {
         'application/json': {
           schema: getModelSchemaRef(GenericList, {
             title: 'NewList',
-            exclude: ['_id'],
+            exclude: ['_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_version', '_idempotencyKey',],
           }),
         },
       },
@@ -236,7 +236,7 @@ export class GenericListController {
         }
       },
       '422': {
-        description: 'Unprocessable entity',
+        description: 'Unprocessable list',
         content: {
           'application/json': {
             schema: {
@@ -269,7 +269,7 @@ export class GenericListController {
         description: 'Generic List PUT success',
       },
       '404': {
-        description: 'Entity not found',
+        description: 'List not found',
         content: {
           'application/json': {
             schema: {
@@ -281,7 +281,7 @@ export class GenericListController {
         }
       },
       '422': {
-        description: 'Unprocessable entity',
+        description: 'Unprocessable list',
         content: {
           'application/json': {
             schema: {
@@ -296,7 +296,16 @@ export class GenericListController {
   })
   async replaceById(
     @param.path.string('id') id: string,
-    @requestBody() list: GenericList,
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(GenericList, {
+            title: 'ReplaceGenericList',
+            exclude: ['_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_version', '_idempotencyKey'],
+          })
+        }
+      }
+    }) list: GenericList,
   ): Promise<void> {
     await this.genericListRepository.replaceById(id, list);
   }
@@ -307,7 +316,7 @@ export class GenericListController {
         description: 'Generic List DELETE success',
       },
       '404': {
-        description: 'Entity not found',
+        description: 'List not found',
         content: {
           'application/json': {
             schema: {
