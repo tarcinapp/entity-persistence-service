@@ -109,8 +109,9 @@ export class GenericListGenericEntityController {
     })
     genericEntity: Partial<GenericEntity>,
     @param.query.object('where', getWhereSchemaFor(GenericEntity)) where?: Where<GenericEntity>,
+    @param.query.object('whereThrough') whereThrough?: Where<GenericListToEntityRelation>,
   ): Promise<Count> {
-    return this.listRepository.genericEntities(id).updateAll(genericEntity, where);
+    return this.listRepository.genericEntities(id).updateAll(genericEntity, where, whereThrough);
   }
 
   @del('/generic-lists/{id}/generic-entities', {
@@ -125,6 +126,7 @@ export class GenericListGenericEntityController {
     @param.path.string('id') id: string,
     @param.query.object('set') set?: Set,
     @param.query.object('where', getWhereSchemaFor(GenericEntity)) where?: Where<GenericEntity>,
+    @param.query.object('whereThrough') whereThrough?: Where<GenericListToEntityRelation>
   ): Promise<Count> {
 
     const filterBuilder = new FilterBuilder<GenericEntity>();
@@ -139,6 +141,6 @@ export class GenericListGenericEntityController {
         filter: filter
       }).build();
 
-    return this.listRepository.genericEntities(id).deleteAll(filter.where);
+    return this.listRepository.genericEntities(id).deleteAll(filter.where, whereThrough);
   }
 }

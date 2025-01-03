@@ -7,8 +7,7 @@ import {
   Getter,
   Options,
   repository,
-  Where,
-  WhereBuilder
+  Where
 } from '@loopback/repository';
 import _ from 'lodash';
 import {EntityDbDataSource} from '../datasources';
@@ -155,20 +154,37 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
    * @param options 
    * @returns 
    */
-  async updateAll(data: DataObject<GenericEntity>, where?: Where<GenericEntity>, options?: Options) {
+  async updateAll(data: DataObject<GenericEntity>, where?: Where<GenericEntity>, whereThrough?: Where<GenericListToEntityRelation>, options?: Options) {
     const genericEntitiesRepo = await this.genericEntityRepositoryGetter();
     const genericListEntityRelationRepo = await this.genericListEntityRepositoryGetter();
 
     const relations = await genericListEntityRelationRepo.find({
       where: {
-        _listId: this.sourceListId
+        _listId: this.sourceListId,
+        ...whereThrough
       }
     });
     const entityIds = relations.map(rel => rel._entityId);
-    const whereBuilder = new WhereBuilder<GenericEntity>(where);
-    whereBuilder.and({_id: {inq: entityIds}});
-    where = whereBuilder.build();
+
+    where = {_id: {inq: entityIds}, ...where};
 
     return genericEntitiesRepo.updateAll(data, where, options);
+  }
+
+  async deleteAll(where?: Where<GenericEntity>, whereThrough?: Where<GenericListToEntityRelation>, options?: Options) {
+    const genericEntitiesRepo = await this.genericEntityRepositoryGetter();
+    const genericListEntityRelationRepo = await this.genericListEntityRepositoryGetter();
+
+    const relations = await genericListEntityRelationRepo.find({
+      where: {
+        _listId: this.sourceListId,
+        ...whereThrough
+      }
+    });
+    const entityIds = relations.map(rel => rel._entityId);
+
+    where = {_id: {inq: entityIds}, ...where};
+
+    return genericEntitiesRepo.deleteAll(where, options);
   }
 }
