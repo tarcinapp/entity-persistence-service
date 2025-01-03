@@ -6,7 +6,9 @@ import {
   Filter,
   Getter,
   Options,
-  repository
+  repository,
+  Where,
+  WhereBuilder
 } from '@loopback/repository';
 import _ from 'lodash';
 import {EntityDbDataSource} from '../datasources';
@@ -142,5 +144,22 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
       throw err;
     }
     return entity;
+  }
+
+  async updateAll(data: DataObject<GenericEntity>, where?: Where<GenericEntity>, options?: Options) {
+    const genericEntitiesRepo = await this.genericEntityRepositoryGetter();
+    const genericListEntityRelationRepo = await this.genericListEntityRepositoryGetter();
+
+    const relations = await genericListEntityRelationRepo.find({
+      where: {
+        _listId: this.sourceListId
+      }
+    });
+    const entityIds = relations.map(rel => rel._entityId);
+    const whereBuilder = new WhereBuilder<GenericEntity>(where);
+    whereBuilder.and({_id: {inq: entityIds}});
+    where = whereBuilder.build();
+
+    return genericEntitiesRepo.updateAll(data, where, options);
   }
 }
