@@ -1,4 +1,5 @@
-import {IdKindValidityBase} from '../base-models/id-kind-validity-base.model';
+import {RecordsCommonBase} from '../base-models/records-common-base.model';
+
 
 /**
  * Inherits:
@@ -10,5 +11,5 @@ import {IdKindValidityBase} from '../base-models/id-kind-validity-base.model';
 type SelectedKeys = "_id" | "_kind" | "_validFromDateTime" | "_validUntilDateTime";
 
 export type RelationMetadataType = {
-  [K in keyof Pick<IdKindValidityBase, SelectedKeys>]: IdKindValidityBase[K];
+  [K in keyof Pick<RecordsCommonBase, SelectedKeys>]: RecordsCommonBase[K];
 }

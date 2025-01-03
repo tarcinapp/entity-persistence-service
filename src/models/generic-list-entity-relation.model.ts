@@ -1,5 +1,4 @@
 import {model, property} from '@loopback/repository';
-import {ModelWithIdBase} from './base-models/model-with-id-base.model';
 import {RecordsCommonBase} from './base-models/records-common-base.model';
 import {SourceAndTargetMetadata} from './base-types/source-and-target-metadata.type';
 
@@ -17,13 +16,13 @@ export class GenericListToEntityRelation extends RecordsCommonBase {
     type: 'string',
     required: true,
   })
-  _listId: ModelWithIdBase["_id"];
+  _listId: RecordsCommonBase["_id"];
 
   @property({
     type: 'string',
     required: true,
   })
-  _entityId: ModelWithIdBase["_id"];
+  _entityId: RecordsCommonBase["_id"];
 
   // Define the 'fromMetadata' field
   @property({

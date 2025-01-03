@@ -1,5 +1,4 @@
-import {model, property} from '@loopback/repository';
-import {IdKindValidityBase} from './id-kind-validity-base.model';
+import {Entity, model, property} from '@loopback/repository';
 
 /**
  * Inherits:
@@ -13,7 +12,41 @@ import {IdKindValidityBase} from './id-kind-validity-base.model';
     strict: false
   }
 })
-export class RecordsCommonBase extends IdKindValidityBase {
+export class RecordsCommonBase extends Entity {
+
+  @property({
+    type: 'string',
+    id: true,
+    generated: false,
+    defaultFn: 'uuidv4',
+  })
+  _id?: string;
+
+  @property({
+    type: 'string',
+    required: true,
+  })
+  _kind: string;
+
+  @property({
+    type: 'date',
+    description: 'This is the approval time.' +
+      'Only those records with validFromDateTime property has a value can be' +
+      'seen by other members.' +
+      'If caller is not a member at the creation time, this field is filled' +
+      'automatically by the server.',
+    default: null,
+    jsonSchema: {nullable: true}
+  })
+  _validFromDateTime?: string;
+
+  @property({
+    type: 'date',
+    description: 'This field indicates if the rcord is currently active.',
+    default: null,
+    jsonSchema: {nullable: true}
+  })
+  _validUntilDateTime?: string | null;
 
   @property({
     type: 'date',
