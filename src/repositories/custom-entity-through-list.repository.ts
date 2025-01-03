@@ -146,6 +146,15 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
     return entity;
   }
 
+  /**
+   * Finds the ids of entities by the given source list id through the relation repository.
+   * Then adds id filter to the given where object and calls the generic entity repository.
+   * 
+   * @param data 
+   * @param where 
+   * @param options 
+   * @returns 
+   */
   async updateAll(data: DataObject<GenericEntity>, where?: Where<GenericEntity>, options?: Options) {
     const genericEntitiesRepo = await this.genericEntityRepositoryGetter();
     const genericListEntityRelationRepo = await this.genericListEntityRepositoryGetter();
