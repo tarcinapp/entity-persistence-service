@@ -131,6 +131,4 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
     return super.create(data);
   }
 
-
-
 }

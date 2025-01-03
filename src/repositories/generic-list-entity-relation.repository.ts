@@ -89,6 +89,8 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
             // Mutate the existing relation object
             relation._fromMetadata = {
               _kind: list._kind,
+              _name: list._name,
+              _slug: list._slug,
               _validFromDateTime: list._validFromDateTime,
               _validUntilDateTime: list._validUntilDateTime,
               _ownerUsers: list._ownerUsers,
@@ -101,6 +103,8 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
           if (entity !== undefined)
             relation._toMetadata = {
               _kind: entity._kind,
+              _name: entity._name,
+              _slug: entity._slug,
               _validFromDateTime: entity._validFromDateTime,
               _validUntilDateTime: entity._validUntilDateTime,
               _visibility: entity._visibility,
@@ -145,6 +149,8 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
       if (listMetadata)
         rawRelation._fromMetadata = {
           _kind: listMetadata._kind,
+          _name: listMetadata._name,
+          _slug: listMetadata._slug,
           _validFromDateTime: listMetadata._validFromDateTime,
           _validUntilDateTime: listMetadata._validUntilDateTime,
           _visibility: listMetadata._visibility,
@@ -157,6 +163,8 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
       if (entityMetadata)
         rawRelation._toMetadata = {
           _kind: entityMetadata._kind,
+          _name: entityMetadata._name,
+          _slug: entityMetadata._slug,
           _validFromDateTime: entityMetadata._validFromDateTime,
           _validUntilDateTime: entityMetadata._validUntilDateTime,
           _visibility: entityMetadata._visibility,
