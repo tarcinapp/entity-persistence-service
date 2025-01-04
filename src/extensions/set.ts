@@ -32,8 +32,7 @@ export interface OrClause {
  * This interface defines the structure of the 'set' query parameter.
  */
 export interface Set extends Condition, AndClause, OrClause {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [key: string]: any;
+
 }
 
 /**
