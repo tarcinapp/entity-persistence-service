@@ -4,7 +4,6 @@ import {
   Filter,
   FilterBuilder,
   FilterExcludingWhere,
-  InclusionFilter,
   repository,
   Where
 } from '@loopback/repository';
@@ -25,6 +24,7 @@ import {
 } from '@loopback/rest';
 import {Set, SetFilterBuilder} from '../extensions';
 import {sanitizeFilterFields} from '../helpers/filter.helper';
+import {processIncludes} from '../helpers/sets-in-inclusions';
 import {GenericList, HttpErrorResponse} from '../models';
 import {GenericListRepository} from '../repositories';
 
@@ -148,20 +148,7 @@ export class GenericListController {
         filter: filter
       }).build();
 
-    if (filter && Array.isArray(filter?.include)) {
-
-      filter.include = filter.include.map((include: InclusionFilter) => {
-
-        if (typeof include === 'object' && include.set) {
-
-          include.scope = new SetFilterBuilder<GenericList>(include.set, {
-            filter: include.scope
-          }).build();
-        }
-
-        return include;
-      });
-    }
+    processIncludes<GenericList>(filter);
 
     sanitizeFilterFields(filter);
 
