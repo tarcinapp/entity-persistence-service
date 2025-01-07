@@ -13,6 +13,14 @@ export function processIncludes<T extends object>(filter: Filter<T> | undefined)
         }).build();
       }
 
+      if (include.setThrough) {
+        include.whereThrough = new SetFilterBuilder<T>(include.setThrough, {
+          filter: {
+            where: include.whereThrough
+          }
+        }).build().where;
+      }
+
       // Recursively process nested includes in `scope.include`
       if (include.scope && Array.isArray(include.scope.include)) {
         include.scope.include = include.scope.include.map((nestedInclude: InclusionFilter) =>
