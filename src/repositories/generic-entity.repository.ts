@@ -1,5 +1,5 @@
 import {Getter, inject} from '@loopback/core';
-import {DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, Options, Where, WhereBuilder, repository} from '@loopback/repository';
+import {Count, DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, Options, Where, WhereBuilder, repository} from '@loopback/repository';
 import * as crypto from 'crypto';
 import _ from 'lodash';
 import slugify from "slugify";
@@ -10,6 +10,7 @@ import {SetFilterBuilder} from '../extensions/set';
 import {ValidfromConfigurationReader} from '../extensions/validfrom-config-reader';
 import {VisibilityConfigurationReader} from '../extensions/visibility';
 import {EntityRelation, GenericEntity, GenericEntityRelations, HttpErrorResponse, Reactions, SingleError, Tag, TagEntityRelation} from '../models';
+import {GenericListEntityRelationRepository} from './generic-list-entity-relation.repository';
 import {ReactionsRepository} from './reactions.repository';
 import {RelationRepository} from './relation.repository';
 import {TagEntityRelationRepository} from './tag-entity-relation.repository';
@@ -34,17 +35,42 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   private static responseLimit = _.parseInt(process.env.response_limit_entity ?? "50");
 
   constructor(
-    @inject('datasources.EntityDb') dataSource: EntityDbDataSource,
-    @repository.getter('RelationRepository') protected relationRepositoryGetter: Getter<RelationRepository>,
-    @repository.getter('ReactionsRepository') protected reactionsRepositoryGetter: Getter<ReactionsRepository>,
-    @repository.getter('TagEntityRelationRepository') protected tagEntityRelationRepositoryGetter: Getter<TagEntityRelationRepository>,
-    @repository.getter('TagRepository') protected tagRepositoryGetter: Getter<TagRepository>,
-    @inject('extensions.uniqueness.configurationreader') private uniquenessConfigReader: UniquenessConfigurationReader,
-    @inject('extensions.record-limits.configurationreader') private recordLimitConfigReader: RecordLimitsConfigurationReader,
-    @inject('extensions.kind-limits.configurationreader') private kindLimitConfigReader: KindLimitsConfigurationReader,
-    @inject('extensions.visibility.configurationreader') private visibilityConfigReader: VisibilityConfigurationReader,
-    @inject('extensions.validfrom.configurationreader') private validfromConfigReader: ValidfromConfigurationReader,
-    @inject('extensions.idempotency.configurationreader') private idempotencyConfigReader: IdempotencyConfigurationReader
+    @inject('datasources.EntityDb')
+    dataSource: EntityDbDataSource,
+
+    @repository.getter('RelationRepository')
+    protected relationRepositoryGetter: Getter<RelationRepository>,
+
+    @repository.getter('ReactionsRepository')
+    protected reactionsRepositoryGetter: Getter<ReactionsRepository>,
+
+    @repository.getter('TagEntityRelationRepository')
+    protected tagEntityRelationRepositoryGetter: Getter<TagEntityRelationRepository>,
+
+    @repository.getter('TagRepository')
+    protected tagRepositoryGetter: Getter<TagRepository>,
+
+    @repository.getter('GenericListEntityRelationRepository')
+    protected listEntityRelationRepositoryGetter: Getter<GenericListEntityRelationRepository>,
+
+    @inject('extensions.uniqueness.configurationreader')
+    private uniquenessConfigReader: UniquenessConfigurationReader,
+
+    @inject('extensions.record-limits.configurationreader')
+    private recordLimitConfigReader: RecordLimitsConfigurationReader,
+
+    @inject('extensions.kind-limits.configurationreader')
+    private kindLimitConfigReader: KindLimitsConfigurationReader,
+
+    @inject('extensions.visibility.configurationreader')
+    private visibilityConfigReader: VisibilityConfigurationReader,
+
+    @inject('extensions.validfrom.configurationreader')
+    private validfromConfigReader: ValidfromConfigurationReader,
+
+    @inject('extensions.idempotency.configurationreader')
+    private idempotencyConfigReader: IdempotencyConfigurationReader
+
   ) {
     super(GenericEntity, dataSource);
     this.tags = this.createHasManyThroughRepositoryFactoryFor('tags', tagRepositoryGetter, tagEntityRelationRepositoryGetter,);
@@ -133,6 +159,33 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     this.setCountFields(data);
 
     return super.updateAll(data, where, options);
+  }
+
+  async deleteById(id: string | undefined, options?: Options): Promise<void> {
+    const listEntityRelationRepo = await this.listEntityRelationRepositoryGetter();
+
+    // delete all relations
+    await listEntityRelationRepo.deleteAll({
+      _entityId: id
+    });
+
+    return super.deleteById(id, options);
+  }
+
+  async deleteAll(where?: Where<GenericEntity> | undefined, options?: Options): Promise<Count> {
+    const listEntityRelationRepo = await this.listEntityRelationRepositoryGetter();
+
+    // delete all relations
+    await listEntityRelationRepo.deleteAll({
+      _entityId: {
+        inq: (await this.find({
+          where: where,
+          fields: ['_id']
+        })).map(entity => entity._id)
+      }
+    });
+
+    return super.deleteAll(where, options);
   }
 
   private async findIdempotentEntity(idempotencyKey: string | undefined): Promise<GenericEntity | null> {
@@ -337,7 +390,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
         this.setCountFields(data);
 
-        _.unset(data, 'relationMetadata');
+        _.unset(data, '_relationMetadata');
 
         return {
           data: data,
