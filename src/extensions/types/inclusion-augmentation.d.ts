@@ -5,5 +5,7 @@ import {Set} from '../set';
 declare module '@loopback/repository' {
   export interface Inclusion {
     set?: Set; // Define the new optional 'set' field
+    setThrough?: Set; // Define the new optional 'setThrough' field
+    whereThrough?: Where
   }
 }

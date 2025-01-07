@@ -1,5 +1,5 @@
 import {Getter, inject} from '@loopback/core';
-import {DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, Options, Where, WhereBuilder, repository} from '@loopback/repository';
+import {DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, InclusionResolver, Options, Where, WhereBuilder, repository} from '@loopback/repository';
 import * as crypto from 'crypto';
 import _ from "lodash";
 import qs from 'qs';
@@ -8,7 +8,7 @@ import {EntityDbDataSource} from '../datasources';
 import {IdempotencyConfigurationReader, KindLimitsConfigurationReader, RecordLimitsConfigurationReader, UniquenessConfigurationReader, VisibilityConfigurationReader} from '../extensions';
 import {Set, SetFilterBuilder} from '../extensions/set';
 import {ValidfromConfigurationReader} from '../extensions/validfrom-config-reader';
-import {GenericList, HttpErrorResponse, ListReactions, ListRelation, ListRelations, SingleError, Tag, TagListRelation} from '../models';
+import {GenericEntity, GenericList, GenericListToEntityRelation, HttpErrorResponse, ListReactions, ListRelation, ListRelations, SingleError, Tag, TagListRelation} from '../models';
 import {CustomEntityThroughListRepository} from './custom-entity-through-list.repository';
 import {GenericEntityRepository} from './generic-entity.repository';
 import {GenericListEntityRelationRepository} from './generic-list-entity-relation.repository';
@@ -88,6 +88,7 @@ export class GenericListRepository extends DefaultCrudRepository<
     this.children = this.createHasManyRepositoryFactoryFor('_children', listRelationRepositoryGetter);
     this.registerInclusionResolver('_children', this.children.inclusionResolver);
 
+    // make genericEntities inclusion available through a custom repository
     this.genericEntities = (listId: typeof GenericList.prototype._id) => {
       const repo = new CustomEntityThroughListRepository(
         this.dataSource,
@@ -95,13 +96,81 @@ export class GenericListRepository extends DefaultCrudRepository<
         this.listEntityRelationRepositoryGetter,
       );
 
+      // set the sourceListId to the custom repo
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (repo as any).sourceListId = listId;
       return repo;
     };
-    const genericEntitiesInclusionResolver = this.createHasManyThroughRepositoryFactoryFor('_genericEntities', genericEntityRepositoryGetter, listEntityRelationRepositoryGetter).inclusionResolver
 
-    this.registerInclusionResolver('_genericEntities', genericEntitiesInclusionResolver);
+    //const genericEntitiesInclusionResolver = this.createHasManyThroughRepositoryFactoryFor('_genericEntities', genericEntityRepositoryGetter, listEntityRelationRepositoryGetter).inclusionResolver
+
+    this.registerInclusionResolver(
+      '_genericEntities',
+      this.createEntitiesInclusionResolver(
+        listEntityRelationRepositoryGetter,
+        genericEntityRepositoryGetter,
+      ),
+    );
+
+    // standard inclusion resolver definition
+    //this.registerInclusionResolver('_genericEntities', genericEntitiesInclusionResolver);
+
+  }
+
+  /**
+   * Custom inclusion resolver for the _genericEntities relation aware of whereThrough and setThrough
+   * @param listEntityRelationRepositoryGetter 
+   * @param genericEntityRepositoryGetter 
+   * @returns 
+   */
+  createEntitiesInclusionResolver(
+    listEntityRelationRepositoryGetter: Getter<GenericListEntityRelationRepository>,
+    genericEntityRepositoryGetter: Getter<GenericEntityRepository>,
+  ): InclusionResolver<GenericList, GenericEntity> {
+
+    return async (lists, inclusion, options) => {
+      const listEntityRelationRepo = await listEntityRelationRepositoryGetter();
+      const entityRepo = await genericEntityRepositoryGetter();
+
+      // Extract filters from the inclusion object
+      const relationFilter: Where<GenericListToEntityRelation> = typeof inclusion === 'object' ? inclusion.whereThrough : {};
+      const entityFilter = typeof inclusion === 'object' ? inclusion.scope : {};
+
+      // Find relationships that match the provided filters
+      const listEntityRelations = await listEntityRelationRepo.find({
+        where: {
+          _listId: {inq: lists.map(l => l._id)},
+          ...relationFilter, // Apply dynamic filters to the through model
+        },
+      });
+
+      const entityIds = listEntityRelations.map(rel => rel._entityId);
+
+      // Find entities matching the related IDs and any additional filters
+      const entities = await entityRepo.find({
+        where: {
+          _id: {inq: entityIds},
+          ...entityFilter?.where, // Apply additional filters for the entity
+        },
+        ...entityFilter, // Apply entity-level filters like limit, order, etc.
+      });
+
+      // Map entities back to their respective lists
+      const entitiesByListId = new Map<string | undefined, GenericEntity[]>();
+
+      listEntityRelations.forEach(rel => {
+        if (!entitiesByListId.has(rel._listId)) {
+          entitiesByListId.set(rel._listId, []);
+        }
+        const entity = entities.find(e => e._id === rel._entityId);
+        if (entity) {
+          entitiesByListId.get(rel._listId)?.push(entity);
+        }
+      });
+
+      // Return entities grouped by list, preserving the order of the lists
+      return lists.map(list => entitiesByListId.get(list._id) ?? []);
+    };
   }
 
   async find(filter?: Filter<GenericList>, options?: Options) {
