@@ -20,7 +20,7 @@ export class RecordsCommonBase extends Entity {
     generated: false,
     defaultFn: 'uuidv4',
   })
-  _id?: string;
+  _id: string;
 
   @property({
     type: 'string',
