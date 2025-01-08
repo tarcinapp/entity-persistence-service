@@ -1,47 +1,48 @@
-import {Entity, model, property} from '@loopback/repository';
+import {model, property} from '@loopback/repository';
+import {RecordsCommonBase} from './base-models/records-common-base.model';
+import {SourceAndTargetMetadata} from './base-types/source-and-target-metadata.type';
 
 @model({
   settings: {
     strict: false,
     mongodb: {
-      collection: "GenericListToEntityRelation"
+      collection: process.env.collection_list_list_entity_rel ?? "GenericListToEntityRelation"
     }
   }
 })
-export class GenericListEntityRelation extends Entity {
-  @property({
-    type: 'string',
-    id: true,
-    generated: false,
-    defaultFn: "uuidv4",
-  })
-  id?: string;
+export class GenericListToEntityRelation extends RecordsCommonBase {
 
   @property({
     type: 'string',
     required: true,
   })
-  listId: string;
+  _listId: RecordsCommonBase["_id"];
 
   @property({
     type: 'string',
     required: true,
   })
-  entityId: string;
+  _entityId: RecordsCommonBase["_id"];
 
+  // Define the 'fromMetadata' field
   @property({
-    type: 'date',
-    defaultFn: "now",
+    type: 'object',
+    description: 'Metadata for the source entity'
   })
-  creationDateTime?: string;
+  _fromMetadata: SourceAndTargetMetadata;
 
-  // Define well-known properties here
+  // Define the 'toMetadata' field
+  @property({
+    type: 'object',
+    description: 'Metadata for the destination entity',
+  })
+  _toMetadata: SourceAndTargetMetadata;
 
   // Indexer property to allow additional data
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [prop: string]: any;
+  //[prop: string]: any;
 
-  constructor(data?: Partial<GenericListEntityRelation>) {
+  constructor(data?: Partial<GenericListToEntityRelation>) {
     super(data);
   }
 }
@@ -50,4 +51,4 @@ export interface GenericListEntityRelationRelations {
   // describe navigational properties here
 }
 
-export type ListEntityRelationWithRelations = GenericListEntityRelation & GenericListEntityRelationRelations;
+export type ListEntityRelationWithRelations = GenericListToEntityRelation & GenericListEntityRelationRelations;

@@ -21,12 +21,12 @@ import {
 } from '../models';
 import {GenericListRepository} from '../repositories';
 
-export class ListListRelationController {
+export class GenericListChildrenController {
   constructor(
     @repository(GenericListRepository) protected listRepository: GenericListRepository,
   ) { }
 
-  @get('/lists/{id}/list-relations', {
+  @get('/generic-lists/{id}/children', {
     responses: {
       '200': {
         description: 'Array of List has many ListRelation',
@@ -42,10 +42,10 @@ export class ListListRelationController {
     @param.path.string('id') id: string,
     @param.query.object('filter') filter?: Filter<ListRelation>,
   ): Promise<ListRelation[]> {
-    return this.listRepository.relations(id).find(filter);
+    return this.listRepository.children(id).find(filter);
   }
 
-  @post('/lists/{id}/list-relations', {
+  @post('/generic-lists/{id}/children', {
     responses: {
       '200': {
         description: 'List model instance',
@@ -54,7 +54,7 @@ export class ListListRelationController {
     },
   })
   async create(
-    @param.path.string('id') id: typeof GenericList.prototype.id,
+    @param.path.string('id') id: typeof GenericList.prototype._id,
     @requestBody({
       content: {
         'application/json': {
@@ -67,10 +67,10 @@ export class ListListRelationController {
       },
     }) listRelation: Omit<ListRelation, 'id'>,
   ): Promise<ListRelation> {
-    return this.listRepository.relations(id).create(listRelation);
+    return this.listRepository.children(id).create(listRelation);
   }
 
-  @patch('/lists/{id}/list-relations', {
+  @patch('/generic-lists/{id}/children', {
     responses: {
       '200': {
         description: 'List.ListRelation PATCH success count',
@@ -90,10 +90,10 @@ export class ListListRelationController {
     listRelation: Partial<ListRelation>,
     @param.query.object('where', getWhereSchemaFor(ListRelation)) where?: Where<ListRelation>,
   ): Promise<Count> {
-    return this.listRepository.relations(id).patch(listRelation, where);
+    return this.listRepository.children(id).patch(listRelation, where);
   }
 
-  @del('/lists/{id}/list-relations', {
+  @del('/generic-lists/{id}/children', {
     responses: {
       '200': {
         description: 'List.ListRelation DELETE success count',
@@ -105,6 +105,6 @@ export class ListListRelationController {
     @param.path.string('id') id: string,
     @param.query.object('where', getWhereSchemaFor(ListRelation)) where?: Where<ListRelation>,
   ): Promise<Count> {
-    return this.listRepository.relations(id).delete(where);
+    return this.listRepository.children(id).delete(where);
   }
 }

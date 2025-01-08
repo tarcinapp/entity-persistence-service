@@ -11,7 +11,7 @@ export async function main(options: ApplicationConfig = {}) {
   const app = new EntityPersistenceApplication(options);
 
   app.bind(RestBindings.ERROR_WRITER_OPTIONS).to({
-    debug: process.env.NODE_ENV != 'production',
+    debug: process.env.NODE_ENV !== 'production',
     safeFields: ['errorCode', 'message']
   });
 
@@ -64,7 +64,11 @@ if (require.main === module) {
         setServersFromRequest: true,
       },
       expressSettings: {
-        'x-powered-by': false
+        'x-powered-by': false,
+        // eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-explicit-any
+        'query parser': (query: any) => {
+          return require('qs').parse(query, {depth: 10});
+        }
       }
     },
   };

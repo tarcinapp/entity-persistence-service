@@ -128,4 +128,40 @@ export class RecordLimitsConfigurationReader {
       return updatedSet as Set;
     }
   }
+
+  ///
+  public isRecordLimitsConfiguredForListEntityRelations(kind?: string) {
+    return _.has(process.env, 'record_limit_list_entity_rel_count') || this.isLimitConfiguredForKindForListEntityRelations(kind);
+  }
+
+  public isLimitConfiguredForKindForListEntityRelations(kind?: string) {
+    return _.has(process.env, `record_limit_list_entity_rel_count_for_${kind}`);
+  }
+
+  public getRecordLimitsCountForListEntityRelations(kind?: string) {
+
+    if (_.has(process.env, `record_limit_list_entity_rel_count_for_${kind}`)) {
+      return _.toInteger(_.get(process.env, `record_limit_list_entity_rel_count_for_${kind}`));
+    }
+
+    if (_.has(process.env, `record_limit_list_entity_rel_count`)) {
+      return _.toInteger(_.get(process.env, `record_limit_list_entity_rel_count`));
+    }
+  }
+
+  public getRecordLimitsSetForListEntityRelations(kind?: string): Set | undefined {
+
+    let setStr: string | undefined;
+
+    setStr = _.get(process.env, `record_limit_list_entity_rel_set_for_${kind}`);
+
+    if (!setStr) {
+      setStr = _.get(process.env, 'record_limit_list_entity_rel_set');
+    }
+
+    if (setStr) {
+      const set = (qs.parse(setStr)).set as Set;
+      return set;
+    }
+  }
 }

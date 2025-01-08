@@ -31,6 +31,12 @@ export class UniquenessConfigurationReader {
   // this setting keeps the fields array for entities by their kinds
   private static KIND_LIST_UNIQUENESS_FIELDS: {property: string[]} | {} = {};
 
+  ///
+
+  private static IS_COMMON_LIST_ENTITY_REL_UNIQUENESS_IS_CONFIGURED: boolean | undefined;
+  private static COMMON_LIST_ENTITY_REL_UNIQUENESS_FIELDS: string[];
+  private static KIND_LIST_ENTITY_REL_UNIQUENESS_FIELDS: {property: string[]} | {} = {};
+
   constructor() {
 
     if (!_.isBoolean(UniquenessConfigurationReader.IS_COMMON_ENTITY_UNIQUENESS_IS_CONFIGURED))
@@ -38,6 +44,9 @@ export class UniquenessConfigurationReader {
 
     if (!_.isBoolean(UniquenessConfigurationReader.IS_COMMON_LIST_UNIQUENESS_IS_CONFIGURED))
       this.initConfigForLists();
+
+    if (!_.isBoolean(UniquenessConfigurationReader.IS_COMMON_LIST_ENTITY_REL_UNIQUENESS_IS_CONFIGURED))
+      this.initConfigForListEntityRelations();
   }
 
   /**
@@ -72,8 +81,20 @@ export class UniquenessConfigurationReader {
     }
   }
 
+  private initConfigForListEntityRelations() {
+    if (_.isString(process.env.uniqueness_list_entity_rel_fields)) {
+      UniquenessConfigurationReader.IS_COMMON_LIST_ENTITY_REL_UNIQUENESS_IS_CONFIGURED = true;
+
+      UniquenessConfigurationReader.COMMON_LIST_ENTITY_REL_UNIQUENESS_FIELDS = process.env.uniqueness_list_entity_rel_fields
+        .replace(/\s/g, '')
+        .split(',');
+    } else {
+      UniquenessConfigurationReader.IS_COMMON_LIST_ENTITY_REL_UNIQUENESS_IS_CONFIGURED = false;
+    }
+  }
+
   public isUniquenessConfiguredForEntities(kind?: string): boolean {
-    return UniquenessConfigurationReader.IS_COMMON_ENTITY_UNIQUENESS_IS_CONFIGURED || _.has(process.env, `uniqueness_entity_fields_for_${kind}`);
+    return UniquenessConfigurationReader.IS_COMMON_ENTITY_UNIQUENESS_IS_CONFIGURED ?? _.has(process.env, `uniqueness_entity_fields_for_${kind}`);
   }
 
   public getFieldsForEntities(kind?: string): string[] {
@@ -85,7 +106,7 @@ export class UniquenessConfigurationReader {
         return _.get(UniquenessConfigurationReader.KIND_ENTITY_UNIQUENESS_FIELDS, kind);
 
       if (_.has(process.env, `uniqueness_entity_fields_for_${kind}`)) {
-        let fields = _.get(process.env, `uniqueness_entity_fields_for_${kind}`)!
+        const fields = _.get(process.env, `uniqueness_entity_fields_for_${kind}`)!
           .replace(/\s/g, '')
           .split(',');
 
@@ -133,7 +154,7 @@ export class UniquenessConfigurationReader {
   }
 
   public isUniquenessConfiguredForLists(kind?: string): boolean {
-    return UniquenessConfigurationReader.IS_COMMON_LIST_UNIQUENESS_IS_CONFIGURED || _.has(process.env, `uniqueness_list_fields_for_${kind}`);
+    return UniquenessConfigurationReader.IS_COMMON_LIST_UNIQUENESS_IS_CONFIGURED ?? _.has(process.env, `uniqueness_list_fields_for_${kind}`);
   }
 
   public getFieldsForLists(kind?: string): string[] {
@@ -145,7 +166,7 @@ export class UniquenessConfigurationReader {
         return _.get(UniquenessConfigurationReader.KIND_LIST_UNIQUENESS_FIELDS, kind);
 
       if (_.has(process.env, `uniqueness_list_fields_for_${kind}`)) {
-        let fields = _.get(process.env, `uniqueness_list_fields_for_${kind}`)!
+        const fields = _.get(process.env, `uniqueness_list_fields_for_${kind}`)!
           .replace(/\s/g, '')
           .split(',');
 
@@ -188,6 +209,54 @@ export class UniquenessConfigurationReader {
       })
 
       return updatedSet as Set;
+    }
+  }
+
+  public isUniquenessConfiguredForListEntityRelations(kind?: string): boolean {
+    return (
+      UniquenessConfigurationReader.IS_COMMON_LIST_ENTITY_REL_UNIQUENESS_IS_CONFIGURED ??
+      _.has(process.env, `uniqueness_list_entity_rel_fields_for_${kind}`)
+    );
+  }
+
+  public getFieldsForListEntityRelations(kind?: string): string[] {
+    if (kind) {
+      // If fields are already configured for the kind, return from static field
+      if (_.has(UniquenessConfigurationReader.KIND_LIST_ENTITY_REL_UNIQUENESS_FIELDS, kind))
+        return _.get(UniquenessConfigurationReader.KIND_LIST_ENTITY_REL_UNIQUENESS_FIELDS, kind);
+
+      if (_.has(process.env, `uniqueness_list_entity_rel_fields_for_${kind}`)) {
+        const fields = _.get(process.env, `uniqueness_list_entity_rel_fields_for_${kind}`)!
+          .replace(/\s/g, '')
+          .split(',');
+
+        UniquenessConfigurationReader.KIND_LIST_ENTITY_REL_UNIQUENESS_FIELDS = _.set(
+          UniquenessConfigurationReader.KIND_LIST_ENTITY_REL_UNIQUENESS_FIELDS,
+          kind,
+          fields
+        );
+
+        return fields;
+      }
+    }
+
+    return UniquenessConfigurationReader.COMMON_LIST_ENTITY_REL_UNIQUENESS_FIELDS;
+  }
+
+  public getSetForListEntityRelations(
+    kind?: string
+  ): Set | undefined {
+    let setStr: string | undefined;
+
+    if (_.has(process.env, `uniqueness_list_entity_rel_set_for_${kind}`))
+      setStr = _.get(process.env, `uniqueness_list_entity_rel_set_for_${kind}`);
+
+    if (!setStr && process.env.uniqueness_list_entity_rel_set)
+      setStr = process.env.uniqueness_list_entity_rel_set;
+
+    if (setStr) {
+      const set = (qs.parse(setStr)).set as Set;
+      return set;
     }
   }
 }

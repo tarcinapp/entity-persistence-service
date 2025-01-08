@@ -16,23 +16,23 @@ import {
   requestBody,
 } from '@loopback/rest';
 import {
+  EntityRelation,
   GenericEntity,
-  Relation,
 } from '../models';
 import {GenericEntityRepository} from '../repositories';
 
-export class GenericEntityRelationController {
+export class GenericEntityChildrenController {
   constructor(
     @repository(GenericEntityRepository) protected genericEntityRepository: GenericEntityRepository,
   ) { }
 
-  @get('/generic-entities/{id}/relations', {
+  @get('/generic-entities/{id}/children', {
     responses: {
       '200': {
         description: 'Array of GenericEntity has many Relation',
         content: {
           'application/json': {
-            schema: {type: 'array', items: getModelSchemaRef(Relation)},
+            schema: {type: 'array', items: getModelSchemaRef(EntityRelation)},
           },
         },
       },
@@ -40,37 +40,37 @@ export class GenericEntityRelationController {
   })
   async find(
     @param.path.string('id') id: string,
-    @param.query.object('filter') filter?: Filter<Relation>,
-  ): Promise<Relation[]> {
-    return this.genericEntityRepository.relations(id).find(filter);
+    @param.query.object('filter') filter?: Filter<EntityRelation>,
+  ): Promise<EntityRelation[]> {
+    return this.genericEntityRepository.children(id).find(filter);
   }
 
-  @post('/generic-entities/{id}/relations', {
+  @post('/generic-entities/{id}/children', {
     responses: {
       '200': {
         description: 'GenericEntity model instance',
-        content: {'application/json': {schema: getModelSchemaRef(Relation)}},
+        content: {'application/json': {schema: getModelSchemaRef(EntityRelation)}},
       },
     },
   })
   async create(
-    @param.path.string('id') id: typeof GenericEntity.prototype.id,
+    @param.path.string('id') id: typeof GenericEntity.prototype._id,
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(Relation, {
+          schema: getModelSchemaRef(EntityRelation, {
             title: 'NewRelationInGenericEntity',
-            exclude: ['id'],
+            exclude: ['_id'],
             optional: ['from']
           }),
         },
       },
-    }) relation: Omit<Relation, 'id'>,
-  ): Promise<Relation> {
-    return this.genericEntityRepository.relations(id).create(relation);
+    }) relation: Omit<EntityRelation, 'id'>,
+  ): Promise<EntityRelation> {
+    return this.genericEntityRepository.children(id).create(relation);
   }
 
-  @patch('/generic-entities/{id}/relations', {
+  @patch('/generic-entities/{id}/children', {
     responses: {
       '200': {
         description: 'GenericEntity.Relation PATCH success count',
@@ -83,17 +83,17 @@ export class GenericEntityRelationController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(Relation, {partial: true}),
+          schema: getModelSchemaRef(EntityRelation, {partial: true}),
         },
       },
     })
-    relation: Partial<Relation>,
-    @param.query.object('where', getWhereSchemaFor(Relation)) where?: Where<Relation>,
+    relation: Partial<EntityRelation>,
+    @param.query.object('where', getWhereSchemaFor(EntityRelation)) where?: Where<EntityRelation>,
   ): Promise<Count> {
-    return this.genericEntityRepository.relations(id).patch(relation, where);
+    return this.genericEntityRepository.children(id).patch(relation, where);
   }
 
-  @del('/generic-entities/{id}/relations', {
+  @del('/generic-entities/{id}/children', {
     responses: {
       '200': {
         description: 'GenericEntity.Relation DELETE success count',
@@ -103,8 +103,8 @@ export class GenericEntityRelationController {
   })
   async delete(
     @param.path.string('id') id: string,
-    @param.query.object('where', getWhereSchemaFor(Relation)) where?: Where<Relation>,
+    @param.query.object('where', getWhereSchemaFor(EntityRelation)) where?: Where<EntityRelation>,
   ): Promise<Count> {
-    return this.genericEntityRepository.relations(id).delete(where);
+    return this.genericEntityRepository.children(id).delete(where);
   }
 }

@@ -26,7 +26,7 @@ export class ListListReactionsController {
     @repository(GenericListRepository) protected listRepository: GenericListRepository,
   ) { }
 
-  @get('/lists/{id}/list-reactions', {
+  @get('/generic-lists/{id}/list-reactions', {
     responses: {
       '200': {
         description: 'Array of List has many ListReactions',
@@ -45,7 +45,7 @@ export class ListListReactionsController {
     return this.listRepository.reactions(id).find(filter);
   }
 
-  @post('/lists/{id}/list-reactions', {
+  @post('/generic-lists/{id}/list-reactions', {
     responses: {
       '200': {
         description: 'List model instance',
@@ -54,7 +54,7 @@ export class ListListReactionsController {
     },
   })
   async create(
-    @param.path.string('id') id: typeof GenericList.prototype.id,
+    @param.path.string('id') id: typeof GenericList.prototype._id,
     @requestBody({
       content: {
         'application/json': {
@@ -70,7 +70,7 @@ export class ListListReactionsController {
     return this.listRepository.reactions(id).create(listReactions);
   }
 
-  @patch('/lists/{id}/list-reactions', {
+  @patch('/generic-lists/{id}/list-reactions', {
     responses: {
       '200': {
         description: 'List.ListReactions PATCH success count',
@@ -93,7 +93,7 @@ export class ListListReactionsController {
     return this.listRepository.reactions(id).patch(listReactions, where);
   }
 
-  @del('/lists/{id}/list-reactions', {
+  @del('/generic-lists/{id}/list-reactions', {
     responses: {
       '200': {
         description: 'List.ListReactions DELETE success count',

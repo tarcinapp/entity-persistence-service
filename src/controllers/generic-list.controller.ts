@@ -23,8 +23,11 @@ import {
   requestBody
 } from '@loopback/rest';
 import {Set, SetFilterBuilder} from '../extensions';
+import {sanitizeFilterFields} from '../helpers/filter.helper';
+import {processIncludes} from '../helpers/sets-in-inclusions';
 import {GenericList, HttpErrorResponse} from '../models';
 import {GenericListRepository} from '../repositories';
+
 
 export class GenericListController {
   constructor(
@@ -51,7 +54,7 @@ export class GenericListController {
         }
       },
       '409': {
-        description: 'Entity name already exists.',
+        description: 'List name already exists.',
         content: {
           'application/json': {
             schema: {
@@ -82,7 +85,7 @@ export class GenericListController {
         'application/json': {
           schema: getModelSchemaRef(GenericList, {
             title: 'NewList',
-            exclude: ['id'],
+            exclude: ['_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_version', '_idempotencyKey',],
           }),
         },
       },
@@ -145,6 +148,10 @@ export class GenericListController {
         filter: filter
       }).build();
 
+    processIncludes<GenericList>(filter);
+
+    sanitizeFilterFields(filter);
+
     return this.genericListRepository.find(filter);
   }
 
@@ -165,9 +172,23 @@ export class GenericListController {
       },
     })
     list: GenericList,
+    @param.query.object('set') set?: Set,
     @param.where(GenericList) where?: Where<GenericList>,
   ): Promise<Count> {
-    return this.genericListRepository.updateAll(list, where);
+
+    const filterBuilder = new FilterBuilder<GenericList>();
+
+    if (where)
+      filterBuilder.where(where);
+
+    let filter = filterBuilder.build();
+
+    if (set)
+      filter = new SetFilterBuilder<GenericList>(set, {
+        filter: filter
+      }).build();
+
+    return this.genericListRepository.updateAll(list, filter.where);
   }
 
   @get('/generic-lists/{id}', {
@@ -219,7 +240,7 @@ export class GenericListController {
         }
       },
       '422': {
-        description: 'Unprocessable entity',
+        description: 'Unprocessable list',
         content: {
           'application/json': {
             schema: {
@@ -252,7 +273,7 @@ export class GenericListController {
         description: 'Generic List PUT success',
       },
       '404': {
-        description: 'Entity not found',
+        description: 'List not found',
         content: {
           'application/json': {
             schema: {
@@ -264,7 +285,7 @@ export class GenericListController {
         }
       },
       '422': {
-        description: 'Unprocessable entity',
+        description: 'Unprocessable list',
         content: {
           'application/json': {
             schema: {
@@ -279,7 +300,16 @@ export class GenericListController {
   })
   async replaceById(
     @param.path.string('id') id: string,
-    @requestBody() list: GenericList,
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(GenericList, {
+            title: 'ReplaceGenericList',
+            exclude: ['_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_version', '_idempotencyKey'],
+          })
+        }
+      }
+    }) list: GenericList,
   ): Promise<void> {
     await this.genericListRepository.replaceById(id, list);
   }
@@ -290,7 +320,7 @@ export class GenericListController {
         description: 'Generic List DELETE success',
       },
       '404': {
-        description: 'Entity not found',
+        description: 'List not found',
         content: {
           'application/json': {
             schema: {

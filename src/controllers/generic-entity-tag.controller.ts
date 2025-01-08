@@ -5,7 +5,7 @@ import {
   repository,
   Where,
 } from '@loopback/repository';
-  import {
+import {
   del,
   get,
   getModelSchemaRef,
@@ -16,9 +16,8 @@ import {
   requestBody,
 } from '@loopback/rest';
 import {
-GenericEntity,
-TagEntityRelation,
-Tag,
+  GenericEntity,
+  Tag,
 } from '../models';
 import {GenericEntityRepository} from '../repositories';
 
@@ -55,7 +54,7 @@ export class GenericEntityTagController {
     },
   })
   async create(
-    @param.path.string('id') id: typeof GenericEntity.prototype.id,
+    @param.path.string('id') id: typeof GenericEntity.prototype._id,
     @requestBody({
       content: {
         'application/json': {

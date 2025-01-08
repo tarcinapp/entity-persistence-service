@@ -1,5 +1,5 @@
 import {Getter, inject} from '@loopback/core';
-import {DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, Options, Where, WhereBuilder, repository} from '@loopback/repository';
+import {Count, DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, Options, Where, WhereBuilder, repository} from '@loopback/repository';
 import * as crypto from 'crypto';
 import _ from 'lodash';
 import slugify from "slugify";
@@ -9,7 +9,8 @@ import {KindLimitsConfigurationReader} from '../extensions/kind-limits';
 import {SetFilterBuilder} from '../extensions/set';
 import {ValidfromConfigurationReader} from '../extensions/validfrom-config-reader';
 import {VisibilityConfigurationReader} from '../extensions/visibility';
-import {GenericEntity, GenericEntityRelations, HttpErrorResponse, Reactions, Relation, SingleError, Tag, TagEntityRelation} from '../models';
+import {EntityRelation, GenericEntity, GenericEntityRelations, HttpErrorResponse, Reactions, SingleError, Tag, TagEntityRelation} from '../models';
+import {GenericListEntityRelationRepository} from './generic-list-entity-relation.repository';
 import {ReactionsRepository} from './reactions.repository';
 import {RelationRepository} from './relation.repository';
 import {TagEntityRelationRepository} from './tag-entity-relation.repository';
@@ -18,40 +19,65 @@ import {TagRepository} from './tag.repository';
 
 export class GenericEntityRepository extends DefaultCrudRepository<
   GenericEntity,
-  typeof GenericEntity.prototype.id,
+  typeof GenericEntity.prototype._id,
   GenericEntityRelations
 > {
 
-  public readonly relations: HasManyRepositoryFactory<Relation, typeof GenericEntity.prototype.id>;
+  public readonly children: HasManyRepositoryFactory<EntityRelation, typeof GenericEntity.prototype._id>;
 
-  public readonly reactions: HasManyRepositoryFactory<Reactions, typeof GenericEntity.prototype.id>;
+  public readonly reactions: HasManyRepositoryFactory<Reactions, typeof GenericEntity.prototype._id>;
 
   public readonly tags: HasManyThroughRepositoryFactory<Tag, typeof Tag.prototype.id,
     TagEntityRelation,
-    typeof GenericEntity.prototype.id
+    typeof GenericEntity.prototype._id
   >;
 
   private static responseLimit = _.parseInt(process.env.response_limit_entity ?? "50");
 
   constructor(
-    @inject('datasources.EntityDb') dataSource: EntityDbDataSource,
-    @repository.getter('RelationRepository') protected relationRepositoryGetter: Getter<RelationRepository>,
-    @repository.getter('ReactionsRepository') protected reactionsRepositoryGetter: Getter<ReactionsRepository>,
-    @repository.getter('TagEntityRelationRepository') protected tagEntityRelationRepositoryGetter: Getter<TagEntityRelationRepository>,
-    @repository.getter('TagRepository') protected tagRepositoryGetter: Getter<TagRepository>,
-    @inject('extensions.uniqueness.configurationreader') private uniquenessConfigReader: UniquenessConfigurationReader,
-    @inject('extensions.record-limits.configurationreader') private recordLimitConfigReader: RecordLimitsConfigurationReader,
-    @inject('extensions.kind-limits.configurationreader') private kindLimitConfigReader: KindLimitsConfigurationReader,
-    @inject('extensions.visibility.configurationreader') private visibilityConfigReader: VisibilityConfigurationReader,
-    @inject('extensions.validfrom.configurationreader') private validfromConfigReader: ValidfromConfigurationReader,
-    @inject('extensions.idempotency.configurationreader') private idempotencyConfigReader: IdempotencyConfigurationReader
+    @inject('datasources.EntityDb')
+    dataSource: EntityDbDataSource,
+
+    @repository.getter('RelationRepository')
+    protected relationRepositoryGetter: Getter<RelationRepository>,
+
+    @repository.getter('ReactionsRepository')
+    protected reactionsRepositoryGetter: Getter<ReactionsRepository>,
+
+    @repository.getter('TagEntityRelationRepository')
+    protected tagEntityRelationRepositoryGetter: Getter<TagEntityRelationRepository>,
+
+    @repository.getter('TagRepository')
+    protected tagRepositoryGetter: Getter<TagRepository>,
+
+    @repository.getter('GenericListEntityRelationRepository')
+    protected listEntityRelationRepositoryGetter: Getter<GenericListEntityRelationRepository>,
+
+    @inject('extensions.uniqueness.configurationreader')
+    private uniquenessConfigReader: UniquenessConfigurationReader,
+
+    @inject('extensions.record-limits.configurationreader')
+    private recordLimitConfigReader: RecordLimitsConfigurationReader,
+
+    @inject('extensions.kind-limits.configurationreader')
+    private kindLimitConfigReader: KindLimitsConfigurationReader,
+
+    @inject('extensions.visibility.configurationreader')
+    private visibilityConfigReader: VisibilityConfigurationReader,
+
+    @inject('extensions.validfrom.configurationreader')
+    private validfromConfigReader: ValidfromConfigurationReader,
+
+    @inject('extensions.idempotency.configurationreader')
+    private idempotencyConfigReader: IdempotencyConfigurationReader
+
   ) {
     super(GenericEntity, dataSource);
     this.tags = this.createHasManyThroughRepositoryFactoryFor('tags', tagRepositoryGetter, tagEntityRelationRepositoryGetter,);
     this.reactions = this.createHasManyRepositoryFactoryFor('reactions', reactionsRepositoryGetter,);
     this.registerInclusionResolver('reactions', this.reactions.inclusionResolver);
-    this.relations = this.createHasManyRepositoryFactoryFor('relations', relationRepositoryGetter,);
-    this.registerInclusionResolver('relations', this.relations.inclusionResolver);
+    this.children = this.createHasManyRepositoryFactoryFor('_children', relationRepositoryGetter,);
+    this.registerInclusionResolver('_children', this.children.inclusionResolver);
   }
 
   async find(filter?: Filter<GenericEntity>, options?: Options) {
@@ -67,7 +93,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     return super.find(filter, options);
   }
 
-  async create(data: DataObject<GenericEntity>) {
+  async create(data: DataObject<GenericEntity>, options?: Options) {
 
     const idempotencyKey = this.calculateIdempotencyKey(data);
 
@@ -78,7 +104,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
           return foundIdempotent;
         }
 
-        data.idempotencyKey = idempotencyKey;
+        data._idempotencyKey = idempotencyKey;
 
         // we do not have identical data in the db
         // go ahead, validate, enrich and create the data
@@ -88,14 +114,14 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
   async replaceById(id: string, data: DataObject<GenericEntity>, options?: Options) {
 
-    return this.enrichIncomingEntityForUpdates(id, data)
+    return this.modifyIncomingEntityForUpdates(id, data)
       .then(collection => {
 
         // calculate idempotencyKey
         const idempotencyKey = this.calculateIdempotencyKey(collection.data);
 
         // set idempotencyKey
-        collection.data.idempotencyKey = idempotencyKey;
+        collection.data._idempotencyKey = idempotencyKey;
 
         return collection;
       })
@@ -105,7 +131,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
   async updateById(id: string, data: DataObject<GenericEntity>, options?: Options) {
 
-    return this.enrichIncomingEntityForUpdates(id, data)
+    return this.modifyIncomingEntityForUpdates(id, data)
       .then(collection => {
         const mergedData = _.defaults({}, collection.data, collection.existingData);
 
@@ -113,7 +139,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
         const idempotencyKey = this.calculateIdempotencyKey(mergedData);
 
         // set idempotencyKey
-        collection.data.idempotencyKey = idempotencyKey;
+        collection.data._idempotencyKey = idempotencyKey;
 
         return collection;
       })
@@ -124,15 +150,42 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   async updateAll(data: DataObject<GenericEntity>, where?: Where<GenericEntity>, options?: Options) {
 
     const now = new Date().toISOString();
-    data.lastUpdatedDateTime = now;
+    data._lastUpdatedDateTime = now;
 
     this.checkDataKindFormat(data);
 
     this.generateSlug(data);
 
-    this.setOwnersCount(data);
+    this.setCountFields(data);
 
     return super.updateAll(data, where, options);
+  }
+
+  async deleteById(id: string, options?: Options): Promise<void> {
+    const listEntityRelationRepo = await this.listEntityRelationRepositoryGetter();
+
+    // delete all relations
+    await listEntityRelationRepo.deleteAll({
+      _entityId: id
+    });
+
+    return super.deleteById(id, options);
+  }
+
+  async deleteAll(where?: Where<GenericEntity> | undefined, options?: Options): Promise<Count> {
+    const listEntityRelationRepo = await this.listEntityRelationRepositoryGetter();
+
+    // delete all relations
+    await listEntityRelationRepo.deleteAll({
+      _entityId: {
+        inq: (await this.find({
+          where: where,
+          fields: ['_id']
+        })).map(entity => entity._id)
+      }
+    });
+
+    return super.deleteAll(where, options);
   }
 
   private async findIdempotentEntity(idempotencyKey: string | undefined): Promise<GenericEntity | null> {
@@ -145,7 +198,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
         where: {
           and: [
             {
-              idempotencyKey: idempotencyKey
+              _idempotencyKey: idempotencyKey
             }
           ]
         }
@@ -159,7 +212,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   }
 
   calculateIdempotencyKey(data: DataObject<GenericEntity>) {
-    const idempotencyFields = this.idempotencyConfigReader.getIdempotencyForEntities(data.kind);
+    const idempotencyFields = this.idempotencyConfigReader.getIdempotencyForEntities(data._kind);
 
     // idempotency is not configured
     if (idempotencyFields.length === 0) return;
@@ -195,7 +248,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     const trx = await trxRepo.beginTransaction(IsolationLevel.READ_COMMITTED);
     */
 
-    return this.enrichIncomingEntityForCreation(data)
+    return this.modifyIncomingEntityForCreation(data)
       .then(enrichedData => this.validateIncomingEntityForCreation(enrichedData))
       .then(validEnrichedData => super.create(validEnrichedData));
   }
@@ -227,16 +280,20 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   private async validateIncomingDataForUpdate(id: string, existingData: DataObject<GenericEntity>, data: DataObject<GenericEntity>, options?: Options) {
 
     // we need to merge existing data with incoming data in order to check limits and uniquenesses
-    const mergedData = _.defaults({}, data, existingData);
+    const mergedData = _.assign(
+      {},
+      existingData && _.pickBy(existingData, (value) => value != null),
+      data
+    );
     const uniquenessCheck = this.checkUniquenessForUpdate(id, mergedData);
 
-    if (data.kind) {
+    if (data._kind) {
       this.checkDataKindFormat(data);
       this.checkDataKindValues(data);
     }
 
     this.generateSlug(data);
-    this.setOwnersCount(data);
+    this.setCountFields(data);
 
     await uniquenessCheck;
 
@@ -244,46 +301,65 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   }
 
   /**
-   * Adds managed fields to the entity.
+   * Modifies the incoming payload according to the managed fields policies and configuration.
+   * ---
+   * Sets these fields if absent: 
+   * - slug 
+   * - creationDateTime
+   * - lastUpdatedDateTime
+   * - validFromDateTime (according to the configuration)
+   * 
+   * Always sets these fields ignoring their incoming values: 
+   * - version
+   * - visibility (according to the configuration)
+   * - ownerGroupsCount
+   * - ownerUsersCount
+   * - viewerUsersCount
+   * - viewerGroupsCount
+   * 
+   * Always clears these fields as they are readonly through relation.
+   * - relationMetadata
+   * 
    * @param data Data that is intended to be created
    * @returns New version of the data which have managed fields are added
    */
-  private async enrichIncomingEntityForCreation(data: DataObject<GenericEntity>): Promise<DataObject<GenericEntity>> {
+  private async modifyIncomingEntityForCreation(data: DataObject<GenericEntity>): Promise<DataObject<GenericEntity>> {
 
     // take the date of now to make sure we have exactly the same date in all date fields
     const now = new Date().toISOString();
 
     // use incoming creationDateTime and lastUpdateDateTime if given. Override with default if it does not exist.
-    data.creationDateTime = data.creationDateTime ? data.creationDateTime : now;
-    data.lastUpdatedDateTime = data.lastUpdatedDateTime ? data.lastUpdatedDateTime : now;
+    data._createdDateTime = data._createdDateTime ? data._createdDateTime : now;
+    data._lastUpdatedDateTime = data._lastUpdatedDateTime ? data._lastUpdatedDateTime : now;
 
     // autoapprove the record if it is configured
-
-    data.validFromDateTime = this.validfromConfigReader.getValidFromForEntities(data.kind) ? now : undefined;
+    data._validFromDateTime = this.validfromConfigReader.getValidFromForEntities(data._kind) ? now : undefined;
 
     // new data is starting from version 1
-    data.version = 1;
+    data._version = 1;
 
     // set visibility
-    data.visibility = this.visibilityConfigReader.getVisibilityForEntities(data.kind);
+    data._visibility = this.visibilityConfigReader.getVisibilityForEntities(data._kind);
 
     // prepare slug from the name and set to the record 
     this.generateSlug(data);
 
     // set owners count to make searching easier
-    this.setOwnersCount(data);
+    this.setCountFields(data);
+
+    _.unset(data, 'relationMetadata');
 
     return data;
   }
 
   /**
-   * Enrich the original record with managed fields where applicable.
+   * Modifies the original record with managed fields where applicable.
    * This method can be used by replace and update operations as their requirements are same.
    * @param id Id of the targeted record
    * @param data Payload of the entity
    * @returns Enriched entity
    */
-  private async enrichIncomingEntityForUpdates(id: string, data: DataObject<GenericEntity>) {
+  private async modifyIncomingEntityForUpdates(id: string, data: DataObject<GenericEntity>) {
 
     return this.findById(id)
       .then(existingData => {
@@ -305,14 +381,16 @@ export class GenericEntityRepository extends DefaultCrudRepository<
         const now = new Date().toISOString();
 
         // set new version
-        data.version = (existingData.version ?? 1) + 1;
+        data._version = (existingData._version ?? 1) + 1;
 
         // we may use current date, if it does not exist in the given data
-        data.lastUpdatedDateTime = data.lastUpdatedDateTime ? data.lastUpdatedDateTime : now;
+        data._lastUpdatedDateTime = data._lastUpdatedDateTime ? data._lastUpdatedDateTime : now;
 
         this.generateSlug(data);
 
-        this.setOwnersCount(data);
+        this.setCountFields(data);
+
+        _.unset(data, '_relationMetadata');
 
         return {
           data: data,
@@ -323,17 +401,17 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
   private async checkRecordLimits(newData: DataObject<GenericEntity>) {
 
-    if (!this.recordLimitConfigReader.isRecordLimitsConfiguredForEntities(newData.kind))
+    if (!this.recordLimitConfigReader.isRecordLimitsConfiguredForEntities(newData._kind))
       return;
 
-    const limit = this.recordLimitConfigReader.getRecordLimitsCountForEntities(newData.kind)
-    const set = this.recordLimitConfigReader.getRecordLimitsSetForEntities(newData.ownerUsers, newData.ownerGroups, newData.kind);
+    const limit = this.recordLimitConfigReader.getRecordLimitsCountForEntities(newData._kind)
+    const set = this.recordLimitConfigReader.getRecordLimitsSetForEntities(newData._ownerUsers, newData._ownerGroups, newData._kind);
     let filterBuilder: FilterBuilder<GenericEntity>;
 
-    if (this.recordLimitConfigReader.isLimitConfiguredForKindForEntities(newData.kind))
+    if (this.recordLimitConfigReader.isLimitConfiguredForKindForEntities(newData._kind))
       filterBuilder = new FilterBuilder<GenericEntity>({
         where: {
-          kind: newData.kind
+          _kind: newData._kind
         }
       })
     else {
@@ -372,32 +450,32 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
   private generateSlug(data: DataObject<GenericEntity>) {
 
-    if (data.name && !data.slug)
-      data.slug = slugify(data.name ?? '', {lower: true, strict: true});
+    if (data._name && !data._slug)
+      data._slug = slugify(data._name ?? '', {lower: true, strict: true});
   }
 
-  private setOwnersCount(data: DataObject<GenericEntity>) {
+  private setCountFields(data: DataObject<GenericEntity>) {
 
-    if (_.isArray(data.ownerUsers))
-      data.ownerUsersCount = data.ownerUsers?.length;
+    if (_.isArray(data._ownerUsers))
+      data._ownerUsersCount = data._ownerUsers?.length;
 
-    if (_.isArray(data.ownerGroups))
-      data.ownerGroupsCount = data.ownerGroups?.length;
+    if (_.isArray(data._ownerGroups))
+      data._ownerGroupsCount = data._ownerGroups?.length;
 
-    if (_.isArray(data.viewerUsers))
-      data.viewerUsersCount = data.viewerUsers?.length;
+    if (_.isArray(data._viewerUsers))
+      data._viewerUsersCount = data._viewerUsers?.length;
 
-    if (_.isArray(data.viewerGroups))
-      data.viewerGroupsCount = data.viewerGroups?.length;
+    if (_.isArray(data._viewerGroups))
+      data._viewerGroupsCount = data._viewerGroups?.length;
   }
 
   private checkDataKindFormat(data: DataObject<GenericEntity>) {
 
     // make sure data kind is slug format
-    if (data.kind) {
-      const slugKind: string = slugify(data.kind, {lower: true, strict: true});
+    if (data._kind) {
+      const slugKind: string = slugify(data._kind, {lower: true, strict: true});
 
-      if (slugKind !== data.kind) {
+      if (slugKind !== data._kind) {
         throw new HttpErrorResponse({
           statusCode: 422,
           name: "InvalidKindError",
@@ -417,7 +495,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
      * this point. If it's not valid, we raise an error with the allowed valid
      * values for 'kind'.
      */
-    const kind = data.kind || '';
+    const kind = data._kind ?? '';
 
     if (!this.kindLimitConfigReader.isKindAcceptableForEntity(kind)) {
       const validValues = this.kindLimitConfigReader.allowedKindsForEntities;
@@ -425,7 +503,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
       throw new HttpErrorResponse({
         statusCode: 422,
         name: "InvalidKindError",
-        message: `Entity kind '${data.kind}' is not valid. Use any of these values instead: ${validValues.join(', ')}`,
+        message: `Entity kind '${data._kind}' is not valid. Use any of these values instead: ${validValues.join(', ')}`,
         code: "INVALID-ENTITY-KIND",
         status: 422,
       });
@@ -435,14 +513,14 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   private async checkUniquenessForCreate(newData: DataObject<GenericEntity>) {
 
     // return if no uniqueness is configured
-    if (!this.uniquenessConfigReader.isUniquenessConfiguredForEntities(newData.kind))
+    if (!this.uniquenessConfigReader.isUniquenessConfiguredForEntities(newData._kind))
       return;
 
     const whereBuilder: WhereBuilder<GenericEntity> = new WhereBuilder<GenericEntity>();
 
     // read the fields (name, slug) array for this kind
-    const fields: string[] = this.uniquenessConfigReader.getFieldsForEntities(newData.kind);
-    const set = this.uniquenessConfigReader.getSetForEntities(newData.ownerUsers, newData.ownerGroups, newData.kind);
+    const fields: string[] = this.uniquenessConfigReader.getFieldsForEntities(newData._kind);
+    const set = this.uniquenessConfigReader.getSetForEntities(newData._ownerUsers, newData._ownerGroups, newData._kind);
 
     // add uniqueness fields to where builder
     _.forEach(fields, (field) => {
@@ -480,14 +558,14 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
   private async checkUniquenessForUpdate(id: string, newData: DataObject<GenericEntity>) {
 
-    if (!this.uniquenessConfigReader.isUniquenessConfiguredForEntities(newData.kind))
+    if (!this.uniquenessConfigReader.isUniquenessConfiguredForEntities(newData._kind))
       return;
 
     const whereBuilder: WhereBuilder<GenericEntity> = new WhereBuilder<GenericEntity>();
 
     // read the fields (name, slug) array for this kind
-    const fields: string[] = this.uniquenessConfigReader.getFieldsForEntities(newData.kind);
-    const set = this.uniquenessConfigReader.getSetForEntities(newData.ownerUsers, newData.ownerGroups, newData.kind);
+    const fields: string[] = this.uniquenessConfigReader.getFieldsForEntities(newData._kind);
+    const set = this.uniquenessConfigReader.getSetForEntities(newData._ownerUsers, newData._ownerGroups, newData._kind);
 
     _.forEach(fields, (field) => {
 
@@ -498,14 +576,14 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
     // this is for preventing the same data to be returned
     whereBuilder.and({
-      id: {
+      _id: {
         neq: id
       }
     });
 
     let filter = new FilterBuilder<GenericEntity>()
       .where(whereBuilder.build())
-      .fields('id')
+      .fields('_id')
       .build();
 
     // add set filter if configured

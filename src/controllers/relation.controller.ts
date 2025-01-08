@@ -7,29 +7,29 @@ import {
   Where,
 } from '@loopback/repository';
 import {
-  post,
-  param,
+  del,
   get,
   getModelSchemaRef,
+  param,
   patch,
+  post,
   put,
-  del,
   requestBody,
 } from '@loopback/rest';
-import {Relation} from '../models';
+import {EntityRelation} from '../models';
 import {RelationRepository} from '../repositories';
 
 export class RelationController {
   constructor(
     @repository(RelationRepository)
-    public relationRepository : RelationRepository,
-  ) {}
+    public relationRepository: RelationRepository,
+  ) { }
 
   @post('/relations', {
     responses: {
       '200': {
         description: 'Relation model instance',
-        content: {'application/json': {schema: getModelSchemaRef(Relation)}},
+        content: {'application/json': {schema: getModelSchemaRef(EntityRelation)}},
       },
     },
   })
@@ -37,15 +37,15 @@ export class RelationController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(Relation, {
+          schema: getModelSchemaRef(EntityRelation, {
             title: 'NewRelation',
             exclude: ['id'],
           }),
         },
       },
     })
-    relation: Omit<Relation, 'id'>,
-  ): Promise<Relation> {
+    relation: Omit<EntityRelation, 'id'>,
+  ): Promise<EntityRelation> {
     return this.relationRepository.create(relation);
   }
 
@@ -58,7 +58,7 @@ export class RelationController {
     },
   })
   async count(
-    @param.where(Relation) where?: Where<Relation>,
+    @param.where(EntityRelation) where?: Where<EntityRelation>,
   ): Promise<Count> {
     return this.relationRepository.count(where);
   }
@@ -71,7 +71,7 @@ export class RelationController {
           'application/json': {
             schema: {
               type: 'array',
-              items: getModelSchemaRef(Relation, {includeRelations: true}),
+              items: getModelSchemaRef(EntityRelation, {includeRelations: true}),
             },
           },
         },
@@ -79,8 +79,8 @@ export class RelationController {
     },
   })
   async find(
-    @param.filter(Relation) filter?: Filter<Relation>,
-  ): Promise<Relation[]> {
+    @param.filter(EntityRelation) filter?: Filter<EntityRelation>,
+  ): Promise<EntityRelation[]> {
     return this.relationRepository.find(filter);
   }
 
@@ -96,12 +96,12 @@ export class RelationController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(Relation, {partial: true}),
+          schema: getModelSchemaRef(EntityRelation, {partial: true}),
         },
       },
     })
-    relation: Relation,
-    @param.where(Relation) where?: Where<Relation>,
+    relation: EntityRelation,
+    @param.where(EntityRelation) where?: Where<EntityRelation>,
   ): Promise<Count> {
     return this.relationRepository.updateAll(relation, where);
   }
@@ -112,7 +112,7 @@ export class RelationController {
         description: 'Relation model instance',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(Relation, {includeRelations: true}),
+            schema: getModelSchemaRef(EntityRelation, {includeRelations: true}),
           },
         },
       },
@@ -120,8 +120,8 @@ export class RelationController {
   })
   async findById(
     @param.path.string('id') id: string,
-    @param.filter(Relation, {exclude: 'where'}) filter?: FilterExcludingWhere<Relation>
-  ): Promise<Relation> {
+    @param.filter(EntityRelation, {exclude: 'where'}) filter?: FilterExcludingWhere<EntityRelation>
+  ): Promise<EntityRelation> {
     return this.relationRepository.findById(id, filter);
   }
 
@@ -137,11 +137,11 @@ export class RelationController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(Relation, {partial: true}),
+          schema: getModelSchemaRef(EntityRelation, {partial: true}),
         },
       },
     })
-    relation: Relation,
+    relation: EntityRelation,
   ): Promise<void> {
     await this.relationRepository.updateById(id, relation);
   }
@@ -155,7 +155,7 @@ export class RelationController {
   })
   async replaceById(
     @param.path.string('id') id: string,
-    @requestBody() relation: Relation,
+    @requestBody() relation: EntityRelation,
   ): Promise<void> {
     await this.relationRepository.replaceById(id, relation);
   }
