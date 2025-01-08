@@ -4,7 +4,11 @@
   "compilerOptions": {
     "experimentalDecorators": true,
     "outDir": "dist",
-    "rootDir": "src"
+    "rootDir": "src",
+    "target": "es2023",
+    "lib": [
+      "es2023"
+    ]
   },
   "include": [
     "src"
