@@ -117,6 +117,88 @@ export class GenericListRepository extends DefaultCrudRepository<
 
   }
 
+  async find(filter?: Filter<GenericList>, options?: Options) {
+
+    // Calculate the limit value using optional chaining and nullish coalescing
+    // If filter.limit is defined, use its value; otherwise, use ListRepository.response_limit
+    const limit = filter?.limit ?? GenericListRepository.responseLimit;
+
+    // Update the filter object by spreading the existing filter and overwriting the limit property
+    // Ensure that the new limit value does not exceed ListRepository.response_limit
+    filter = {...filter, limit: Math.min(limit, GenericListRepository.responseLimit)};
+
+    return super.find(filter, options);
+  }
+
+  async create(data: DataObject<GenericList>) {
+
+    const idempotencyKey = this.calculateIdempotencyKey(data);
+
+    return this.findIdempotentList(idempotencyKey)
+      .then(foundIdempotent => {
+
+        if (foundIdempotent) {
+          return foundIdempotent;
+        }
+
+        data._idempotencyKey = idempotencyKey;
+
+        // we do not have identical data in the db
+        // go ahead, validate, enrich and create the data
+        return this.createNewListFacade(data);
+      });
+  }
+
+  async replaceById(id: string, data: DataObject<GenericList>, options?: Options): Promise<void> {
+
+    return this.modifyIncomingListForUpdates(id, data)
+      .then(collection => {
+
+        // calculate idempotency key
+        const idempotencyKey = this.calculateIdempotencyKey(collection.data);
+
+        // set idempotency key to the data
+        collection.data._idempotencyKey = idempotencyKey;
+
+        return collection;
+      })
+      .then(collection => this.validateIncomingListForReplace(id, collection.data, options))
+      .then(validEnrichedData => super.replaceById(id, validEnrichedData, options));
+  }
+
+  async updateById(id: string, data: DataObject<GenericList>, options?: Options): Promise<void> {
+
+    return this.modifyIncomingListForUpdates(id, data)
+      .then(collection => {
+
+        const mergedData = _.defaults({}, collection.data, collection.existingData);
+
+        // calculate idempotency key
+        const idempotencyKey = this.calculateIdempotencyKey(mergedData);
+
+        // set idempotency key to the data
+        collection.data._idempotencyKey = idempotencyKey;
+
+        return collection;
+      })
+      .then(collection => this.validateIncomingDataForUpdate(id, collection.existingData, collection.data, options))
+      .then(validEnrichedData => super.updateById(id, validEnrichedData, options));
+  }
+
+  async updateAll(data: DataObject<GenericList>, where?: Where<GenericList>, options?: Options) {
+
+    const now = new Date().toISOString();
+    data._lastUpdatedDateTime = now;
+
+    this.checkDataKindFormat(data);
+
+    this.generateSlug(data);
+
+    this.setCountFields(data);
+
+    return super.updateAll(data, where, options);
+  }
+
   /**
    * Custom inclusion resolver for the _genericEntities relation aware of whereThrough and setThrough
    * @param listEntityRelationRepositoryGetter 
@@ -171,52 +253,6 @@ export class GenericListRepository extends DefaultCrudRepository<
       // Return entities grouped by list, preserving the order of the lists
       return lists.map(list => entitiesByListId.get(list._id) ?? []);
     };
-  }
-
-  async find(filter?: Filter<GenericList>, options?: Options) {
-
-    // Calculate the limit value using optional chaining and nullish coalescing
-    // If filter.limit is defined, use its value; otherwise, use ListRepository.response_limit
-    const limit = filter?.limit ?? GenericListRepository.responseLimit;
-
-    // Update the filter object by spreading the existing filter and overwriting the limit property
-    // Ensure that the new limit value does not exceed ListRepository.response_limit
-    filter = {...filter, limit: Math.min(limit, GenericListRepository.responseLimit)};
-
-    return super.find(filter, options);
-  }
-
-  async create(data: DataObject<GenericList>) {
-
-    const idempotencyKey = this.calculateIdempotencyKey(data);
-
-    return this.findIdempotentList(idempotencyKey)
-      .then(foundIdempotent => {
-
-        if (foundIdempotent) {
-          return foundIdempotent;
-        }
-
-        data._idempotencyKey = idempotencyKey;
-
-        // we do not have identical data in the db
-        // go ahead, validate, enrich and create the data
-        return this.createNewListFacade(data);
-      });
-  }
-
-  async updateAll(data: DataObject<GenericList>, where?: Where<GenericList>, options?: Options) {
-
-    const now = new Date().toISOString();
-    data._lastUpdatedDateTime = now;
-
-    this.checkDataKindFormat(data);
-
-    this.generateSlug(data);
-
-    this.setOwnersCount(data);
-
-    return super.updateAll(data, where, options);
   }
 
   private async findIdempotentList(idempotencyKey: string | undefined): Promise<GenericList | null> {
@@ -311,7 +347,11 @@ export class GenericListRepository extends DefaultCrudRepository<
   private async validateIncomingDataForUpdate(id: string, existingData: DataObject<GenericList>, data: DataObject<GenericList>, options?: Options) {
 
     // we need to merge existing data with incoming data in order to check limits and uniquenesses
-    const mergedData = _.defaults({}, data, existingData);
+    const mergedData = _.assign(
+      {},
+      existingData && _.pickBy(existingData, (value) => value != null),
+      data
+    );
     const uniquenessCheck = this.checkUniquenessForUpdate(id, mergedData);
 
     if (data._kind) {
@@ -320,7 +360,7 @@ export class GenericListRepository extends DefaultCrudRepository<
     }
 
     this.generateSlug(data);
-    this.setOwnersCount(data);
+    this.setCountFields(data);
 
     await uniquenessCheck;
 
@@ -355,7 +395,7 @@ export class GenericListRepository extends DefaultCrudRepository<
     this.generateSlug(data);
 
     // set owners count to make searching easier
-    this.setOwnersCount(data);
+    this.setCountFields(data);
 
     return data;
   }
@@ -367,7 +407,7 @@ export class GenericListRepository extends DefaultCrudRepository<
    * @param data Payload of the list
    * @returns Enriched list
    */
-  private async enrichIncomingListForUpdates(id: string, data: DataObject<GenericList>) {
+  private async modifyIncomingListForUpdates(id: string, data: DataObject<GenericList>) {
 
     return this.findById(id)
       .then(existingData => {
@@ -396,7 +436,7 @@ export class GenericListRepository extends DefaultCrudRepository<
 
         this.generateSlug(data);
 
-        this.setOwnersCount(data);
+        this.setCountFields(data);
 
         return {
           data: data,
@@ -460,7 +500,7 @@ export class GenericListRepository extends DefaultCrudRepository<
       data._slug = slugify(data._name ?? '', {lower: true, strict: true});
   }
 
-  private setOwnersCount(data: DataObject<GenericList>) {
+  private setCountFields(data: DataObject<GenericList>) {
 
     if (_.isArray(data._ownerUsers))
       data._ownerUsersCount = data._ownerUsers?.length;
