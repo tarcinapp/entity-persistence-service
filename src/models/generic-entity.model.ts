@@ -20,7 +20,7 @@ export class GenericEntity extends ListEntityCommonBase {
     type: 'object',
     description: 'Metadata for the relation target'
   })
-  _relationMetadata?: RelationMetadataType
+  _relationMetadata: RelationMetadataType
 
   @hasMany(() => EntityRelation, {keyTo: 'from'})
   _children: EntityRelation[];

@@ -214,11 +214,10 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
 
     return this.enrichIncomingRelForUpdates(id, data)
       .then(collection => {
-        const mergedData = _.assign(
-          {},
-          collection.existingData && _.pickBy(collection.existingData, (value) => value != null),
-          collection.data
-        );
+        const mergedData = {
+          ...data,
+          ...(collection.existingData && _.pickBy(collection.existingData, (value) => value != null))
+        };
 
         // calculate idempotencyKey
         const idempotencyKey = this.calculateIdempotencyKey(mergedData);
@@ -264,7 +263,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
     return Promise
       .all([
         this.checkUniquenessForRelation(data),
-        this.checkDependantsExistence(data),
+        this.checkDependantsExistence(data as DataObject<GenericListToEntityRelation> & {_entityId: string; _listId: string;}),
         this.checkRecordLimits(data)
       ])
       .then(() => data);
@@ -300,11 +299,10 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
 
   async validateIncomingRelForUpdate(id: string, existingData: DataObject<GenericListToEntityRelation>, data: DataObject<GenericListToEntityRelation>, options?: Options) {
     // we need to merge existing data with incoming data in order to check limits and uniquenesses
-    const mergedData = _.assign(
-      {},
-      existingData && _.pickBy(existingData, (value) => value != null),
-      data
-    );
+    const mergedData = {
+      ...data,
+      ...(existingData && _.pickBy(existingData, (value) => value != null))
+    } as DataObject<GenericListToEntityRelation>;
 
     if (mergedData._kind) {
       this.checkDataKindFormat(mergedData);
@@ -313,7 +311,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
 
     return Promise.all([
       this.checkUniquenessForUpdate(id, mergedData),
-      this.checkDependantsExistence(mergedData)
+      this.checkDependantsExistence(mergedData as DataObject<GenericListToEntityRelation> & {_entityId: string; _listId: string;})
     ])
       .then(() => data);
   }
@@ -324,7 +322,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
     this.checkDataKindFormat(data);
 
     return Promise.all([
-      this.checkDependantsExistence(data),
+      this.checkDependantsExistence(data as DataObject<GenericListToEntityRelation> & {_entityId: string; _listId: string;}),
       this.checkUniquenessForUpdate(id, data)
     ])
       .then(() => data);
@@ -463,7 +461,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
 
 
   async checkDependantsExistence(
-    data: DataObject<GenericListToEntityRelation>
+    data: DataObject<GenericListToEntityRelation> & {_entityId: string; _listId: string}
   ) {
     const [genericEntityRepo, genericListRepo] = await Promise.all([
       this.genericEntityRepositoryGetter(),
