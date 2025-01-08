@@ -1,5 +1,5 @@
 import {Getter, inject} from '@loopback/core';
-import {DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, InclusionResolver, Options, Where, WhereBuilder, repository} from '@loopback/repository';
+import {Count, DataObject, DefaultCrudRepository, Filter, FilterBuilder, HasManyRepositoryFactory, HasManyThroughRepositoryFactory, InclusionResolver, Options, Where, WhereBuilder, repository} from '@loopback/repository';
 import * as crypto from 'crypto';
 import _ from "lodash";
 import qs from 'qs';
@@ -197,6 +197,33 @@ export class GenericListRepository extends DefaultCrudRepository<
     this.setCountFields(data);
 
     return super.updateAll(data, where, options);
+  }
+
+  async deleteById(id: string | undefined, options?: Options): Promise<void> {
+    const listEntityRelationRepo = await this.listEntityRelationRepositoryGetter();
+
+    // delete all relations
+    await listEntityRelationRepo.deleteAll({
+      _listId: id
+    });
+
+    return super.deleteById(id, options);
+  }
+
+  async deleteAll(where?: Where<GenericList> | undefined, options?: Options): Promise<Count> {
+    const listEntityRelationRepo = await this.listEntityRelationRepositoryGetter();
+
+    // delete all relations
+    await listEntityRelationRepo.deleteAll({
+      _listId: {
+        inq: (await this.find({
+          where: where,
+          fields: ['_id']
+        })).map(list => list._id)
+      }
+    });
+
+    return super.deleteAll(where, options);
   }
 
   /**

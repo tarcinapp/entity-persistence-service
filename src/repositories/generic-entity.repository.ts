@@ -161,7 +161,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     return super.updateAll(data, where, options);
   }
 
-  async deleteById(id: string | undefined, options?: Options): Promise<void> {
+  async deleteById(id: string, options?: Options): Promise<void> {
     const listEntityRelationRepo = await this.listEntityRelationRepositoryGetter();
 
     // delete all relations
