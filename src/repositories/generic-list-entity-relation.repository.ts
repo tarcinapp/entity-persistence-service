@@ -470,6 +470,16 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
       this.genericListRepositoryGetter(),
     ]);
 
+    if (!data._entityId || !data._listId) {
+      throw new HttpErrorResponse({
+        statusCode: 400,
+        name: "BadRequestError",
+        message: "Entity id and list id are required.",
+        code: "RELATION-MISSING-IDS",
+        status: 400
+      });
+    }
+
     // Check if related entity and list exist
     await Promise.all([
       genericEntityRepo.findById(data._entityId).catch(() => {
