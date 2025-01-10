@@ -242,7 +242,7 @@ export class GenericListRepository extends DefaultCrudRepository<
       const entityRepo = await genericEntityRepositoryGetter();
 
       // Extract filters from the inclusion object
-      const relationFilter: Where<GenericListToEntityRelation> = typeof inclusion === 'object' ? inclusion.whereThrough : {};
+      const relationFilter: Where<GenericListToEntityRelation> = typeof inclusion === 'object' ? inclusion.whereThrough ?? {} : {};
       const entityFilter = typeof inclusion === 'object' ? inclusion.scope : {};
 
       // Find relationships that match the provided filters
