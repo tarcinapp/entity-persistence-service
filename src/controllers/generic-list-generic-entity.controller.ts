@@ -81,11 +81,12 @@ export class GenericListGenericEntityController {
         'application/json': {
           schema: getModelSchemaRef(GenericEntity, {
             title: 'NewGenericEntityInList',
-            exclude: ['_id'],
+            exclude: ['_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_version', '_idempotencyKey']
           }),
         },
       },
-    }) genericEntity: Omit<GenericEntity, 'id'>,
+    })
+    genericEntity: Omit<GenericEntity, 'id'>
   ): Promise<GenericEntity> {
     return this.listRepository.genericEntities(id).create(genericEntity);
   }
