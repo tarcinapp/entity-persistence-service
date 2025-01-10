@@ -511,7 +511,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
   ): Promise<DataObject<GenericListToEntityRelation>> {
     const now = new Date().toISOString();
 
-    data._kind = data._kind ?? 'relation';
+    data._kind = data._kind ?? process.env.default_relation_kind ?? this.kindLimitConfigReader.defaultRelationKind;
     data._createdDateTime = data._createdDateTime ?? now;
     data._lastUpdatedDateTime = data._lastUpdatedDateTime ?? now;
     data._version = 1;

@@ -24,9 +24,9 @@ export class RecordsCommonBase extends Entity {
 
   @property({
     type: 'string',
-    required: true,
+    required: false,
   })
-  _kind: string;
+  _kind?: string;
 
   @property({
     type: 'date',

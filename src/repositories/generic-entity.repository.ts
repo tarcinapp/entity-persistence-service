@@ -325,6 +325,8 @@ export class GenericEntityRepository extends DefaultCrudRepository<
    */
   private async modifyIncomingEntityForCreation(data: DataObject<GenericEntity>): Promise<DataObject<GenericEntity>> {
 
+    data._kind = data._kind ?? process.env.default_entity_kind ?? this.kindLimitConfigReader.defaultEntityKind;
+
     // take the date of now to make sure we have exactly the same date in all date fields
     const now = new Date().toISOString();
 

@@ -36,6 +36,10 @@ export class KindLimitsConfigurationReader {
 
   private static IS_KIND_LIMITS_CONFIGURED_FOR_LIST_ENTITY_KINDS: boolean = false;
 
+  private static DEFAULT_ENTITY_KIND: string = 'entity';
+  private static DEFAULT_LIST_KIND: string = 'list';
+  private static DEFAULT_RELATION_KIND: string = 'relation';
+
   static {
     this.initKindLimitConfigurations();
   }
@@ -55,6 +59,19 @@ export class KindLimitsConfigurationReader {
     return KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_ENTITY_LIST_RELATIONS;
   }
 
+
+  public get defaultEntityKind() {
+    return KindLimitsConfigurationReader.DEFAULT_ENTITY_KIND;
+  }
+
+  public get defaultListKind() {
+    return KindLimitsConfigurationReader.DEFAULT_LIST_KIND;
+  }
+
+  public get defaultRelationKind() {
+    return KindLimitsConfigurationReader.DEFAULT_RELATION_KIND;
+  }
+
   private static initKindLimitConfigurations() {
 
     if (_.has(process.env, 'entity_kinds')) {
@@ -63,7 +80,7 @@ export class KindLimitsConfigurationReader {
       const kinds = _.split(process.env['entity_kinds'], ',')
         .map(_.trim);
 
-      KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_ENTITIES = kinds;
+      KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_ENTITIES.push(...kinds, KindLimitsConfigurationReader.DEFAULT_ENTITY_KIND);
     }
 
     if (_.has(process.env, 'list_kinds')) {
@@ -72,7 +89,7 @@ export class KindLimitsConfigurationReader {
       const kinds = _.split(process.env['list_kinds'], ',')
         .map(_.trim);
 
-      KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_LISTS = kinds;
+      KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_LISTS.push(...kinds, KindLimitsConfigurationReader.DEFAULT_LIST_KIND);
     }
 
     if (_.has(process.env, 'list_entity_rel_kinds')) {
@@ -81,7 +98,7 @@ export class KindLimitsConfigurationReader {
       const kinds = _.split(process.env['list_entity_rel_kinds'], ',')
         .map(_.trim);
 
-      KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_ENTITY_LIST_RELATIONS = kinds;
+      KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_ENTITY_LIST_RELATIONS.push(...kinds, KindLimitsConfigurationReader.DEFAULT_RELATION_KIND);
     }
   }
 

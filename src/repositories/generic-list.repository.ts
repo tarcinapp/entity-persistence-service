@@ -401,6 +401,8 @@ export class GenericListRepository extends DefaultCrudRepository<
   */
   private async enrichIncomingListForCreation(data: DataObject<GenericList>): Promise<DataObject<GenericList>> {
 
+    data._kind = data._kind ?? process.env.default_list_kind ?? this.kindLimitConfigReader.defaultListKind;
+
     // take the date of now to make sure we have exactly the same date in all date fields
     const now = new Date().toISOString();
 
