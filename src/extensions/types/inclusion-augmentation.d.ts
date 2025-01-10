@@ -1,4 +1,5 @@
 import '@loopback/repository';
+import {Where} from '@loopback/repository';
 import {Set} from '../set';
 
 // Extend the Inclusion interface
