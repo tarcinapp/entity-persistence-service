@@ -5,7 +5,7 @@ import {sanitizeFilterFields} from '../helpers/filter.helper';
 import {GenericEntity, HttpErrorResponse} from '../models';
 import {GenericEntityRepository} from '../repositories';
 
-export class GenericEntityControllerController {
+export class GenericEntityController {
   constructor(
     @repository(GenericEntityRepository)
     public genericEntityRepository: GenericEntityRepository,
