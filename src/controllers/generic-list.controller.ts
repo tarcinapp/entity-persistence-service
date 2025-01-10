@@ -86,6 +86,7 @@ export class GenericListController {
           schema: getModelSchemaRef(GenericList, {
             title: 'NewList',
             exclude: ['_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_version', '_idempotencyKey', '_relationMetadata'],
+            includeRelations: false
           }),
         },
       },
@@ -171,6 +172,7 @@ export class GenericListController {
           schema: getModelSchemaRef(GenericList, {
             title: 'NewList',
             exclude: ['_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_version', '_idempotencyKey', '_relationMetadata'],
+            includeRelations: false
           }),
         },
       },
@@ -265,6 +267,7 @@ export class GenericListController {
           schema: getModelSchemaRef(GenericList, {
             title: 'NewList',
             exclude: ['_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_version', '_idempotencyKey', '_relationMetadata'],
+            includeRelations: false
           }),
         },
       },
@@ -313,6 +316,7 @@ export class GenericListController {
           schema: getModelSchemaRef(GenericList, {
             title: 'NewList',
             exclude: ['_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_version', '_idempotencyKey', '_relationMetadata'],
+            includeRelations: false
           }),
         },
       },
