@@ -109,19 +109,21 @@ export class KindLimitsConfigurationReader {
   }
 
   public isKindAcceptableForEntity(kind: string) {
-    if (KindLimitsConfigurationReader.IS_KIND_LIMITS_CONFIGURED_FOR_ENTITIES)
+    if (KindLimitsConfigurationReader.IS_KIND_LIMITS_CONFIGURED_FOR_ENTITIES) {
       return KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_ENTITIES.includes(
         kind,
       );
+    }
 
     return true;
   }
 
   public isKindAcceptableForList(kind: string) {
-    if (KindLimitsConfigurationReader.IS_KIND_LIMITS_CONFIGURED_FOR_LISTS)
+    if (KindLimitsConfigurationReader.IS_KIND_LIMITS_CONFIGURED_FOR_LISTS) {
       return KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_LISTS.includes(
         kind,
       );
+    }
 
     return true;
   }
@@ -129,10 +131,11 @@ export class KindLimitsConfigurationReader {
   public isKindAcceptableForListEntityRelations(kind: string) {
     if (
       KindLimitsConfigurationReader.IS_KIND_LIMITS_CONFIGURED_FOR_LIST_ENTITY_KINDS
-    )
+    ) {
       return KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_ENTITY_LIST_RELATIONS.includes(
         kind,
       );
+    }
 
     return true;
   }

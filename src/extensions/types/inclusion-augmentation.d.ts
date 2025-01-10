@@ -1,6 +1,6 @@
 import '@loopback/repository';
-import { Where } from '@loopback/repository';
-import { Set } from '../set';
+import type { Where } from '@loopback/repository';
+import type { Set } from '../set';
 
 // Extend the Inclusion interface
 declare module '@loopback/repository' {

@@ -1,7 +1,7 @@
 import { BindingKey } from '@loopback/core';
 import _, { cloneDeepWith, isEmpty } from 'lodash';
 import qs from 'qs';
-import { Set, UserAndGroupInfo } from '../extensions/set';
+import type { Set, UserAndGroupInfo } from '../extensions/set';
 
 export namespace UniquenessBindings {
   export const CONFIG_READER = BindingKey.create<UniquenessConfigurationReader>(
@@ -46,22 +46,25 @@ export class UniquenessConfigurationReader {
       !_.isBoolean(
         UniquenessConfigurationReader.IS_COMMON_ENTITY_UNIQUENESS_IS_CONFIGURED,
       )
-    )
+    ) {
       this.initConfigForEntities();
+    }
 
     if (
       !_.isBoolean(
         UniquenessConfigurationReader.IS_COMMON_LIST_UNIQUENESS_IS_CONFIGURED,
       )
-    )
+    ) {
       this.initConfigForLists();
+    }
 
     if (
       !_.isBoolean(
         UniquenessConfigurationReader.IS_COMMON_LIST_ENTITY_REL_UNIQUENESS_IS_CONFIGURED,
       )
-    )
+    ) {
       this.initConfigForListEntityRelations();
+    }
   }
 
   /**
@@ -120,11 +123,12 @@ export class UniquenessConfigurationReader {
       // if fields are already configured in static field for the entity, return from the static field instead of parsing the config string
       if (
         _.has(UniquenessConfigurationReader.KIND_ENTITY_UNIQUENESS_FIELDS, kind)
-      )
+      ) {
         return _.get(
           UniquenessConfigurationReader.KIND_ENTITY_UNIQUENESS_FIELDS,
           kind,
         );
+      }
 
       if (_.has(process.env, `uniqueness_entity_fields_for_${kind}`)) {
         const fields = _.get(
@@ -154,11 +158,13 @@ export class UniquenessConfigurationReader {
   ): Set | undefined {
     let setStr: string | undefined;
 
-    if (process.env.uniqueness_entity_set)
+    if (process.env.uniqueness_entity_set) {
       setStr = process.env.uniqueness_entity_set;
+    }
 
-    if (_.has(process.env, `uniqueness_entity_set_for_${kind}`))
+    if (_.has(process.env, `uniqueness_entity_set_for_${kind}`)) {
       setStr = _.get(process.env, `uniqueness_entity_set_for_${kind}`);
+    }
 
     if (setStr) {
       const set = qs.parse(setStr).set as Set;
@@ -195,11 +201,12 @@ export class UniquenessConfigurationReader {
       // if fields are already configured in static field for the list, return from the static field instead of parsing the config string
       if (
         _.has(UniquenessConfigurationReader.KIND_LIST_UNIQUENESS_FIELDS, kind)
-      )
+      ) {
         return _.get(
           UniquenessConfigurationReader.KIND_LIST_UNIQUENESS_FIELDS,
           kind,
         );
+      }
 
       if (_.has(process.env, `uniqueness_list_fields_for_${kind}`)) {
         const fields = _.get(process.env, `uniqueness_list_fields_for_${kind}`)!
@@ -226,11 +233,13 @@ export class UniquenessConfigurationReader {
   ): Set | undefined {
     let setStr: string | undefined;
 
-    if (process.env.uniqueness_list_set)
+    if (process.env.uniqueness_list_set) {
       setStr = process.env.uniqueness_list_set;
+    }
 
-    if (_.has(process.env, `uniqueness_list_set_for_${kind}`))
+    if (_.has(process.env, `uniqueness_list_set_for_${kind}`)) {
       setStr = _.get(process.env, `uniqueness_list_set_for_${kind}`);
+    }
 
     if (setStr) {
       const set = qs.parse(setStr).set as Set;
@@ -270,11 +279,12 @@ export class UniquenessConfigurationReader {
           UniquenessConfigurationReader.KIND_LIST_ENTITY_REL_UNIQUENESS_FIELDS,
           kind,
         )
-      )
+      ) {
         return _.get(
           UniquenessConfigurationReader.KIND_LIST_ENTITY_REL_UNIQUENESS_FIELDS,
           kind,
         );
+      }
 
       if (_.has(process.env, `uniqueness_list_entity_rel_fields_for_${kind}`)) {
         const fields = _.get(
@@ -301,11 +311,13 @@ export class UniquenessConfigurationReader {
   public getSetForListEntityRelations(kind?: string): Set | undefined {
     let setStr: string | undefined;
 
-    if (_.has(process.env, `uniqueness_list_entity_rel_set_for_${kind}`))
+    if (_.has(process.env, `uniqueness_list_entity_rel_set_for_${kind}`)) {
       setStr = _.get(process.env, `uniqueness_list_entity_rel_set_for_${kind}`);
+    }
 
-    if (!setStr && process.env.uniqueness_list_entity_rel_set)
+    if (!setStr && process.env.uniqueness_list_entity_rel_set) {
       setStr = process.env.uniqueness_list_entity_rel_set;
+    }
 
     if (setStr) {
       const set = qs.parse(setStr).set as Set;

@@ -1,5 +1,6 @@
 import { RestBindings } from '@loopback/rest';
-import { ApplicationConfig, EntityPersistenceApplication } from './application';
+import type { ApplicationConfig } from './application';
+import { EntityPersistenceApplication } from './application';
 import {
   KindLimitsBindings,
   KindLimitsConfigurationReader,

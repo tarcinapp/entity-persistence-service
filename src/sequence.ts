@@ -33,7 +33,9 @@ export class MySequence implements SequenceHandler {
     try {
       const { request, response } = context;
       const finished = await this.invokeMiddleware(context);
-      if (finished) return;
+      if (finished) {
+        return;
+      }
       const route = this.findRoute(request);
       const args = await this.parseParams(request, route);
       const result = await this.invoke(route, args);

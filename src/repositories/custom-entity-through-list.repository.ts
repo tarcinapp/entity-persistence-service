@@ -111,7 +111,7 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
       const relation = relations.find((rel) => rel._entityId === entity._id);
       if (relation) {
         // Exclude `toMetadata` while retaining other properties
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/naming-convention
+
         const {
           _toMetadata,
           _entityId,

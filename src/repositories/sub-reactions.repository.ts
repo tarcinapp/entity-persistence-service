@@ -18,8 +18,9 @@ export class SubReactionsRepository extends DefaultCrudRepository<
   }
 
   async find(filter?: Filter<SubReactions>, options?: Options) {
-    if (filter?.limit && filter.limit > SubReactionsRepository.response_limit)
+    if (filter?.limit && filter.limit > SubReactionsRepository.response_limit) {
       filter.limit = SubReactionsRepository.response_limit;
+    }
 
     return super.find(filter, options);
   }

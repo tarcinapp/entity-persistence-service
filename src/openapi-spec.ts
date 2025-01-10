@@ -1,4 +1,4 @@
-import { ApplicationConfig } from '@loopback/core';
+import type { ApplicationConfig } from '@loopback/core';
 import { EntityPersistenceApplication } from './application';
 
 /**

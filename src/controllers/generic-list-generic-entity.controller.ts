@@ -52,18 +52,20 @@ export class GenericListGenericEntityController {
     @param.query.object('filterThrough')
     filterThrough?: Filter<GenericListToEntityRelation>,
   ): Promise<GenericEntity[]> {
-    if (set)
+    if (set) {
       filter = new SetFilterBuilder<GenericEntity>(set, {
         filter: filter,
       }).build();
+    }
 
-    if (setThrough)
+    if (setThrough) {
       filterThrough = new SetFilterBuilder<GenericListToEntityRelation>(
         setThrough,
         {
           filter: filterThrough,
         },
       ).build();
+    }
 
     sanitizeFilterFields(filter);
     sanitizeFilterFields(filterThrough);
@@ -153,14 +155,17 @@ export class GenericListGenericEntityController {
   ): Promise<Count> {
     const filterBuilder = new FilterBuilder<GenericEntity>();
 
-    if (where) filterBuilder.where(where);
+    if (where) {
+      filterBuilder.where(where);
+    }
 
     let filter = filterBuilder.build();
 
-    if (set)
+    if (set) {
       filter = new SetFilterBuilder<GenericEntity>(set, {
         filter: filter,
       }).build();
+    }
 
     return this.listRepository
       .genericEntities(id)

@@ -1,11 +1,10 @@
-import {
+import type {
   Filter,
-  FilterBuilder,
   OrClause as LbOrClause,
   Where,
-  WhereBuilder,
 } from '@loopback/repository';
-import { AnyObject } from '@loopback/repository/dist/common-types';
+import { FilterBuilder, WhereBuilder } from '@loopback/repository';
+import type { AnyObject } from '@loopback/repository/dist/common-types';
 import _ from 'lodash';
 
 export interface Condition {
@@ -113,9 +112,11 @@ export class SetFilterBuilder<T extends object = AnyObject> {
      * Using the filter here does not cause multiple nested queries. I decided
      * to keep it as it is.
      */
-    if (this.options?.filter)
+    if (this.options?.filter) {
       filterBuilder = new FilterBuilder<T>(this.options?.filter);
-    else filterBuilder = new FilterBuilder<T>();
+    } else {
+      filterBuilder = new FilterBuilder<T>();
+    }
 
     /**
      * Use the where clause we generated in the newly filter and return it.
@@ -127,11 +128,12 @@ export class SetFilterBuilder<T extends object = AnyObject> {
     parentSet: Set,
     key: string,
   ): Where<AnyObject>[] | Where<AnyObject> {
-    if (key !== 'and' && key !== 'or')
+    if (key !== 'and' && key !== 'or') {
       return this.setTransformer.produceWhereClauseFor(
         key,
         _.get(parentSet, key),
       );
+    }
 
     /**
      * If we reach this line, key is either 'and' or 'or'
@@ -149,9 +151,13 @@ export class SetFilterBuilder<T extends object = AnyObject> {
     // this is to merge all sub-clauses to a 'where' clause.
     const subWhereBuilder = new WhereBuilder<AnyObject>();
 
-    if (key === 'and') subWhereBuilder.and(subClauses);
+    if (key === 'and') {
+      subWhereBuilder.and(subClauses);
+    }
 
-    if (key === 'or') subWhereBuilder.or(subClauses);
+    if (key === 'or') {
+      subWhereBuilder.or(subClauses);
+    }
 
     return subWhereBuilder.build();
   }
@@ -160,8 +166,9 @@ export class SetFilterBuilder<T extends object = AnyObject> {
     parentSet: Set,
     keys: string[],
   ): Where<AnyObject>[] | Where<AnyObject> {
-    if (keys.length === 1)
+    if (keys.length === 1) {
       return this.buildWhereClauseForSingleKeyOfSet(parentSet, keys[0]);
+    }
 
     return _.map(keys, (condition) => {
       return this.buildWhereClauseForSingleKeyOfSet(parentSet, condition);
@@ -185,28 +192,45 @@ class SetToFilterTransformer {
     setName: string,
     setValue?: string | UserAndGroupInfo,
   ): Where<AnyObject> {
-    if (setName === 'publics') return this.produceWhereClauseForPublics();
+    if (setName === 'publics') {
+      return this.produceWhereClauseForPublics();
+    }
 
-    if (setName === 'actives') return this.produceWhereClauseForActives();
+    if (setName === 'actives') {
+      return this.produceWhereClauseForActives();
+    }
 
-    if (setName === 'inactives') return this.produceWhereClauseForInactives();
+    if (setName === 'inactives') {
+      return this.produceWhereClauseForInactives();
+    }
 
-    if (setName === 'pendings') return this.produceWhereClauseForPendings();
+    if (setName === 'pendings') {
+      return this.produceWhereClauseForPendings();
+    }
 
-    if (setName === 'owners' && _.isObject(setValue))
+    if (setName === 'owners' && _.isObject(setValue)) {
       return this.produceWhereClauseForOwners(setValue);
+    }
 
-    if (setName === 'viewers' && _.isObject(setValue))
+    if (setName === 'viewers' && _.isObject(setValue)) {
       return this.produceWhereClauseForViewers(setValue);
+    }
 
-    if (setName === 'day') return this.produceWhereClauseForDay();
+    if (setName === 'day') {
+      return this.produceWhereClauseForDay();
+    }
 
-    if (setName === 'week') return this.produceWhereClauseForWeek();
+    if (setName === 'week') {
+      return this.produceWhereClauseForWeek();
+    }
 
-    if (setName === 'month') return this.produceWhereClauseForMonth();
+    if (setName === 'month') {
+      return this.produceWhereClauseForMonth();
+    }
 
-    if (setName === 'audience' && _.isObject(setValue))
+    if (setName === 'audience' && _.isObject(setValue)) {
       return this.produceWhereClauseForAudience(setValue);
+    }
 
     return {};
   }
@@ -304,7 +328,9 @@ class SetToFilterTransformer {
   produceWhereClauseForOwners(setValue?: UserAndGroupInfo): Where<AnyObject> {
     // if owners set query is used it must have a value, otherwise the filter should return emtpy
     // todo: maybe we'd like to throw exception here
-    if (!setValue) return { kind: false };
+    if (!setValue) {
+      return { kind: false };
+    }
 
     const filter: Where<AnyObject> = {};
 
@@ -341,9 +367,13 @@ class SetToFilterTransformer {
      * If there is no user id or group name provided, we return
      * records with zero user and zero groups
      */
-    if (!userIdsGiven) _.set(filter, '_ownerUsersCount', 0);
+    if (!userIdsGiven) {
+      _.set(filter, '_ownerUsersCount', 0);
+    }
 
-    if (!groupIdsGiven) _.set(filter, '_ownerGroupsCount', 0);
+    if (!groupIdsGiven) {
+      _.set(filter, '_ownerGroupsCount', 0);
+    }
 
     return filter;
   }
@@ -351,7 +381,9 @@ class SetToFilterTransformer {
   produceWhereClauseForViewers(setValue?: UserAndGroupInfo): Where<AnyObject> {
     // if viewers set query is used it must have a value, otherwise the filter should return emtpy
     // todo: maybe we'd like to throw exception here
-    if (!setValue) return { kind: false };
+    if (!setValue) {
+      return { kind: false };
+    }
 
     const filter: Where<AnyObject> = {};
 
@@ -390,9 +422,13 @@ class SetToFilterTransformer {
      * If there is no user id or group name provided, we return
      * records with zero user and zero groups
      */
-    if (!userIdsGiven) _.set(filter, '_ownerUsersCount', 0);
+    if (!userIdsGiven) {
+      _.set(filter, '_ownerUsersCount', 0);
+    }
 
-    if (!groupIdsGiven) _.set(filter, '_ownerGroupsCount', 0);
+    if (!groupIdsGiven) {
+      _.set(filter, '_ownerGroupsCount', 0);
+    }
 
     return filter;
   }

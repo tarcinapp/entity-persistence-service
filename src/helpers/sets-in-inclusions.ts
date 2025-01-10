@@ -1,4 +1,4 @@
-import { Filter, InclusionFilter } from '@loopback/repository';
+import type { Filter, InclusionFilter } from '@loopback/repository';
 import { SetFilterBuilder } from '../extensions';
 
 export function processIncludes<T extends object>(

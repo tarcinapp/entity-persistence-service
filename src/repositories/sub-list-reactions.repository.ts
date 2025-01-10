@@ -21,8 +21,9 @@ export class SubListReactionsRepository extends DefaultCrudRepository<
     if (
       filter?.limit &&
       filter.limit > SubListReactionsRepository.response_limit
-    )
+    ) {
       filter.limit = SubListReactionsRepository.response_limit;
+    }
 
     return super.find(filter, options);
   }

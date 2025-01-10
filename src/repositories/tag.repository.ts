@@ -25,8 +25,9 @@ export class TagRepository extends DefaultCrudRepository<
   }
 
   async find(filter?: Filter<Tag>, options?: Options) {
-    if (filter?.limit && filter.limit > TagRepository.response_limit)
+    if (filter?.limit && filter.limit > TagRepository.response_limit) {
       filter.limit = TagRepository.response_limit;
+    }
 
     return super.find(filter, options);
   }
@@ -56,7 +57,7 @@ export class TagRepository extends DefaultCrudRepository<
       content: data.content,
     };
 
-    let filter: Filter<Tag> = new FilterBuilder<Tag>()
+    const filter: Filter<Tag> = new FilterBuilder<Tag>()
       .fields('id')
       .where(where)
       .build();

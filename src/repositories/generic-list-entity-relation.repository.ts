@@ -116,7 +116,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
           const list = listMetadataMap.get(relation._listId);
           const entity = entityMetadataMap.get(relation._entityId);
 
-          if (list !== undefined)
+          if (list !== undefined) {
             // Mutate the existing relation object
             relation._fromMetadata = {
               _kind: list._kind,
@@ -130,8 +130,9 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
               _viewerGroups: list._viewerGroups,
               _visibility: list._visibility,
             };
+          }
 
-          if (entity !== undefined)
+          if (entity !== undefined) {
             relation._toMetadata = {
               _kind: entity._kind,
               _name: entity._name,
@@ -144,6 +145,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
               _viewerUsers: entity._viewerUsers,
               _viewerGroups: entity._viewerGroups,
             };
+          }
 
           return relation; // Return the mutated object
         });
@@ -179,7 +181,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
       ]);
 
       // Enrich the raw relation with metadata
-      if (listMetadata)
+      if (listMetadata) {
         rawRelation._fromMetadata = {
           _kind: listMetadata._kind,
           _name: listMetadata._name,
@@ -192,8 +194,9 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
           _viewerUsers: listMetadata._viewerUsers,
           _viewerGroups: listMetadata._viewerGroups,
         };
+      }
 
-      if (entityMetadata)
+      if (entityMetadata) {
         rawRelation._toMetadata = {
           _kind: entityMetadata._kind,
           _name: entityMetadata._name,
@@ -206,6 +209,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
           _viewerUsers: entityMetadata._viewerUsers,
           _viewerGroups: entityMetadata._viewerGroups,
         };
+      }
       return rawRelation;
     });
   }
@@ -423,8 +427,9 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
     if (
       !process.env.uniqueness_list_entity_rel_fields &&
       !process.env.uniqueness_list_entity_rel_set
-    )
+    ) {
       return;
+    }
 
     const whereBuilder: WhereBuilder<GenericListToEntityRelation> =
       new WhereBuilder<GenericListToEntityRelation>();
@@ -643,7 +648,9 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
     const idempotencyFields =
       this.idempotencyConfigReader.getIdempotencyForListEntityRels(data._kind);
 
-    if (idempotencyFields.length === 0) return undefined;
+    if (idempotencyFields.length === 0) {
+      return undefined;
+    }
 
     const keyString = idempotencyFields
       .map((field) => {

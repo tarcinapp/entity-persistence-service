@@ -1,4 +1,4 @@
-import { ListEntityCommonBase } from '../base-models/list-entity-common-base.model';
+import type { ListEntityCommonBase } from '../base-models/list-entity-common-base.model';
 
 /**
  * Inherits:

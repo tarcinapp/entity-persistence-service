@@ -393,7 +393,9 @@ export class GenericListRepository extends DefaultCrudRepository<
       this.idempotencyConfigReader.getIdempotencyForLists(data._kind);
 
     // idempotency is not configured
-    if (idempotencyFields.length === 0) return;
+    if (idempotencyFields.length === 0) {
+      return;
+    }
 
     const fieldValues = idempotencyFields.map((idempotencyField) => {
       const value = _.get(data, idempotencyField);
@@ -588,8 +590,9 @@ export class GenericListRepository extends DefaultCrudRepository<
       !this.recordLimitConfigReader.isRecordLimitsConfiguredForLists(
         newData._kind,
       )
-    )
+    ) {
       return;
+    }
 
     const limit = this.recordLimitConfigReader.getRecordLimitsCountForLists(
       newData._kind,
@@ -605,13 +608,13 @@ export class GenericListRepository extends DefaultCrudRepository<
       this.recordLimitConfigReader.isLimitConfiguredForKindForLists(
         newData._kind,
       )
-    )
+    ) {
       filterBuilder = new FilterBuilder<GenericList>({
         where: {
           _kind: newData._kind,
         },
       });
-    else {
+    } else {
       filterBuilder = new FilterBuilder<GenericList>();
     }
 
@@ -646,22 +649,27 @@ export class GenericListRepository extends DefaultCrudRepository<
   }
 
   private generateSlug(data: DataObject<GenericList>) {
-    if (data._name && !data._slug)
+    if (data._name && !data._slug) {
       data._slug = slugify(data._name ?? '', { lower: true, strict: true });
+    }
   }
 
   private setCountFields(data: DataObject<GenericList>) {
-    if (_.isArray(data._ownerUsers))
+    if (_.isArray(data._ownerUsers)) {
       data._ownerUsersCount = data._ownerUsers?.length;
+    }
 
-    if (_.isArray(data._ownerGroups))
+    if (_.isArray(data._ownerGroups)) {
       data._ownerGroupsCount = data._ownerGroups?.length;
+    }
 
-    if (_.isArray(data._viewerUsers))
+    if (_.isArray(data._viewerUsers)) {
       data._viewerUsersCount = data._viewerUsers?.length;
+    }
 
-    if (_.isArray(data._viewerGroups))
+    if (_.isArray(data._viewerGroups)) {
       data._viewerGroupsCount = data._viewerGroups?.length;
+    }
   }
 
   private checkDataKindFormat(data: DataObject<GenericList>) {
@@ -707,8 +715,9 @@ export class GenericListRepository extends DefaultCrudRepository<
     // return if no uniqueness is configured
     if (
       !this.uniquenessConfigReader.isUniquenessConfiguredForLists(newData._kind)
-    )
+    ) {
       return;
+    }
 
     const whereBuilder: WhereBuilder<GenericList> =
       new WhereBuilder<GenericList>();
@@ -759,8 +768,12 @@ export class GenericListRepository extends DefaultCrudRepository<
     newData: DataObject<GenericList>,
   ) {
     // return if no uniqueness is configured
-    if (!process.env.uniqueness_list_fields && !process.env.uniqueness_list_set)
+    if (
+      !process.env.uniqueness_list_fields &&
+      !process.env.uniqueness_list_set
+    ) {
       return;
+    }
 
     const whereBuilder: WhereBuilder<GenericList> =
       new WhereBuilder<GenericList>();

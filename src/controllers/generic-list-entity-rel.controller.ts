@@ -77,14 +77,17 @@ export class GenericListEntityRelController {
   ): Promise<Count> {
     const filterBuilder = new FilterBuilder<GenericListToEntityRelation>();
 
-    if (where) filterBuilder.where(where);
+    if (where) {
+      filterBuilder.where(where);
+    }
 
     let filter = filterBuilder.build();
 
-    if (set)
+    if (set) {
       filter = new SetFilterBuilder<GenericListToEntityRelation>(set, {
         filter: filter,
       }).build();
+    }
 
     return this.genericListEntityRelationRepository.count(filter.where);
   }
@@ -111,10 +114,11 @@ export class GenericListEntityRelController {
     @param.filter(GenericListToEntityRelation)
     filter?: Filter<GenericListToEntityRelation>,
   ): Promise<GenericListToEntityRelation[]> {
-    if (set)
+    if (set) {
       filter = new SetFilterBuilder<GenericListToEntityRelation>(set, {
         filter: filter,
       }).build();
+    }
 
     sanitizeFilterFields(filter);
 

@@ -1,4 +1,4 @@
-import { RecordsCommonBase } from '../base-models/records-common-base.model';
+import type { RecordsCommonBase } from '../base-models/records-common-base.model';
 
 /**
  * Inherits:

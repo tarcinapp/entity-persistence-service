@@ -1,5 +1,6 @@
-import { Client, expect } from '@loopback/testlab';
-import { EntityPersistenceApplication } from '../..';
+import type { Client } from '@loopback/testlab';
+import { expect } from '@loopback/testlab';
+import type { EntityPersistenceApplication } from '../..';
 import { setupApplication } from './test-helper';
 
 describe('PingController', () => {

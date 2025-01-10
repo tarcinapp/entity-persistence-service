@@ -128,14 +128,17 @@ export class GenericListController {
   ): Promise<Count> {
     const filterBuilder = new FilterBuilder<GenericList>();
 
-    if (where) filterBuilder.where(where);
+    if (where) {
+      filterBuilder.where(where);
+    }
 
     let filter = filterBuilder.build();
 
-    if (set)
+    if (set) {
       filter = new SetFilterBuilder<GenericList>(set, {
         filter: filter,
       }).build();
+    }
 
     return this.genericListRepository.count(filter.where);
   }
@@ -159,10 +162,11 @@ export class GenericListController {
     @param.filter(GenericList) filter?: Filter<GenericList>,
     @param.query.object('set') set?: Set,
   ): Promise<GenericList[]> {
-    if (set)
+    if (set) {
       filter = new SetFilterBuilder<GenericList>(set, {
         filter: filter,
       }).build();
+    }
 
     processIncludes<GenericList>(filter);
 
@@ -218,14 +222,17 @@ export class GenericListController {
   ): Promise<Count> {
     const filterBuilder = new FilterBuilder<GenericList>();
 
-    if (where) filterBuilder.where(where);
+    if (where) {
+      filterBuilder.where(where);
+    }
 
     let filter = filterBuilder.build();
 
-    if (set)
+    if (set) {
       filter = new SetFilterBuilder<GenericList>(set, {
         filter: filter,
       }).build();
+    }
 
     return this.genericListRepository.updateAll(list, filter.where);
   }
