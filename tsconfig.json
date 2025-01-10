@@ -15,6 +15,9 @@
     "strict": true
   },
   "include": [
-    "src"
+    "src/**/*.ts",
+    "src/**/*.js",
+    "src/**/*.d.ts",
+    ".eslintrc.js"
   ]
 }

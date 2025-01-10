@@ -210,6 +210,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
           _viewerGroups: entityMetadata._viewerGroups,
         };
       }
+
       return rawRelation;
     });
   }
@@ -230,6 +231,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
         }
 
         data._idempotencyKey = idempotencyKey;
+
         return this.createNewRelationFacade(data);
       },
     );
@@ -655,6 +657,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
     const keyString = idempotencyFields
       .map((field) => {
         const value = _.get(data, field);
+
         return typeof value === 'object' ? JSON.stringify(value) : value;
       })
       .join(',');
@@ -673,6 +676,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
         where: { _idempotencyKey: idempotencyKey },
       });
     }
+
     return null;
   }
 

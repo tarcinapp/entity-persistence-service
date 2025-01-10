@@ -153,6 +153,7 @@ export class GenericListRepository extends DefaultCrudRepository<
       // set the sourceListId to the custom repo
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (repo as any).sourceListId = listId;
+
       return repo;
     };
 
@@ -354,6 +355,7 @@ export class GenericListRepository extends DefaultCrudRepository<
         if (!entitiesByListId.has(rel._listId)) {
           entitiesByListId.set(rel._listId, []);
         }
+
         const entity = entities.find((e) => e._id === rel._entityId);
         if (entity) {
           entitiesByListId.get(rel._listId)?.push(entity);
@@ -399,6 +401,7 @@ export class GenericListRepository extends DefaultCrudRepository<
 
     const fieldValues = idempotencyFields.map((idempotencyField) => {
       const value = _.get(data, idempotencyField);
+
       return typeof value === 'object' ? JSON.stringify(value) : value;
     });
 

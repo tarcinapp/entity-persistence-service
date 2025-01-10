@@ -126,6 +126,7 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
           _validUntilDateTime: relation._validUntilDateTime,
         };
       }
+
       return entity;
     });
   }
@@ -158,6 +159,7 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
       await genericEntitiesRepo.deleteById(entity._id, options);
       throw err;
     }
+
     return entity;
   }
 

@@ -301,6 +301,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
     const fieldValues = idempotencyFields.map((idempotencyField) => {
       const value = _.get(data, idempotencyField);
+
       return typeof value === 'object' ? JSON.stringify(value) : value;
     });
 

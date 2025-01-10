@@ -70,26 +70,31 @@ export class IdempotencyConfigurationReader {
 
   private getIdempotencyConfigForKindForEntities(kind?: string): string[] {
     const config = process.env[`idempotency_entity_for_${kind}`];
+
     return config ? config.split(',').map((fieldPath) => fieldPath.trim()) : [];
   }
 
   private getIdempotencyConfigForEntities(): string[] {
     const config = process.env['idempotency_entity'];
+
     return config ? config.split(',').map((fieldPath) => fieldPath.trim()) : [];
   }
 
   private getIdempotencyConfigForKindForLists(kind?: string): string[] {
     const config = process.env[`idempotency_list_for_${kind}`];
+
     return config ? config.split(',').map((fieldPath) => fieldPath.trim()) : [];
   }
 
   private getIdempotencyConfigForLists(): string[] {
     const config = process.env['idempotency_list'];
+
     return config ? config.split(',').map((fieldPath) => fieldPath.trim()) : [];
   }
 
   private getIdempotencyConfigForKindForListEntityRel(kind?: string): string[] {
     const config = process.env[`idempotency_list_entity_rel_for_${kind}`];
+
     return config ? config.split(',').map((fieldPath) => fieldPath.trim()) : [];
   }
 

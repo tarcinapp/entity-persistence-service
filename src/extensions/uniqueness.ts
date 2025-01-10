@@ -321,6 +321,7 @@ export class UniquenessConfigurationReader {
 
     if (setStr) {
       const set = qs.parse(setStr).set as Set;
+
       return set;
     }
   }

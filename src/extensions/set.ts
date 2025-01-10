@@ -145,6 +145,7 @@ export class SetFilterBuilder<T extends object = AnyObject> {
      */
     const subClauses = _.map(subSetArr, (subSet) => {
       const subSetKeys = _.keys(subSet);
+
       return this.buildWhereClauseForConditions(subSet, subSetKeys);
     });
 
@@ -355,11 +356,13 @@ class SetToFilterTransformer {
 
     if (userIdsGiven) {
       const userIdsArr = setValue?.userIds!.split(',');
+
       return this.prepareOwnerUsersClause(userIdsArr);
     }
 
     if (groupIdsGiven) {
       const groupIdsArr = setValue?.groupIds!.split(',');
+
       return this.prepareOwnerGroupsClause(groupIdsArr);
     }
 

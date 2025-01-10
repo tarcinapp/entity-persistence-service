@@ -1,9 +1,6 @@
-import {EntityPersistenceApplication} from '../..';
-import {
-  createRestAppClient,
-  givenHttpServerConfig,
-  Client,
-} from '@loopback/testlab';
+import type { Client } from '@loopback/testlab';
+import { createRestAppClient, givenHttpServerConfig } from '@loopback/testlab';
+import { EntityPersistenceApplication } from '../..';
 
 export async function setupApplication(): Promise<AppWithClient> {
   const restConfig = givenHttpServerConfig({
@@ -18,12 +15,14 @@ export async function setupApplication(): Promise<AppWithClient> {
     rest: restConfig,
   });
 
+  debugger;
+
   await app.boot();
   await app.start();
 
   const client = createRestAppClient(app);
 
-  return {app, client};
+  return { app, client };
 }
 
 export interface AppWithClient {
