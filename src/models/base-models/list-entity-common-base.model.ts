@@ -1,4 +1,5 @@
 import {model, property} from '@loopback/repository';
+import {RelationMetadataType} from '../base-types/relation-metadata-under-entity.type';
 import {AccessControlBase} from './access-control-base.model';
 
 /**
@@ -55,6 +56,12 @@ export class ListEntityCommonBase extends AccessControlBase {
     default: 0,
   })
   _viewerGroupsCount?: number;
+
+  @property({
+    type: 'object',
+    description: 'Contains the relation metadata for the record'
+  })
+  _relationMetadata?: RelationMetadataType
 
   constructor(data?: Partial<ListEntityCommonBase>) {
     super(data);
