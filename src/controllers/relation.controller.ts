@@ -16,20 +16,22 @@ import {
   put,
   requestBody,
 } from '@loopback/rest';
-import {EntityRelation} from '../models';
-import {RelationRepository} from '../repositories';
+import { EntityRelation } from '../models';
+import { RelationRepository } from '../repositories';
 
 export class RelationController {
   constructor(
     @repository(RelationRepository)
     public relationRepository: RelationRepository,
-  ) { }
+  ) {}
 
   @post('/relations', {
     responses: {
       '200': {
         description: 'Relation model instance',
-        content: {'application/json': {schema: getModelSchemaRef(EntityRelation)}},
+        content: {
+          'application/json': { schema: getModelSchemaRef(EntityRelation) },
+        },
       },
     },
   })
@@ -53,7 +55,7 @@ export class RelationController {
     responses: {
       '200': {
         description: 'Relation model count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
@@ -71,7 +73,9 @@ export class RelationController {
           'application/json': {
             schema: {
               type: 'array',
-              items: getModelSchemaRef(EntityRelation, {includeRelations: true}),
+              items: getModelSchemaRef(EntityRelation, {
+                includeRelations: true,
+              }),
             },
           },
         },
@@ -88,7 +92,7 @@ export class RelationController {
     responses: {
       '200': {
         description: 'Relation PATCH success count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
@@ -96,7 +100,7 @@ export class RelationController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(EntityRelation, {partial: true}),
+          schema: getModelSchemaRef(EntityRelation, { partial: true }),
         },
       },
     })
@@ -112,7 +116,9 @@ export class RelationController {
         description: 'Relation model instance',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(EntityRelation, {includeRelations: true}),
+            schema: getModelSchemaRef(EntityRelation, {
+              includeRelations: true,
+            }),
           },
         },
       },
@@ -120,7 +126,8 @@ export class RelationController {
   })
   async findById(
     @param.path.string('id') id: string,
-    @param.filter(EntityRelation, {exclude: 'where'}) filter?: FilterExcludingWhere<EntityRelation>
+    @param.filter(EntityRelation, { exclude: 'where' })
+    filter?: FilterExcludingWhere<EntityRelation>,
   ): Promise<EntityRelation> {
     return this.relationRepository.findById(id, filter);
   }
@@ -137,7 +144,7 @@ export class RelationController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(EntityRelation, {partial: true}),
+          schema: getModelSchemaRef(EntityRelation, { partial: true }),
         },
       },
     })

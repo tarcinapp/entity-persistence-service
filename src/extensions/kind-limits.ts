@@ -1,4 +1,4 @@
-import {BindingKey} from '@loopback/core';
+import { BindingKey } from '@loopback/core';
 import _ from 'lodash';
 
 export namespace KindLimitsBindings {
@@ -10,14 +10,12 @@ export namespace KindLimitsBindings {
 /**
  * This class is used to read the configuration made to constraint allowed list of kinds.
  * Class can be used for entities, lists, reactions, etc..
- * 
+ *
  * It's implemented only for entities so far.
  */
 export class KindLimitsConfigurationReader {
-
-
   // this var keeps if there is a configuration. Validation calls are checking if this value true
-  // before executing validation logic. 
+  // before executing validation logic.
   private static IS_KIND_LIMITS_CONFIGURED_FOR_ENTITIES: boolean = false;
 
   // this var getting initialized at the constructor.
@@ -25,7 +23,7 @@ export class KindLimitsConfigurationReader {
   private static ALLOWED_KINDS_FOR_ENTITIES: string[] = [];
 
   // this var keeps if there is a configuration. Validation calls are checking if this value true
-  // before executing validation logic. 
+  // before executing validation logic.
   private static IS_KIND_LIMITS_CONFIGURED_FOR_LISTS: boolean = false;
 
   // this var getting initialized at the constructor.
@@ -34,7 +32,8 @@ export class KindLimitsConfigurationReader {
 
   private static ALLOWED_KINDS_FOR_ENTITY_LIST_RELATIONS: string[] = [];
 
-  private static IS_KIND_LIMITS_CONFIGURED_FOR_LIST_ENTITY_KINDS: boolean = false;
+  private static IS_KIND_LIMITS_CONFIGURED_FOR_LIST_ENTITY_KINDS: boolean =
+    false;
 
   private static DEFAULT_ENTITY_KIND: string = 'entity';
   private static DEFAULT_LIST_KIND: string = 'list';
@@ -44,8 +43,7 @@ export class KindLimitsConfigurationReader {
     this.initKindLimitConfigurations();
   }
 
-  constructor() {
-  }
+  constructor() {}
 
   public get allowedKindsForEntities() {
     return KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_ENTITIES;
@@ -58,7 +56,6 @@ export class KindLimitsConfigurationReader {
   public get allowedKindsForEntityListRelations() {
     return KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_ENTITY_LIST_RELATIONS;
   }
-
 
   public get defaultEntityKind() {
     return KindLimitsConfigurationReader.DEFAULT_ENTITY_KIND;
@@ -73,54 +70,69 @@ export class KindLimitsConfigurationReader {
   }
 
   private static initKindLimitConfigurations() {
-
     if (_.has(process.env, 'entity_kinds')) {
-      KindLimitsConfigurationReader.IS_KIND_LIMITS_CONFIGURED_FOR_ENTITIES = true;
+      KindLimitsConfigurationReader.IS_KIND_LIMITS_CONFIGURED_FOR_ENTITIES =
+        true;
 
-      const kinds = _.split(process.env['entity_kinds'], ',')
-        .map(_.trim);
+      const kinds = _.split(process.env['entity_kinds'], ',').map(_.trim);
 
-      KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_ENTITIES.push(...kinds, KindLimitsConfigurationReader.DEFAULT_ENTITY_KIND);
+      KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_ENTITIES.push(
+        ...kinds,
+        KindLimitsConfigurationReader.DEFAULT_ENTITY_KIND,
+      );
     }
 
     if (_.has(process.env, 'list_kinds')) {
       KindLimitsConfigurationReader.IS_KIND_LIMITS_CONFIGURED_FOR_LISTS = true;
 
-      const kinds = _.split(process.env['list_kinds'], ',')
-        .map(_.trim);
+      const kinds = _.split(process.env['list_kinds'], ',').map(_.trim);
 
-      KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_LISTS.push(...kinds, KindLimitsConfigurationReader.DEFAULT_LIST_KIND);
+      KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_LISTS.push(
+        ...kinds,
+        KindLimitsConfigurationReader.DEFAULT_LIST_KIND,
+      );
     }
 
     if (_.has(process.env, 'list_entity_rel_kinds')) {
-      KindLimitsConfigurationReader.IS_KIND_LIMITS_CONFIGURED_FOR_LIST_ENTITY_KINDS = true;
+      KindLimitsConfigurationReader.IS_KIND_LIMITS_CONFIGURED_FOR_LIST_ENTITY_KINDS =
+        true;
 
-      const kinds = _.split(process.env['list_entity_rel_kinds'], ',')
-        .map(_.trim);
+      const kinds = _.split(process.env['list_entity_rel_kinds'], ',').map(
+        _.trim,
+      );
 
-      KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_ENTITY_LIST_RELATIONS.push(...kinds, KindLimitsConfigurationReader.DEFAULT_RELATION_KIND);
+      KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_ENTITY_LIST_RELATIONS.push(
+        ...kinds,
+        KindLimitsConfigurationReader.DEFAULT_RELATION_KIND,
+      );
     }
   }
 
   public isKindAcceptableForEntity(kind: string) {
-
     if (KindLimitsConfigurationReader.IS_KIND_LIMITS_CONFIGURED_FOR_ENTITIES)
-      return KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_ENTITIES.includes(kind);
+      return KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_ENTITIES.includes(
+        kind,
+      );
 
     return true;
   }
 
   public isKindAcceptableForList(kind: string) {
     if (KindLimitsConfigurationReader.IS_KIND_LIMITS_CONFIGURED_FOR_LISTS)
-      return KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_LISTS.includes(kind);
+      return KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_LISTS.includes(
+        kind,
+      );
 
     return true;
   }
 
   public isKindAcceptableForListEntityRelations(kind: string) {
-
-    if (KindLimitsConfigurationReader.IS_KIND_LIMITS_CONFIGURED_FOR_LIST_ENTITY_KINDS)
-      return KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_ENTITY_LIST_RELATIONS.includes(kind);
+    if (
+      KindLimitsConfigurationReader.IS_KIND_LIMITS_CONFIGURED_FOR_LIST_ENTITY_KINDS
+    )
+      return KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_ENTITY_LIST_RELATIONS.includes(
+        kind,
+      );
 
     return true;
   }

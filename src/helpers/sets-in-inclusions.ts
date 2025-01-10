@@ -1,10 +1,10 @@
-import {Filter, InclusionFilter} from '@loopback/repository';
-import {SetFilterBuilder} from '../extensions';
+import { Filter, InclusionFilter } from '@loopback/repository';
+import { SetFilterBuilder } from '../extensions';
 
-export function processIncludes<T extends object>(filter: Filter<T> | undefined): void {
-
+export function processIncludes<T extends object>(
+  filter: Filter<T> | undefined,
+): void {
   function processIncludeObject(include: InclusionFilter): InclusionFilter {
-
     if (typeof include === 'object') {
       // Process the current include object if it has a `set`
       if (include.set) {
@@ -16,15 +16,16 @@ export function processIncludes<T extends object>(filter: Filter<T> | undefined)
       if (include.setThrough) {
         include.whereThrough = new SetFilterBuilder<T>(include.setThrough, {
           filter: {
-            where: include.whereThrough
-          }
+            where: include.whereThrough,
+          },
         }).build().where;
       }
 
       // Recursively process nested includes in `scope.include`
       if (include.scope && Array.isArray(include.scope.include)) {
-        include.scope.include = include.scope.include.map((nestedInclude: InclusionFilter) =>
-          processIncludeObject(nestedInclude),
+        include.scope.include = include.scope.include.map(
+          (nestedInclude: InclusionFilter) =>
+            processIncludeObject(nestedInclude),
         );
       }
     }
@@ -32,6 +33,8 @@ export function processIncludes<T extends object>(filter: Filter<T> | undefined)
   }
 
   if (filter && Array.isArray(filter.include)) {
-    filter.include = filter.include.map((include: InclusionFilter) => processIncludeObject(include));
+    filter.include = filter.include.map((include: InclusionFilter) =>
+      processIncludeObject(include),
+    );
   }
 }

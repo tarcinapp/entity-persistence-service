@@ -15,16 +15,14 @@ import {
   post,
   requestBody,
 } from '@loopback/rest';
-import {
-  Reactions,
-  SubReactions,
-} from '../models';
-import {ReactionsRepository} from '../repositories';
+import { Reactions, SubReactions } from '../models';
+import { ReactionsRepository } from '../repositories';
 
 export class ReactionsSubReactionsController {
   constructor(
-    @repository(ReactionsRepository) protected reactionsRepository: ReactionsRepository,
-  ) { }
+    @repository(ReactionsRepository)
+    protected reactionsRepository: ReactionsRepository,
+  ) {}
 
   @get('/reactions/{id}/sub-reactions', {
     responses: {
@@ -32,7 +30,7 @@ export class ReactionsSubReactionsController {
         description: 'Array of Reactions has many SubReactions',
         content: {
           'application/json': {
-            schema: {type: 'array', items: getModelSchemaRef(SubReactions)},
+            schema: { type: 'array', items: getModelSchemaRef(SubReactions) },
           },
         },
       },
@@ -49,7 +47,9 @@ export class ReactionsSubReactionsController {
     responses: {
       '200': {
         description: 'Reactions model instance',
-        content: {'application/json': {schema: getModelSchemaRef(SubReactions)}},
+        content: {
+          'application/json': { schema: getModelSchemaRef(SubReactions) },
+        },
       },
     },
   })
@@ -61,11 +61,12 @@ export class ReactionsSubReactionsController {
           schema: getModelSchemaRef(SubReactions, {
             title: 'NewSubReactionsInReactions',
             exclude: ['id'],
-            optional: ['reactionId']
+            optional: ['reactionId'],
           }),
         },
       },
-    }) subReactions: Omit<SubReactions, 'id'>,
+    })
+    subReactions: Omit<SubReactions, 'id'>,
   ): Promise<SubReactions> {
     return this.reactionsRepository.subReactions(id).create(subReactions);
   }
@@ -74,7 +75,7 @@ export class ReactionsSubReactionsController {
     responses: {
       '200': {
         description: 'Reactions.SubReactions PATCH success count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
@@ -83,12 +84,13 @@ export class ReactionsSubReactionsController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(SubReactions, {partial: true}),
+          schema: getModelSchemaRef(SubReactions, { partial: true }),
         },
       },
     })
     subReactions: Partial<SubReactions>,
-    @param.query.object('where', getWhereSchemaFor(SubReactions)) where?: Where<SubReactions>,
+    @param.query.object('where', getWhereSchemaFor(SubReactions))
+    where?: Where<SubReactions>,
   ): Promise<Count> {
     return this.reactionsRepository.subReactions(id).patch(subReactions, where);
   }
@@ -97,13 +99,14 @@ export class ReactionsSubReactionsController {
     responses: {
       '200': {
         description: 'Reactions.SubReactions DELETE success count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
   async delete(
     @param.path.string('id') id: string,
-    @param.query.object('where', getWhereSchemaFor(SubReactions)) where?: Where<SubReactions>,
+    @param.query.object('where', getWhereSchemaFor(SubReactions))
+    where?: Where<SubReactions>,
   ): Promise<Count> {
     return this.reactionsRepository.subReactions(id).delete(where);
   }

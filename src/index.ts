@@ -1,9 +1,25 @@
-import {RestBindings} from '@loopback/rest';
-import {ApplicationConfig, EntityPersistenceApplication} from './application';
-import {KindLimitsBindings, KindLimitsConfigurationReader, UniquenessBindings, UniquenessConfigurationReader, VisibilityConfigBindings, VisibilityConfigurationReader} from './extensions';
-import {IdempotencyConfigBindings, IdempotencyConfigurationReader} from './extensions/idempotency-config-reader';
-import {RecordLimitsBindings, RecordLimitsConfigurationReader} from './extensions/record-limits';
-import {ValidFromConfigBindings, ValidfromConfigurationReader} from './extensions/validfrom-config-reader';
+import { RestBindings } from '@loopback/rest';
+import { ApplicationConfig, EntityPersistenceApplication } from './application';
+import {
+  KindLimitsBindings,
+  KindLimitsConfigurationReader,
+  UniquenessBindings,
+  UniquenessConfigurationReader,
+  VisibilityConfigBindings,
+  VisibilityConfigurationReader,
+} from './extensions';
+import {
+  IdempotencyConfigBindings,
+  IdempotencyConfigurationReader,
+} from './extensions/idempotency-config-reader';
+import {
+  RecordLimitsBindings,
+  RecordLimitsConfigurationReader,
+} from './extensions/record-limits';
+import {
+  ValidFromConfigBindings,
+  ValidfromConfigurationReader,
+} from './extensions/validfrom-config-reader';
 
 export * from './application';
 
@@ -12,29 +28,34 @@ export async function main(options: ApplicationConfig = {}) {
 
   app.bind(RestBindings.ERROR_WRITER_OPTIONS).to({
     debug: process.env.NODE_ENV !== 'production',
-    safeFields: ['errorCode', 'message']
+    safeFields: ['errorCode', 'message'],
   });
 
   // add uniqueness configuration reader to context
-  app.bind(UniquenessBindings.CONFIG_READER)
+  app
+    .bind(UniquenessBindings.CONFIG_READER)
     .toClass(UniquenessConfigurationReader);
 
   // add uniqueness configuration reader to context
-  app.bind(RecordLimitsBindings.CONFIG_READER)
+  app
+    .bind(RecordLimitsBindings.CONFIG_READER)
     .toClass(RecordLimitsConfigurationReader);
 
   // add kind limits configuration reader to context
-  app.bind(KindLimitsBindings.CONFIG_READER)
+  app
+    .bind(KindLimitsBindings.CONFIG_READER)
     .toClass(KindLimitsConfigurationReader);
 
-  app.bind(VisibilityConfigBindings.CONFIG_READER)
+  app
+    .bind(VisibilityConfigBindings.CONFIG_READER)
     .toClass(VisibilityConfigurationReader);
 
   app
     .bind(IdempotencyConfigBindings.CONFIG_READER)
-    .toClass(IdempotencyConfigurationReader)
+    .toClass(IdempotencyConfigurationReader);
 
-  app.bind(ValidFromConfigBindings.CONFIG_READER)
+  app
+    .bind(ValidFromConfigBindings.CONFIG_READER)
     .toClass(ValidfromConfigurationReader);
 
   await app.boot();
@@ -67,12 +88,12 @@ if (require.main === module) {
         'x-powered-by': false,
         // eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-explicit-any
         'query parser': (query: any) => {
-          return require('qs').parse(query, {depth: 10});
-        }
-      }
+          return require('qs').parse(query, { depth: 10 });
+        },
+      },
     },
   };
-  main(config).catch(err => {
+  main(config).catch((err) => {
     console.error('Cannot start the application.', err);
     process.exit(1);
   });

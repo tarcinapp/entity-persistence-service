@@ -1,12 +1,13 @@
-import {BindingKey} from '@loopback/core';
-import _, {cloneDeepWith, isEmpty} from 'lodash';
+import { BindingKey } from '@loopback/core';
+import _, { cloneDeepWith, isEmpty } from 'lodash';
 import qs from 'qs';
-import {Set, UserAndGroupInfo} from '../extensions/set';
+import { Set, UserAndGroupInfo } from '../extensions/set';
 
 export namespace RecordLimitsBindings {
-  export const CONFIG_READER = BindingKey.create<RecordLimitsConfigurationReader>(
-    'extensions.record-limits.configurationreader',
-  );
+  export const CONFIG_READER =
+    BindingKey.create<RecordLimitsConfigurationReader>(
+      'extensions.record-limits.configurationreader',
+    );
 }
 
 /**
@@ -16,13 +17,13 @@ export namespace RecordLimitsBindings {
  * to where the limit needs to be applied (set), and to get the limit integer.
  */
 export class RecordLimitsConfigurationReader {
-
-  constructor() {
-
-  }
+  constructor() {}
 
   public isRecordLimitsConfiguredForEntities(kind?: string) {
-    return _.has(process.env, 'record_limit_entity_count') || this.isLimitConfiguredForKindForEntities(kind);
+    return (
+      _.has(process.env, 'record_limit_entity_count') ||
+      this.isLimitConfiguredForKindForEntities(kind)
+    );
   }
 
   public isLimitConfiguredForKindForEntities(kind?: string) {
@@ -30,9 +31,10 @@ export class RecordLimitsConfigurationReader {
   }
 
   public getRecordLimitsCountForEntities(kind?: string) {
-
     if (_.has(process.env, `record_limit_entity_count_for_${kind}`)) {
-      return _.toInteger(_.get(process.env, `record_limit_entity_count_for_${kind}`));
+      return _.toInteger(
+        _.get(process.env, `record_limit_entity_count_for_${kind}`),
+      );
     }
 
     if (_.has(process.env, `record_limit_entity_count`)) {
@@ -40,8 +42,11 @@ export class RecordLimitsConfigurationReader {
     }
   }
 
-  public getRecordLimitsSetForEntities(ownerUsers?: (string | undefined)[], ownerGroups?: (string | undefined)[], kind?: string): Set | undefined {
-
+  public getRecordLimitsSetForEntities(
+    ownerUsers?: (string | undefined)[],
+    ownerGroups?: (string | undefined)[],
+    kind?: string,
+  ): Set | undefined {
     let setStr: string | undefined;
 
     setStr = _.get(process.env, `record_limit_entity_set_for_${kind}`);
@@ -51,24 +56,23 @@ export class RecordLimitsConfigurationReader {
     }
 
     if (setStr) {
-      const set = (qs.parse(setStr)).set as Set;
+      const set = qs.parse(setStr).set as Set;
       const userAndGroupInfo: UserAndGroupInfo = {};
 
       if (!isEmpty(ownerUsers)) {
-        userAndGroupInfo.userIds = ownerUsers?.join(',')
+        userAndGroupInfo.userIds = ownerUsers?.join(',');
       }
 
       if (!isEmpty(ownerGroups)) {
-        userAndGroupInfo.groupIds = ownerGroups?.join(',')
+        userAndGroupInfo.groupIds = ownerGroups?.join(',');
       }
 
       // Use _.cloneDeepWith for inline recursive replacement
       const updatedSet = cloneDeepWith(set, (v, k) => {
-
         if (k === 'owners' || k === 'audience') {
           return userAndGroupInfo;
         }
-      })
+      });
 
       return updatedSet as Set;
     }
@@ -77,7 +81,10 @@ export class RecordLimitsConfigurationReader {
   /////
 
   public isRecordLimitsConfiguredForLists(kind?: string) {
-    return _.has(process.env, 'record_limit_list_count') || this.isLimitConfiguredForKindForLists(kind);
+    return (
+      _.has(process.env, 'record_limit_list_count') ||
+      this.isLimitConfiguredForKindForLists(kind)
+    );
   }
 
   public isLimitConfiguredForKindForLists(kind?: string) {
@@ -85,9 +92,10 @@ export class RecordLimitsConfigurationReader {
   }
 
   public getRecordLimitsCountForLists(kind?: string) {
-
     if (_.has(process.env, `record_limit_list_count_for_${kind}`)) {
-      return _.toInteger(_.get(process.env, `record_limit_list_count_for_${kind}`));
+      return _.toInteger(
+        _.get(process.env, `record_limit_list_count_for_${kind}`),
+      );
     }
 
     if (_.has(process.env, `record_limit_list_count`)) {
@@ -95,8 +103,11 @@ export class RecordLimitsConfigurationReader {
     }
   }
 
-  public getRecordLimitsSetForLists(ownerUsers?: (string | undefined)[], ownerGroups?: (string | undefined)[], kind?: string): Set | undefined {
-
+  public getRecordLimitsSetForLists(
+    ownerUsers?: (string | undefined)[],
+    ownerGroups?: (string | undefined)[],
+    kind?: string,
+  ): Set | undefined {
     let setStr: string | undefined;
 
     setStr = _.get(process.env, `record_limit_list_set_for_${kind}`);
@@ -106,24 +117,23 @@ export class RecordLimitsConfigurationReader {
     }
 
     if (setStr) {
-      const set = (qs.parse(setStr)).set as Set;
+      const set = qs.parse(setStr).set as Set;
       const userAndGroupInfo: UserAndGroupInfo = {};
 
       if (!isEmpty(ownerUsers)) {
-        userAndGroupInfo.userIds = ownerUsers?.join(',')
+        userAndGroupInfo.userIds = ownerUsers?.join(',');
       }
 
       if (!isEmpty(ownerGroups)) {
-        userAndGroupInfo.groupIds = ownerGroups?.join(',')
+        userAndGroupInfo.groupIds = ownerGroups?.join(',');
       }
 
       // Use _.cloneDeepWith for inline recursive replacement
       const updatedSet = cloneDeepWith(set, (v, k) => {
-
         if (k === 'owners' || k === 'audience') {
           return userAndGroupInfo;
         }
-      })
+      });
 
       return updatedSet as Set;
     }
@@ -131,7 +141,10 @@ export class RecordLimitsConfigurationReader {
 
   ///
   public isRecordLimitsConfiguredForListEntityRelations(kind?: string) {
-    return _.has(process.env, 'record_limit_list_entity_rel_count') || this.isLimitConfiguredForKindForListEntityRelations(kind);
+    return (
+      _.has(process.env, 'record_limit_list_entity_rel_count') ||
+      this.isLimitConfiguredForKindForListEntityRelations(kind)
+    );
   }
 
   public isLimitConfiguredForKindForListEntityRelations(kind?: string) {
@@ -139,18 +152,22 @@ export class RecordLimitsConfigurationReader {
   }
 
   public getRecordLimitsCountForListEntityRelations(kind?: string) {
-
     if (_.has(process.env, `record_limit_list_entity_rel_count_for_${kind}`)) {
-      return _.toInteger(_.get(process.env, `record_limit_list_entity_rel_count_for_${kind}`));
+      return _.toInteger(
+        _.get(process.env, `record_limit_list_entity_rel_count_for_${kind}`),
+      );
     }
 
     if (_.has(process.env, `record_limit_list_entity_rel_count`)) {
-      return _.toInteger(_.get(process.env, `record_limit_list_entity_rel_count`));
+      return _.toInteger(
+        _.get(process.env, `record_limit_list_entity_rel_count`),
+      );
     }
   }
 
-  public getRecordLimitsSetForListEntityRelations(kind?: string): Set | undefined {
-
+  public getRecordLimitsSetForListEntityRelations(
+    kind?: string,
+  ): Set | undefined {
     let setStr: string | undefined;
 
     setStr = _.get(process.env, `record_limit_list_entity_rel_set_for_${kind}`);
@@ -160,7 +177,7 @@ export class RecordLimitsConfigurationReader {
     }
 
     if (setStr) {
-      const set = (qs.parse(setStr)).set as Set;
+      const set = qs.parse(setStr).set as Set;
       return set;
     }
   }

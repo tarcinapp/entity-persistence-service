@@ -1,4 +1,4 @@
-import {Entity, model, property} from '@loopback/repository';
+import { Entity, model, property } from '@loopback/repository';
 
 @model()
 export class ListRelation extends Entity {
@@ -6,7 +6,7 @@ export class ListRelation extends Entity {
     type: 'string',
     id: true,
     generated: false,
-    defaultFn: "uuidv4",
+    defaultFn: 'uuidv4',
   })
   id?: string;
 
@@ -30,7 +30,7 @@ export class ListRelation extends Entity {
 
   @property({
     type: 'date',
-    defaultFn: "now",
+    defaultFn: 'now',
   })
   creationDateTime?: string;
 

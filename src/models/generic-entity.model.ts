@@ -1,27 +1,28 @@
-import {hasMany, model} from '@loopback/repository';
-import {ListEntityCommonBase} from './base-models/list-entity-common-base.model';
-import {Reactions} from './reactions.model';
-import {EntityRelation} from './relation.model';
-import {TagEntityRelation} from './tag-entity-relation.model';
-import {Tag} from './tag.model';
+import { hasMany, model } from '@loopback/repository';
+import { ListEntityCommonBase } from './base-models/list-entity-common-base.model';
+import { Reactions } from './reactions.model';
+import { EntityRelation } from './relation.model';
+import { TagEntityRelation } from './tag-entity-relation.model';
+import { Tag } from './tag.model';
 
 @model({
   settings: {
     strict: false,
     mongodb: {
-      collection: process.env.collection_entity ?? "GenericEntity"
-    }
-  }
+      collection: process.env.collection_entity ?? 'GenericEntity',
+    },
+  },
 })
 export class GenericEntity extends ListEntityCommonBase {
-
-  @hasMany(() => EntityRelation, {keyTo: 'from'})
+  @hasMany(() => EntityRelation, { keyTo: 'from' })
   _children?: EntityRelation[];
 
-  @hasMany(() => Reactions, {keyTo: 'entityId'})
+  @hasMany(() => Reactions, { keyTo: 'entityId' })
   _reactions?: Reactions[];
 
-  @hasMany(() => Tag, {through: {model: () => TagEntityRelation, keyFrom: 'entityId'}})
+  @hasMany(() => Tag, {
+    through: { model: () => TagEntityRelation, keyFrom: 'entityId' },
+  })
   tags?: Tag[];
   // Define well-known properties here
 

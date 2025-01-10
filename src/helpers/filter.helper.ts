@@ -1,5 +1,5 @@
-import {Fields} from '@loopback/repository';
-import {isPlainObject, mapValues} from 'lodash';
+import { Fields } from '@loopback/repository';
+import { isPlainObject, mapValues } from 'lodash';
 
 // Helper function to ensure boolean values in 'fields'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -8,10 +8,14 @@ export function sanitizeFilterFields(filter?: any): void {
 
   // Check if the current object has a `fields` property
   if (filter.fields) {
-    filter.fields = mapValues(filter.fields, value =>
-      typeof value === 'string' && value === 'true' ? true :
-        typeof value === 'string' && value === 'false' ? false :
-          value // Keep the original value if it's not 'true' or 'false'
+    filter.fields = mapValues(
+      filter.fields,
+      (value) =>
+        typeof value === 'string' && value === 'true'
+          ? true
+          : typeof value === 'string' && value === 'false'
+            ? false
+            : value, // Keep the original value if it's not 'true' or 'false'
     ) as Fields;
   }
 

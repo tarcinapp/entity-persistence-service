@@ -1,4 +1,4 @@
-import {Entity, model, property} from '@loopback/repository';
+import { Entity, model, property } from '@loopback/repository';
 
 @model()
 export class EntityRelation extends Entity {
@@ -6,7 +6,7 @@ export class EntityRelation extends Entity {
     type: 'string',
     id: true,
     generated: false,
-    defaultFn: "uuidv4"
+    defaultFn: 'uuidv4',
   })
   id?: string;
 
@@ -30,25 +30,25 @@ export class EntityRelation extends Entity {
 
   @property({
     type: 'date',
-    defaultFn: "now"
+    defaultFn: 'now',
   })
   creationDateTime?: string;
 
   @property({
     required: false,
-    type: 'date'
+    type: 'date',
   })
   lastUpdatedDateTime?: string;
 
   @property({
     required: false,
-    type: 'string'
+    type: 'string',
   })
   createdBy?: string;
 
   @property({
     required: false,
-    type: 'string'
+    type: 'string',
   })
   lastUpdatedBy?: string;
   // Define well-known properties here

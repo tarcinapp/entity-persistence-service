@@ -15,16 +15,14 @@ import {
   post,
   requestBody,
 } from '@loopback/rest';
-import {
-  GenericList,
-  ListReactions,
-} from '../models';
-import {GenericListRepository} from '../repositories';
+import { GenericList, ListReactions } from '../models';
+import { GenericListRepository } from '../repositories';
 
 export class ListListReactionsController {
   constructor(
-    @repository(GenericListRepository) protected listRepository: GenericListRepository,
-  ) { }
+    @repository(GenericListRepository)
+    protected listRepository: GenericListRepository,
+  ) {}
 
   @get('/generic-lists/{id}/list-reactions', {
     responses: {
@@ -32,7 +30,7 @@ export class ListListReactionsController {
         description: 'Array of List has many ListReactions',
         content: {
           'application/json': {
-            schema: {type: 'array', items: getModelSchemaRef(ListReactions)},
+            schema: { type: 'array', items: getModelSchemaRef(ListReactions) },
           },
         },
       },
@@ -49,7 +47,9 @@ export class ListListReactionsController {
     responses: {
       '200': {
         description: 'List model instance',
-        content: {'application/json': {schema: getModelSchemaRef(ListReactions)}},
+        content: {
+          'application/json': { schema: getModelSchemaRef(ListReactions) },
+        },
       },
     },
   })
@@ -61,11 +61,12 @@ export class ListListReactionsController {
           schema: getModelSchemaRef(ListReactions, {
             title: 'NewListReactionsInList',
             exclude: ['id'],
-            optional: ['listId']
+            optional: ['listId'],
           }),
         },
       },
-    }) listReactions: Omit<ListReactions, 'id'>,
+    })
+    listReactions: Omit<ListReactions, 'id'>,
   ): Promise<ListReactions> {
     return this.listRepository.reactions(id).create(listReactions);
   }
@@ -74,7 +75,7 @@ export class ListListReactionsController {
     responses: {
       '200': {
         description: 'List.ListReactions PATCH success count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
@@ -83,12 +84,13 @@ export class ListListReactionsController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(ListReactions, {partial: true}),
+          schema: getModelSchemaRef(ListReactions, { partial: true }),
         },
       },
     })
     listReactions: Partial<ListReactions>,
-    @param.query.object('where', getWhereSchemaFor(ListReactions)) where?: Where<ListReactions>,
+    @param.query.object('where', getWhereSchemaFor(ListReactions))
+    where?: Where<ListReactions>,
   ): Promise<Count> {
     return this.listRepository.reactions(id).patch(listReactions, where);
   }
@@ -97,13 +99,14 @@ export class ListListReactionsController {
     responses: {
       '200': {
         description: 'List.ListReactions DELETE success count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
   async delete(
     @param.path.string('id') id: string,
-    @param.query.object('where', getWhereSchemaFor(ListReactions)) where?: Where<ListReactions>,
+    @param.query.object('where', getWhereSchemaFor(ListReactions))
+    where?: Where<ListReactions>,
   ): Promise<Count> {
     return this.listRepository.reactions(id).delete(where);
   }

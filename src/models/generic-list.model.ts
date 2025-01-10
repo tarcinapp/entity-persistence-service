@@ -1,33 +1,42 @@
-import {hasMany, model} from '@loopback/repository';
-import {ListEntityCommonBase} from './base-models/list-entity-common-base.model';
-import {GenericEntity, GenericEntityWithRelations} from './generic-entity.model';
-import {GenericListToEntityRelation} from './generic-list-entity-relation.model';
-import {ListReactions} from './list-reactions.model';
-import {ListRelation} from './list-relation.model';
-import {TagListRelation} from './tag-list-relation.model';
-import {Tag} from './tag.model';
+import { hasMany, model } from '@loopback/repository';
+import { ListEntityCommonBase } from './base-models/list-entity-common-base.model';
+import {
+  GenericEntity,
+  GenericEntityWithRelations,
+} from './generic-entity.model';
+import { GenericListToEntityRelation } from './generic-list-entity-relation.model';
+import { ListReactions } from './list-reactions.model';
+import { ListRelation } from './list-relation.model';
+import { TagListRelation } from './tag-list-relation.model';
+import { Tag } from './tag.model';
 
 @model({
   settings: {
     strict: false,
     mongodb: {
-      collection: process.env.collection_list ?? "GenericList"
-    }
-  }
+      collection: process.env.collection_list ?? 'GenericList',
+    },
+  },
 })
 export class GenericList extends ListEntityCommonBase {
-
-
-  @hasMany(() => GenericEntity, {through: {model: () => GenericListToEntityRelation, keyFrom: '_listId', keyTo: '_entityId'}})
+  @hasMany(() => GenericEntity, {
+    through: {
+      model: () => GenericListToEntityRelation,
+      keyFrom: '_listId',
+      keyTo: '_entityId',
+    },
+  })
   _genericEntities: GenericEntity[];
 
-  @hasMany(() => ListRelation, {keyTo: 'from'})
+  @hasMany(() => ListRelation, { keyTo: 'from' })
   _children: ListRelation[];
 
-  @hasMany(() => ListReactions, {keyTo: 'listId'})
+  @hasMany(() => ListReactions, { keyTo: 'listId' })
   reactions: ListReactions[];
 
-  @hasMany(() => Tag, {through: {model: () => TagListRelation, keyFrom: 'listId'}})
+  @hasMany(() => Tag, {
+    through: { model: () => TagListRelation, keyFrom: 'listId' },
+  })
   tags: Tag[];
   // Define well-known properties here
 
@@ -41,7 +50,7 @@ export class GenericList extends ListEntityCommonBase {
 }
 
 export interface ListRelations {
-  genericEntities?: GenericEntityWithRelations
+  genericEntities?: GenericEntityWithRelations;
 }
 
 export type ListWithRelations = GenericList & ListRelations;

@@ -1,13 +1,13 @@
-import {Entity, hasMany, model, property} from '@loopback/repository';
-import {SubReactions} from './sub-reactions.model';
+import { Entity, hasMany, model, property } from '@loopback/repository';
+import { SubReactions } from './sub-reactions.model';
 
-@model({settings: {strict: false}})
+@model({ settings: { strict: false } })
 export class Reactions extends Entity {
   @property({
     type: 'string',
     id: true,
     generated: false,
-    defaultFn: "uuidv4"
+    defaultFn: 'uuidv4',
   })
   id?: string;
 
@@ -19,7 +19,7 @@ export class Reactions extends Entity {
 
   @property({
     type: 'date',
-    defaultFn: "now"
+    defaultFn: 'now',
   })
   creationDateTime?: string;
 
@@ -32,14 +32,14 @@ export class Reactions extends Entity {
   @property({
     type: 'date',
     default: null,
-    jsonSchema: {nullable: true}
+    jsonSchema: { nullable: true },
   })
   validUntilDateTime?: string | null;
 
   @property({
     type: 'array',
     itemType: 'string',
-    default: []
+    default: [],
   })
   ownerUsers?: string[];
 
@@ -48,7 +48,7 @@ export class Reactions extends Entity {
   })
   entityId?: string;
 
-  @hasMany(() => SubReactions, {keyTo: 'reactionId'})
+  @hasMany(() => SubReactions, { keyTo: 'reactionId' })
   subReactions: SubReactions[];
   // Define well-known properties here
 

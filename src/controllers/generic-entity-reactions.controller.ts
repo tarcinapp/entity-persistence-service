@@ -15,16 +15,14 @@ import {
   post,
   requestBody,
 } from '@loopback/rest';
-import {
-  GenericEntity,
-  Reactions,
-} from '../models';
-import {GenericEntityRepository} from '../repositories';
+import { GenericEntity, Reactions } from '../models';
+import { GenericEntityRepository } from '../repositories';
 
 export class GenericEntityReactionsController {
   constructor(
-    @repository(GenericEntityRepository) protected genericEntityRepository: GenericEntityRepository,
-  ) { }
+    @repository(GenericEntityRepository)
+    protected genericEntityRepository: GenericEntityRepository,
+  ) {}
 
   @get('/generic-entities/{id}/reactions', {
     responses: {
@@ -32,7 +30,7 @@ export class GenericEntityReactionsController {
         description: 'Array of GenericEntity has many Reactions',
         content: {
           'application/json': {
-            schema: {type: 'array', items: getModelSchemaRef(Reactions)},
+            schema: { type: 'array', items: getModelSchemaRef(Reactions) },
           },
         },
       },
@@ -49,7 +47,9 @@ export class GenericEntityReactionsController {
     responses: {
       '200': {
         description: 'GenericEntity model instance',
-        content: {'application/json': {schema: getModelSchemaRef(Reactions)}},
+        content: {
+          'application/json': { schema: getModelSchemaRef(Reactions) },
+        },
       },
     },
   })
@@ -61,11 +61,12 @@ export class GenericEntityReactionsController {
           schema: getModelSchemaRef(Reactions, {
             title: 'NewReactionsInGenericEntity',
             exclude: ['_id'],
-            optional: ['entityId']
+            optional: ['entityId'],
           }),
         },
       },
-    }) reactions: Omit<Reactions, 'id'>,
+    })
+    reactions: Omit<Reactions, 'id'>,
   ): Promise<Reactions> {
     return this.genericEntityRepository.reactions(id).create(reactions);
   }
@@ -74,7 +75,7 @@ export class GenericEntityReactionsController {
     responses: {
       '200': {
         description: 'GenericEntity.Reactions PATCH success count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
@@ -83,12 +84,13 @@ export class GenericEntityReactionsController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(Reactions, {partial: true}),
+          schema: getModelSchemaRef(Reactions, { partial: true }),
         },
       },
     })
     reactions: Partial<Reactions>,
-    @param.query.object('where', getWhereSchemaFor(Reactions)) where?: Where<Reactions>,
+    @param.query.object('where', getWhereSchemaFor(Reactions))
+    where?: Where<Reactions>,
   ): Promise<Count> {
     return this.genericEntityRepository.reactions(id).patch(reactions, where);
   }
@@ -97,13 +99,14 @@ export class GenericEntityReactionsController {
     responses: {
       '200': {
         description: 'GenericEntity.Reactions DELETE success count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
   async delete(
     @param.path.string('id') id: string,
-    @param.query.object('where', getWhereSchemaFor(Reactions)) where?: Where<Reactions>,
+    @param.query.object('where', getWhereSchemaFor(Reactions))
+    where?: Where<Reactions>,
   ): Promise<Count> {
     return this.genericEntityRepository.reactions(id).delete(where);
   }

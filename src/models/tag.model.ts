@@ -1,4 +1,4 @@
-import {Entity, model, property} from '@loopback/repository';
+import { Entity, model, property } from '@loopback/repository';
 import _ from 'lodash';
 
 @model()
@@ -7,7 +7,7 @@ export class Tag extends Entity {
     type: 'string',
     id: true,
     generated: false,
-    defaultFn: "uuidv4"
+    defaultFn: 'uuidv4',
   })
   id?: string;
 
@@ -15,15 +15,16 @@ export class Tag extends Entity {
     type: 'string',
     jsonSchema: {
       minLength: 2,
-      maxLength: _.parseInt(process.env.validation_tag_length || "50")
-    }
+      maxLength: _.parseInt(process.env.validation_tag_length || '50'),
+    },
   })
   content: string;
 
   @property({
     type: 'date',
-    defaultFn: "now",
-    description: 'This field is filled by server at the time of the creation of the entity.'
+    defaultFn: 'now',
+    description:
+      'This field is filled by server at the time of the creation of the entity.',
   })
   creationDateTime?: string;
 

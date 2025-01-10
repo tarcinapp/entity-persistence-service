@@ -1,4 +1,4 @@
-import {Entity, model, property} from '@loopback/repository';
+import { Entity, model, property } from '@loopback/repository';
 
 /**
  * Inherits:
@@ -9,11 +9,10 @@ import {Entity, model, property} from '@loopback/repository';
  */
 @model({
   settings: {
-    strict: false
-  }
+    strict: false,
+  },
 })
 export class RecordsCommonBase extends Entity {
-
   @property({
     type: 'string',
     id: true,
@@ -30,13 +29,14 @@ export class RecordsCommonBase extends Entity {
 
   @property({
     type: 'date',
-    description: 'This is the approval time.' +
+    description:
+      'This is the approval time.' +
       'Only those records with validFromDateTime property has a value can be' +
       'seen by other members.' +
       'If caller is not a member at the creation time, this field is filled' +
       'automatically by the server.',
     default: null,
-    jsonSchema: {nullable: true}
+    jsonSchema: { nullable: true },
   })
   _validFromDateTime?: string;
 
@@ -44,13 +44,14 @@ export class RecordsCommonBase extends Entity {
     type: 'date',
     description: 'This field indicates if the rcord is currently active.',
     default: null,
-    jsonSchema: {nullable: true}
+    jsonSchema: { nullable: true },
   })
   _validUntilDateTime?: string | null;
 
   @property({
     type: 'date',
-    description: 'This field is filled by server at the time of the creation of the record.',
+    description:
+      'This field is filled by server at the time of the creation of the record.',
   })
   _createdDateTime?: string;
 

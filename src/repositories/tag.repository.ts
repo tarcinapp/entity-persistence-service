@@ -1,25 +1,30 @@
-import {inject} from '@loopback/core';
-import {DataObject, DefaultCrudRepository, Filter, FilterBuilder, Options, Where} from '@loopback/repository';
+import { inject } from '@loopback/core';
+import {
+  DataObject,
+  DefaultCrudRepository,
+  Filter,
+  FilterBuilder,
+  Options,
+  Where,
+} from '@loopback/repository';
 import _ from 'lodash';
-import {EntityDbDataSource} from '../datasources';
-import {HttpErrorResponse, Tag, TagRelations} from '../models';
+import { EntityDbDataSource } from '../datasources';
+import { HttpErrorResponse, Tag, TagRelations } from '../models';
 
 export class TagRepository extends DefaultCrudRepository<
   Tag,
   typeof Tag.prototype.id,
   TagRelations
 > {
+  private static response_limit = _.parseInt(
+    process.env.response_limit_tag || '50',
+  );
 
-  private static response_limit = _.parseInt(process.env.response_limit_tag || "50");
-
-  constructor(
-    @inject('datasources.EntityDb') dataSource: EntityDbDataSource,
-  ) {
+  constructor(@inject('datasources.EntityDb') dataSource: EntityDbDataSource) {
     super(Tag, dataSource);
   }
 
   async find(filter?: Filter<Tag>, options?: Options) {
-
     if (filter?.limit && filter.limit > TagRepository.response_limit)
       filter.limit = TagRepository.response_limit;
 
@@ -27,21 +32,18 @@ export class TagRepository extends DefaultCrudRepository<
   }
 
   async create(data: DataObject<Tag>) {
-
     await this.checkUniqueness(data);
 
     return super.create(data);
   }
 
   async replaceById(id: string, data: DataObject<Tag>, options?: Options) {
-
     await this.checkUniqueness(data);
 
     return super.replaceById(id, data, options);
   }
 
   async updateById(id: string, data: DataObject<Tag>, options?: Options) {
-
     if (_.has(data, 'content')) {
       await this.checkUniqueness(data);
     }
@@ -50,9 +52,8 @@ export class TagRepository extends DefaultCrudRepository<
   }
 
   async checkUniqueness(data: DataObject<Tag>) {
-
     const where: Where<Tag> = {
-      content: data.content
+      content: data.content,
     };
 
     let filter: Filter<Tag> = new FilterBuilder<Tag>()
@@ -66,12 +67,11 @@ export class TagRepository extends DefaultCrudRepository<
     const activeEntityWithSameName = await super.findOne(filter);
 
     if (activeEntityWithSameName) {
-
       throw new HttpErrorResponse({
         statusCode: 409,
-        name: "DataUniquenessViolationError",
-        message: "Entity already exists.",
-        code: "ENTITY-ALREADY-EXISTS",
+        name: 'DataUniquenessViolationError',
+        message: 'Entity already exists.',
+        code: 'ENTITY-ALREADY-EXISTS',
         status: 409,
       });
     }

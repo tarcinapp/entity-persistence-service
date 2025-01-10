@@ -5,41 +5,38 @@ import {
   FilterBuilder,
   FilterExcludingWhere,
   repository,
-  Where
+  Where,
 } from '@loopback/repository';
 import {
-  del, get,
+  del,
+  get,
   getJsonSchema,
-  getModelSchemaRef, param,
-
-
-  patch, post,
-
-
-
-
+  getModelSchemaRef,
+  param,
+  patch,
+  post,
   put,
-
-  requestBody
+  requestBody,
 } from '@loopback/rest';
-import {Set, SetFilterBuilder} from '../extensions';
-import {sanitizeFilterFields} from '../helpers/filter.helper';
-import {processIncludes} from '../helpers/sets-in-inclusions';
-import {GenericList, HttpErrorResponse} from '../models';
-import {GenericListRepository} from '../repositories';
-
+import { Set, SetFilterBuilder } from '../extensions';
+import { sanitizeFilterFields } from '../helpers/filter.helper';
+import { processIncludes } from '../helpers/sets-in-inclusions';
+import { GenericList, HttpErrorResponse } from '../models';
+import { GenericListRepository } from '../repositories';
 
 export class GenericListController {
   constructor(
     @repository(GenericListRepository)
     public genericListRepository: GenericListRepository,
-  ) { }
+  ) {}
 
   @post('/generic-lists', {
     responses: {
       '200': {
         description: 'Generic List model instance',
-        content: {'application/json': {schema: getModelSchemaRef(GenericList)}},
+        content: {
+          'application/json': { schema: getModelSchemaRef(GenericList) },
+        },
       },
       '429': {
         description: 'List limit is exceeded',
@@ -47,11 +44,11 @@ export class GenericListController {
           'application/json': {
             schema: {
               properties: {
-                error: getJsonSchema(HttpErrorResponse)
-              }
-            }
-          }
-        }
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
       },
       '409': {
         description: 'List name already exists.',
@@ -59,12 +56,12 @@ export class GenericListController {
           'application/json': {
             schema: {
               properties: {
-                error: getJsonSchema(HttpErrorResponse)
-              }
-            }
-          }
-        }
-      }
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
     },
     '422': {
       description: 'Unprocessable list',
@@ -72,12 +69,12 @@ export class GenericListController {
         'application/json': {
           schema: {
             properties: {
-              error: getJsonSchema(HttpErrorResponse)
-            }
-          }
-        }
-      }
-    }
+              error: getJsonSchema(HttpErrorResponse),
+            },
+          },
+        },
+      },
+    },
   })
   async create(
     @requestBody({
@@ -85,15 +82,35 @@ export class GenericListController {
         'application/json': {
           schema: getModelSchemaRef(GenericList, {
             title: 'NewList',
-            exclude: ['_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_version', '_idempotencyKey', '_relationMetadata'],
-            includeRelations: false
+            exclude: [
+              '_id',
+              '_slug',
+              '_ownerUsersCount',
+              '_ownerGroupsCount',
+              '_viewerUsersCount',
+              '_viewerGroupsCount',
+              '_version',
+              '_idempotencyKey',
+              '_relationMetadata',
+            ],
+            includeRelations: false,
           }),
         },
       },
     })
-    list: Omit<GenericList, 'id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_version' | '_idempotencyKey' | '_relationMetadata'>,
+    list: Omit<
+      GenericList,
+      | 'id'
+      | '_slug'
+      | '_ownerUsersCount'
+      | '_ownerGroupsCount'
+      | '_viewerUsersCount'
+      | '_viewerGroupsCount'
+      | '_version'
+      | '_idempotencyKey'
+      | '_relationMetadata'
+    >,
   ): Promise<GenericList> {
-
     return this.genericListRepository.create(list);
   }
 
@@ -101,7 +118,7 @@ export class GenericListController {
     responses: {
       '200': {
         description: 'Generic List model count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
@@ -109,17 +126,15 @@ export class GenericListController {
     @param.query.object('set') set?: Set,
     @param.where(GenericList) where?: Where<GenericList>,
   ): Promise<Count> {
-
     const filterBuilder = new FilterBuilder<GenericList>();
 
-    if (where)
-      filterBuilder.where(where);
+    if (where) filterBuilder.where(where);
 
     let filter = filterBuilder.build();
 
     if (set)
       filter = new SetFilterBuilder<GenericList>(set, {
-        filter: filter
+        filter: filter,
       }).build();
 
     return this.genericListRepository.count(filter.where);
@@ -133,7 +148,7 @@ export class GenericListController {
           'application/json': {
             schema: {
               type: 'array',
-              items: getModelSchemaRef(GenericList, {includeRelations: true}),
+              items: getModelSchemaRef(GenericList, { includeRelations: true }),
             },
           },
         },
@@ -144,10 +159,9 @@ export class GenericListController {
     @param.filter(GenericList) filter?: Filter<GenericList>,
     @param.query.object('set') set?: Set,
   ): Promise<GenericList[]> {
-
     if (set)
       filter = new SetFilterBuilder<GenericList>(set, {
-        filter: filter
+        filter: filter,
       }).build();
 
     processIncludes<GenericList>(filter);
@@ -161,7 +175,7 @@ export class GenericListController {
     responses: {
       '200': {
         description: 'Generic List PATCH success count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
@@ -171,27 +185,46 @@ export class GenericListController {
         'application/json': {
           schema: getModelSchemaRef(GenericList, {
             title: 'NewList',
-            exclude: ['_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_version', '_idempotencyKey', '_relationMetadata'],
-            includeRelations: false
+            exclude: [
+              '_id',
+              '_slug',
+              '_ownerUsersCount',
+              '_ownerGroupsCount',
+              '_viewerUsersCount',
+              '_viewerGroupsCount',
+              '_version',
+              '_idempotencyKey',
+              '_relationMetadata',
+            ],
+            includeRelations: false,
           }),
         },
       },
     })
-    list: Omit<GenericList, 'id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_version' | '_idempotencyKey' | '_relationMetadata'>,
+    list: Omit<
+      GenericList,
+      | 'id'
+      | '_slug'
+      | '_ownerUsersCount'
+      | '_ownerGroupsCount'
+      | '_viewerUsersCount'
+      | '_viewerGroupsCount'
+      | '_version'
+      | '_idempotencyKey'
+      | '_relationMetadata'
+    >,
     @param.query.object('set') set?: Set,
     @param.where(GenericList) where?: Where<GenericList>,
   ): Promise<Count> {
-
     const filterBuilder = new FilterBuilder<GenericList>();
 
-    if (where)
-      filterBuilder.where(where);
+    if (where) filterBuilder.where(where);
 
     let filter = filterBuilder.build();
 
     if (set)
       filter = new SetFilterBuilder<GenericList>(set, {
-        filter: filter
+        filter: filter,
       }).build();
 
     return this.genericListRepository.updateAll(list, filter.where);
@@ -203,7 +236,7 @@ export class GenericListController {
         description: 'Generic List model instance',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(GenericList, {includeRelations: true}),
+            schema: getModelSchemaRef(GenericList, { includeRelations: true }),
           },
         },
       },
@@ -214,16 +247,17 @@ export class GenericListController {
         'application/json': {
           schema: {
             properties: {
-              error: getJsonSchema(HttpErrorResponse)
-            }
-          }
-        }
-      }
+              error: getJsonSchema(HttpErrorResponse),
+            },
+          },
+        },
+      },
     },
   })
   async findById(
     @param.path.string('id') id: string,
-    @param.filter(GenericList, {exclude: 'where'}) filter?: FilterExcludingWhere<GenericList>
+    @param.filter(GenericList, { exclude: 'where' })
+    filter?: FilterExcludingWhere<GenericList>,
   ): Promise<GenericList> {
     return this.genericListRepository.findById(id, filter);
   }
@@ -239,11 +273,11 @@ export class GenericListController {
           'application/json': {
             schema: {
               properties: {
-                error: getJsonSchema(HttpErrorResponse)
-              }
-            }
-          }
-        }
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
       },
       '422': {
         description: 'Unprocessable list',
@@ -251,12 +285,12 @@ export class GenericListController {
           'application/json': {
             schema: {
               properties: {
-                error: getJsonSchema(HttpErrorResponse)
-              }
-            }
-          }
-        }
-      }
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
     },
   })
   async updateById(
@@ -266,13 +300,34 @@ export class GenericListController {
         'application/json': {
           schema: getModelSchemaRef(GenericList, {
             title: 'NewList',
-            exclude: ['_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_version', '_idempotencyKey', '_relationMetadata'],
-            includeRelations: false
+            exclude: [
+              '_id',
+              '_slug',
+              '_ownerUsersCount',
+              '_ownerGroupsCount',
+              '_viewerUsersCount',
+              '_viewerGroupsCount',
+              '_version',
+              '_idempotencyKey',
+              '_relationMetadata',
+            ],
+            includeRelations: false,
           }),
         },
       },
     })
-    list: Omit<GenericList, 'id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_version' | '_idempotencyKey' | '_relationMetadata'>,
+    list: Omit<
+      GenericList,
+      | 'id'
+      | '_slug'
+      | '_ownerUsersCount'
+      | '_ownerGroupsCount'
+      | '_viewerUsersCount'
+      | '_viewerGroupsCount'
+      | '_version'
+      | '_idempotencyKey'
+      | '_relationMetadata'
+    >,
   ): Promise<void> {
     await this.genericListRepository.updateById(id, list);
   }
@@ -288,11 +343,11 @@ export class GenericListController {
           'application/json': {
             schema: {
               properties: {
-                error: getJsonSchema(HttpErrorResponse)
-              }
-            }
-          }
-        }
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
       },
       '422': {
         description: 'Unprocessable list',
@@ -300,12 +355,12 @@ export class GenericListController {
           'application/json': {
             schema: {
               properties: {
-                error: getJsonSchema(HttpErrorResponse)
-              }
-            }
-          }
-        }
-      }
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
     },
   })
   async replaceById(
@@ -315,13 +370,34 @@ export class GenericListController {
         'application/json': {
           schema: getModelSchemaRef(GenericList, {
             title: 'NewList',
-            exclude: ['_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_version', '_idempotencyKey', '_relationMetadata'],
-            includeRelations: false
+            exclude: [
+              '_id',
+              '_slug',
+              '_ownerUsersCount',
+              '_ownerGroupsCount',
+              '_viewerUsersCount',
+              '_viewerGroupsCount',
+              '_version',
+              '_idempotencyKey',
+              '_relationMetadata',
+            ],
+            includeRelations: false,
           }),
         },
       },
     })
-    list: Omit<GenericList, 'id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_version' | '_idempotencyKey' | '_relationMetadata'>,
+    list: Omit<
+      GenericList,
+      | 'id'
+      | '_slug'
+      | '_ownerUsersCount'
+      | '_ownerGroupsCount'
+      | '_viewerUsersCount'
+      | '_viewerGroupsCount'
+      | '_version'
+      | '_idempotencyKey'
+      | '_relationMetadata'
+    >,
   ): Promise<void> {
     await this.genericListRepository.replaceById(id, list);
   }
@@ -337,12 +413,12 @@ export class GenericListController {
           'application/json': {
             schema: {
               properties: {
-                error: getJsonSchema(HttpErrorResponse)
-              }
-            }
-          }
-        }
-      }
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
     },
   })
   async deleteById(@param.path.string('id') id: string): Promise<void> {

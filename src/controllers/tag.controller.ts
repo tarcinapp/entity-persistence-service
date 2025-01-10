@@ -4,24 +4,20 @@ import {
   Filter,
   FilterExcludingWhere,
   repository,
-  Where
+  Where,
 } from '@loopback/repository';
 import {
-  del, get,
-  getModelSchemaRef, param,
-
-
-  patch, post,
-
-
-
-
+  del,
+  get,
+  getModelSchemaRef,
+  param,
+  patch,
+  post,
   put,
-
-  requestBody
+  requestBody,
 } from '@loopback/rest';
-import {Tag} from '../models';
-import {TagRepository} from '../repositories';
+import { Tag } from '../models';
+import { TagRepository } from '../repositories';
 
 export class TagController {
   constructor(
@@ -33,7 +29,7 @@ export class TagController {
     responses: {
       '200': {
         description: 'Tag model instance',
-        content: {'application/json': {schema: getModelSchemaRef(Tag)}},
+        content: { 'application/json': { schema: getModelSchemaRef(Tag) } },
       },
     },
   })
@@ -57,13 +53,11 @@ export class TagController {
     responses: {
       '200': {
         description: 'Tag model count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
-  async count(
-    @param.where(Tag) where?: Where<Tag>,
-  ): Promise<Count> {
+  async count(@param.where(Tag) where?: Where<Tag>): Promise<Count> {
     return this.tagRepository.count(where);
   }
 
@@ -75,16 +69,14 @@ export class TagController {
           'application/json': {
             schema: {
               type: 'array',
-              items: getModelSchemaRef(Tag, {includeRelations: true}),
+              items: getModelSchemaRef(Tag, { includeRelations: true }),
             },
           },
         },
       },
     },
   })
-  async find(
-    @param.filter(Tag) filter?: Filter<Tag>,
-  ): Promise<Tag[]> {
+  async find(@param.filter(Tag) filter?: Filter<Tag>): Promise<Tag[]> {
     return this.tagRepository.find(filter);
   }
   /*
@@ -116,7 +108,7 @@ export class TagController {
         description: 'Tag model instance',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(Tag, {includeRelations: true}),
+            schema: getModelSchemaRef(Tag, { includeRelations: true }),
           },
         },
       },
@@ -124,7 +116,7 @@ export class TagController {
   })
   async findById(
     @param.path.string('id') id: string,
-    @param.filter(Tag, {exclude: 'where'}) filter?: FilterExcludingWhere<Tag>
+    @param.filter(Tag, { exclude: 'where' }) filter?: FilterExcludingWhere<Tag>,
   ): Promise<Tag> {
     return this.tagRepository.findById(id, filter);
   }
@@ -141,7 +133,7 @@ export class TagController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(Tag, {partial: true}),
+          schema: getModelSchemaRef(Tag, { partial: true }),
         },
       },
     })

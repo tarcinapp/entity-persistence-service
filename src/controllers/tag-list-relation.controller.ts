@@ -16,20 +16,22 @@ import {
   del,
   requestBody,
 } from '@loopback/rest';
-import {TagListRelation} from '../models';
-import {TagListRelationRepository} from '../repositories';
+import { TagListRelation } from '../models';
+import { TagListRelationRepository } from '../repositories';
 
 export class TagListRelationController {
   constructor(
     @repository(TagListRelationRepository)
-    public tagListRelationRepository : TagListRelationRepository,
+    public tagListRelationRepository: TagListRelationRepository,
   ) {}
 
   @post('/tag-list-relations', {
     responses: {
       '200': {
         description: 'TagListRelation model instance',
-        content: {'application/json': {schema: getModelSchemaRef(TagListRelation)}},
+        content: {
+          'application/json': { schema: getModelSchemaRef(TagListRelation) },
+        },
       },
     },
   })
@@ -53,7 +55,7 @@ export class TagListRelationController {
     responses: {
       '200': {
         description: 'TagListRelation model count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
@@ -71,7 +73,9 @@ export class TagListRelationController {
           'application/json': {
             schema: {
               type: 'array',
-              items: getModelSchemaRef(TagListRelation, {includeRelations: true}),
+              items: getModelSchemaRef(TagListRelation, {
+                includeRelations: true,
+              }),
             },
           },
         },
@@ -88,7 +92,7 @@ export class TagListRelationController {
     responses: {
       '200': {
         description: 'TagListRelation PATCH success count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
@@ -96,7 +100,7 @@ export class TagListRelationController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(TagListRelation, {partial: true}),
+          schema: getModelSchemaRef(TagListRelation, { partial: true }),
         },
       },
     })
@@ -112,7 +116,9 @@ export class TagListRelationController {
         description: 'TagListRelation model instance',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(TagListRelation, {includeRelations: true}),
+            schema: getModelSchemaRef(TagListRelation, {
+              includeRelations: true,
+            }),
           },
         },
       },
@@ -120,7 +126,8 @@ export class TagListRelationController {
   })
   async findById(
     @param.path.string('id') id: string,
-    @param.filter(TagListRelation, {exclude: 'where'}) filter?: FilterExcludingWhere<TagListRelation>
+    @param.filter(TagListRelation, { exclude: 'where' })
+    filter?: FilterExcludingWhere<TagListRelation>,
   ): Promise<TagListRelation> {
     return this.tagListRelationRepository.findById(id, filter);
   }
@@ -137,7 +144,7 @@ export class TagListRelationController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(TagListRelation, {partial: true}),
+          schema: getModelSchemaRef(TagListRelation, { partial: true }),
         },
       },
     })

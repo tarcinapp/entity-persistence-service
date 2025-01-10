@@ -1,4 +1,4 @@
-import {BindingKey} from '@loopback/core';
+import { BindingKey } from '@loopback/core';
 import _ from 'lodash';
 
 export namespace ValidFromConfigBindings {
@@ -12,12 +12,9 @@ export class ValidfromConfigurationReader {
   defaultListAutoApprove: boolean = false;
   defaultListEntityAutoApprove: boolean = false;
 
-  constructor() {
-
-  }
+  constructor() {}
 
   public getValidFromForEntities(kind?: string) {
-
     if (_.has(process.env, `autoapprove_entity_for_${kind}`)) {
       return _.get(process.env, `autoapprove_entity_for_${kind}`) === 'true';
     }
@@ -30,7 +27,6 @@ export class ValidfromConfigurationReader {
   }
 
   public getValidFromForLists(kind?: string) {
-
     if (_.has(process.env, `autoapprove_list_for_${kind}`)) {
       return _.get(process.env, `autoapprove_list_for_${kind}`) === 'true';
     }
@@ -43,9 +39,11 @@ export class ValidfromConfigurationReader {
   }
 
   getValidFromForListEntityRelations(kind?: string) {
-
     if (_.has(process.env, `autoapprove_list_entity_relations_for_${kind}`)) {
-      return _.get(process.env, `autoapprove_list_entity_relations_for_${kind}`) === 'true';
+      return (
+        _.get(process.env, `autoapprove_list_entity_relations_for_${kind}`) ===
+        'true'
+      );
     }
 
     if (_.has(process.env, `autoapprove_list_entity_relations`)) {

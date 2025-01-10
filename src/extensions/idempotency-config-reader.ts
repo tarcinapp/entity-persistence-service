@@ -1,19 +1,19 @@
-import {BindingKey} from '@loopback/core';
-import {isEmpty} from 'lodash';
+import { BindingKey } from '@loopback/core';
+import { isEmpty } from 'lodash';
 
 export namespace IdempotencyConfigBindings {
-  export const CONFIG_READER = BindingKey.create<IdempotencyConfigurationReader>(
-    'extensions.idempotency.configurationreader',
-  );
+  export const CONFIG_READER =
+    BindingKey.create<IdempotencyConfigurationReader>(
+      'extensions.idempotency.configurationreader',
+    );
 }
 
 export class IdempotencyConfigurationReader {
-
   defaultListIdempotency: string[] = [];
   defaultEntityIdempotency: string[] = [];
   defaultListEntityRelIdempotency: string[] = [];
 
-  constructor() { }
+  constructor() {}
 
   public isIdempotencyConfiguredForEntities(kind?: string) {
     return (
@@ -58,7 +58,8 @@ export class IdempotencyConfigurationReader {
   }
 
   public getIdempotencyForListEntityRels(kind?: string): string[] {
-    let idempotencyConfig = this.getIdempotencyConfigForKindForListEntityRel(kind);
+    let idempotencyConfig =
+      this.getIdempotencyConfigForKindForListEntityRel(kind);
 
     if (isEmpty(idempotencyConfig)) {
       idempotencyConfig = this.getIdempotencyConfigForListEntityRel();
@@ -95,6 +96,6 @@ export class IdempotencyConfigurationReader {
   private getIdempotencyConfigForListEntityRel(): string[] {
     const config = process.env['idempotency_list_entity_rel'];
 
-    return config ? config.split(',').map((fieldPath) => fieldPath.trim()) : []
+    return config ? config.split(',').map((fieldPath) => fieldPath.trim()) : [];
   }
 }

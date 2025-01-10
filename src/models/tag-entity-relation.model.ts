@@ -1,4 +1,4 @@
-import {Entity, model, property} from '@loopback/repository';
+import { Entity, model, property } from '@loopback/repository';
 
 @model()
 export class TagEntityRelation extends Entity {
@@ -6,7 +6,7 @@ export class TagEntityRelation extends Entity {
     type: 'string',
     id: true,
     generated: false,
-    defaultFn: 'uuidv4'
+    defaultFn: 'uuidv4',
   })
   id?: string;
 
@@ -24,10 +24,9 @@ export class TagEntityRelation extends Entity {
 
   @property({
     type: 'date',
-    defaultFn: 'now'
+    defaultFn: 'now',
   })
   creationDateTime?: string;
-
 
   constructor(data?: Partial<TagEntityRelation>) {
     super(data);
@@ -38,4 +37,5 @@ export interface TagEntityRelationRelations {
   // describe navigational properties here
 }
 
-export type TagEntityRelationWithRelations = TagEntityRelation & TagEntityRelationRelations;
+export type TagEntityRelationWithRelations = TagEntityRelation &
+  TagEntityRelationRelations;

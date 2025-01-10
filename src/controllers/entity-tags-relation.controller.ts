@@ -16,20 +16,22 @@ import {
   del,
   requestBody,
 } from '@loopback/rest';
-import {TagEntityRelation} from '../models';
-import {TagEntityRelationRepository} from '../repositories';
+import { TagEntityRelation } from '../models';
+import { TagEntityRelationRepository } from '../repositories';
 
 export class EntityTagsRelationController {
   constructor(
     @repository(TagEntityRelationRepository)
-    public tagEntityRelationRepository : TagEntityRelationRepository,
+    public tagEntityRelationRepository: TagEntityRelationRepository,
   ) {}
 
   @post('/tag-entity-relations', {
     responses: {
       '200': {
         description: 'TagEntityRelation model instance',
-        content: {'application/json': {schema: getModelSchemaRef(TagEntityRelation)}},
+        content: {
+          'application/json': { schema: getModelSchemaRef(TagEntityRelation) },
+        },
       },
     },
   })
@@ -53,7 +55,7 @@ export class EntityTagsRelationController {
     responses: {
       '200': {
         description: 'TagEntityRelation model count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
@@ -71,7 +73,9 @@ export class EntityTagsRelationController {
           'application/json': {
             schema: {
               type: 'array',
-              items: getModelSchemaRef(TagEntityRelation, {includeRelations: true}),
+              items: getModelSchemaRef(TagEntityRelation, {
+                includeRelations: true,
+              }),
             },
           },
         },
@@ -88,7 +92,7 @@ export class EntityTagsRelationController {
     responses: {
       '200': {
         description: 'TagEntityRelation PATCH success count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
@@ -96,7 +100,7 @@ export class EntityTagsRelationController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(TagEntityRelation, {partial: true}),
+          schema: getModelSchemaRef(TagEntityRelation, { partial: true }),
         },
       },
     })
@@ -112,7 +116,9 @@ export class EntityTagsRelationController {
         description: 'TagEntityRelation model instance',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(TagEntityRelation, {includeRelations: true}),
+            schema: getModelSchemaRef(TagEntityRelation, {
+              includeRelations: true,
+            }),
           },
         },
       },
@@ -120,7 +126,8 @@ export class EntityTagsRelationController {
   })
   async findById(
     @param.path.string('id') id: string,
-    @param.filter(TagEntityRelation, {exclude: 'where'}) filter?: FilterExcludingWhere<TagEntityRelation>
+    @param.filter(TagEntityRelation, { exclude: 'where' })
+    filter?: FilterExcludingWhere<TagEntityRelation>,
   ): Promise<TagEntityRelation> {
     return this.tagEntityRelationRepository.findById(id, filter);
   }
@@ -137,7 +144,7 @@ export class EntityTagsRelationController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(TagEntityRelation, {partial: true}),
+          schema: getModelSchemaRef(TagEntityRelation, { partial: true }),
         },
       },
     })

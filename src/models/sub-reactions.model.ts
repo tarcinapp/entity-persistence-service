@@ -1,12 +1,12 @@
-import {Entity, model, property} from '@loopback/repository';
+import { Entity, model, property } from '@loopback/repository';
 
-@model({settings: {strict: false}})
+@model({ settings: { strict: false } })
 export class SubReactions extends Entity {
   @property({
     type: 'string',
     id: true,
     generated: false,
-    defaultFn: "uuidv4"
+    defaultFn: 'uuidv4',
   })
   id?: string;
 
@@ -18,7 +18,7 @@ export class SubReactions extends Entity {
 
   @property({
     type: 'date',
-    defaultFn: 'now'
+    defaultFn: 'now',
   })
   creationDateTime?: string;
 
@@ -30,7 +30,7 @@ export class SubReactions extends Entity {
   @property({
     type: 'date',
     default: null,
-    jsonSchema: {nullable: true}
+    jsonSchema: { nullable: true },
   })
   validUntilDateTime?: string | null;
 

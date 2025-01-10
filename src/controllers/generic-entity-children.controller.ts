@@ -15,16 +15,14 @@ import {
   post,
   requestBody,
 } from '@loopback/rest';
-import {
-  EntityRelation,
-  GenericEntity,
-} from '../models';
-import {GenericEntityRepository} from '../repositories';
+import { EntityRelation, GenericEntity } from '../models';
+import { GenericEntityRepository } from '../repositories';
 
 export class GenericEntityChildrenController {
   constructor(
-    @repository(GenericEntityRepository) protected genericEntityRepository: GenericEntityRepository,
-  ) { }
+    @repository(GenericEntityRepository)
+    protected genericEntityRepository: GenericEntityRepository,
+  ) {}
 
   @get('/generic-entities/{id}/children', {
     responses: {
@@ -32,7 +30,7 @@ export class GenericEntityChildrenController {
         description: 'Array of GenericEntity has many Relation',
         content: {
           'application/json': {
-            schema: {type: 'array', items: getModelSchemaRef(EntityRelation)},
+            schema: { type: 'array', items: getModelSchemaRef(EntityRelation) },
           },
         },
       },
@@ -49,7 +47,9 @@ export class GenericEntityChildrenController {
     responses: {
       '200': {
         description: 'GenericEntity model instance',
-        content: {'application/json': {schema: getModelSchemaRef(EntityRelation)}},
+        content: {
+          'application/json': { schema: getModelSchemaRef(EntityRelation) },
+        },
       },
     },
   })
@@ -61,11 +61,12 @@ export class GenericEntityChildrenController {
           schema: getModelSchemaRef(EntityRelation, {
             title: 'NewRelationInGenericEntity',
             exclude: ['_id'],
-            optional: ['from']
+            optional: ['from'],
           }),
         },
       },
-    }) relation: Omit<EntityRelation, 'id'>,
+    })
+    relation: Omit<EntityRelation, 'id'>,
   ): Promise<EntityRelation> {
     return this.genericEntityRepository.children(id).create(relation);
   }
@@ -74,7 +75,7 @@ export class GenericEntityChildrenController {
     responses: {
       '200': {
         description: 'GenericEntity.Relation PATCH success count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
@@ -83,12 +84,13 @@ export class GenericEntityChildrenController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(EntityRelation, {partial: true}),
+          schema: getModelSchemaRef(EntityRelation, { partial: true }),
         },
       },
     })
     relation: Partial<EntityRelation>,
-    @param.query.object('where', getWhereSchemaFor(EntityRelation)) where?: Where<EntityRelation>,
+    @param.query.object('where', getWhereSchemaFor(EntityRelation))
+    where?: Where<EntityRelation>,
   ): Promise<Count> {
     return this.genericEntityRepository.children(id).patch(relation, where);
   }
@@ -97,13 +99,14 @@ export class GenericEntityChildrenController {
     responses: {
       '200': {
         description: 'GenericEntity.Relation DELETE success count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
   async delete(
     @param.path.string('id') id: string,
-    @param.query.object('where', getWhereSchemaFor(EntityRelation)) where?: Where<EntityRelation>,
+    @param.query.object('where', getWhereSchemaFor(EntityRelation))
+    where?: Where<EntityRelation>,
   ): Promise<Count> {
     return this.genericEntityRepository.children(id).delete(where);
   }

@@ -1,4 +1,4 @@
-import {inject} from '@loopback/context';
+import { inject } from '@loopback/context';
 import {
   FindRoute,
   InvokeMethod,
@@ -18,7 +18,7 @@ export class MySequence implements SequenceHandler {
    * Optional invoker for registered middleware in a chain.
    * To be injected via SequenceActions.INVOKE_MIDDLEWARE.
    */
-  @inject(SequenceActions.INVOKE_MIDDLEWARE, {optional: true})
+  @inject(SequenceActions.INVOKE_MIDDLEWARE, { optional: true })
   protected invokeMiddleware: InvokeMiddleware = () => false;
 
   constructor(
@@ -31,7 +31,7 @@ export class MySequence implements SequenceHandler {
 
   async handle(context: RequestContext) {
     try {
-      const {request, response} = context;
+      const { request, response } = context;
       const finished = await this.invokeMiddleware(context);
       if (finished) return;
       const route = this.findRoute(request);

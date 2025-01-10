@@ -4,7 +4,7 @@ import {
   Filter,
   FilterBuilder,
   repository,
-  Where
+  Where,
 } from '@loopback/repository';
 import {
   del,
@@ -16,27 +16,29 @@ import {
   post,
   requestBody,
 } from '@loopback/rest';
-import {Set, SetFilterBuilder} from '../extensions/set';
-import {sanitizeFilterFields} from '../helpers/filter.helper';
+import { Set, SetFilterBuilder } from '../extensions/set';
+import { sanitizeFilterFields } from '../helpers/filter.helper';
 import {
   GenericEntity,
   GenericList,
-  GenericListToEntityRelation
+  GenericListToEntityRelation,
 } from '../models';
-import {GenericListRepository} from '../repositories';
+import { GenericListRepository } from '../repositories';
 
 export class GenericListGenericEntityController {
   constructor(
-    @repository(GenericListRepository) protected listRepository: GenericListRepository,
-  ) { }
+    @repository(GenericListRepository)
+    protected listRepository: GenericListRepository,
+  ) {}
 
   @get('/generic-lists/{id}/generic-entities', {
     responses: {
       '200': {
-        description: 'Array of GenericList has many GenericEntity through ListEntityRelation',
+        description:
+          'Array of GenericList has many GenericEntity through ListEntityRelation',
         content: {
           'application/json': {
-            schema: {type: 'array', items: getModelSchemaRef(GenericEntity)},
+            schema: { type: 'array', items: getModelSchemaRef(GenericEntity) },
           },
         },
       },
@@ -47,18 +49,21 @@ export class GenericListGenericEntityController {
     @param.query.object('set') set?: Set,
     @param.query.object('filter') filter?: Filter<GenericEntity>,
     @param.query.object('setThrough') setThrough?: Set,
-    @param.query.object('filterThrough') filterThrough?: Filter<GenericListToEntityRelation>,
+    @param.query.object('filterThrough')
+    filterThrough?: Filter<GenericListToEntityRelation>,
   ): Promise<GenericEntity[]> {
-
     if (set)
       filter = new SetFilterBuilder<GenericEntity>(set, {
-        filter: filter
+        filter: filter,
       }).build();
 
     if (setThrough)
-      filterThrough = new SetFilterBuilder<GenericListToEntityRelation>(setThrough, {
-        filter: filterThrough
-      }).build();
+      filterThrough = new SetFilterBuilder<GenericListToEntityRelation>(
+        setThrough,
+        {
+          filter: filterThrough,
+        },
+      ).build();
 
     sanitizeFilterFields(filter);
     sanitizeFilterFields(filterThrough);
@@ -70,7 +75,9 @@ export class GenericListGenericEntityController {
     responses: {
       '200': {
         description: 'create a GenericEntity model instance',
-        content: {'application/json': {schema: getModelSchemaRef(GenericEntity)}},
+        content: {
+          'application/json': { schema: getModelSchemaRef(GenericEntity) },
+        },
       },
     },
   })
@@ -81,12 +88,21 @@ export class GenericListGenericEntityController {
         'application/json': {
           schema: getModelSchemaRef(GenericEntity, {
             title: 'NewGenericEntityInList',
-            exclude: ['_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_version', '_idempotencyKey']
+            exclude: [
+              '_id',
+              '_slug',
+              '_ownerUsersCount',
+              '_ownerGroupsCount',
+              '_viewerUsersCount',
+              '_viewerGroupsCount',
+              '_version',
+              '_idempotencyKey',
+            ],
           }),
         },
       },
     })
-    genericEntity: Omit<GenericEntity, 'id'>
+    genericEntity: Omit<GenericEntity, 'id'>,
   ): Promise<GenericEntity> {
     return this.listRepository.genericEntities(id).create(genericEntity);
   }
@@ -95,7 +111,7 @@ export class GenericListGenericEntityController {
     responses: {
       '200': {
         description: 'GenericList.GenericEntity PATCH success count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
@@ -104,44 +120,50 @@ export class GenericListGenericEntityController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(GenericEntity, {partial: true}),
+          schema: getModelSchemaRef(GenericEntity, { partial: true }),
         },
       },
     })
     genericEntity: Partial<GenericEntity>,
-    @param.query.object('where', getWhereSchemaFor(GenericEntity)) where?: Where<GenericEntity>,
-    @param.query.object('whereThrough') whereThrough?: Where<GenericListToEntityRelation>,
+    @param.query.object('where', getWhereSchemaFor(GenericEntity))
+    where?: Where<GenericEntity>,
+    @param.query.object('whereThrough')
+    whereThrough?: Where<GenericListToEntityRelation>,
   ): Promise<Count> {
-    return this.listRepository.genericEntities(id).updateAll(genericEntity, where, whereThrough);
+    return this.listRepository
+      .genericEntities(id)
+      .updateAll(genericEntity, where, whereThrough);
   }
 
   @del('/generic-lists/{id}/generic-entities', {
     responses: {
       '200': {
         description: 'GenericList.GenericEntity DELETE success count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
   async delete(
     @param.path.string('id') id: string,
     @param.query.object('set') set?: Set,
-    @param.query.object('where', getWhereSchemaFor(GenericEntity)) where?: Where<GenericEntity>,
-    @param.query.object('whereThrough') whereThrough?: Where<GenericListToEntityRelation>
+    @param.query.object('where', getWhereSchemaFor(GenericEntity))
+    where?: Where<GenericEntity>,
+    @param.query.object('whereThrough')
+    whereThrough?: Where<GenericListToEntityRelation>,
   ): Promise<Count> {
-
     const filterBuilder = new FilterBuilder<GenericEntity>();
 
-    if (where)
-      filterBuilder.where(where);
+    if (where) filterBuilder.where(where);
 
     let filter = filterBuilder.build();
 
     if (set)
       filter = new SetFilterBuilder<GenericEntity>(set, {
-        filter: filter
+        filter: filter,
       }).build();
 
-    return this.listRepository.genericEntities(id).deleteAll(filter.where, whereThrough);
+    return this.listRepository
+      .genericEntities(id)
+      .deleteAll(filter.where, whereThrough);
   }
 }

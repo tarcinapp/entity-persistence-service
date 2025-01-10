@@ -1,5 +1,5 @@
-import {ApplicationConfig} from '@loopback/core';
-import {EntityPersistenceApplication} from './application';
+import { ApplicationConfig } from '@loopback/core';
+import { EntityPersistenceApplication } from './application';
 
 /**
  * Export the OpenAPI spec from the application
@@ -17,7 +17,7 @@ async function exportOpenApiSpec(): Promise<void> {
   await app.exportOpenApiSpec(outFile);
 }
 
-exportOpenApiSpec().catch(err => {
+exportOpenApiSpec().catch((err) => {
   console.error('Fail to export OpenAPI spec from the application.', err);
   process.exit(1);
 });

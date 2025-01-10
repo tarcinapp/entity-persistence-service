@@ -1,10 +1,10 @@
-import {model, property} from '@loopback/repository';
-import {RelationMetadataType} from '../base-types/relation-metadata-under-entity.type';
-import {AccessControlBase} from './access-control-base.model';
+import { model, property } from '@loopback/repository';
+import { RelationMetadataType } from '../base-types/relation-metadata-under-entity.type';
+import { AccessControlBase } from './access-control-base.model';
 
 /**
  * Inherits:
-  * _id, _kind, _validFromDateTime, _validUntilDateTime, _version, _createdDateTime,
+ * _id, _kind, _validFromDateTime, _validUntilDateTime, _version, _createdDateTime,
  * _createdBy, _lastUpdatedDateTime, _lastUpdatedBy, _idempotencyKey,
  * _ownerUsers, _ownerGroups, _viewerUsers, _viewerGroups
  *
@@ -13,16 +13,15 @@ import {AccessControlBase} from './access-control-base.model';
  */
 @model({
   settings: {
-    strict: false
-  }
+    strict: false,
+  },
 })
 export class ListEntityCommonBase extends AccessControlBase {
-
   @property({
     type: 'string',
     required: true,
     jsonSchema: {
-      minLength: 2
+      minLength: 2,
     },
   })
   _name: string;
@@ -59,9 +58,9 @@ export class ListEntityCommonBase extends AccessControlBase {
 
   @property({
     type: 'object',
-    description: 'Contains the relation metadata for the record'
+    description: 'Contains the relation metadata for the record',
   })
-  _relationMetadata?: RelationMetadataType
+  _relationMetadata?: RelationMetadataType;
 
   constructor(data?: Partial<ListEntityCommonBase>) {
     super(data);

@@ -1,21 +1,41 @@
-import {Count, CountSchema, Filter, FilterBuilder, FilterExcludingWhere, repository, Where} from '@loopback/repository';
-import {del, get, getJsonSchema, getModelSchemaRef, param, patch, post, put, requestBody} from '@loopback/rest';
-import {Set, SetFilterBuilder} from '../extensions/set';
-import {sanitizeFilterFields} from '../helpers/filter.helper';
-import {GenericEntity, HttpErrorResponse} from '../models';
-import {GenericEntityRepository} from '../repositories';
+import {
+  Count,
+  CountSchema,
+  Filter,
+  FilterBuilder,
+  FilterExcludingWhere,
+  repository,
+  Where,
+} from '@loopback/repository';
+import {
+  del,
+  get,
+  getJsonSchema,
+  getModelSchemaRef,
+  param,
+  patch,
+  post,
+  put,
+  requestBody,
+} from '@loopback/rest';
+import { Set, SetFilterBuilder } from '../extensions/set';
+import { sanitizeFilterFields } from '../helpers/filter.helper';
+import { GenericEntity, HttpErrorResponse } from '../models';
+import { GenericEntityRepository } from '../repositories';
 
 export class GenericEntityController {
   constructor(
     @repository(GenericEntityRepository)
     public genericEntityRepository: GenericEntityRepository,
-  ) { }
+  ) {}
 
   @post('/generic-entities', {
     responses: {
       '200': {
         description: 'GenericEntity model instance',
-        content: {'application/json': {schema: getModelSchemaRef(GenericEntity)}},
+        content: {
+          'application/json': { schema: getModelSchemaRef(GenericEntity) },
+        },
       },
       '429': {
         description: 'Entity limit is exceeded',
@@ -23,11 +43,11 @@ export class GenericEntityController {
           'application/json': {
             schema: {
               properties: {
-                error: getJsonSchema(HttpErrorResponse)
-              }
-            }
-          }
-        }
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
       },
       '409': {
         description: 'Entity name already exists.',
@@ -35,11 +55,11 @@ export class GenericEntityController {
           'application/json': {
             schema: {
               properties: {
-                error: getJsonSchema(HttpErrorResponse)
-              }
-            }
-          }
-        }
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
       },
       '422': {
         description: 'Unprocessable entity',
@@ -47,12 +67,12 @@ export class GenericEntityController {
           'application/json': {
             schema: {
               properties: {
-                error: getJsonSchema(HttpErrorResponse)
-              }
-            }
-          }
-        }
-      }
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
     },
   })
   async create(
@@ -61,15 +81,24 @@ export class GenericEntityController {
         'application/json': {
           schema: getModelSchemaRef(GenericEntity, {
             title: 'NewGenericEntity',
-            exclude: ['_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_relationMetadata', '_version', '_idempotencyKey',],
-            includeRelations: false
+            exclude: [
+              '_id',
+              '_slug',
+              '_ownerUsersCount',
+              '_ownerGroupsCount',
+              '_viewerUsersCount',
+              '_viewerGroupsCount',
+              '_relationMetadata',
+              '_version',
+              '_idempotencyKey',
+            ],
+            includeRelations: false,
           }),
         },
       },
     })
-    genericEntity: Omit<GenericEntity, 'id'>
+    genericEntity: Omit<GenericEntity, 'id'>,
   ): Promise<GenericEntity> {
-
     return this.genericEntityRepository.create(genericEntity);
   }
 
@@ -77,7 +106,7 @@ export class GenericEntityController {
     responses: {
       '200': {
         description: 'GenericEntity model count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
@@ -85,17 +114,15 @@ export class GenericEntityController {
     @param.query.object('set') set?: Set,
     @param.where(GenericEntity) where?: Where<GenericEntity>,
   ): Promise<Count> {
-
     const filterBuilder = new FilterBuilder<GenericEntity>();
 
-    if (where)
-      filterBuilder.where(where);
+    if (where) filterBuilder.where(where);
 
     let filter = filterBuilder.build();
 
     if (set)
       filter = new SetFilterBuilder<GenericEntity>(set, {
-        filter: filter
+        filter: filter,
       }).build();
 
     return this.genericEntityRepository.count(filter.where);
@@ -109,7 +136,9 @@ export class GenericEntityController {
           'application/json': {
             schema: {
               type: 'array',
-              items: getModelSchemaRef(GenericEntity, {includeRelations: true}),
+              items: getModelSchemaRef(GenericEntity, {
+                includeRelations: true,
+              }),
             },
           },
         },
@@ -118,12 +147,11 @@ export class GenericEntityController {
   })
   async find(
     @param.query.object('set') set?: Set,
-    @param.filter(GenericEntity) filter?: Filter<GenericEntity>
+    @param.filter(GenericEntity) filter?: Filter<GenericEntity>,
   ): Promise<GenericEntity[]> {
-
     if (set)
       filter = new SetFilterBuilder<GenericEntity>(set, {
-        filter: filter
+        filter: filter,
       }).build();
 
     sanitizeFilterFields(filter);
@@ -135,7 +163,7 @@ export class GenericEntityController {
     responses: {
       '200': {
         description: 'GenericEntity PATCH success count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
@@ -145,27 +173,46 @@ export class GenericEntityController {
         'application/json': {
           schema: getModelSchemaRef(GenericEntity, {
             title: 'NewGenericEntity',
-            exclude: ['_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_relationMetadata', '_version', '_idempotencyKey',],
-            includeRelations: false
+            exclude: [
+              '_id',
+              '_slug',
+              '_ownerUsersCount',
+              '_ownerGroupsCount',
+              '_viewerUsersCount',
+              '_viewerGroupsCount',
+              '_relationMetadata',
+              '_version',
+              '_idempotencyKey',
+            ],
+            includeRelations: false,
           }),
         },
       },
     })
-    genericEntity: Omit<GenericEntity, 'id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_version' | '_idempotencyKey' | '_relationMetadata'>,
+    genericEntity: Omit<
+      GenericEntity,
+      | 'id'
+      | '_slug'
+      | '_ownerUsersCount'
+      | '_ownerGroupsCount'
+      | '_viewerUsersCount'
+      | '_viewerGroupsCount'
+      | '_version'
+      | '_idempotencyKey'
+      | '_relationMetadata'
+    >,
     @param.query.object('set') set?: Set,
     @param.where(GenericEntity) where?: Where<GenericEntity>,
   ): Promise<Count> {
-
     const filterBuilder = new FilterBuilder<GenericEntity>();
 
-    if (where)
-      filterBuilder.where(where);
+    if (where) filterBuilder.where(where);
 
     let filter = filterBuilder.build();
 
     if (set)
       filter = new SetFilterBuilder<GenericEntity>(set, {
-        filter: filter
+        filter: filter,
       }).build();
 
     return this.genericEntityRepository.updateAll(genericEntity, filter.where);
@@ -177,7 +224,9 @@ export class GenericEntityController {
         description: 'GenericEntity model instance',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(GenericEntity, {includeRelations: true}),
+            schema: getModelSchemaRef(GenericEntity, {
+              includeRelations: true,
+            }),
           },
         },
       },
@@ -188,16 +237,17 @@ export class GenericEntityController {
         'application/json': {
           schema: {
             properties: {
-              error: getJsonSchema(HttpErrorResponse)
-            }
-          }
-        }
-      }
+              error: getJsonSchema(HttpErrorResponse),
+            },
+          },
+        },
+      },
     },
   })
   async findById(
     @param.path.string('id') id: string,
-    @param.filter(GenericEntity, {exclude: 'where'}) filter?: FilterExcludingWhere<GenericEntity>
+    @param.filter(GenericEntity, { exclude: 'where' })
+    filter?: FilterExcludingWhere<GenericEntity>,
   ): Promise<GenericEntity> {
     return this.genericEntityRepository.findById(id, filter);
   }
@@ -213,11 +263,11 @@ export class GenericEntityController {
           'application/json': {
             schema: {
               properties: {
-                error: getJsonSchema(HttpErrorResponse)
-              }
-            }
-          }
-        }
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
       },
       '422': {
         description: 'Unprocessable entity',
@@ -225,12 +275,12 @@ export class GenericEntityController {
           'application/json': {
             schema: {
               properties: {
-                error: getJsonSchema(HttpErrorResponse)
-              }
-            }
-          }
-        }
-      }
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
     },
   })
   async updateById(
@@ -241,13 +291,34 @@ export class GenericEntityController {
           schema: getModelSchemaRef(GenericEntity, {
             title: 'PatchGenericEntity',
             partial: true,
-            exclude: ['_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_relationMetadata', '_version', '_idempotencyKey',],
-            includeRelations: false
+            exclude: [
+              '_id',
+              '_slug',
+              '_ownerUsersCount',
+              '_ownerGroupsCount',
+              '_viewerUsersCount',
+              '_viewerGroupsCount',
+              '_relationMetadata',
+              '_version',
+              '_idempotencyKey',
+            ],
+            includeRelations: false,
           }),
         },
       },
     })
-    genericEntity: Omit<GenericEntity, 'id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_version' | '_idempotencyKey' | '_relationMetadata'>,
+    genericEntity: Omit<
+      GenericEntity,
+      | 'id'
+      | '_slug'
+      | '_ownerUsersCount'
+      | '_ownerGroupsCount'
+      | '_viewerUsersCount'
+      | '_viewerGroupsCount'
+      | '_version'
+      | '_idempotencyKey'
+      | '_relationMetadata'
+    >,
   ): Promise<void> {
     await this.genericEntityRepository.updateById(id, genericEntity);
   }
@@ -263,11 +334,11 @@ export class GenericEntityController {
           'application/json': {
             schema: {
               properties: {
-                error: getJsonSchema(HttpErrorResponse)
-              }
-            }
-          }
-        }
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
       },
       '422': {
         description: 'Unprocessable entity',
@@ -275,12 +346,12 @@ export class GenericEntityController {
           'application/json': {
             schema: {
               properties: {
-                error: getJsonSchema(HttpErrorResponse)
-              }
-            }
-          }
-        }
-      }
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
     },
   })
   async replaceById(
@@ -290,13 +361,34 @@ export class GenericEntityController {
         'application/json': {
           schema: getModelSchemaRef(GenericEntity, {
             title: 'ReplaceGenericEntity',
-            exclude: ['_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_relationMetadata', '_version', '_idempotencyKey',],
-            includeRelations: false
+            exclude: [
+              '_id',
+              '_slug',
+              '_ownerUsersCount',
+              '_ownerGroupsCount',
+              '_viewerUsersCount',
+              '_viewerGroupsCount',
+              '_relationMetadata',
+              '_version',
+              '_idempotencyKey',
+            ],
+            includeRelations: false,
           }),
         },
       },
     })
-    genericEntity: Omit<GenericEntity, 'id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_version' | '_idempotencyKey' | '_relationMetadata'>,
+    genericEntity: Omit<
+      GenericEntity,
+      | 'id'
+      | '_slug'
+      | '_ownerUsersCount'
+      | '_ownerGroupsCount'
+      | '_viewerUsersCount'
+      | '_viewerGroupsCount'
+      | '_version'
+      | '_idempotencyKey'
+      | '_relationMetadata'
+    >,
   ): Promise<void> {
     await this.genericEntityRepository.replaceById(id, genericEntity);
   }
@@ -312,12 +404,12 @@ export class GenericEntityController {
           'application/json': {
             schema: {
               properties: {
-                error: getJsonSchema(HttpErrorResponse)
-              }
-            }
-          }
-        }
-      }
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
     },
   })
   async deleteById(@param.path.string('id') id: string): Promise<void> {

@@ -15,16 +15,14 @@ import {
   post,
   requestBody,
 } from '@loopback/rest';
-import {
-  GenericList,
-  Tag
-} from '../models';
-import {GenericListRepository} from '../repositories';
+import { GenericList, Tag } from '../models';
+import { GenericListRepository } from '../repositories';
 
 export class ListTagController {
   constructor(
-    @repository(GenericListRepository) protected listRepository: GenericListRepository,
-  ) { }
+    @repository(GenericListRepository)
+    protected listRepository: GenericListRepository,
+  ) {}
 
   @get('/generic-lists/{id}/tags', {
     responses: {
@@ -32,7 +30,7 @@ export class ListTagController {
         description: 'Array of List has many Tag through TagListRelation',
         content: {
           'application/json': {
-            schema: {type: 'array', items: getModelSchemaRef(Tag)},
+            schema: { type: 'array', items: getModelSchemaRef(Tag) },
           },
         },
       },
@@ -49,7 +47,7 @@ export class ListTagController {
     responses: {
       '200': {
         description: 'create a Tag model instance',
-        content: {'application/json': {schema: getModelSchemaRef(Tag)}},
+        content: { 'application/json': { schema: getModelSchemaRef(Tag) } },
       },
     },
   })
@@ -64,7 +62,8 @@ export class ListTagController {
           }),
         },
       },
-    }) tag: Omit<Tag, 'id'>,
+    })
+    tag: Omit<Tag, 'id'>,
   ): Promise<Tag> {
     return this.listRepository.tags(id).create(tag);
   }
@@ -73,7 +72,7 @@ export class ListTagController {
     responses: {
       '200': {
         description: 'List.Tag PATCH success count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
@@ -82,7 +81,7 @@ export class ListTagController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(Tag, {partial: true}),
+          schema: getModelSchemaRef(Tag, { partial: true }),
         },
       },
     })
@@ -96,7 +95,7 @@ export class ListTagController {
     responses: {
       '200': {
         description: 'List.Tag DELETE success count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })

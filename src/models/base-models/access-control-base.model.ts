@@ -1,21 +1,20 @@
-import {model, property} from '@loopback/repository';
-import {RecordsCommonBase} from './records-common-base.model';
+import { model, property } from '@loopback/repository';
+import { RecordsCommonBase } from './records-common-base.model';
 
 /**
  * Inherits:
  * _id, _kind, _validFromDateTime, _validUntilDateTime, _version, _createdDateTime,
  * _createdBy, _lastUpdatedDateTime, _lastUpdatedBy, _idempotencyKey
- * 
+ *
  * Adds:
  * _ownerUsers, _ownerGroups, _viewerUsers, _viewerGroups
  */
 @model({
   settings: {
-    strict: false
-  }
+    strict: false,
+  },
 })
 export class AccessControlBase extends RecordsCommonBase {
-
   @property.array(String, {
     required: false,
     default: [],

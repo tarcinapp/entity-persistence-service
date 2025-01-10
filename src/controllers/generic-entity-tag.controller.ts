@@ -15,24 +15,23 @@ import {
   post,
   requestBody,
 } from '@loopback/rest';
-import {
-  GenericEntity,
-  Tag,
-} from '../models';
-import {GenericEntityRepository} from '../repositories';
+import { GenericEntity, Tag } from '../models';
+import { GenericEntityRepository } from '../repositories';
 
 export class GenericEntityTagController {
   constructor(
-    @repository(GenericEntityRepository) protected genericEntityRepository: GenericEntityRepository,
-  ) { }
+    @repository(GenericEntityRepository)
+    protected genericEntityRepository: GenericEntityRepository,
+  ) {}
 
   @get('/generic-entities/{id}/tags', {
     responses: {
       '200': {
-        description: 'Array of GenericEntity has many Tag through TagEntityRelation',
+        description:
+          'Array of GenericEntity has many Tag through TagEntityRelation',
         content: {
           'application/json': {
-            schema: {type: 'array', items: getModelSchemaRef(Tag)},
+            schema: { type: 'array', items: getModelSchemaRef(Tag) },
           },
         },
       },
@@ -49,7 +48,7 @@ export class GenericEntityTagController {
     responses: {
       '200': {
         description: 'create a Tag model instance',
-        content: {'application/json': {schema: getModelSchemaRef(Tag)}},
+        content: { 'application/json': { schema: getModelSchemaRef(Tag) } },
       },
     },
   })
@@ -64,7 +63,8 @@ export class GenericEntityTagController {
           }),
         },
       },
-    }) tag: Omit<Tag, 'id'>,
+    })
+    tag: Omit<Tag, 'id'>,
   ): Promise<Tag> {
     return this.genericEntityRepository.tags(id).create(tag);
   }
@@ -73,7 +73,7 @@ export class GenericEntityTagController {
     responses: {
       '200': {
         description: 'GenericEntity.Tag PATCH success count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
@@ -82,7 +82,7 @@ export class GenericEntityTagController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(Tag, {partial: true}),
+          schema: getModelSchemaRef(Tag, { partial: true }),
         },
       },
     })
@@ -96,7 +96,7 @@ export class GenericEntityTagController {
     responses: {
       '200': {
         description: 'GenericEntity.Tag DELETE success count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
