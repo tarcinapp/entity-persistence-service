@@ -85,13 +85,14 @@ export class GenericListController {
         'application/json': {
           schema: getModelSchemaRef(GenericList, {
             title: 'NewList',
-            exclude: ['_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_version', '_idempotencyKey',],
+            exclude: ['_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_version', '_idempotencyKey', '_relationMetadata'],
           }),
         },
       },
     })
-    list: Omit<GenericList, 'id'>,
+    list: Omit<GenericList, 'id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_version' | '_idempotencyKey' | '_relationMetadata'>,
   ): Promise<GenericList> {
+
     return this.genericListRepository.create(list);
   }
 
@@ -167,11 +168,14 @@ export class GenericListController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(GenericList, {partial: true}),
+          schema: getModelSchemaRef(GenericList, {
+            title: 'NewList',
+            exclude: ['_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_version', '_idempotencyKey', '_relationMetadata'],
+          }),
         },
       },
     })
-    list: GenericList,
+    list: Omit<GenericList, 'id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_version' | '_idempotencyKey' | '_relationMetadata'>,
     @param.query.object('set') set?: Set,
     @param.where(GenericList) where?: Where<GenericList>,
   ): Promise<Count> {
@@ -258,11 +262,14 @@ export class GenericListController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(GenericList, {partial: true}),
+          schema: getModelSchemaRef(GenericList, {
+            title: 'NewList',
+            exclude: ['_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_version', '_idempotencyKey', '_relationMetadata'],
+          }),
         },
       },
     })
-    list: GenericList,
+    list: Omit<GenericList, 'id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_version' | '_idempotencyKey' | '_relationMetadata'>,
   ): Promise<void> {
     await this.genericListRepository.updateById(id, list);
   }
@@ -304,12 +311,13 @@ export class GenericListController {
       content: {
         'application/json': {
           schema: getModelSchemaRef(GenericList, {
-            title: 'ReplaceGenericList',
-            exclude: ['_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_version', '_idempotencyKey'],
-          })
-        }
-      }
-    }) list: GenericList,
+            title: 'NewList',
+            exclude: ['_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_version', '_idempotencyKey', '_relationMetadata'],
+          }),
+        },
+      },
+    })
+    list: Omit<GenericList, 'id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_version' | '_idempotencyKey' | '_relationMetadata'>,
   ): Promise<void> {
     await this.genericListRepository.replaceById(id, list);
   }
