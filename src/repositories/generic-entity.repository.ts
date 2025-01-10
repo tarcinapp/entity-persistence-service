@@ -74,8 +74,8 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   ) {
     super(GenericEntity, dataSource);
     this.tags = this.createHasManyThroughRepositoryFactoryFor('tags', tagRepositoryGetter, tagEntityRelationRepositoryGetter,);
-    this.reactions = this.createHasManyRepositoryFactoryFor('reactions', reactionsRepositoryGetter,);
-    this.registerInclusionResolver('reactions', this.reactions.inclusionResolver);
+    this.reactions = this.createHasManyRepositoryFactoryFor('_reactions', reactionsRepositoryGetter,);
+    this.registerInclusionResolver('_reactions', this.reactions.inclusionResolver);
     this.children = this.createHasManyRepositoryFactoryFor('_children', relationRepositoryGetter,);
     this.registerInclusionResolver('_children', this.children.inclusionResolver);
   }
