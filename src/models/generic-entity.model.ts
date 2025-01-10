@@ -1,6 +1,5 @@
-import {hasMany, model, property} from '@loopback/repository';
+import {hasMany, model} from '@loopback/repository';
 import {ListEntityCommonBase} from './base-models/list-entity-common-base.model';
-import {RelationMetadataType} from './base-types/relation-metadata-under-entity.type';
 import {Reactions} from './reactions.model';
 import {EntityRelation} from './relation.model';
 import {TagEntityRelation} from './tag-entity-relation.model';
@@ -16,20 +15,14 @@ import {Tag} from './tag.model';
 })
 export class GenericEntity extends ListEntityCommonBase {
 
-  @property({
-    type: 'object',
-    description: 'Metadata for the relation target'
-  })
-  _relationMetadata: RelationMetadataType
-
   @hasMany(() => EntityRelation, {keyTo: 'from'})
-  _children: EntityRelation[];
+  _children?: EntityRelation[];
 
   @hasMany(() => Reactions, {keyTo: 'entityId'})
-  reactions: Reactions[];
+  _reactions?: Reactions[];
 
   @hasMany(() => Tag, {through: {model: () => TagEntityRelation, keyFrom: 'entityId'}})
-  tags: Tag[];
+  tags?: Tag[];
   // Define well-known properties here
 
   // Indexer property to allow additional data
