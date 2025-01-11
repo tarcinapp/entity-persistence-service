@@ -1,4 +1,4 @@
-import { Entity, model, property } from '@loopback/repository';
+import {Entity, model, property} from '@loopback/repository';
 import _ from 'lodash';
 
 @model()

@@ -1,15 +1,16 @@
-import { inject } from '@loopback/core';
+import {inject} from '@loopback/core';
+import type {DataObject, Options} from '@loopback/repository';
 import {
-  DataObject,
   DefaultCrudRepository,
   Filter,
   FilterBuilder,
-  Options,
   Where,
 } from '@loopback/repository';
 import _ from 'lodash';
-import { EntityDbDataSource } from '../datasources';
-import { HttpErrorResponse, Tag, TagRelations } from '../models';
+
+import {EntityDbDataSource} from '../datasources';
+import type {TagRelations} from '../models';
+import {HttpErrorResponse, Tag} from '../models';
 
 export class TagRepository extends DefaultCrudRepository<
   Tag,
