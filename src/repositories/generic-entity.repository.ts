@@ -155,15 +155,11 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
       // we do not have identical data in the db
       // go ahead, validate, enrich and create the data
-      return this.createNewEntityFacade(data);
+      return this.createNewEntityFacade(data, options);
     });
   }
 
-  async replaceById(
-    id: string,
-    data: DataObject<GenericEntity>,
-    options?: Options,
-  ) {
+  async replaceById(id: string, data: DataObject<GenericEntity>) {
     return this.modifyIncomingEntityForUpdates(id, data)
       .then((collection) => {
         // calculate idempotencyKey
@@ -175,11 +171,9 @@ export class GenericEntityRepository extends DefaultCrudRepository<
         return collection;
       })
       .then((collection) =>
-        this.validateIncomingEntityForReplace(id, collection.data, options),
+        this.validateIncomingEntityForReplace(id, collection.data),
       )
-      .then((validEnrichedData) =>
-        super.replaceById(id, validEnrichedData, options),
-      );
+      .then((validEnrichedData) => super.replaceById(id, validEnrichedData));
   }
 
   async updateById(
@@ -208,7 +202,6 @@ export class GenericEntityRepository extends DefaultCrudRepository<
           id,
           collection.existingData,
           collection.data,
-          options,
         ),
       )
       .then((validEnrichedData) =>
@@ -319,6 +312,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
    */
   private async createNewEntityFacade(
     data: DataObject<GenericEntity>,
+    options?: Options,
   ): Promise<GenericEntity> {
     /**
      * TODO: MongoDB connector still does not support transactions.
@@ -334,7 +328,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
       .then((enrichedData) =>
         this.validateIncomingEntityForCreation(enrichedData),
       )
-      .then((validEnrichedData) => super.create(validEnrichedData));
+      .then((validEnrichedData) => super.create(validEnrichedData, options));
   }
 
   private async validateIncomingEntityForCreation(
@@ -354,7 +348,6 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   private async validateIncomingEntityForReplace(
     id: string,
     data: DataObject<GenericEntity>,
-    options?: Options,
   ) {
     const uniquenessCheck = this.checkUniquenessForUpdate(id, data);
 
@@ -370,12 +363,11 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     id: string,
     existingData: DataObject<GenericEntity>,
     data: DataObject<GenericEntity>,
-    options?: Options,
   ) {
     // we need to merge existing data with incoming data in order to check limits and uniquenesses
     const mergedData = _.assign(
       {},
-      existingData && _.pickBy(existingData, (value) => value != null),
+      existingData && _.pickBy(existingData, (value) => value !== null),
       data,
     );
     const uniquenessCheck = this.checkUniquenessForUpdate(id, mergedData);

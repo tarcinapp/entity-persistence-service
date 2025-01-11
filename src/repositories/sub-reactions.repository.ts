@@ -9,6 +9,7 @@ export class SubReactionsRepository extends DefaultCrudRepository<
   typeof SubReactions.prototype.id,
   SubReactionsRelations
 > {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   private static response_limit = _.parseInt(
     process.env.response_limit_entity_reaction ?? '50',
   );

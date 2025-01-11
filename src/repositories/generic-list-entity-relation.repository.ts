@@ -232,16 +232,12 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
 
         data._idempotencyKey = idempotencyKey;
 
-        return this.createNewRelationFacade(data);
+        return this.createNewRelationFacade(data, options);
       },
     );
   }
 
-  async replaceById(
-    id: string,
-    data: DataObject<GenericListToEntityRelation>,
-    options?: Options,
-  ) {
+  async replaceById(id: string, data: DataObject<GenericListToEntityRelation>) {
     return this.enrichIncomingRelForUpdates(id, data)
       .then((collection) => {
         // calculate idempotencyKey
@@ -253,24 +249,18 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
         return collection;
       })
       .then((collection) =>
-        this.validateIncomingRelForReplace(id, collection.data, options),
+        this.validateIncomingRelForReplace(id, collection.data),
       )
-      .then((validEnrichedData) =>
-        super.replaceById(id, validEnrichedData, options),
-      );
+      .then((validEnrichedData) => super.replaceById(id, validEnrichedData));
   }
 
-  async updateById(
-    id: string,
-    data: DataObject<GenericListToEntityRelation>,
-    options?: Options,
-  ) {
+  async updateById(id: string, data: DataObject<GenericListToEntityRelation>) {
     return this.enrichIncomingRelForUpdates(id, data)
       .then((collection) => {
         const mergedData = {
           ...data,
           ...(collection.existingData &&
-            _.pickBy(collection.existingData, (value) => value != null)),
+            _.pickBy(collection.existingData, (value) => value !== null)),
         };
 
         // calculate idempotencyKey
@@ -286,12 +276,9 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
           id,
           collection.existingData,
           collection.data,
-          options,
         ),
       )
-      .then((validEnrichedData) =>
-        super.updateById(id, validEnrichedData, options),
-      );
+      .then((validEnrichedData) => super.updateById(id, validEnrichedData));
   }
 
   async updateAll(
@@ -312,12 +299,13 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
    */
   async createNewRelationFacade(
     data: DataObject<GenericListToEntityRelation>,
+    options?: Options,
   ): Promise<GenericListToEntityRelation> {
     return this.enrichIncomingRelationForCreation(data)
       .then((enrichedData) =>
         this.validateIncomingRelationForCreation(enrichedData),
       )
-      .then((validEnrichedData) => super.create(validEnrichedData));
+      .then((validEnrichedData) => super.create(validEnrichedData, options));
   }
 
   /**
@@ -378,12 +366,11 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
     id: string,
     existingData: DataObject<GenericListToEntityRelation>,
     data: DataObject<GenericListToEntityRelation>,
-    options?: Options,
   ) {
     // we need to merge existing data with incoming data in order to check limits and uniquenesses
     const mergedData = {
       ...data,
-      ...(existingData && _.pickBy(existingData, (value) => value != null)),
+      ...(existingData && _.pickBy(existingData, (value) => value !== null)),
     } as DataObject<GenericListToEntityRelation>;
 
     if (mergedData._kind) {
@@ -405,7 +392,6 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
   async validateIncomingRelForReplace(
     id: string,
     data: DataObject<GenericListToEntityRelation>,
-    options?: Options,
   ) {
     this.checkDataKindValues(data);
     this.checkDataKindFormat(data);

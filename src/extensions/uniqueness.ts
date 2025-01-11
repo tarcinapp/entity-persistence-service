@@ -3,11 +3,11 @@ import _, { cloneDeepWith, isEmpty } from 'lodash';
 import qs from 'qs';
 import type { Set, UserAndGroupInfo } from '../extensions/set';
 
-export namespace UniquenessBindings {
-  export const CONFIG_READER = BindingKey.create<UniquenessConfigurationReader>(
+export const UniquenessBindings = {
+  CONFIG_READER: BindingKey.create<UniquenessConfigurationReader>(
     'extensions.uniqueness.configurationreader',
-  );
-}
+  ),
+} as const;
 
 export class UniquenessConfigurationReader {
   // this setting keeps if uniqueness is configured for all entities in all kinds
@@ -17,8 +17,9 @@ export class UniquenessConfigurationReader {
   private static COMMON_ENTITY_UNIQUENESS_FIELDS: string[];
 
   // this setting keeps the fields array for entities by their kinds
-  private static KIND_ENTITY_UNIQUENESS_FIELDS: { property: string[] } | {} =
-    {};
+  private static KIND_ENTITY_UNIQUENESS_FIELDS:
+    | { property: string[] }
+    | object = {};
 
   // --------------------------------------------------------------------------
 
@@ -29,7 +30,8 @@ export class UniquenessConfigurationReader {
   private static COMMON_LIST_UNIQUENESS_FIELDS: string[];
 
   // this setting keeps the fields array for entities by their kinds
-  private static KIND_LIST_UNIQUENESS_FIELDS: { property: string[] } | {} = {};
+  private static KIND_LIST_UNIQUENESS_FIELDS: { property: string[] } | object =
+    {};
 
   ///
 
@@ -39,7 +41,7 @@ export class UniquenessConfigurationReader {
   private static COMMON_LIST_ENTITY_REL_UNIQUENESS_FIELDS: string[];
   private static KIND_LIST_ENTITY_REL_UNIQUENESS_FIELDS:
     | { property: string[] }
-    | {} = {};
+    | object = {};
 
   constructor() {
     if (

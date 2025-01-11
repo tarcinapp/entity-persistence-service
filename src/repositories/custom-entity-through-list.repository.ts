@@ -112,13 +112,6 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
       if (relation) {
         // Exclude `toMetadata` while retaining other properties
 
-        const {
-          _toMetadata,
-          _entityId,
-          _listId,
-          ...relationWithoutToMetadata
-        } = relation;
-
         entity._relationMetadata = {
           _id: relation._id,
           _kind: relation._kind,

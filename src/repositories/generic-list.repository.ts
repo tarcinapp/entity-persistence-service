@@ -218,7 +218,7 @@ export class GenericListRepository extends DefaultCrudRepository<
         return collection;
       })
       .then((collection) =>
-        this.validateIncomingListForReplace(id, collection.data, options),
+        this.validateIncomingListForReplace(id, collection.data),
       )
       .then((validEnrichedData) =>
         super.replaceById(id, validEnrichedData, options),
@@ -251,7 +251,6 @@ export class GenericListRepository extends DefaultCrudRepository<
           id,
           collection.existingData,
           collection.data,
-          options,
         ),
       )
       .then((validEnrichedData) =>
@@ -320,7 +319,7 @@ export class GenericListRepository extends DefaultCrudRepository<
     listEntityRelationRepositoryGetter: Getter<GenericListEntityRelationRepository>,
     genericEntityRepositoryGetter: Getter<GenericEntityRepository>,
   ): InclusionResolver<GenericList, GenericEntity> {
-    return async (lists, inclusion, options) => {
+    return async (lists, inclusion) => {
       const listEntityRelationRepo = await listEntityRelationRepositoryGetter();
       const entityRepo = await genericEntityRepositoryGetter();
 
@@ -454,7 +453,6 @@ export class GenericListRepository extends DefaultCrudRepository<
   private async validateIncomingListForReplace(
     id: string,
     data: DataObject<GenericList>,
-    options?: Options,
   ) {
     const uniquenessCheck = this.checkUniquenessForUpdate(id, data);
 
@@ -470,12 +468,11 @@ export class GenericListRepository extends DefaultCrudRepository<
     id: string,
     existingData: DataObject<GenericList>,
     data: DataObject<GenericList>,
-    options?: Options,
   ) {
     // we need to merge existing data with incoming data in order to check limits and uniquenesses
     const mergedData = _.assign(
       {},
-      existingData && _.pickBy(existingData, (value) => value != null),
+      existingData && _.pickBy(existingData, (value) => value !== null),
       data,
     );
     const uniquenessCheck = this.checkUniquenessForUpdate(id, mergedData);

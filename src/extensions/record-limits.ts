@@ -3,12 +3,11 @@ import _, { cloneDeepWith, isEmpty } from 'lodash';
 import qs from 'qs';
 import type { Set, UserAndGroupInfo } from '../extensions/set';
 
-export namespace RecordLimitsBindings {
-  export const CONFIG_READER =
-    BindingKey.create<RecordLimitsConfigurationReader>(
-      'extensions.record-limits.configurationreader',
-    );
-}
+export const RecordLimitsBindings = {
+  CONFIG_READER: BindingKey.create<RecordLimitsConfigurationReader>(
+    'extensions.record-limits.configurationreader',
+  ),
+} as const;
 
 /**
  * This class is helper to read configuration made to limit number of records

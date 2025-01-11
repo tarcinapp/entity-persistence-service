@@ -1,19 +1,16 @@
 import { BindingKey } from '@loopback/core';
 import { isEmpty } from 'lodash';
 
-export namespace IdempotencyConfigBindings {
-  export const CONFIG_READER =
-    BindingKey.create<IdempotencyConfigurationReader>(
-      'extensions.idempotency.configurationreader',
-    );
-}
+export const IdempotencyConfigBindings = {
+  CONFIG_READER: BindingKey.create<IdempotencyConfigurationReader>(
+    'extensions.idempotency.configurationreader',
+  ),
+} as const;
 
 export class IdempotencyConfigurationReader {
   defaultListIdempotency: string[] = [];
   defaultEntityIdempotency: string[] = [];
   defaultListEntityRelIdempotency: string[] = [];
-
-  constructor() {}
 
   public isIdempotencyConfiguredForEntities(kind?: string) {
     return (

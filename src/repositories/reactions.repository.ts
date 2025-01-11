@@ -21,6 +21,7 @@ export class ReactionsRepository extends DefaultCrudRepository<
     typeof Reactions.prototype.id
   >;
 
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   private static response_limit = _.parseInt(
     process.env.response_limit_entity_reaction ?? '50',
   );

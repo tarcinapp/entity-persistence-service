@@ -5,8 +5,6 @@ import type { Set } from '../../../extensions/set';
 import { GenericEntity } from '../../../models';
 import { GenericEntityRepository } from '../../../repositories';
 
-describe('GenericEntityController.create', () => {});
-
 describe('GenericEntityController', () => {
   let controller: GenericEntityController;
   let repository: sinon.SinonStubbedInstance<GenericEntityRepository>;

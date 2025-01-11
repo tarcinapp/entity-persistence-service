@@ -1,11 +1,11 @@
 import { BindingKey } from '@loopback/core';
 import _ from 'lodash';
 
-export namespace KindLimitsBindings {
-  export const CONFIG_READER = BindingKey.create<KindLimitsConfigurationReader>(
+export const KindLimitsBindings = {
+  CONFIG_READER: BindingKey.create<KindLimitsConfigurationReader>(
     'extensions.kind-limits.configurationreader',
-  );
-}
+  ),
+} as const;
 
 /**
  * This class is used to read the configuration made to constraint allowed list of kinds.
@@ -42,8 +42,6 @@ export class KindLimitsConfigurationReader {
   static {
     this.initKindLimitConfigurations();
   }
-
-  constructor() {}
 
   public get allowedKindsForEntities() {
     return KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_ENTITIES;

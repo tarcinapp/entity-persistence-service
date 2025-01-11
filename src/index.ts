@@ -88,7 +88,7 @@ if (require.main === module) {
       },
       expressSettings: {
         'x-powered-by': false,
-        // eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         'query parser': (query: any) => {
           return parse(query, { depth: 10 });
         },

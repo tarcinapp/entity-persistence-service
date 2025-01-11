@@ -29,6 +29,14 @@ module.exports = {
     '@typescript-eslint/explicit-function-return-type': 'off', // Disable enforced return types
     '@typescript-eslint/no-empty-function': 'warn', // Warn against empty functions
     '@typescript-eslint/consistent-type-imports': 'error', // Enforce consistent type-only imports
+    '@typescript-eslint/naming-convention': [
+      'error',
+      {
+        selector: ['variable', 'parameter', 'classProperty'],
+        format: ['camelCase', 'UPPER_CASE', 'PascalCase'],
+        leadingUnderscore: 'allow',
+      },
+    ],
 
     // General JavaScript/ESLint Rules
     'no-console': 'warn', // Discourage `console.log` in production code
