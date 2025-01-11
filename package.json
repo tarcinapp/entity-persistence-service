@@ -70,6 +70,7 @@
     "@loopback/testlab": "^7.0.8",
     "@types/node": "^16.18.119",
     "eslint": "^8.57.0",
+    "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-prettier": "^5.2.1",
     "mocha": "^11.0.1",
     "mock-env": "^0.2.0",

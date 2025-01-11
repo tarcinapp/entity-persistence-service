@@ -4,6 +4,8 @@ module.exports = {
     'eslint:recommended', // Enforce recommended ESLint rules
     'plugin:@typescript-eslint/recommended', // Enable TypeScript-specific linting
     'plugin:prettier/recommended', // Integrate Prettier for consistent formatting
+    'plugin:import/recommended',
+    'plugin:import/typescript',
   ],
   parser: '@typescript-eslint/parser', // Use TypeScript parser
   parserOptions: {
@@ -15,6 +17,7 @@ module.exports = {
   plugins: [
     '@typescript-eslint', // TypeScript-specific linting rules
     'prettier', // Prettier integration
+    'import',
   ],
   rules: {
     // Prettier Integration
