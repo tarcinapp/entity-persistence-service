@@ -1,7 +1,7 @@
-import { DefaultCrudRepository } from '@loopback/repository';
-import { TagEntityRelation, TagEntityRelationRelations } from '../models';
-import { EntityDbDataSource } from '../datasources';
 import { inject } from '@loopback/core';
+import { DefaultCrudRepository } from '@loopback/repository';
+import { EntityDbDataSource } from '../datasources';
+import { TagEntityRelation, TagEntityRelationRelations } from '../models';
 
 export class TagEntityRelationRepository extends DefaultCrudRepository<
   TagEntityRelation,

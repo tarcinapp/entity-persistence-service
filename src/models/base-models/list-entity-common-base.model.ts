@@ -1,6 +1,6 @@
 import { model, property } from '@loopback/repository';
-import { RelationMetadataType } from '../base-types/relation-metadata-under-entity.type';
 import { AccessControlBase } from './access-control-base.model';
+import { RelationMetadataType } from '../base-types/relation-metadata-under-entity.type';
 
 /**
  * Inherits:

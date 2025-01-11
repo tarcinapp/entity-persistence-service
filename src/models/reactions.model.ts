@@ -1,7 +1,7 @@
-import {Entity, hasMany, model, property} from '@loopback/repository';
-import {SubReactions} from './sub-reactions.model';
+import { Entity, hasMany, model, property } from '@loopback/repository';
+import { SubReactions } from './sub-reactions.model';
 
-@model({settings: {strict: false}})
+@model({ settings: { strict: false } })
 export class Reactions extends Entity {
   @property({
     type: 'string',
@@ -32,7 +32,7 @@ export class Reactions extends Entity {
   @property({
     type: 'date',
     default: null,
-    jsonSchema: {nullable: true},
+    jsonSchema: { nullable: true },
   })
   validUntilDateTime?: string | null;
 
@@ -48,7 +48,7 @@ export class Reactions extends Entity {
   })
   entityId?: string;
 
-  @hasMany(() => SubReactions, {keyTo: 'reactionId'})
+  @hasMany(() => SubReactions, { keyTo: 'reactionId' })
   subReactions: SubReactions[];
   // Define well-known properties here
 

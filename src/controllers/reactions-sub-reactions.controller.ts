@@ -16,14 +16,14 @@ import {
   requestBody,
 } from '@loopback/rest';
 
-import {Reactions, SubReactions} from '../models';
-import {ReactionsRepository} from '../repositories';
+import { Reactions, SubReactions } from '../models';
+import { ReactionsRepository } from '../repositories';
 
 export class ReactionsSubReactionsController {
   constructor(
     @repository(ReactionsRepository)
     protected reactionsRepository: ReactionsRepository,
-  ) { }
+  ) {}
 
   @get('/reactions/{id}/sub-reactions', {
     responses: {
@@ -31,7 +31,7 @@ export class ReactionsSubReactionsController {
         description: 'Array of Reactions has many SubReactions',
         content: {
           'application/json': {
-            schema: {type: 'array', items: getModelSchemaRef(SubReactions)},
+            schema: { type: 'array', items: getModelSchemaRef(SubReactions) },
           },
         },
       },
@@ -49,7 +49,7 @@ export class ReactionsSubReactionsController {
       '200': {
         description: 'Reactions model instance',
         content: {
-          'application/json': {schema: getModelSchemaRef(SubReactions)},
+          'application/json': { schema: getModelSchemaRef(SubReactions) },
         },
       },
     },
@@ -76,7 +76,7 @@ export class ReactionsSubReactionsController {
     responses: {
       '200': {
         description: 'Reactions.SubReactions PATCH success count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
@@ -85,7 +85,7 @@ export class ReactionsSubReactionsController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(SubReactions, {partial: true}),
+          schema: getModelSchemaRef(SubReactions, { partial: true }),
         },
       },
     })
@@ -100,7 +100,7 @@ export class ReactionsSubReactionsController {
     responses: {
       '200': {
         description: 'Reactions.SubReactions DELETE success count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
