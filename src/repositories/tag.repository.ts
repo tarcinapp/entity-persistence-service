@@ -18,7 +18,7 @@ export class TagRepository extends DefaultCrudRepository<
   TagRelations
 > {
   private static response_limit = _.parseInt(
-    process.env.response_limit_tag || '50',
+    process.env.response_limit_tag ?? '50',
   );
 
   constructor(@inject('datasources.EntityDb') dataSource: EntityDbDataSource) {

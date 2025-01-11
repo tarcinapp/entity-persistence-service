@@ -15,8 +15,6 @@ export async function setupApplication(): Promise<AppWithClient> {
     rest: restConfig,
   });
 
-  debugger;
-
   await app.boot();
   await app.start();
 

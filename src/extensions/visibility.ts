@@ -1,20 +1,15 @@
 import { BindingKey } from '@loopback/core';
 import _ from 'lodash';
 
-export namespace VisibilityConfigBindings {
-  export const CONFIG_READER = BindingKey.create<VisibilityConfigurationReader>(
+export const VisibilityConfigBindings = {
+  CONFIG_READER: BindingKey.create<VisibilityConfigurationReader>(
     'extensions.visibility.configurationreader',
-  );
-}
+  ),
+};
 
 export class VisibilityConfigurationReader {
   defaultEntityVisibility: string = 'protected';
   defaultListVisibility: string = 'protected';
-
-  /**
-   *
-   */
-  constructor() {}
 
   public isVisibilityConfiguredForEntities(kind?: string) {
     return (

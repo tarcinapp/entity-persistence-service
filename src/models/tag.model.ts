@@ -15,7 +15,7 @@ export class Tag extends Entity {
     type: 'string',
     jsonSchema: {
       minLength: 2,
-      maxLength: _.parseInt(process.env.validation_tag_length || '50'),
+      maxLength: _.parseInt(process.env.validation_tag_length ?? '50'),
     },
   })
   content: string;

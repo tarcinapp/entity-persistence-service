@@ -1,4 +1,5 @@
 import { RestBindings } from '@loopback/rest';
+import { parse } from 'qs';
 import type { ApplicationConfig } from './application';
 import { EntityPersistenceApplication } from './application';
 import {
@@ -89,7 +90,7 @@ if (require.main === module) {
         'x-powered-by': false,
         // eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-explicit-any
         'query parser': (query: any) => {
-          return require('qs').parse(query, { depth: 10 });
+          return parse(query, { depth: 10 });
         },
       },
     },

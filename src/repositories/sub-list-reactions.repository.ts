@@ -10,7 +10,7 @@ export class SubListReactionsRepository extends DefaultCrudRepository<
   SubListReactionsRelations
 > {
   private static response_limit = _.parseInt(
-    process.env.response_limit_list_reaction || '50',
+    process.env.response_limit_list_reaction ?? '50',
   );
 
   constructor(@inject('datasources.EntityDb') dataSource: EntityDbDataSource) {

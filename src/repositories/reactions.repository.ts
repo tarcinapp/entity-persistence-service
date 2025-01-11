@@ -22,7 +22,7 @@ export class ReactionsRepository extends DefaultCrudRepository<
   >;
 
   private static response_limit = _.parseInt(
-    process.env.response_limit_entity_reaction || '50',
+    process.env.response_limit_entity_reaction ?? '50',
   );
 
   constructor(
