@@ -258,6 +258,7 @@ The updateAll operation is not available for tags since their content is unique,
 
 1. All database models have id property and it is generated at server side with guid.
 2. DateTime fields names are end with '`dateTime`'
+3. All managed fields are prefixed with underscore.
 Here are the list of common field names.
 
 | Field Name              | Description                                                                                                                                                                                                                                                                                                                                                                                   |
