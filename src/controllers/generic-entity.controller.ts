@@ -18,9 +18,15 @@ import {
   put,
   requestBody,
 } from '@loopback/rest';
+import { count } from 'console';
+import { set, filter, find } from 'lodash';
 import { Set, SetFilterBuilder } from '../extensions/set';
 import { sanitizeFilterFields } from '../helpers/filter.helper';
 import { GenericEntity, HttpErrorResponse } from '../models';
+import {
+  UNMODIFIABLE_COMMON_FIELDS,
+  UnmodifiableCommonFields,
+} from '../models/base-types/unmodifiable-common-fields';
 import { GenericEntityRepository } from '../repositories';
 
 export class GenericEntityController {
@@ -81,23 +87,13 @@ export class GenericEntityController {
         'application/json': {
           schema: getModelSchemaRef(GenericEntity, {
             title: 'NewGenericEntity',
-            exclude: [
-              '_id',
-              '_slug',
-              '_ownerUsersCount',
-              '_ownerGroupsCount',
-              '_viewerUsersCount',
-              '_viewerGroupsCount',
-              '_relationMetadata',
-              '_version',
-              '_idempotencyKey',
-            ],
+            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof GenericEntity)[],
             includeRelations: false,
           }),
         },
       },
     })
-    genericEntity: Omit<GenericEntity, 'id'>,
+    genericEntity: Omit<GenericEntity, UnmodifiableCommonFields>,
   ): Promise<GenericEntity> {
     return this.genericEntityRepository.create(genericEntity);
   }
@@ -177,34 +173,13 @@ export class GenericEntityController {
         'application/json': {
           schema: getModelSchemaRef(GenericEntity, {
             title: 'NewGenericEntity',
-            exclude: [
-              '_id',
-              '_slug',
-              '_ownerUsersCount',
-              '_ownerGroupsCount',
-              '_viewerUsersCount',
-              '_viewerGroupsCount',
-              '_relationMetadata',
-              '_version',
-              '_idempotencyKey',
-            ],
+            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof GenericEntity)[],
             includeRelations: false,
           }),
         },
       },
     })
-    genericEntity: Omit<
-      GenericEntity,
-      | 'id'
-      | '_slug'
-      | '_ownerUsersCount'
-      | '_ownerGroupsCount'
-      | '_viewerUsersCount'
-      | '_viewerGroupsCount'
-      | '_version'
-      | '_idempotencyKey'
-      | '_relationMetadata'
-    >,
+    genericEntity: Omit<GenericEntity, UnmodifiableCommonFields>,
     @param.query.object('set') set?: Set,
     @param.where(GenericEntity) where?: Where<GenericEntity>,
   ): Promise<Count> {
@@ -298,34 +273,13 @@ export class GenericEntityController {
           schema: getModelSchemaRef(GenericEntity, {
             title: 'PatchGenericEntity',
             partial: true,
-            exclude: [
-              '_id',
-              '_slug',
-              '_ownerUsersCount',
-              '_ownerGroupsCount',
-              '_viewerUsersCount',
-              '_viewerGroupsCount',
-              '_relationMetadata',
-              '_version',
-              '_idempotencyKey',
-            ],
+            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof GenericEntity)[],
             includeRelations: false,
           }),
         },
       },
     })
-    genericEntity: Omit<
-      GenericEntity,
-      | 'id'
-      | '_slug'
-      | '_ownerUsersCount'
-      | '_ownerGroupsCount'
-      | '_viewerUsersCount'
-      | '_viewerGroupsCount'
-      | '_version'
-      | '_idempotencyKey'
-      | '_relationMetadata'
-    >,
+    genericEntity: Omit<GenericEntity, UnmodifiableCommonFields>,
   ): Promise<void> {
     await this.genericEntityRepository.updateById(id, genericEntity);
   }
@@ -368,34 +322,13 @@ export class GenericEntityController {
         'application/json': {
           schema: getModelSchemaRef(GenericEntity, {
             title: 'ReplaceGenericEntity',
-            exclude: [
-              '_id',
-              '_slug',
-              '_ownerUsersCount',
-              '_ownerGroupsCount',
-              '_viewerUsersCount',
-              '_viewerGroupsCount',
-              '_relationMetadata',
-              '_version',
-              '_idempotencyKey',
-            ],
+            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof GenericEntity)[],
             includeRelations: false,
           }),
         },
       },
     })
-    genericEntity: Omit<
-      GenericEntity,
-      | 'id'
-      | '_slug'
-      | '_ownerUsersCount'
-      | '_ownerGroupsCount'
-      | '_viewerUsersCount'
-      | '_viewerGroupsCount'
-      | '_version'
-      | '_idempotencyKey'
-      | '_relationMetadata'
-    >,
+    genericEntity: Omit<GenericEntity, UnmodifiableCommonFields>,
   ): Promise<void> {
     await this.genericEntityRepository.replaceById(id, genericEntity);
   }

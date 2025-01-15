@@ -57,6 +57,18 @@ export class ListEntityCommonBase extends AccessControlBase {
   _viewerGroupsCount?: number;
 
   @property({
+    type: 'number',
+    default: 0,
+  })
+  _parentCount?: number;
+
+  @property({
+    type: 'number',
+    default: 0,
+  })
+  _childCount?: number;
+
+  @property({
     type: 'object',
     description: 'Contains the relation metadata for the record',
   })

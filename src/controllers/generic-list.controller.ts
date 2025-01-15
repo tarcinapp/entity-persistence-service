@@ -22,6 +22,10 @@ import { Set, SetFilterBuilder } from '../extensions';
 import { sanitizeFilterFields } from '../helpers/filter.helper';
 import { processIncludes } from '../helpers/sets-in-inclusions';
 import { GenericList, HttpErrorResponse } from '../models';
+import {
+  UNMODIFIABLE_COMMON_FIELDS,
+  UnmodifiableCommonFields,
+} from '../models/base-types/unmodifiable-common-fields';
 import { GenericListRepository } from '../repositories';
 
 export class GenericListController {
@@ -82,34 +86,13 @@ export class GenericListController {
         'application/json': {
           schema: getModelSchemaRef(GenericList, {
             title: 'NewList',
-            exclude: [
-              '_id',
-              '_slug',
-              '_ownerUsersCount',
-              '_ownerGroupsCount',
-              '_viewerUsersCount',
-              '_viewerGroupsCount',
-              '_version',
-              '_idempotencyKey',
-              '_relationMetadata',
-            ],
+            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof GenericList)[],
             includeRelations: false,
           }),
         },
       },
     })
-    list: Omit<
-      GenericList,
-      | 'id'
-      | '_slug'
-      | '_ownerUsersCount'
-      | '_ownerGroupsCount'
-      | '_viewerUsersCount'
-      | '_viewerGroupsCount'
-      | '_version'
-      | '_idempotencyKey'
-      | '_relationMetadata'
-    >,
+    list: Omit<GenericList, UnmodifiableCommonFields>,
   ): Promise<GenericList> {
     return this.genericListRepository.create(list);
   }
@@ -189,34 +172,13 @@ export class GenericListController {
         'application/json': {
           schema: getModelSchemaRef(GenericList, {
             title: 'NewList',
-            exclude: [
-              '_id',
-              '_slug',
-              '_ownerUsersCount',
-              '_ownerGroupsCount',
-              '_viewerUsersCount',
-              '_viewerGroupsCount',
-              '_version',
-              '_idempotencyKey',
-              '_relationMetadata',
-            ],
+            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof GenericList)[],
             includeRelations: false,
           }),
         },
       },
     })
-    list: Omit<
-      GenericList,
-      | 'id'
-      | '_slug'
-      | '_ownerUsersCount'
-      | '_ownerGroupsCount'
-      | '_viewerUsersCount'
-      | '_viewerGroupsCount'
-      | '_version'
-      | '_idempotencyKey'
-      | '_relationMetadata'
-    >,
+    list: Omit<GenericList, UnmodifiableCommonFields>,
     @param.query.object('set') set?: Set,
     @param.where(GenericList) where?: Where<GenericList>,
   ): Promise<Count> {
@@ -307,34 +269,13 @@ export class GenericListController {
         'application/json': {
           schema: getModelSchemaRef(GenericList, {
             title: 'NewList',
-            exclude: [
-              '_id',
-              '_slug',
-              '_ownerUsersCount',
-              '_ownerGroupsCount',
-              '_viewerUsersCount',
-              '_viewerGroupsCount',
-              '_version',
-              '_idempotencyKey',
-              '_relationMetadata',
-            ],
+            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof GenericList)[],
             includeRelations: false,
           }),
         },
       },
     })
-    list: Omit<
-      GenericList,
-      | 'id'
-      | '_slug'
-      | '_ownerUsersCount'
-      | '_ownerGroupsCount'
-      | '_viewerUsersCount'
-      | '_viewerGroupsCount'
-      | '_version'
-      | '_idempotencyKey'
-      | '_relationMetadata'
-    >,
+    list: Omit<GenericList, UnmodifiableCommonFields>,
   ): Promise<void> {
     await this.genericListRepository.updateById(id, list);
   }
@@ -377,34 +318,13 @@ export class GenericListController {
         'application/json': {
           schema: getModelSchemaRef(GenericList, {
             title: 'NewList',
-            exclude: [
-              '_id',
-              '_slug',
-              '_ownerUsersCount',
-              '_ownerGroupsCount',
-              '_viewerUsersCount',
-              '_viewerGroupsCount',
-              '_version',
-              '_idempotencyKey',
-              '_relationMetadata',
-            ],
+            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof GenericList)[],
             includeRelations: false,
           }),
         },
       },
     })
-    list: Omit<
-      GenericList,
-      | 'id'
-      | '_slug'
-      | '_ownerUsersCount'
-      | '_ownerGroupsCount'
-      | '_viewerUsersCount'
-      | '_viewerGroupsCount'
-      | '_version'
-      | '_idempotencyKey'
-      | '_relationMetadata'
-    >,
+    list: Omit<GenericList, UnmodifiableCommonFields>,
   ): Promise<void> {
     await this.genericListRepository.replaceById(id, list);
   }
