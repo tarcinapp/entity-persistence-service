@@ -3,7 +3,7 @@ import _ from 'lodash';
 
 export const KindLimitsBindings = {
   CONFIG_READER: BindingKey.create<KindLimitsConfigurationReader>(
-    'extensions.kind-limits.configurationreader',
+    'extensions.kind-limits.config-helper',
   ),
 } as const;
 

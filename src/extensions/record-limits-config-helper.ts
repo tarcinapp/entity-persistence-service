@@ -5,7 +5,7 @@ import type { Set, UserAndGroupInfo } from '../extensions/set';
 
 export const RecordLimitsBindings = {
   CONFIG_READER: BindingKey.create<RecordLimitsConfigurationReader>(
-    'extensions.record-limits.configurationreader',
+    'extensions.record-limits.config-helper',
   ),
 } as const;
 

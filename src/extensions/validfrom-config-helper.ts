@@ -3,7 +3,7 @@ import _ from 'lodash';
 
 export const ValidFromConfigBindings = {
   CONFIG_READER: BindingKey.create<ValidfromConfigurationReader>(
-    'extensions.validfrom.configurationreader',
+    'extensions.validfrom.config-helper',
   ),
 };
 

@@ -9,19 +9,13 @@ import {
   UniquenessConfigurationReader,
   VisibilityConfigBindings,
   VisibilityConfigurationReader,
-} from './extensions';
-import {
   IdempotencyConfigBindings,
   IdempotencyConfigurationReader,
-} from './extensions/idempotency-config-reader';
-import {
   RecordLimitsBindings,
   RecordLimitsConfigurationReader,
-} from './extensions/record-limits';
-import {
   ValidFromConfigBindings,
   ValidfromConfigurationReader,
-} from './extensions/validfrom-config-reader';
+} from './extensions';
 
 export * from './application';
 

@@ -20,9 +20,9 @@ import {
   RecordLimitsConfigurationReader,
   SetFilterBuilder,
   UniquenessConfigurationReader,
+  ValidfromConfigurationReader,
 } from '../extensions';
 import { Set } from '../extensions/set';
-import { ValidfromConfigurationReader } from '../extensions/validfrom-config-reader';
 import {
   GenericListEntityRelationRelations,
   GenericListToEntityRelation,
@@ -51,19 +51,19 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
     @repository.getter('GenericListRepository')
     protected genericListRepositoryGetter: Getter<GenericListRepository>,
 
-    @inject('extensions.idempotency.configurationreader')
+    @inject('extensions.idempotency.config-helper')
     private idempotencyConfigReader: IdempotencyConfigurationReader,
 
-    @inject('extensions.kind-limits.configurationreader')
+    @inject('extensions.kind-limits.config-helper')
     private kindLimitConfigReader: KindLimitsConfigurationReader,
 
-    @inject('extensions.validfrom.configurationreader')
+    @inject('extensions.validfrom.config-helper')
     private validfromConfigReader: ValidfromConfigurationReader,
 
-    @inject('extensions.record-limits.configurationreader')
+    @inject('extensions.record-limits.config-helper')
     private recordLimitConfigReader: RecordLimitsConfigurationReader,
 
-    @inject('extensions.uniqueness.configurationreader')
+    @inject('extensions.uniqueness.config-helper')
     private uniquenessConfigReader: UniquenessConfigurationReader,
   ) {
     super(GenericListToEntityRelation, dataSource);

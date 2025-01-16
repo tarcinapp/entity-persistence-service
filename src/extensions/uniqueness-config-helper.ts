@@ -5,7 +5,7 @@ import type { Set, UserAndGroupInfo } from '../extensions/set';
 
 export const UniquenessBindings = {
   CONFIG_READER: BindingKey.create<UniquenessConfigurationReader>(
-    'extensions.uniqueness.configurationreader',
+    'extensions.uniqueness.config-helper',
   ),
 } as const;
 
