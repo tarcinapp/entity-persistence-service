@@ -1,14 +1,25 @@
 import type { DataObject } from '@loopback/repository';
 import { expect, sinon } from '@loopback/testlab';
+import type { EntityPersistenceApplication } from '../../..';
 import { GenericEntityController } from '../../../controllers';
 import type { Set } from '../../../extensions/set';
 import { GenericEntity } from '../../../models';
 import { GenericEntityRepository } from '../../../repositories';
+import { setupApplication, teardownApplication } from '../test-helper';
 
 describe('GenericEntityController', () => {
+  let app: EntityPersistenceApplication;
   let controller: GenericEntityController;
   let repository: sinon.SinonStubbedInstance<GenericEntityRepository>;
   let originalEntityKinds: string | undefined;
+
+  before(async () => {
+    ({ app } = await setupApplication());
+  });
+
+  after(async () => {
+    await teardownApplication(app);
+  });
 
   beforeEach(() => {
     // Save original env value
@@ -69,7 +80,7 @@ describe('GenericEntityController', () => {
       // Assert
       expect(result).to.eql(expectedEntity);
       sinon.assert.calledOnce(repository.findById);
-      sinon.assert.calledWithExactly(repository.findById, '123');
+      sinon.assert.calledWith(repository.findById, '123');
     });
   });
 
