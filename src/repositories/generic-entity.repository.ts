@@ -18,13 +18,15 @@ import slugify from 'slugify';
 import { EntityDbDataSource } from '../datasources';
 import {
   IdempotencyConfigurationReader,
+  KindLimitsConfigurationReader,
   RecordLimitsConfigurationReader,
   UniquenessConfigurationReader,
+  ValidfromConfigurationReader,
+  VisibilityConfigurationReader,
 } from '../extensions';
-import { KindLimitsConfigurationReader } from '../extensions/kind-limits';
+
 import { SetFilterBuilder } from '../extensions/set';
-import { ValidfromConfigurationReader } from '../extensions/validfrom-config-reader';
-import { VisibilityConfigurationReader } from '../extensions/visibility';
+
 import {
   EntityRelation,
   GenericEntity,
