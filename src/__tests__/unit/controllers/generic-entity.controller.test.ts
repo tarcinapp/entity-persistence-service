@@ -61,6 +61,36 @@ describe('GenericEntityController', () => {
       sinon.assert.calledOnce(repository.create);
       sinon.assert.calledWithExactly(repository.create, inputEntity);
     });
+
+    it('should throw 409 when entity name already exists', async () => {
+      const inputEntity = {
+        _name: 'existingName',
+        _kind: 'book',
+      };
+      repository.create.rejects({ statusCode: 409 });
+
+      try {
+        await controller.create(inputEntity);
+        throw new Error('Expected error was not thrown');
+      } catch (error) {
+        expect(error).to.have.property('statusCode', 409);
+      }
+    });
+
+    it('should throw 429 when entity limit is exceeded', async () => {
+      const inputEntity = {
+        _name: 'newEntity',
+        _kind: 'book',
+      };
+      repository.create.rejects({ statusCode: 429 });
+
+      try {
+        await controller.create(inputEntity);
+        throw new Error('Expected error was not thrown');
+      } catch (error) {
+        expect(error).to.have.property('statusCode', 429);
+      }
+    });
   });
 
   describe('findById()', () => {
@@ -81,6 +111,33 @@ describe('GenericEntityController', () => {
       expect(result).to.eql(expectedEntity);
       sinon.assert.calledOnce(repository.findById);
       sinon.assert.calledWith(repository.findById, '123');
+    });
+
+    it('should retrieve an entity by id with filter', async () => {
+      const expectedEntity = new GenericEntity({
+        _id: '123',
+        _name: 'testEntity',
+        _kind: 'book',
+        foo: 'bar',
+      });
+      const filter = { fields: ['_name', '_kind'] };
+      repository.findById.resolves(expectedEntity);
+
+      const result = await controller.findById('123', filter);
+
+      expect(result).to.eql(expectedEntity);
+      sinon.assert.calledWith(repository.findById, '123', filter);
+    });
+
+    it('should throw 404 when entity not found', async () => {
+      repository.findById.rejects({ statusCode: 404 });
+
+      try {
+        await controller.findById('nonexistent');
+        throw new Error('Expected error was not thrown');
+      } catch (error) {
+        expect(error).to.have.property('statusCode', 404);
+      }
     });
   });
 
@@ -181,6 +238,116 @@ describe('GenericEntityController', () => {
       // Assert
       sinon.assert.calledOnce(repository.deleteById);
       sinon.assert.calledWithExactly(repository.deleteById, id);
+    });
+  });
+
+  describe('count()', () => {
+    it('should count entities with no set or where clause', async () => {
+      const expectedCount = { count: 5 };
+      repository.count.resolves(expectedCount);
+
+      const result = await controller.count();
+
+      expect(result).to.eql(expectedCount);
+      sinon.assert.calledWith(repository.count, undefined);
+    });
+
+    it('should count entities with where clause', async () => {
+      const where = { _kind: 'book' };
+      const expectedCount = { count: 3 };
+      repository.count.resolves(expectedCount);
+
+      const result = await controller.count(undefined, where);
+
+      expect(result).to.eql(expectedCount);
+      sinon.assert.calledWith(repository.count, where);
+    });
+
+    it('should count entities with set', async () => {
+      const set: Set = { actives: 'true' };
+      const expectedCount = { count: 2 };
+      repository.count.resolves(expectedCount);
+
+      const result = await controller.count(set);
+
+      expect(result).to.eql(expectedCount);
+      sinon.assert.calledWithMatch(repository.count, sinon.match.object);
+    });
+  });
+
+  describe('updateAll()', () => {
+    it('should update all matching entities', async () => {
+      const updateData = {
+        _name: 'updatedName',
+        foo: 'baz',
+      };
+      const where = { _kind: 'book' };
+      const expectedCount = { count: 2 };
+      repository.updateAll.resolves(expectedCount);
+
+      const result = await controller.updateAll(updateData, undefined, where);
+
+      expect(result).to.eql(expectedCount);
+      sinon.assert.calledWith(repository.updateAll, updateData, where);
+    });
+
+    it('should update all matching entities with set', async () => {
+      const updateData = { _name: 'updatedName' };
+      const set: Set = { actives: 'true' };
+      const expectedCount = { count: 1 };
+      repository.updateAll.resolves(expectedCount);
+
+      const result = await controller.updateAll(updateData, set);
+
+      expect(result).to.eql(expectedCount);
+      sinon.assert.calledWithMatch(
+        repository.updateAll,
+        updateData,
+        sinon.match.object,
+      );
+    });
+  });
+
+  describe('replaceById()', () => {
+    it('should replace an entity by id', async () => {
+      const id = '123';
+      const replaceData = {
+        _name: 'replacedName',
+        _kind: 'book',
+        foo: 'baz',
+      };
+      repository.replaceById.resolves();
+
+      await controller.replaceById(id, replaceData);
+
+      sinon.assert.calledOnce(repository.replaceById);
+      sinon.assert.calledWithExactly(repository.replaceById, id, replaceData);
+    });
+
+    it('should throw 404 when entity to replace not found', async () => {
+      const id = 'nonexistent';
+      const replaceData = { _name: 'replacedName' };
+      repository.replaceById.rejects({ statusCode: 404 });
+
+      try {
+        await controller.replaceById(id, replaceData);
+        throw new Error('Expected error was not thrown');
+      } catch (error) {
+        expect(error).to.have.property('statusCode', 404);
+      }
+    });
+
+    it('should throw 422 for invalid data', async () => {
+      const id = '123';
+      const invalidData = { _id: 'invalid' } as any;
+      repository.replaceById.rejects({ statusCode: 422 });
+
+      try {
+        await controller.replaceById(id, invalidData);
+        throw new Error('Expected error was not thrown');
+      } catch (error) {
+        expect(error).to.have.property('statusCode', 422);
+      }
     });
   });
 });
