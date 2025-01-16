@@ -15,7 +15,7 @@ import {
 } from '@loopback/repository';
 import * as crypto from 'crypto';
 import _ from 'lodash';
-import qs from 'qs';
+import { parse } from 'qs';
 import slugify from 'slugify';
 import { EntityDbDataSource } from '../datasources';
 import {
@@ -827,7 +827,7 @@ export class GenericListRepository extends DefaultCrudRepository<
           (newData._ownerGroups ? newData._ownerGroups?.join(',') : ''),
       );
 
-      const uniquenessSet = qs.parse(uniquenessStr).set as Set;
+      const uniquenessSet = parse(uniquenessStr).set as Set;
 
       filter = new SetFilterBuilder<GenericList>(uniquenessSet, {
         filter: filter,

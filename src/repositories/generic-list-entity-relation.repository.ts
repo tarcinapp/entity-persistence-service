@@ -12,7 +12,7 @@ import {
 } from '@loopback/repository';
 import * as crypto from 'crypto';
 import _ from 'lodash';
-import qs from 'qs';
+import { parse } from 'qs';
 import { EntityDbDataSource } from '../datasources';
 import {
   IdempotencyConfigurationReader,
@@ -463,7 +463,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
     // add set filter if configured
     if (process.env.uniqueness_list_entity_set) {
       const uniquenessStr = process.env.uniqueness_list_entity_set;
-      const uniquenessSet = qs.parse(uniquenessStr).set as Set;
+      const uniquenessSet = parse(uniquenessStr).set as Set;
 
       filter = new SetFilterBuilder<GenericListToEntityRelation>(
         uniquenessSet,

@@ -1,6 +1,6 @@
 import { BindingKey } from '@loopback/core';
 import _, { cloneDeepWith, isEmpty } from 'lodash';
-import qs from 'qs';
+import { parse } from 'qs';
 import type { Set, UserAndGroupInfo } from '../extensions/set';
 
 export const UniquenessBindings = {
@@ -169,7 +169,7 @@ export class UniquenessConfigurationReader {
     }
 
     if (setStr) {
-      const set = qs.parse(setStr).set as Set;
+      const set = parse(setStr).set as Set;
       const userAndGroupInfo: UserAndGroupInfo = {};
 
       if (!isEmpty(ownerUsers)) {
@@ -244,7 +244,7 @@ export class UniquenessConfigurationReader {
     }
 
     if (setStr) {
-      const set = qs.parse(setStr).set as Set;
+      const set = parse(setStr).set as Set;
       const userAndGroupInfo: UserAndGroupInfo = {};
 
       if (!isEmpty(ownerUsers)) {
@@ -322,7 +322,7 @@ export class UniquenessConfigurationReader {
     }
 
     if (setStr) {
-      const set = qs.parse(setStr).set as Set;
+      const set = parse(setStr).set as Set;
 
       return set;
     }

@@ -1,6 +1,6 @@
 import { BindingKey } from '@loopback/core';
 import _, { cloneDeepWith, isEmpty } from 'lodash';
-import qs from 'qs';
+import { parse } from 'qs';
 import type { Set, UserAndGroupInfo } from '../extensions/set';
 
 export const RecordLimitsBindings = {
@@ -16,8 +16,6 @@ export const RecordLimitsBindings = {
  * to where the limit needs to be applied (set), and to get the limit integer.
  */
 export class RecordLimitsConfigurationReader {
-  constructor() {}
-
   public isRecordLimitsConfiguredForEntities(kind?: string) {
     return (
       _.has(process.env, 'record_limit_entity_count') ||
@@ -55,7 +53,7 @@ export class RecordLimitsConfigurationReader {
     }
 
     if (setStr) {
-      const set = qs.parse(setStr).set as Set;
+      const set = parse(setStr).set as Set;
       const userAndGroupInfo: UserAndGroupInfo = {};
 
       if (!isEmpty(ownerUsers)) {
@@ -116,7 +114,7 @@ export class RecordLimitsConfigurationReader {
     }
 
     if (setStr) {
-      const set = qs.parse(setStr).set as Set;
+      const set = parse(setStr).set as Set;
       const userAndGroupInfo: UserAndGroupInfo = {};
 
       if (!isEmpty(ownerUsers)) {
@@ -176,7 +174,7 @@ export class RecordLimitsConfigurationReader {
     }
 
     if (setStr) {
-      const set = qs.parse(setStr).set as Set;
+      const set = parse(setStr).set as Set;
 
       return set;
     }

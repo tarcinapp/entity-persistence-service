@@ -18,8 +18,6 @@ import {
   put,
   requestBody,
 } from '@loopback/rest';
-import { count } from 'console';
-import { set, filter, find } from 'lodash';
 import { Set, SetFilterBuilder } from '../extensions/set';
 import { sanitizeFilterFields } from '../helpers/filter.helper';
 import { GenericEntity, HttpErrorResponse } from '../models';
