@@ -339,7 +339,7 @@ describe('GenericEntityController', () => {
 
     it('should throw 422 for invalid data', async () => {
       const id = '123';
-      const invalidData = { _id: 'invalid' } as any;
+      const invalidData = { _id: 'invalid' } as DataObject<GenericEntity>;
       repository.replaceById.rejects({ statusCode: 422 });
 
       try {

@@ -1,6 +1,6 @@
 import type { Client } from '@loopback/testlab';
 import type { EntityPersistenceApplication } from '../..';
-import { setupApplication } from './test-helper';
+import { setupApplication, teardownApplication } from './test-helper';
 
 describe('HomePage', () => {
   let app: EntityPersistenceApplication;
@@ -11,7 +11,7 @@ describe('HomePage', () => {
   });
 
   after(async () => {
-    await app.stop();
+    await teardownApplication(app);
   });
 
   it('exposes a default home page', async () => {

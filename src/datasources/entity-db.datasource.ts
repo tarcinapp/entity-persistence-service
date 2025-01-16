@@ -4,19 +4,20 @@ import { juggler } from '@loopback/repository';
 const config = {
   name: 'EntityDb',
   connector: 'mongodb',
-  host: process.env['mongodb_url'] ? '' : process.env['mongodb_host'],
-  port: process.env['mongodb_url'] ? '' : process.env['mongodb_port'],
-  user: process.env['mongodb_url'] ? '' : process.env['mongodb_user'],
-  password: process.env['mongodb_url'] ? '' : process.env['mongodb_password'],
-  database: process.env['mongodb_database'],
   url: process.env['mongodb_url'],
+  database: process.env['mongodb_database'],
   useNewUrlParser: true,
+  useUnifiedTopology: true,
+  ...(process.env['mongodb_url']
+    ? {}
+    : {
+        host: process.env['mongodb_host'],
+        port: process.env['mongodb_port'],
+        user: process.env['mongodb_user'],
+        password: process.env['mongodb_password'],
+      }),
 };
 
-// Observe application's life cycle to disconnect the datasource when
-// application is stopped. This allows the application to be shut down
-// gracefully. The `stop()` method is inherited from `juggler.DataSource`.
-// Learn more at https://loopback.io/doc/en/lb4/Life-cycle.html
 @lifeCycleObserver('datasource')
 export class EntityDbDataSource
   extends juggler.DataSource
@@ -29,6 +30,10 @@ export class EntityDbDataSource
     @inject('datasources.config.EntityDb', { optional: true })
     dsConfig: object = config,
   ) {
-    super(dsConfig);
+    if (process.env.NODE_ENV === 'test') {
+      super({ ...dsConfig, connector: 'memory' });
+    } else {
+      super(dsConfig);
+    }
   }
 }

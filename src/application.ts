@@ -39,6 +39,17 @@ export class EntityPersistenceApplication extends BootMixin(
         extensions: ['.controller.js'],
         nested: true,
       },
+      repositories: {
+        dirs: ['repositories'],
+        extensions: ['.repository.js'],
+        nested: true,
+      },
+      datasources: {
+        // Skip default datasource binding in test mode
+        dirs: process.env.NODE_ENV === 'test' ? [] : ['datasources'],
+        extensions: ['.datasource.js'],
+        nested: true,
+      },
     };
   }
 }

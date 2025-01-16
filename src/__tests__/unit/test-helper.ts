@@ -1,23 +1,25 @@
+import { juggler } from '@loopback/repository';
 import { givenHttpServerConfig } from '@loopback/testlab';
-import { MongoMemoryServer } from 'mongodb-memory-server';
 import { EntityPersistenceApplication } from '../..';
 
-let mongod: MongoMemoryServer;
-
 export async function setupApplication(): Promise<AppWithClient> {
-  // Create an in-memory MongoDB instance
-  mongod = await MongoMemoryServer.create();
-  const mongoUri = mongod.getUri();
+  // Set test environment
+  process.env.NODE_ENV = 'test';
 
-  // Set environment variables for MongoDB connection
-  process.env.mongodb_url = mongoUri;
-  process.env.mongodb_database = 'testdb';
-
-  const restConfig = givenHttpServerConfig({});
+  // Create test-specific datasource config
+  const testConfig = {
+    name: 'EntityDb',
+    connector: 'memory',
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  };
 
   const app = new EntityPersistenceApplication({
-    rest: restConfig,
+    rest: givenHttpServerConfig({}),
   });
+
+  // Bind the test datasource configuration
+  app.bind('datasources.EntityDb').to(new juggler.DataSource(testConfig));
 
   await app.boot();
   await app.start();
@@ -26,8 +28,11 @@ export async function setupApplication(): Promise<AppWithClient> {
 }
 
 export async function teardownApplication(app: EntityPersistenceApplication) {
+  // Stop the app
   await app.stop();
-  await mongod.stop();
+
+  // Reset environment
+  delete process.env.NODE_ENV;
 }
 
 export interface AppWithClient {

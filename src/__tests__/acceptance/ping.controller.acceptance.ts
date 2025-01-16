@@ -2,7 +2,7 @@ import type { Client } from '@loopback/testlab';
 import { expect } from '@loopback/testlab';
 
 import type { EntityPersistenceApplication } from '../..';
-import { setupApplication } from './test-helper';
+import { setupApplication, teardownApplication } from './test-helper';
 
 describe('PingController', () => {
   let app: EntityPersistenceApplication;
@@ -13,7 +13,7 @@ describe('PingController', () => {
   });
 
   after(async () => {
-    await app.stop();
+    await teardownApplication(app);
   });
 
   it('invokes GET /ping', async () => {

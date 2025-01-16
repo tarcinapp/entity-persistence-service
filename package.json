@@ -23,7 +23,7 @@
     "eslint": "lb-eslint --report-unused-disable-directives .",
     "eslint:fix": "npm run eslint -- --fix",
     "pretest": "npm run clean && npm run build",
-    "test": "lb-mocha --allow-console-logs \"dist/__tests__\"",
+    "test": "cross-env NODE_ENV=test lb-mocha --allow-console-logs \"dist/__tests__\"",
     "posttest": "npm run lint",
     "test:dev": "lb-mocha --allow-console-logs dist/__tests__/**/*.js && npm run posttest",
     "docker:build": "docker build -t entity-persistence-service .",
@@ -32,7 +32,9 @@
     "openapi-spec": "node ./dist/openapi-spec",
     "prestart": "npm run build",
     "start": "node -r source-map-support/register .",
-    "clean": "lb-clean dist *.tsbuildinfo .eslintcache"
+    "clean": "lb-clean dist *.tsbuildinfo .eslintcache",
+    "test:unit": "cross-env NODE_ENV=test lb-mocha \"dist/__tests__/unit/**/*.test.js\"",
+    "test:acceptance": "cross-env NODE_ENV=test lb-mocha \"dist/__tests__/acceptance/**/*.acceptance.js\""
   },
   "repository": {
     "type": "git"
@@ -69,6 +71,7 @@
     "@loopback/eslint-config": "^15.0.4",
     "@loopback/testlab": "^7.0.8",
     "@types/node": "^16.18.119",
+    "cross-env": "^7.0.3",
     "eslint": "^8.57.0",
     "eslint-import-resolver-typescript": "^3.7.0",
     "eslint-plugin-import": "^2.31.0",
