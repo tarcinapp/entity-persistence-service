@@ -7,6 +7,11 @@ import { GenericEntity } from '../../../models';
 import { GenericEntityRepository } from '../../../repositories';
 import { setupApplication, teardownApplication } from '../test-helper';
 
+/**
+ * Test suite for GenericEntityController
+ * Tests all CRUD operations and their error cases.
+ * Uses sinon stubs to isolate the controller from the repository layer.
+ */
 describe('GenericEntityController', () => {
   let app: EntityPersistenceApplication;
   let controller: GenericEntityController;
@@ -22,19 +27,27 @@ describe('GenericEntityController', () => {
   });
 
   beforeEach(() => {
-    // Save original env value
+    // Save original env value to restore after each test
     originalEntityKinds = process.env.entity_kinds;
     process.env.entity_kinds = 'book';
 
+    // Create a fresh stub for each test to avoid interference
     repository = sinon.createStubInstance(GenericEntityRepository);
     controller = new GenericEntityController(repository);
   });
 
   afterEach(() => {
-    // Restore original env value
+    // Restore original env value to maintain test isolation
     process.env.entity_kinds = originalEntityKinds;
   });
 
+  /**
+   * Tests for the create operation
+   * Covers successful creation and various error cases:
+   * - 409: Duplicate entity name
+   * - 422: Invalid/unmodifiable fields
+   * - 429: Entity limit exceeded
+   */
   describe('create()', () => {
     it('should successfully call GenericEntityRepository.create() with correct data', async () => {
       // Arrange
@@ -50,7 +63,6 @@ describe('GenericEntityController', () => {
         _kind: 'book',
         foo: 'bar',
       });
-
       repository.create.resolves(expectedEntity);
 
       // Act
@@ -63,12 +75,14 @@ describe('GenericEntityController', () => {
     });
 
     it('should throw 409 when entity name already exists', async () => {
+      // Arrange
       const inputEntity = {
         _name: 'existingName',
         _kind: 'book',
       };
       repository.create.rejects({ statusCode: 409 });
 
+      // Act & Assert
       try {
         await controller.create(inputEntity);
         throw new Error('Expected error was not thrown');
@@ -91,11 +105,26 @@ describe('GenericEntityController', () => {
         expect(error).to.have.property('statusCode', 429);
       }
     });
+
+    it('should throw 422 when trying to modify unmodifiable fields', async () => {
+      const inputEntity = {
+        _name: 'testEntity',
+        _kind: 'book',
+        _id: '123', // This should not be allowed
+      };
+      repository.create.rejects({ statusCode: 422 });
+
+      try {
+        await controller.create(inputEntity as DataObject<GenericEntity>);
+        throw new Error('Expected error was not thrown');
+      } catch (error) {
+        expect(error).to.have.property('statusCode', 422);
+      }
+    });
   });
 
   describe('findById()', () => {
     it('should retrieve an entity by id', async () => {
-      // Arrange
       const expectedEntity = new GenericEntity({
         _id: '123',
         _name: 'testEntity',
@@ -104,10 +133,7 @@ describe('GenericEntityController', () => {
       });
       repository.findById.resolves(expectedEntity);
 
-      // Act
       const result = await controller.findById('123');
-
-      // Assert
       expect(result).to.eql(expectedEntity);
       sinon.assert.calledOnce(repository.findById);
       sinon.assert.calledWith(repository.findById, '123');
@@ -124,7 +150,6 @@ describe('GenericEntityController', () => {
       repository.findById.resolves(expectedEntity);
 
       const result = await controller.findById('123', filter);
-
       expect(result).to.eql(expectedEntity);
       sinon.assert.calledWith(repository.findById, '123', filter);
     });
@@ -141,6 +166,14 @@ describe('GenericEntityController', () => {
     });
   });
 
+  /**
+   * Tests for the find operation
+   * Verifies different combinations of filters and sets:
+   * - Basic find without parameters
+   * - Finding with filters
+   * - Finding with sets
+   * - Complex where conditions
+   */
   describe('find()', () => {
     it('should retrieve entities with no filter or set', async () => {
       const expectedEntities = [
@@ -149,7 +182,6 @@ describe('GenericEntityController', () => {
       repository.find.resolves(expectedEntities);
 
       const result = await controller.find();
-
       expect(result).to.eql(expectedEntities);
       sinon.assert.calledWith(repository.find, undefined);
     });
@@ -162,7 +194,6 @@ describe('GenericEntityController', () => {
       repository.find.resolves(expectedEntities);
 
       const result = await controller.find(undefined, filter);
-
       expect(result).to.eql(expectedEntities);
       sinon.assert.calledWith(repository.find, filter);
     });
@@ -178,13 +209,12 @@ describe('GenericEntityController', () => {
       repository.find.resolves(expectedEntities);
 
       const result = await controller.find(set);
-
       expect(result).to.eql(expectedEntities);
-      // Verify that SetFilterBuilder was used correctly
       sinon.assert.calledWithMatch(repository.find, sinon.match.has('where'));
     });
 
     it('should retrieve entities with both filter and set', async () => {
+      // Arrange
       const set: Set = { actives: 'true' };
       const filter = { where: { _kind: 'book' }, limit: 10 };
       const expectedEntities = [
@@ -196,17 +226,43 @@ describe('GenericEntityController', () => {
       ];
       repository.find.resolves(expectedEntities);
 
+      // Act
       const result = await controller.find(set, filter);
 
+      // Assert
       expect(result).to.eql(expectedEntities);
-      // Verify combined filter contains both set and filter conditions
+      // Verify that both set and filter conditions are included
       sinon.assert.calledWithMatch(
         repository.find,
         sinon.match.has('where').and(sinon.match.has('limit')),
       );
     });
+
+    it('should handle complex where conditions', async () => {
+      // Arrange
+      const filter = {
+        where: {
+          and: [
+            { _kind: 'book' },
+            { or: [{ _name: 'test1' }, { _name: 'test2' }] },
+          ],
+        },
+      };
+      repository.find.resolves([]);
+
+      // Act
+      await controller.find(undefined, filter);
+
+      // Assert
+      sinon.assert.calledWithMatch(repository.find, filter);
+    });
   });
 
+  /**
+   * Tests for update operations
+   * Verifies both single-entity and bulk updates
+   * Includes validation of unmodifiable fields and entity existence
+   */
   describe('updateById()', () => {
     it('should update an entity by id', async () => {
       // Arrange
@@ -224,20 +280,54 @@ describe('GenericEntityController', () => {
       sinon.assert.calledOnce(repository.updateById);
       sinon.assert.calledWithExactly(repository.updateById, id, updateData);
     });
+
+    it('should throw 404 when entity not found', async () => {
+      const id = 'nonexistent';
+      const updateData = { _name: 'updatedName' };
+      repository.updateById.rejects({ statusCode: 404 });
+
+      try {
+        await controller.updateById(id, updateData);
+        throw new Error('Expected error was not thrown');
+      } catch (error) {
+        expect(error).to.have.property('statusCode', 404);
+      }
+    });
+
+    it('should throw 422 when trying to modify unmodifiable fields', async () => {
+      const id = '123';
+      const updateData = { _id: 'newId' } as DataObject<GenericEntity>;
+      repository.updateById.rejects({ statusCode: 422 });
+
+      try {
+        await controller.updateById(id, updateData);
+        throw new Error('Expected error was not thrown');
+      } catch (error) {
+        expect(error).to.have.property('statusCode', 422);
+      }
+    });
   });
 
   describe('deleteById()', () => {
     it('should delete an entity by id', async () => {
-      // Arrange
       const id = '123';
       repository.deleteById.resolves();
 
-      // Act
       await controller.deleteById(id);
-
-      // Assert
       sinon.assert.calledOnce(repository.deleteById);
       sinon.assert.calledWithExactly(repository.deleteById, id);
+    });
+
+    it('should throw 404 when entity not found', async () => {
+      const id = 'nonexistent';
+      repository.deleteById.rejects({ statusCode: 404 });
+
+      try {
+        await controller.deleteById(id);
+        throw new Error('Expected error was not thrown');
+      } catch (error) {
+        expect(error).to.have.property('statusCode', 404);
+      }
     });
   });
 
@@ -247,7 +337,6 @@ describe('GenericEntityController', () => {
       repository.count.resolves(expectedCount);
 
       const result = await controller.count();
-
       expect(result).to.eql(expectedCount);
       sinon.assert.calledWith(repository.count, undefined);
     });
@@ -258,7 +347,6 @@ describe('GenericEntityController', () => {
       repository.count.resolves(expectedCount);
 
       const result = await controller.count(undefined, where);
-
       expect(result).to.eql(expectedCount);
       sinon.assert.calledWith(repository.count, where);
     });
@@ -269,9 +357,17 @@ describe('GenericEntityController', () => {
       repository.count.resolves(expectedCount);
 
       const result = await controller.count(set);
-
       expect(result).to.eql(expectedCount);
       sinon.assert.calledWithMatch(repository.count, sinon.match.object);
+    });
+
+    it('should handle empty set', async () => {
+      const set: Set = {};
+      const expectedCount = { count: 5 };
+      repository.count.resolves(expectedCount);
+
+      const result = await controller.count(set);
+      expect(result).to.eql(expectedCount);
     });
   });
 
@@ -286,7 +382,6 @@ describe('GenericEntityController', () => {
       repository.updateAll.resolves(expectedCount);
 
       const result = await controller.updateAll(updateData, undefined, where);
-
       expect(result).to.eql(expectedCount);
       sinon.assert.calledWith(repository.updateAll, updateData, where);
     });
@@ -298,13 +393,24 @@ describe('GenericEntityController', () => {
       repository.updateAll.resolves(expectedCount);
 
       const result = await controller.updateAll(updateData, set);
-
       expect(result).to.eql(expectedCount);
       sinon.assert.calledWithMatch(
         repository.updateAll,
         updateData,
         sinon.match.object,
       );
+    });
+
+    it('should throw 422 when trying to modify unmodifiable fields', async () => {
+      const updateData = { _id: 'newId' } as DataObject<GenericEntity>;
+      repository.updateAll.rejects({ statusCode: 422 });
+
+      try {
+        await controller.updateAll(updateData);
+        throw new Error('Expected error was not thrown');
+      } catch (error) {
+        expect(error).to.have.property('statusCode', 422);
+      }
     });
   });
 
@@ -319,7 +425,6 @@ describe('GenericEntityController', () => {
       repository.replaceById.resolves();
 
       await controller.replaceById(id, replaceData);
-
       sinon.assert.calledOnce(repository.replaceById);
       sinon.assert.calledWithExactly(repository.replaceById, id, replaceData);
     });
@@ -344,6 +449,19 @@ describe('GenericEntityController', () => {
 
       try {
         await controller.replaceById(id, invalidData);
+        throw new Error('Expected error was not thrown');
+      } catch (error) {
+        expect(error).to.have.property('statusCode', 422);
+      }
+    });
+
+    it('should throw 422 when required fields are missing', async () => {
+      const id = '123';
+      const incompleteData = {} as DataObject<GenericEntity>;
+      repository.replaceById.rejects({ statusCode: 422 });
+
+      try {
+        await controller.replaceById(id, incompleteData);
         throw new Error('Expected error was not thrown');
       } catch (error) {
         expect(error).to.have.property('statusCode', 422);
