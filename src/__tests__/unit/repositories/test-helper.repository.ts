@@ -1,0 +1,69 @@
+import { juggler } from '@loopback/repository';
+import { EntityPersistenceApplication } from '../../..';
+import type { EntityDbDataSource } from '../../../datasources';
+import {
+  IdempotencyConfigurationReader,
+  KindLimitsConfigurationReader,
+  RecordLimitsConfigurationReader,
+  UniquenessConfigurationReader,
+  ValidfromConfigurationReader,
+  VisibilityConfigurationReader,
+} from '../../../extensions';
+
+export async function setupRepositoryTest(): Promise<{
+  app: EntityPersistenceApplication;
+  dataSource: juggler.DataSource;
+  configReaders: {
+    uniquenessConfigReader: UniquenessConfigurationReader;
+    recordLimitConfigReader: RecordLimitsConfigurationReader;
+    kindLimitConfigReader: KindLimitsConfigurationReader;
+    visibilityConfigReader: VisibilityConfigurationReader;
+    validfromConfigReader: ValidfromConfigurationReader;
+    idempotencyConfigReader: IdempotencyConfigurationReader;
+  };
+}> {
+  // Set test environment
+  process.env.NODE_ENV = 'test';
+
+  // Create test-specific datasource config
+  const testConfig = {
+    name: 'EntityDb',
+    connector: 'memory',
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  };
+
+  const app = new EntityPersistenceApplication();
+  const dataSource = new juggler.DataSource(testConfig) as EntityDbDataSource;
+
+  // Create configuration readers with default test settings
+  const uniquenessConfigReader = new UniquenessConfigurationReader();
+  const recordLimitConfigReader = new RecordLimitsConfigurationReader();
+  const kindLimitConfigReader = new KindLimitsConfigurationReader();
+  const visibilityConfigReader = new VisibilityConfigurationReader();
+  const validfromConfigReader = new ValidfromConfigurationReader();
+  const idempotencyConfigReader = new IdempotencyConfigurationReader();
+
+  return {
+    app,
+    dataSource,
+    configReaders: {
+      uniquenessConfigReader,
+      recordLimitConfigReader,
+      kindLimitConfigReader,
+      visibilityConfigReader,
+      validfromConfigReader,
+      idempotencyConfigReader,
+    },
+  };
+}
+
+export async function teardownRepositoryTest(
+  app: EntityPersistenceApplication,
+) {
+  // Stop the app
+  await app.stop();
+
+  // Reset environment
+  delete process.env.NODE_ENV;
+}

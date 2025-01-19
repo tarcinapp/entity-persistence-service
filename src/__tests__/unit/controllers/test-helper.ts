@@ -1,6 +1,6 @@
 import { juggler } from '@loopback/repository';
 import { givenHttpServerConfig } from '@loopback/testlab';
-import { EntityPersistenceApplication } from '../..';
+import { EntityPersistenceApplication } from '../../..';
 
 export async function setupApplication(): Promise<AppWithClient> {
   // Set test environment

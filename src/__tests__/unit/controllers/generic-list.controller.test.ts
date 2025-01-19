@@ -1,11 +1,11 @@
 import type { DataObject } from '@loopback/repository';
 import { expect, sinon } from '@loopback/testlab';
+import { setupApplication, teardownApplication } from './test-helper';
 import type { EntityPersistenceApplication } from '../../..';
 import { GenericListController } from '../../../controllers';
 import type { Set } from '../../../extensions/set';
 import { GenericList } from '../../../models';
 import { GenericListRepository } from '../../../repositories';
-import { setupApplication, teardownApplication } from '../test-helper';
 
 /**
  * Test suite for GenericListController
