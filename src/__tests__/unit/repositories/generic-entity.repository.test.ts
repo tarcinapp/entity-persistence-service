@@ -48,6 +48,7 @@ describe('GenericEntityRepository', () => {
       testSetup.configReaders.visibilityConfigReader,
       testSetup.configReaders.validfromConfigReader,
       testSetup.configReaders.idempotencyConfigReader,
+      testSetup.configReaders.responseLimitConfigReader,
     );
   });
 
@@ -63,12 +64,5 @@ describe('GenericEntityRepository', () => {
     expect(repository.children).to.not.be.undefined();
     expect(repository.reactions).to.not.be.undefined();
     expect(repository.tags).to.not.be.undefined();
-  });
-
-  it('should have correct response limit configured', () => {
-    // Access the private static field using type assertion
-    const repo = repository as any;
-    const responseLimit = repo.constructor.responseLimit;
-    expect(responseLimit).to.equal(50); // Default value from the repository
   });
 });
