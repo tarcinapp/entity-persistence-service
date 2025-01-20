@@ -26,6 +26,7 @@ import {
   ValidfromConfigurationReader,
   VisibilityConfigurationReader,
 } from '../extensions';
+import { ResponseLimitConfigurationReader } from '../extensions/response-limit-config-helper';
 import { Set, SetFilterBuilder } from '../extensions/set';
 import {
   GenericEntity,
@@ -100,23 +101,26 @@ export class GenericListRepository extends DefaultCrudRepository<
     @repository.getter('CustomListEntityRelRepository')
     protected customListEntityRelRepositoryGetter: Getter<CustomEntityThroughListRepository>,
 
-    @inject('extensions.uniqueness.config-helper')
+    @inject('extensions.uniqueness.configurationreader')
     private uniquenessConfigReader: UniquenessConfigurationReader,
 
-    @inject('extensions.record-limits.config-helper')
+    @inject('extensions.record-limits.configurationreader')
     private recordLimitConfigReader: RecordLimitsConfigurationReader,
 
-    @inject('extensions.kind-limits.config-helper')
+    @inject('extensions.kind-limits.configurationreader')
     private kindLimitConfigReader: KindLimitsConfigurationReader,
 
-    @inject('extensions.visibility.config-helper')
+    @inject('extensions.visibility.configurationreader')
     private visibilityConfigReader: VisibilityConfigurationReader,
 
-    @inject('extensions.validfrom.config-helper')
+    @inject('extensions.validfrom.configurationreader')
     private validfromConfigReader: ValidfromConfigurationReader,
 
-    @inject('extensions.idempotency.config-helper')
+    @inject('extensions.idempotency.configurationreader')
     private idempotencyConfigReader: IdempotencyConfigurationReader,
+
+    @inject('extensions.response-limit.configurationreader')
+    private responseLimitConfigReader: ResponseLimitConfigurationReader,
   ) {
     super(GenericList, dataSource);
 
@@ -173,14 +177,18 @@ export class GenericListRepository extends DefaultCrudRepository<
 
   async find(filter?: Filter<GenericList>, options?: Options) {
     // Calculate the limit value using optional chaining and nullish coalescing
-    // If filter.limit is defined, use its value; otherwise, use ListRepository.response_limit
-    const limit = filter?.limit ?? GenericListRepository.responseLimit;
+    // If filter.limit is defined, use its value; otherwise, use the configured response limit
+    const limit =
+      filter?.limit ?? this.responseLimitConfigReader.getListResponseLimit();
 
     // Update the filter object by spreading the existing filter and overwriting the limit property
-    // Ensure that the new limit value does not exceed ListRepository.response_limit
+    // Ensure that the new limit value does not exceed configured response limit
     filter = {
       ...filter,
-      limit: Math.min(limit, GenericListRepository.responseLimit),
+      limit: Math.min(
+        limit,
+        this.responseLimitConfigReader.getListResponseLimit(),
+      ),
     };
 
     return super.find(filter, options);

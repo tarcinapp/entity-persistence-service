@@ -3,7 +3,7 @@ import _ from 'lodash';
 
 export const VisibilityConfigBindings = {
   CONFIG_READER: BindingKey.create<VisibilityConfigurationReader>(
-    'extensions.visibility.config-helper',
+    'extensions.visibility.configurationreader',
   ),
 };
 

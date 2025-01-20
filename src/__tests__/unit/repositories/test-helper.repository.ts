@@ -9,6 +9,7 @@ import {
   ValidfromConfigurationReader,
   VisibilityConfigurationReader,
 } from '../../../extensions';
+import { ResponseLimitConfigurationReader } from '../../../extensions/response-limit-config-helper';
 
 export async function setupRepositoryTest(): Promise<{
   app: EntityPersistenceApplication;
@@ -20,6 +21,7 @@ export async function setupRepositoryTest(): Promise<{
     visibilityConfigReader: VisibilityConfigurationReader;
     validfromConfigReader: ValidfromConfigurationReader;
     idempotencyConfigReader: IdempotencyConfigurationReader;
+    responseLimitConfigReader: ResponseLimitConfigurationReader;
   };
 }> {
   // Set test environment
@@ -43,6 +45,7 @@ export async function setupRepositoryTest(): Promise<{
   const visibilityConfigReader = new VisibilityConfigurationReader();
   const validfromConfigReader = new ValidfromConfigurationReader();
   const idempotencyConfigReader = new IdempotencyConfigurationReader();
+  const responseLimitConfigReader = new ResponseLimitConfigurationReader();
 
   return {
     app,
@@ -54,6 +57,7 @@ export async function setupRepositoryTest(): Promise<{
       visibilityConfigReader,
       validfromConfigReader,
       idempotencyConfigReader,
+      responseLimitConfigReader,
     },
   };
 }

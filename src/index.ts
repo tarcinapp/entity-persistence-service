@@ -15,6 +15,8 @@ import {
   RecordLimitsConfigurationReader,
   ValidFromConfigBindings,
   ValidfromConfigurationReader,
+  ResponseLimitConfigBindings,
+  ResponseLimitConfigurationReader,
 } from './extensions';
 
 export * from './application';
@@ -53,6 +55,11 @@ export async function main(options: ApplicationConfig = {}) {
   app
     .bind(ValidFromConfigBindings.CONFIG_READER)
     .toClass(ValidfromConfigurationReader);
+
+  // add response limit configuration reader to context
+  app
+    .bind(ResponseLimitConfigBindings.CONFIG_READER)
+    .toClass(ResponseLimitConfigurationReader);
 
   await app.boot();
   await app.start();

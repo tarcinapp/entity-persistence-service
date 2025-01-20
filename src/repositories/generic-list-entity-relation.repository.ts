@@ -31,16 +31,13 @@ import {
 } from '../models';
 import { GenericEntityRepository } from './generic-entity.repository';
 import { GenericListRepository } from './generic-list.repository';
+import { ResponseLimitConfigurationReader } from '../extensions/response-limit-config-helper';
 
 export class GenericListEntityRelationRepository extends DefaultCrudRepository<
   GenericListToEntityRelation,
   typeof GenericListToEntityRelation.prototype._id,
   GenericListEntityRelationRelations
 > {
-  private static responseLimit = _.parseInt(
-    process.env.response_limit_list_entity_rel ?? '50',
-  );
-
   constructor(
     @inject('datasources.EntityDb')
     dataSource: EntityDbDataSource,
@@ -51,106 +48,45 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
     @repository.getter('GenericListRepository')
     protected genericListRepositoryGetter: Getter<GenericListRepository>,
 
-    @inject('extensions.idempotency.config-helper')
+    @inject('extensions.idempotency.configurationreader')
     private idempotencyConfigReader: IdempotencyConfigurationReader,
 
-    @inject('extensions.kind-limits.config-helper')
+    @inject('extensions.kind-limits.configurationreader')
     private kindLimitConfigReader: KindLimitsConfigurationReader,
 
-    @inject('extensions.validfrom.config-helper')
+    @inject('extensions.validfrom.configurationreader')
     private validfromConfigReader: ValidfromConfigurationReader,
 
-    @inject('extensions.record-limits.config-helper')
+    @inject('extensions.record-limits.configurationreader')
     private recordLimitConfigReader: RecordLimitsConfigurationReader,
 
-    @inject('extensions.uniqueness.config-helper')
+    @inject('extensions.uniqueness.configurationreader')
     private uniquenessConfigReader: UniquenessConfigurationReader,
+
+    @inject('extensions.response-limit.configurationreader')
+    private responseLimitConfigReader: ResponseLimitConfigurationReader,
   ) {
     super(GenericListToEntityRelation, dataSource);
   }
 
-  async find(
-    filter?: Filter<GenericListToEntityRelation>,
-    options?: Options,
-  ): Promise<
-    (GenericListToEntityRelation & GenericListEntityRelationRelations)[]
-  > {
+  async find(filter?: Filter<GenericListToEntityRelation>, options?: Options) {
+    // Calculate the limit value using optional chaining and nullish coalescing
+    // If filter.limit is defined, use its value; otherwise, use the configured response limit
     const limit =
-      filter?.limit ?? GenericListEntityRelationRepository.responseLimit;
+      filter?.limit ??
+      this.responseLimitConfigReader.getListEntityRelResponseLimit();
 
-    // Ensure the filter respects the response limit
+    // Update the filter object by spreading the existing filter and overwriting the limit property
+    // Ensure that the new limit value does not exceed configured response limit
     filter = {
       ...filter,
-      limit: Math.min(limit, GenericListEntityRelationRepository.responseLimit),
+      limit: Math.min(
+        limit,
+        this.responseLimitConfigReader.getListEntityRelResponseLimit(),
+      ),
     };
 
-    // Fetch raw relations from the database
-    return super.find(filter, options).then((rawRelations) => {
-      if (!rawRelations.length) {
-        return [];
-      }
-
-      // Collect all listIds and entityIds from the raw relations
-      const listIds = rawRelations.map((relation) => relation._listId);
-      const entityIds = rawRelations.map((relation) => relation._entityId);
-
-      // Fetch required metadata for all lists and entities in a single query
-      return Promise.all([
-        this.genericListRepositoryGetter().then((repo) =>
-          repo.find({ where: { _id: { inq: listIds } } }),
-        ),
-        this.genericEntityRepositoryGetter().then((repo) =>
-          repo.find({ where: { _id: { inq: entityIds } } }),
-        ),
-      ]).then(([listMetadata, entityMetadata]) => {
-        // Create maps for quick lookup by id
-        const listMetadataMap = new Map(
-          listMetadata.map((list) => [list._id, list]),
-        );
-        const entityMetadataMap = new Map(
-          entityMetadata.map((entity) => [entity._id, entity]),
-        );
-
-        // Enrich raw relations with metadata
-        return rawRelations.map((relation) => {
-          const list = listMetadataMap.get(relation._listId);
-          const entity = entityMetadataMap.get(relation._entityId);
-
-          if (list !== undefined) {
-            // Mutate the existing relation object
-            relation._fromMetadata = {
-              _kind: list._kind,
-              _name: list._name,
-              _slug: list._slug,
-              _validFromDateTime: list._validFromDateTime,
-              _validUntilDateTime: list._validUntilDateTime,
-              _ownerUsers: list._ownerUsers,
-              _ownerGroups: list._ownerGroups,
-              _viewerUsers: list._viewerUsers,
-              _viewerGroups: list._viewerGroups,
-              _visibility: list._visibility,
-            };
-          }
-
-          if (entity !== undefined) {
-            relation._toMetadata = {
-              _kind: entity._kind,
-              _name: entity._name,
-              _slug: entity._slug,
-              _validFromDateTime: entity._validFromDateTime,
-              _validUntilDateTime: entity._validUntilDateTime,
-              _visibility: entity._visibility,
-              _ownerUsers: entity._ownerUsers,
-              _ownerGroups: entity._ownerGroups,
-              _viewerUsers: entity._viewerUsers,
-              _viewerGroups: entity._viewerGroups,
-            };
-          }
-
-          return relation; // Return the mutated object
-        });
-      });
-    });
+    return super.find(filter, options);
   }
 
   async findById(

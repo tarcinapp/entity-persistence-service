@@ -42,6 +42,7 @@ import { ReactionsRepository } from './reactions.repository';
 import { RelationRepository } from './relation.repository';
 import { TagEntityRelationRepository } from './tag-entity-relation.repository';
 import { TagRepository } from './tag.repository';
+import { ResponseLimitConfigurationReader } from '../extensions/response-limit-config-helper';
 
 export class GenericEntityRepository extends DefaultCrudRepository<
   GenericEntity,
@@ -64,11 +65,6 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     TagEntityRelation,
     typeof GenericEntity.prototype._id
   >;
-
-  private static responseLimit = _.parseInt(
-    process.env.response_limit_entity ?? '50',
-  );
-
   constructor(
     @inject('datasources.EntityDb')
     dataSource: EntityDbDataSource,
@@ -105,6 +101,9 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
     @inject('extensions.idempotency.configurationreader')
     private idempotencyConfigReader: IdempotencyConfigurationReader,
+
+    @inject('extensions.response-limit.configurationreader')
+    private responseLimitConfigReader: ResponseLimitConfigurationReader,
   ) {
     super(GenericEntity, dataSource);
     this.tags = this.createHasManyThroughRepositoryFactoryFor(
@@ -132,14 +131,18 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
   async find(filter?: Filter<GenericEntity>, options?: Options) {
     // Calculate the limit value using optional chaining and nullish coalescing
-    // If filter.limit is defined, use its value; otherwise, use GenericEntityRepository.response_limit
-    const limit = filter?.limit ?? GenericEntityRepository.responseLimit;
+    // If filter.limit is defined, use its value; otherwise, use the configured response limit
+    const limit =
+      filter?.limit ?? this.responseLimitConfigReader.getEntityResponseLimit();
 
     // Update the filter object by spreading the existing filter and overwriting the limit property
-    // Ensure that the new limit value does not exceed GenericEntityRepository.response_limit
+    // Ensure that the new limit value does not exceed configured response limit
     filter = {
       ...filter,
-      limit: Math.min(limit, GenericEntityRepository.responseLimit),
+      limit: Math.min(
+        limit,
+        this.responseLimitConfigReader.getEntityResponseLimit(),
+      ),
     };
 
     return super.find(filter, options);

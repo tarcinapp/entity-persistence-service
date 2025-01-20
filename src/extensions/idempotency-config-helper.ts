@@ -3,7 +3,7 @@ import { isEmpty } from 'lodash';
 
 export const IdempotencyConfigBindings = {
   CONFIG_READER: BindingKey.create<IdempotencyConfigurationReader>(
-    'extensions.idempotency.config-helper',
+    'extensions.idempotency.configurationreader',
   ),
 } as const;
 
