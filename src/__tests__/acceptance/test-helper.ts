@@ -3,6 +3,23 @@ import type { Client } from '@loopback/testlab';
 import { createRestAppClient, givenHttpServerConfig } from '@loopback/testlab';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { EntityPersistenceApplication } from '../..';
+import { EntityDbDataSource } from '../../datasources/entity-db.datasource';
+import {
+  UniquenessBindings,
+  UniquenessConfigurationReader,
+  RecordLimitsBindings,
+  RecordLimitsConfigurationReader,
+  KindLimitsBindings,
+  KindLimitsConfigurationReader,
+  VisibilityConfigBindings,
+  VisibilityConfigurationReader,
+  IdempotencyConfigBindings,
+  IdempotencyConfigurationReader,
+  ValidFromConfigBindings,
+  ValidfromConfigurationReader,
+  ResponseLimitConfigBindings,
+  ResponseLimitConfigurationReader,
+} from '../../extensions';
 
 export interface TestEnvironmentVariables {
   list_kinds?: string;
@@ -65,19 +82,57 @@ export async function setupApplication(
   };
 
   // Configure the app to use the in-memory MongoDB
-  app.bind('datasources.config.EntityDb').to({
+  const mongoDsConfig = {
     name: 'EntityDb',
     connector: 'mongodb',
     url: mongod.getUri(),
     database: 'testdb',
     useNewUrlParser: true,
     useUnifiedTopology: true,
-  });
+  };
+
+  app.bind('datasources.config.EntityDb').to(mongoDsConfig);
+
+  // Create and bind the datasource
+  const dataSource = new EntityDbDataSource(mongoDsConfig);
+  app.dataSource(dataSource);
 
   app.bind(RestBindings.ERROR_WRITER_OPTIONS).to({
     debug: true,
     safeFields: ['errorCode', 'message'],
   });
+
+  // add uniqueness configuration reader to context
+  app
+    .bind(UniquenessBindings.CONFIG_READER)
+    .toClass(UniquenessConfigurationReader);
+
+  // add record limits configuration reader to context
+  app
+    .bind(RecordLimitsBindings.CONFIG_READER)
+    .toClass(RecordLimitsConfigurationReader);
+
+  // add kind limits configuration reader to context
+  app
+    .bind(KindLimitsBindings.CONFIG_READER)
+    .toClass(KindLimitsConfigurationReader);
+
+  app
+    .bind(VisibilityConfigBindings.CONFIG_READER)
+    .toClass(VisibilityConfigurationReader);
+
+  app
+    .bind(IdempotencyConfigBindings.CONFIG_READER)
+    .toClass(IdempotencyConfigurationReader);
+
+  app
+    .bind(ValidFromConfigBindings.CONFIG_READER)
+    .toClass(ValidfromConfigurationReader);
+
+  // add response limit configuration reader to context
+  app
+    .bind(ResponseLimitConfigBindings.CONFIG_READER)
+    .toClass(ResponseLimitConfigurationReader);
 
   await app.boot();
   await app.start();

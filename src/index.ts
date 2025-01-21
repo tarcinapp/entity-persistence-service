@@ -35,7 +35,7 @@ export async function main(options: ApplicationConfig = {}) {
     .bind(UniquenessBindings.CONFIG_READER)
     .toClass(UniquenessConfigurationReader);
 
-  // add uniqueness configuration reader to context
+  // add record limits configuration reader to context
   app
     .bind(RecordLimitsBindings.CONFIG_READER)
     .toClass(RecordLimitsConfigurationReader);
