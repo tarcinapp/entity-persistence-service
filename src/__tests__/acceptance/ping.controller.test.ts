@@ -1,19 +1,20 @@
 import type { Client } from '@loopback/testlab';
 import { expect } from '@loopback/testlab';
 
-import type { EntityPersistenceApplication } from '../..';
+import type { AppWithClient } from './test-helper';
 import { setupApplication, teardownApplication } from './test-helper';
 
 describe('PingController', () => {
-  let app: EntityPersistenceApplication;
   let client: Client;
+  let appWithClient: AppWithClient;
 
   before('setupApplication', async () => {
-    ({ app, client } = await setupApplication());
+    appWithClient = await setupApplication();
+    ({ client } = appWithClient);
   });
 
   after(async () => {
-    await teardownApplication(app);
+    await teardownApplication(appWithClient);
   });
 
   it('invokes GET /ping', async () => {
