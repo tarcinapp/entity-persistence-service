@@ -15,7 +15,6 @@ import {
 } from '@loopback/repository';
 import * as crypto from 'crypto';
 import _ from 'lodash';
-import { parse } from 'qs';
 import slugify from 'slugify';
 import { EntityDbDataSource } from '../datasources';
 import {
@@ -27,7 +26,7 @@ import {
   VisibilityConfigurationReader,
 } from '../extensions';
 import { ResponseLimitConfigurationReader } from '../extensions/response-limit-config-helper';
-import { Set, SetFilterBuilder } from '../extensions/set';
+import { SetFilterBuilder } from '../extensions/set';
 import {
   GenericEntity,
   GenericList,
@@ -202,7 +201,9 @@ export class GenericListRepository extends DefaultCrudRepository<
         return foundIdempotent;
       }
 
-      data._idempotencyKey = idempotencyKey;
+      if (idempotencyKey) {
+        data._idempotencyKey = idempotencyKey;
+      }
 
       // we do not have identical data in the db
       // go ahead, validate, enrich and create the data
@@ -221,7 +222,9 @@ export class GenericListRepository extends DefaultCrudRepository<
         const idempotencyKey = this.calculateIdempotencyKey(collection.data);
 
         // set idempotency key to the data
-        collection.data._idempotencyKey = idempotencyKey;
+        if (idempotencyKey) {
+          collection.data._idempotencyKey = idempotencyKey;
+        }
 
         return collection;
       })
@@ -778,8 +781,7 @@ export class GenericListRepository extends DefaultCrudRepository<
   ) {
     // return if no uniqueness is configured
     if (
-      !process.env.uniqueness_list_fields &&
-      !process.env.uniqueness_list_set
+      !this.uniquenessConfigReader.isUniquenessConfiguredForLists(newData._kind)
     ) {
       return;
     }
@@ -787,33 +789,24 @@ export class GenericListRepository extends DefaultCrudRepository<
     const whereBuilder: WhereBuilder<GenericList> =
       new WhereBuilder<GenericList>();
 
-    // add uniqueness fields if configured
-    if (process.env.uniqueness_list_fields) {
-      const fields: string[] = process.env.uniqueness_list_fields
-        .replace(/\s/g, '')
-        .split(',');
+    // read the fields (name, slug) array for this kind
+    const fields: string[] = this.uniquenessConfigReader.getFieldsForLists(
+      newData._kind,
+    );
 
-      // if there is at least single field in the fields array that does not present on new data, then we should find it from the db.
-      if (_.some(fields, _.negate(_.partial(_.has, newData)))) {
-        const existingList = await super.findById(id);
+    const set = this.uniquenessConfigReader.getSetForLists(
+      newData._ownerUsers,
+      newData._ownerGroups,
+      newData._kind,
+    );
 
-        _.forEach(fields, (field) => {
-          whereBuilder.and({
-            [field]: _.has(newData, field)
-              ? _.get(newData, field)
-              : _.get(existingList, field),
-          });
-        });
-      } else {
-        _.forEach(fields, (field) => {
-          whereBuilder.and({
-            [field]: _.get(newData, field),
-          });
-        });
-      }
-    }
+    _.forEach(fields, (field) => {
+      whereBuilder.and({
+        [field]: _.get(newData, field),
+      });
+    });
 
-    //
+    // this is for preventing the same data to be returned
     whereBuilder.and({
       _id: {
         neq: id,
@@ -825,30 +818,15 @@ export class GenericListRepository extends DefaultCrudRepository<
       .fields('_id')
       .build();
 
-    // add set filter if configured
-    if (process.env.uniqueness_list_set) {
-      let uniquenessStr = process.env.uniqueness_list_set;
-      uniquenessStr = uniquenessStr.replace(
-        /(set\[.*owners\])/g,
-        '$1=' +
-          (newData._ownerUsers ? newData._ownerUsers?.join(',') : '') +
-          ';' +
-          (newData._ownerGroups ? newData._ownerGroups?.join(',') : ''),
-      );
-
-      const uniquenessSet = parse(uniquenessStr).set as Set;
-
-      filter = new SetFilterBuilder<GenericList>(uniquenessSet, {
+    if (set) {
+      filter = new SetFilterBuilder<GenericList>(set, {
         filter: filter,
       }).build();
     }
 
-    // final uniqueness controlling filter
-    // console.log('Uniqueness Filter: ', JSON.stringify(filter));
+    const violatingList = await super.findOne(filter);
 
-    const existingList = await super.findOne(filter);
-
-    if (existingList) {
+    if (violatingList) {
       throw new HttpErrorResponse({
         statusCode: 409,
         name: 'DataUniquenessViolationError',

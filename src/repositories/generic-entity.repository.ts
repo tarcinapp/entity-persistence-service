@@ -156,7 +156,9 @@ export class GenericEntityRepository extends DefaultCrudRepository<
         return foundIdempotent;
       }
 
-      data._idempotencyKey = idempotencyKey;
+      if (idempotencyKey) {
+        data._idempotencyKey = idempotencyKey;
+      }
 
       // we do not have identical data in the db
       // go ahead, validate, enrich and create the data
@@ -171,7 +173,9 @@ export class GenericEntityRepository extends DefaultCrudRepository<
         const idempotencyKey = this.calculateIdempotencyKey(collection.data);
 
         // set idempotencyKey
-        collection.data._idempotencyKey = idempotencyKey;
+        if (idempotencyKey) {
+          collection.data._idempotencyKey = idempotencyKey;
+        }
 
         return collection;
       })
