@@ -500,7 +500,7 @@ describe('GenericListRepository', () => {
           .returns(true);
       });
 
-      it('should throw error when list does not exist', async () => {
+      it('should throw error with consistent message when list does not exist', async () => {
         superFindByIdStub.resolves(null);
 
         try {
@@ -509,7 +509,7 @@ describe('GenericListRepository', () => {
         } catch (error) {
           expect(error).to.be.instanceOf(HttpErrorResponse);
           expect(error.message).to.match(
-            /List with id 'test-id' could not be found./,
+            /List with id 'test-id' could not be found/,
           );
         }
 
@@ -685,6 +685,41 @@ describe('GenericListRepository', () => {
           _version: 2,
           _lastUpdatedDateTime: now,
         });
+      });
+
+      // New tests for idempotency handling
+      it('should generate new idempotency key when idempotent fields are updated', async () => {
+        const existingIdempotencyKey =
+          '63ea389183badf7004ee26e06f5ecf13995d26b088d9fcb8a7fe17502eb218a4';
+        const existingData = {
+          _id: existingId,
+          _name: 'Original Name',
+          _kind: 'test-kind',
+          _version: 1,
+          _createdDateTime: '2023-01-01T00:00:00.000Z',
+          _lastUpdatedDateTime: '2023-01-01T00:00:00.000Z',
+          _idempotencyKey: existingIdempotencyKey,
+        };
+        superFindByIdStub.resolves(existingData);
+
+        // Setup idempotency configuration
+        sinon
+          .stub(repository['idempotencyConfigReader'], 'getIdempotencyForLists')
+          .returns(['_name']);
+
+        const updateData = {
+          _name: 'Updated Name',
+          _kind: 'test-kind',
+        };
+
+        await repository.replaceById(existingId, updateData);
+
+        expect(superReplaceByIdStub.calledOnce).to.be.true();
+        const replacedData = superReplaceByIdStub.firstCall.args[1];
+        expect(replacedData._idempotencyKey).to.not.equal(
+          existingIdempotencyKey,
+        );
+        expect(typeof replacedData._idempotencyKey).to.equal('string');
       });
     });
   });

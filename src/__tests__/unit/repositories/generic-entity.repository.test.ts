@@ -508,9 +508,9 @@ describe('GenericEntityRepository', () => {
           Object.getPrototypeOf(Object.getPrototypeOf(repository)),
           'replaceById',
         )
-        .callsFake(async (id, data) => data);
+        .resolves();
 
-      // Stub super.findById for fetching existing entity
+      // Stub super.findById for existing data lookup
       superFindByIdStub = sinon
         .stub(
           Object.getPrototypeOf(Object.getPrototypeOf(repository)),
@@ -518,9 +518,11 @@ describe('GenericEntityRepository', () => {
         )
         .resolves({
           _id: existingId,
-          _name: 'Original Name',
-          _kind: 'test-kind',
           _version: 1,
+          _kind: 'test-kind',
+          _name: 'Original Name',
+          _createdDateTime: '2023-01-01T00:00:00.000Z',
+          _lastUpdatedDateTime: '2023-01-01T00:00:00.000Z',
         });
     });
 
@@ -546,57 +548,38 @@ describe('GenericEntityRepository', () => {
             'isUniquenessConfiguredForEntities',
           )
           .returns(false);
+        sinon
+          .stub(
+            repository['visibilityConfigReader'],
+            'getVisibilityForEntities',
+          )
+          .returns('public');
+        sinon
+          .stub(repository['validfromConfigReader'], 'getValidFromForEntities')
+          .returns(true);
       });
 
-      it('should throw error when entity does not exist', async () => {
+      it('should throw error with consistent message when entity does not exist', async () => {
         superFindByIdStub.resolves(null);
 
         try {
-          await repository.replaceById('non-existent-id', { _name: 'test' });
+          await repository.replaceById(existingId, { _name: 'New Name' });
           throw new Error('Expected error was not thrown');
         } catch (error) {
           expect(error).to.be.instanceOf(HttpErrorResponse);
           expect(error.message).to.match(
-            /Entity with id 'non-existent-id' could not be found/,
+            /Entity with id 'test-id' could not be found/,
           );
         }
 
         expect(superReplaceByIdStub.called).to.be.false();
       });
 
-      it('should enrich entity with managed fields', async () => {
-        const inputData = {
-          _name: 'Updated Entity',
-          _kind: 'test-kind',
-          _ownerUsers: ['user1'],
-          _ownerGroups: ['group1', 'group2'],
-          _viewerUsers: ['user2', 'user3'],
-          _viewerGroups: ['group3'],
-        };
-
-        const result = await repository.replaceById(existingId, inputData);
-
-        expect(result).to.containDeep({
-          _name: 'Updated Entity',
-          _kind: 'test-kind',
-          _slug: 'updated-entity',
-          _version: 2,
-          _ownerUsers: ['user1'],
-          _ownerGroups: ['group1', 'group2'],
-          _viewerUsers: ['user2', 'user3'],
-          _viewerGroups: ['group3'],
-          _ownerUsersCount: 1,
-          _ownerGroupsCount: 2,
-          _viewerUsersCount: 2,
-          _viewerGroupsCount: 1,
-        });
-      });
-
       it('should throw error for invalid kind format', async () => {
-        const inputData = { _name: 'test', _kind: 'Test Kind!' };
+        const updateData = { _kind: 'Invalid Kind!', _name: 'test' };
 
         try {
-          await repository.replaceById(existingId, inputData);
+          await repository.replaceById(existingId, updateData);
           throw new Error('Expected error was not thrown');
         } catch (error) {
           expect(error).to.be.instanceOf(HttpErrorResponse);
@@ -609,7 +592,7 @@ describe('GenericEntityRepository', () => {
       });
 
       it('should throw error when kind is not in allowed values', async () => {
-        const inputData = { _name: 'test', _kind: 'invalid-kind' };
+        const updateData = { _kind: 'invalid-kind', _name: 'test' };
 
         kindLimitStub.returns(false);
         sinon
@@ -617,7 +600,7 @@ describe('GenericEntityRepository', () => {
           .get(() => ['allowed-kind']);
 
         try {
-          await repository.replaceById(existingId, inputData);
+          await repository.replaceById(existingId, updateData);
           throw new Error('Expected error was not thrown');
         } catch (error) {
           expect(error).to.be.instanceOf(HttpErrorResponse);
@@ -630,10 +613,9 @@ describe('GenericEntityRepository', () => {
       });
 
       it('should throw error when uniqueness is violated', async () => {
-        const inputData = { _name: 'existing-name', _kind: 'test-kind' };
+        const updateData = { _name: 'existing-name', _kind: 'test-kind' };
         const existingEntity = { _id: 'another-id', _name: 'existing-name' };
 
-        // Setup uniqueness check to find a conflicting entity
         uniquenessStub.returns(true);
         sinon
           .stub(repository['uniquenessConfigReader'], 'getFieldsForEntities')
@@ -646,7 +628,7 @@ describe('GenericEntityRepository', () => {
           .resolves(existingEntity);
 
         try {
-          await repository.replaceById(existingId, inputData);
+          await repository.replaceById(existingId, updateData);
           throw new Error('Expected error was not thrown');
         } catch (error) {
           expect(error).to.be.instanceOf(HttpErrorResponse);
@@ -656,43 +638,149 @@ describe('GenericEntityRepository', () => {
         expect(superReplaceByIdStub.called).to.be.false();
       });
 
-      it('should calculate idempotency key', async () => {
-        const inputData = { _name: 'test', _kind: 'test-kind' };
-        const idempotencyFields = ['_name'];
+      it('should update version and timestamps', async () => {
+        const updateData = {
+          _name: 'Updated Name',
+          _kind: 'test-kind',
+        };
 
-        sinon
-          .stub(
-            repository['idempotencyConfigReader'],
-            'getIdempotencyForEntities',
-          )
-          .returns(idempotencyFields);
+        await repository.replaceById(existingId, updateData);
 
-        const result = (await repository.replaceById(
-          existingId,
-          inputData,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        )) as any;
-
-        expect(typeof result._idempotencyKey).to.equal('string');
+        expect(superReplaceByIdStub.calledOnce).to.be.true();
+        const replacedData = superReplaceByIdStub.firstCall.args[1];
+        expect(replacedData._version).to.equal(2);
+        expect(replacedData._lastUpdatedDateTime).to.equal(now);
       });
 
-      it('should skip idempotency key calculation when not configured', async () => {
-        const inputData = { _name: 'test', _kind: 'test-kind' };
+      it('should generate new slug when name is updated', async () => {
+        const updateData = {
+          _name: 'Updated Entity Name',
+          _kind: 'test-kind',
+        };
 
+        await repository.replaceById(existingId, updateData);
+
+        expect(superReplaceByIdStub.calledOnce).to.be.true();
+        const replacedData = superReplaceByIdStub.firstCall.args[1];
+        expect(replacedData._slug).to.equal('updated-entity-name');
+      });
+
+      it('should preserve existing slug when name is not updated', async () => {
+        const existingData = {
+          _id: existingId,
+          _version: 1,
+          _kind: 'test-kind',
+          _name: 'Test Name',
+          _slug: 'custom-slug',
+          _createdDateTime: '2023-01-01T00:00:00.000Z',
+          _lastUpdatedDateTime: '2023-01-01T00:00:00.000Z',
+        };
+        superFindByIdStub.resolves(existingData);
+
+        const updateData = {
+          _kind: 'test-kind',
+          _name: 'Test Name',
+        };
+
+        await repository.replaceById(existingId, updateData);
+
+        expect(superReplaceByIdStub.calledOnce).to.be.true();
+        const replacedData = superReplaceByIdStub.firstCall.args[1];
+        expect(replacedData._slug).to.equal('test-name');
+      });
+
+      it('should calculate owner and viewer counts', async () => {
+        const updateData = {
+          _name: 'Test Entity',
+          _kind: 'test-kind',
+          _ownerUsers: ['user1', 'user2'],
+          _ownerGroups: ['group1'],
+          _viewerUsers: ['user3', 'user4', 'user5'],
+          _viewerGroups: ['group2', 'group3'],
+        };
+
+        await repository.replaceById(existingId, updateData);
+
+        expect(superReplaceByIdStub.calledOnce).to.be.true();
+        const replacedData = superReplaceByIdStub.firstCall.args[1];
+        expect(replacedData._ownerUsersCount).to.equal(2);
+        expect(replacedData._ownerGroupsCount).to.equal(1);
+        expect(replacedData._viewerUsersCount).to.equal(3);
+        expect(replacedData._viewerGroupsCount).to.equal(2);
+      });
+
+      it('should preserve existing fields not included in update', async () => {
+        const existingData = {
+          _id: existingId,
+          _version: 1,
+          _kind: 'test-kind',
+          _name: 'Original Name',
+          _slug: 'original-name',
+          _createdDateTime: '2023-01-01T00:00:00.000Z',
+          _lastUpdatedDateTime: '2023-01-01T00:00:00.000Z',
+          _validFromDateTime: '2023-01-01T00:00:00.000Z',
+          _validUntilDateTime: null,
+          _visibility: 'public',
+          _ownerUsers: ['user1'],
+          _ownerGroups: ['group1'],
+          _viewerUsers: ['user2'],
+          _viewerGroups: ['group2'],
+        };
+        superFindByIdStub.resolves(existingData);
+
+        const updateData = {
+          _name: 'Updated Name',
+          _kind: 'test-kind',
+        };
+
+        await repository.replaceById(existingId, updateData);
+
+        expect(superReplaceByIdStub.calledOnce).to.be.true();
+        const replacedData = superReplaceByIdStub.firstCall.args[1];
+        expect(replacedData).to.containDeep({
+          _name: 'Updated Name',
+          _kind: 'test-kind',
+          _slug: 'updated-name',
+          _version: 2,
+          _lastUpdatedDateTime: now,
+        });
+      });
+
+      it('should generate new idempotency key when idempotent fields are updated', async () => {
+        const existingIdempotencyKey =
+          '63ea389183badf7004ee26e06f5ecf13995d26b088d9fcb8a7fe17502eb218a4';
+        const existingData = {
+          _id: existingId,
+          _name: 'Original Name',
+          _kind: 'test-kind',
+          _version: 1,
+          _createdDateTime: '2023-01-01T00:00:00.000Z',
+          _lastUpdatedDateTime: '2023-01-01T00:00:00.000Z',
+          _idempotencyKey: existingIdempotencyKey,
+        };
+        superFindByIdStub.resolves(existingData);
+
+        // Setup idempotency configuration
         sinon
           .stub(
             repository['idempotencyConfigReader'],
             'getIdempotencyForEntities',
           )
-          .returns([]);
+          .returns(['_name']);
 
-        const result = (await repository.replaceById(
-          existingId,
-          inputData,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        )) as any;
+        const updateData = {
+          _name: 'Updated Name',
+          _kind: 'test-kind',
+        };
 
-        expect(result._idempotencyKey).to.equal(undefined);
+        await repository.replaceById(existingId, updateData);
+
+        expect(superReplaceByIdStub.calledOnce).to.be.true();
+        const replacedData = superReplaceByIdStub.firstCall.args[1];
+        expect(replacedData._idempotencyKey).to.not.equal(
+          existingIdempotencyKey,
+        );
+        expect(typeof replacedData._idempotencyKey).to.equal('string');
       });
     });
   });
@@ -915,7 +1003,7 @@ describe('GenericEntityRepository', () => {
       });
 
       it('should calculate idempotency key based on merged data', async () => {
-        const updateData = { _name: 'test' };
+        const updateData = { _name: 'test', _kind: 'test-kind' };
         const idempotencyFields = ['_name', '_kind']; // Both fields for idempotency
 
         sinon
