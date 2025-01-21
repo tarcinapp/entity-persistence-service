@@ -1208,4 +1208,193 @@ describe('GenericEntityRepository', () => {
       expect(listEntityRelationRepoStub.deleteAll.calledOnce).to.be.true();
     });
   });
+
+  describe('updateAll', () => {
+    let superUpdateAllStub: sinon.SinonStub;
+    const now = '2024-01-01T00:00:00.000Z';
+
+    beforeEach(() => {
+      // Stub Date.now
+      sinon.useFakeTimers(new Date(now));
+
+      // Stub super.updateAll
+      superUpdateAllStub = sinon
+        .stub(
+          Object.getPrototypeOf(Object.getPrototypeOf(repository)),
+          'updateAll',
+        )
+        .resolves({ count: 2 });
+    });
+
+    afterEach(() => {
+      sinon.restore();
+    });
+
+    it('should update matching entities with provided data', async () => {
+      const where = { _kind: 'test-kind' };
+      const updateData = { _name: 'Updated Name' };
+
+      const result = await repository.updateAll(updateData, where);
+
+      expect(superUpdateAllStub.calledOnce).to.be.true();
+      const [calledData, calledWhere] = superUpdateAllStub.firstCall.args;
+      expect(calledData).to.containDeep({
+        _name: 'Updated Name',
+        _lastUpdatedDateTime: now,
+      });
+      expect(calledWhere).to.deepEqual(where);
+      expect(result.count).to.equal(2);
+    });
+
+    it('should throw error for invalid kind format', async () => {
+      const where = { _kind: 'test-kind' };
+      const updateData = { _kind: 'Invalid Kind!' };
+
+      try {
+        await repository.updateAll(updateData, where);
+        throw new Error('Expected error was not thrown');
+      } catch (error) {
+        expect(error).to.be.instanceOf(HttpErrorResponse);
+        expect(error.message).to.match(
+          /Entity kind cannot contain special or uppercase characters/,
+        );
+      }
+
+      expect(superUpdateAllStub.called).to.be.false();
+    });
+
+    it('should throw error when kind is not in allowed values', async () => {
+      const where = { _kind: 'test-kind' };
+      const updateData = { _kind: 'invalid kind' };
+
+      sinon
+        .stub(repository['kindLimitConfigReader'], 'isKindAcceptableForEntity')
+        .returns(false);
+      sinon
+        .stub(repository['kindLimitConfigReader'], 'allowedKindsForEntities')
+        .get(() => ['allowed-kind']);
+
+      try {
+        await repository.updateAll(updateData, where);
+        throw new Error('Expected error was not thrown');
+      } catch (error) {
+        expect(error).to.be.instanceOf(HttpErrorResponse);
+        expect(error.message).to.match(
+          /Entity kind cannot contain special or uppercase characters. Use 'invalid-kind' instead/,
+        );
+      }
+
+      expect(superUpdateAllStub.called).to.be.false();
+    });
+
+    it('should pass options to super.updateAll', async () => {
+      const where = { _kind: 'test-kind' };
+      const updateData = { _name: 'Updated Name' };
+      const options = { transaction: true };
+
+      await repository.updateAll(updateData, where, options);
+
+      expect(superUpdateAllStub.calledOnce).to.be.true();
+      const [, , calledOptions] = superUpdateAllStub.firstCall.args;
+      expect(calledOptions).to.deepEqual(options);
+    });
+  });
+
+  describe('deleteAll', () => {
+    let superDeleteAllStub: sinon.SinonStub;
+    let relationRepoStub: sinon.SinonStubbedInstance<RelationRepository>;
+    let reactionsRepoStub: sinon.SinonStubbedInstance<ReactionsRepository>;
+    let tagEntityRelationRepoStub: sinon.SinonStubbedInstance<TagEntityRelationRepository>;
+    let tagRepoStub: sinon.SinonStubbedInstance<TagRepository>;
+    let listEntityRelationRepoStub: sinon.SinonStubbedInstance<GenericListEntityRelationRepository>;
+
+    beforeEach(() => {
+      // Create stubs for all related repositories
+      relationRepoStub = sinon.createStubInstance(RelationRepository);
+      reactionsRepoStub = sinon.createStubInstance(ReactionsRepository);
+      tagEntityRelationRepoStub = sinon.createStubInstance(
+        TagEntityRelationRepository,
+      );
+      tagRepoStub = sinon.createStubInstance(TagRepository);
+      listEntityRelationRepoStub = sinon.createStubInstance(
+        GenericListEntityRelationRepository,
+      );
+
+      // Stub the repository getters
+      (repository as any).relationRepositoryGetter = () =>
+        Promise.resolve(relationRepoStub);
+      (repository as any).reactionsRepositoryGetter = () =>
+        Promise.resolve(reactionsRepoStub);
+      (repository as any).tagEntityRelationRepositoryGetter = () =>
+        Promise.resolve(tagEntityRelationRepoStub);
+      (repository as any).tagRepositoryGetter = () =>
+        Promise.resolve(tagRepoStub);
+      (repository as any).listEntityRelationRepositoryGetter = () =>
+        Promise.resolve(listEntityRelationRepoStub);
+
+      // Stub super.deleteAll
+      superDeleteAllStub = sinon
+        .stub(
+          Object.getPrototypeOf(Object.getPrototypeOf(repository)),
+          'deleteAll',
+        )
+        .resolves({ count: 2 });
+    });
+
+    afterEach(() => {
+      sinon.restore();
+    });
+
+    it('should delete matching entities and their relations', async () => {
+      const where = { _kind: 'test-kind' };
+
+      const result = await repository.deleteAll(where);
+
+      // Verify relations are deleted
+      expect(listEntityRelationRepoStub.deleteAll.calledOnce).to.be.true();
+
+      // Verify entities are deleted
+      expect(superDeleteAllStub.calledOnce).to.be.true();
+      expect(superDeleteAllStub.firstCall.args[0]).to.deepEqual(where);
+      expect(result.count).to.equal(2);
+    });
+
+    it('should pass options to super.deleteAll', async () => {
+      const where = { _kind: 'test-kind' };
+      const options = { transaction: true };
+
+      await repository.deleteAll(where, options);
+
+      expect(superDeleteAllStub.calledOnce).to.be.true();
+      expect(superDeleteAllStub.firstCall.args[1]).to.deepEqual(options);
+    });
+
+    it('should handle errors from entity deletion', async () => {
+      const where = { _kind: 'test-kind' };
+      const error = new Error('Failed to delete entities');
+      superDeleteAllStub.rejects(error);
+
+      try {
+        await repository.deleteAll(where);
+        throw new Error('Expected error was not thrown');
+      } catch (e) {
+        expect(e).to.equal(error);
+      }
+
+      // Verify relations were still deleted
+      expect(listEntityRelationRepoStub.deleteAll.calledOnce).to.be.true();
+    });
+
+    it('should delete all entities when no where condition is provided', async () => {
+      const result = await repository.deleteAll();
+
+      // Verify relations are deleted
+      expect(listEntityRelationRepoStub.deleteAll.calledOnce).to.be.true();
+
+      // Verify all entities are deleted
+      expect(superDeleteAllStub.calledOnce).to.be.true();
+      expect(superDeleteAllStub.firstCall.args[0]).to.be.undefined();
+      expect(result.count).to.equal(2);
+    });
+  });
 });

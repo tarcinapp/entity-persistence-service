@@ -230,6 +230,8 @@ export class GenericEntityRepository extends DefaultCrudRepository<
 
     this.checkDataKindFormat(data);
 
+    this.checkDataKindValues(data);
+
     this.generateSlug(data);
 
     this.setCountFields(data);

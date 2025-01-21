@@ -280,6 +280,8 @@ export class GenericListRepository extends DefaultCrudRepository<
 
     this.checkDataKindFormat(data);
 
+    this.checkDataKindValues(data);
+
     this.generateSlug(data);
 
     this.setCountFields(data);
