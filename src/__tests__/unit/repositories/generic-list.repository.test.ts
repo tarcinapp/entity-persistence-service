@@ -724,5 +724,421 @@ describe('GenericListRepository', () => {
     });
   });
 
-  // Additional test suites (replaceById, updateById, deleteById) following the same pattern
+  describe('updateById', () => {
+    let superUpdateByIdStub: sinon.SinonStub;
+    let superFindByIdStub: sinon.SinonStub;
+    const now = '2024-01-01T00:00:00.000Z';
+    const existingId = 'test-id';
+    const existingList = {
+      _id: existingId,
+      _name: 'Original Name',
+      _kind: 'test-kind',
+      _version: 1,
+      _createdDateTime: '2023-01-01T00:00:00.000Z',
+      _lastUpdatedDateTime: '2023-01-01T00:00:00.000Z',
+      _ownerUsers: ['user1'],
+      _ownerGroups: ['group1'],
+      _viewerUsers: ['user2'],
+      _viewerGroups: ['group2'],
+    };
+
+    beforeEach(() => {
+      // Stub Date.now
+      sinon.useFakeTimers(new Date(now));
+
+      // Stub super.updateById to merge data with existing list
+      superUpdateByIdStub = sinon
+        .stub(
+          Object.getPrototypeOf(Object.getPrototypeOf(repository)),
+          'updateById',
+        )
+        .callsFake(async (...args) => {
+          const data = args[1] as Record<string, unknown>;
+          const merged = {
+            ...existingList,
+            ...data,
+            _lastUpdatedDateTime: now,
+            _version: (existingList._version ?? 1) + 1,
+            _createdDateTime: existingList._createdDateTime,
+          } as Record<string, unknown>;
+
+          // Calculate counts
+          if (Array.isArray(merged._ownerUsers)) {
+            merged._ownerUsersCount = merged._ownerUsers.length;
+          }
+
+          if (Array.isArray(merged._ownerGroups)) {
+            merged._ownerGroupsCount = merged._ownerGroups.length;
+          }
+
+          if (Array.isArray(merged._viewerUsers)) {
+            merged._viewerUsersCount = merged._viewerUsers.length;
+          }
+
+          if (Array.isArray(merged._viewerGroups)) {
+            merged._viewerGroupsCount = merged._viewerGroups.length;
+          }
+
+          return merged;
+        });
+
+      // Stub super.findById for fetching existing list
+      superFindByIdStub = sinon
+        .stub(
+          Object.getPrototypeOf(Object.getPrototypeOf(repository)),
+          'findById',
+        )
+        .resolves(existingList);
+    });
+
+    afterEach(() => {
+      sinon.restore();
+    });
+
+    describe('validation and enrichment', () => {
+      let kindLimitStub: sinon.SinonStub;
+      let uniquenessStub: sinon.SinonStub;
+
+      beforeEach(() => {
+        // Common stubs for validation tests
+        kindLimitStub = sinon
+          .stub(repository['kindLimitConfigReader'], 'isKindAcceptableForList')
+          .returns(true);
+        uniquenessStub = sinon
+          .stub(
+            repository['uniquenessConfigReader'],
+            'isUniquenessConfiguredForLists',
+          )
+          .returns(false);
+      });
+
+      it('should throw error when entity does not exist', async () => {
+        superFindByIdStub.resolves(null);
+
+        try {
+          await repository.updateById('non-existent-id', { _name: 'test' });
+          throw new Error('Expected error was not thrown');
+        } catch (error) {
+          expect(error).to.be.instanceOf(HttpErrorResponse);
+          expect(error.message).to.match(
+            /List with id 'non-existent-id' could not be found/,
+          );
+        }
+
+        expect(superUpdateByIdStub.called).to.be.false();
+      });
+
+      it('should merge update data with existing data', async () => {
+        const updateData = {
+          _name: 'Updated Name',
+          _ownerUsers: ['user3'],
+        };
+
+        const result = await repository.updateById(existingId, updateData);
+
+        expect(result).to.containDeep({
+          _name: 'Updated Name',
+          _kind: 'test-kind', // Preserved from existing
+          _ownerUsers: ['user3'],
+          _ownerGroups: ['group1'], // Preserved from existing
+          _viewerUsers: ['user2'], // Preserved from existing
+          _viewerGroups: ['group2'], // Preserved from existing
+          _version: 2,
+          _ownerUsersCount: 1,
+        });
+      });
+
+      it('should enrich entity with managed fields', async () => {
+        const updateData = {
+          _name: 'Updated Entity',
+          _ownerUsers: ['user1', 'user2'],
+          _ownerGroups: ['group1', 'group2'],
+          _viewerUsers: ['user3'],
+          _viewerGroups: ['group3', 'group4'],
+        };
+
+        const result = await repository.updateById(existingId, updateData);
+
+        expect(result).to.containDeep({
+          _name: 'Updated Entity',
+          _slug: 'updated-entity',
+          _version: 2,
+          _lastUpdatedDateTime: now,
+          _ownerUsers: ['user1', 'user2'],
+          _ownerGroups: ['group1', 'group2'],
+          _viewerUsers: ['user3'],
+          _viewerGroups: ['group3', 'group4'],
+          _ownerUsersCount: 2,
+          _ownerGroupsCount: 2,
+          _viewerUsersCount: 1,
+          _viewerGroupsCount: 2,
+        });
+      });
+
+      it('should throw error for invalid kind format', async () => {
+        const updateData = { _kind: 'Test Kind!' };
+
+        try {
+          await repository.updateById(existingId, updateData);
+          throw new Error('Expected error was not thrown');
+        } catch (error) {
+          expect(error).to.be.instanceOf(HttpErrorResponse);
+          expect(error.message).to.match(
+            /List kind cannot contain special or uppercase characters/,
+          );
+        }
+
+        expect(superUpdateByIdStub.called).to.be.false();
+      });
+
+      it('should throw error when kind is not in allowed values', async () => {
+        const updateData = { _kind: 'invalid-kind' };
+
+        kindLimitStub.returns(false);
+        sinon
+          .stub(repository['kindLimitConfigReader'], 'allowedKindsForLists')
+          .get(() => ['allowed-kind']);
+
+        try {
+          await repository.updateById(existingId, updateData);
+          throw new Error('Expected error was not thrown');
+        } catch (error) {
+          expect(error).to.be.instanceOf(HttpErrorResponse);
+          expect(error.message).to.match(
+            /List kind 'invalid-kind' is not valid/,
+          );
+        }
+
+        expect(superUpdateByIdStub.called).to.be.false();
+      });
+
+      it('should throw error when uniqueness is violated', async () => {
+        const updateData = { _name: 'existing-name' };
+        const conflictingList = { _id: 'another-id', _name: 'existing-name' };
+
+        uniquenessStub.returns(true);
+        sinon
+          .stub(repository['uniquenessConfigReader'], 'getFieldsForLists')
+          .returns(['_name']);
+        sinon
+          .stub(
+            Object.getPrototypeOf(Object.getPrototypeOf(repository)),
+            'findOne',
+          )
+          .resolves(conflictingList);
+
+        try {
+          await repository.updateById(existingId, updateData);
+          throw new Error('Expected error was not thrown');
+        } catch (error) {
+          expect(error).to.be.instanceOf(HttpErrorResponse);
+          expect(error.message).to.match(/List already exists/);
+        }
+
+        expect(superUpdateByIdStub.called).to.be.false();
+      });
+
+      it('should calculate idempotency key based on merged data', async () => {
+        const updateData = { _name: 'test', _kind: 'test-kind' };
+        const idempotencyFields = ['_name', '_kind']; // Both fields for idempotency
+
+        sinon
+          .stub(repository['idempotencyConfigReader'], 'getIdempotencyForLists')
+          .returns(idempotencyFields);
+
+        const result = (await repository.updateById(
+          existingId,
+          updateData,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        )) as any;
+
+        expect(typeof result._idempotencyKey).to.equal('string');
+      });
+
+      it('should skip idempotency key calculation when not configured', async () => {
+        const updateData = { _name: 'test' };
+
+        sinon
+          .stub(repository['idempotencyConfigReader'], 'getIdempotencyForLists')
+          .returns([]);
+
+        const result = (await repository.updateById(
+          existingId,
+          updateData,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        )) as any;
+
+        expect(result._idempotencyKey).to.equal(undefined);
+      });
+
+      it('should preserve existing fields when doing partial update', async () => {
+        const existingData = {
+          _id: existingId,
+          _name: 'Original Name',
+          _kind: 'test-kind',
+          _version: 1,
+          _createdDateTime: '2023-01-01T00:00:00.000Z',
+          _lastUpdatedDateTime: '2023-01-01T00:00:00.000Z',
+          _validFromDateTime: null,
+          _validUntilDateTime: null,
+          _ownerUsers: ['user1'],
+          _ownerGroups: ['group1'],
+          _viewerUsers: ['user2'],
+          _viewerGroups: ['group2'],
+          _idempotencyKey: 'test-idempotency-key',
+        };
+        superFindByIdStub.resolves(existingData);
+
+        const updateData = {
+          _name: 'Updated Name',
+        };
+
+        await repository.updateById(existingId, updateData);
+
+        expect(superUpdateByIdStub.calledOnce).to.be.true();
+        const [calledId, calledData] = superUpdateByIdStub.firstCall.args;
+        expect(calledId).to.equal(existingId);
+
+        // version, lastUpdatedDateTime, slug and name must be updated
+        expect(calledData).to.deepEqual({
+          _name: 'Updated Name',
+          _slug: 'updated-name',
+          _version: 2,
+          _lastUpdatedDateTime: now,
+        });
+      });
+
+      it('should preserve existing idempotency key when updating with same values', async () => {
+        const existingIdempotencyKey =
+          'af22eeac96b104f4cb95921a35bed984c7903b57378a771520aa85c4d3baf408';
+        const existingData = {
+          _id: existingId,
+          _name: 'Test List',
+          _kind: 'test-kind',
+          _version: 1,
+          _createdDateTime: '2023-01-01T00:00:00.000Z',
+          _lastUpdatedDateTime: '2023-01-01T00:00:00.000Z',
+          _validFromDateTime: null,
+          _validUntilDateTime: null,
+          _ownerUsers: ['user1'],
+          _ownerGroups: ['group1'],
+          _viewerUsers: ['user2'],
+          _viewerGroups: ['group2'],
+          _idempotencyKey: existingIdempotencyKey,
+          foo: null,
+          bar: undefined,
+        };
+        superFindByIdStub.resolves(existingData);
+
+        // Setup idempotency configuration
+        sinon
+          .stub(repository['idempotencyConfigReader'], 'getIdempotencyForLists')
+          .returns(['_name', '_kind', 'foo', 'bar']);
+
+        // Update with same values
+        const updateData = {
+          _name: 'Test List',
+          _kind: 'test-kind',
+        };
+
+        await repository.updateById(existingId, updateData);
+
+        expect(superUpdateByIdStub.calledOnce).to.be.true();
+        const [calledId, calledData] = superUpdateByIdStub.firstCall.args;
+        expect(calledId).to.equal(existingId);
+        expect(calledData._idempotencyKey).to.equal(existingIdempotencyKey);
+      });
+    });
+  });
+
+  describe('deleteById', () => {
+    let superDeleteByIdStub: sinon.SinonStub;
+    let listEntityRelationRepoStub: sinon.SinonStubbedInstance<GenericListEntityRelationRepository>;
+    let listReactionsRepoStub: sinon.SinonStubbedInstance<ListReactionsRepository>;
+    let listRelationRepoStub: sinon.SinonStubbedInstance<ListRelationRepository>;
+    let tagListRelationRepoStub: sinon.SinonStubbedInstance<TagListRelationRepository>;
+    let tagRepoStub: sinon.SinonStubbedInstance<TagRepository>;
+    let customListEntityRelRepoStub: sinon.SinonStubbedInstance<CustomEntityThroughListRepository>;
+
+    beforeEach(() => {
+      // Create stubs for all related repositories
+      listEntityRelationRepoStub = sinon.createStubInstance(
+        GenericListEntityRelationRepository,
+      );
+      listReactionsRepoStub = sinon.createStubInstance(ListReactionsRepository);
+      listRelationRepoStub = sinon.createStubInstance(ListRelationRepository);
+      tagListRelationRepoStub = sinon.createStubInstance(
+        TagListRelationRepository,
+      );
+      tagRepoStub = sinon.createStubInstance(TagRepository);
+      customListEntityRelRepoStub = sinon.createStubInstance(
+        CustomEntityThroughListRepository,
+      );
+
+      // Stub the repository getters
+      (repository as any).listEntityRelationRepositoryGetter = () =>
+        Promise.resolve(listEntityRelationRepoStub);
+      (repository as any).listReactionsRepositoryGetter = () =>
+        Promise.resolve(listReactionsRepoStub);
+      (repository as any).listRelationRepositoryGetter = () =>
+        Promise.resolve(listRelationRepoStub);
+      (repository as any).tagListRelationRepositoryGetter = () =>
+        Promise.resolve(tagListRelationRepoStub);
+      (repository as any).tagRepositoryGetter = () =>
+        Promise.resolve(tagRepoStub);
+      (repository as any).customEntityThroughListRepositoryGetter = () =>
+        Promise.resolve(customListEntityRelRepoStub);
+
+      // Stub super.deleteById
+      superDeleteByIdStub = sinon
+        .stub(
+          Object.getPrototypeOf(Object.getPrototypeOf(repository)),
+          'deleteById',
+        )
+        .resolves();
+    });
+
+    afterEach(() => {
+      sinon.restore();
+    });
+
+    it('should delete list and its relations', async () => {
+      const listId = 'test-id';
+
+      await repository.deleteById(listId);
+
+      // Verify relations are deleted
+      expect(listEntityRelationRepoStub.deleteAll.calledOnce).to.be.true();
+
+      // Verify list is deleted
+      expect(superDeleteByIdStub.calledOnce).to.be.true();
+      expect(superDeleteByIdStub.firstCall.args[0]).to.equal(listId);
+    });
+
+    it('should pass options to super.deleteById', async () => {
+      const listId = 'test-id';
+      const options = { transaction: true };
+
+      await repository.deleteById(listId, options);
+
+      expect(superDeleteByIdStub.calledOnce).to.be.true();
+      expect(superDeleteByIdStub.firstCall.args[1]).to.deepEqual(options);
+    });
+
+    it('should handle errors from list deletion', async () => {
+      const listId = 'test-id';
+      const error = new Error('Failed to delete list');
+      superDeleteByIdStub.rejects(error);
+
+      try {
+        await repository.deleteById(listId);
+        throw new Error('Expected error was not thrown');
+      } catch (e) {
+        expect(e).to.equal(error);
+      }
+
+      // Verify relations were still deleted
+      expect(listEntityRelationRepoStub.deleteAll.calledOnce).to.be.true();
+    });
+  });
 });
