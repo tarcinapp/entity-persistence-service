@@ -316,7 +316,12 @@ export async function setupApplication(
       .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {}),
   };
 
-  // Set test env vars
+  // Clear all environment variables first
+  Object.keys(process.env).forEach((key) => {
+    delete process.env[key];
+  });
+
+  // Set new environment variables
   if (envVars) {
     Object.entries(envVars).forEach(([key, value]) => {
       if (value !== undefined) {
@@ -324,6 +329,9 @@ export async function setupApplication(
       }
     });
   }
+
+  // Reset all configuration readers after setting new environment variables
+  KindLimitsConfigurationReader.resetConfiguration();
 
   const mongod = await MongoMemoryServer.create();
 

@@ -43,6 +43,17 @@ export class KindLimitsConfigurationReader {
     this.initKindLimitConfigurations();
   }
 
+  // Add method to reset configuration for testing
+  public static resetConfiguration() {
+    this.IS_KIND_LIMITS_CONFIGURED_FOR_ENTITIES = false;
+    this.IS_KIND_LIMITS_CONFIGURED_FOR_LISTS = false;
+    this.IS_KIND_LIMITS_CONFIGURED_FOR_LIST_ENTITY_KINDS = false;
+    this.ALLOWED_KINDS_FOR_ENTITIES = [];
+    this.ALLOWED_KINDS_FOR_LISTS = [];
+    this.ALLOWED_KINDS_FOR_ENTITY_LIST_RELATIONS = [];
+    this.initKindLimitConfigurations();
+  }
+
   public get allowedKindsForEntities() {
     return KindLimitsConfigurationReader.ALLOWED_KINDS_FOR_ENTITIES;
   }
