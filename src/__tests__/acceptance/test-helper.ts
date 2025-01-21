@@ -22,11 +22,141 @@ import {
 } from '../../extensions';
 
 export interface TestEnvironmentVariables {
+  // Database Configuration
+  mongodb_url?: string;
+  mongodb_database?: string;
+  mongodb_host?: string;
+  mongodb_port?: string;
+  mongodb_user?: string;
+  mongodb_password?: string;
+
+  // Collection Names
+  collection_entity?: string;
+  collection_list?: string;
+  collection_list_entity_rel?: string;
+  collection_entity_reaction?: string;
+  collection_list_reaction?: string;
+  collection_tag?: string;
+  collection_list_tag_rel?: string;
+  collection_entity_tag_rel?: string;
+
+  // Allowed Kinds Configuration
+  entity_kinds?: string;
   list_kinds?: string;
+  list_entity_rel_kinds?: string;
+
+  // Default Values Configuration
+  default_entity_kind?: string;
   default_list_kind?: string;
+  default_relation_kind?: string;
+
+  // Uniqueness Configuration
+  uniqueness_entity_fields?: string;
+  uniqueness_list_fields?: string;
+  uniqueness_list_entity_rel_fields?: string;
+  uniqueness_entity_set?: string;
+  uniqueness_list_set?: string;
+  uniqueness_list_entity_rel_set?: string;
+
+  // Auto Approve Configuration
+  autoapprove_entity?: string;
   autoapprove_list?: string;
+  autoapprove_list_entity_relations?: string;
+
+  // Visibility Configuration
+  visibility_entity?: string;
   visibility_list?: string;
+  visibility_entity_reaction?: string;
+  visibility_list_reaction?: string;
+
+  // Response Limits Configuration
+  response_limit_entity?: string;
+  response_limit_list_entity_rel?: string;
+  response_limit_entity_reaction?: string;
+  response_limit_list_reaction?: string;
+
+  // Record Limits Configuration
+  record_limit_entity_count?: string;
+  record_limit_entity_set?: string;
+  record_limit_list_count?: string;
+  record_limit_list_set?: string;
+  record_limit_list_entity_rel_count?: string;
+  record_limit_list_entity_rel_set?: string;
+  record_limit_entity_reaction_count?: string;
+  record_limit_entity_reaction_set?: string;
+  record_limit_list_reaction_count?: string;
+  record_limit_list_reaction_set?: string;
+  record_limit_tag_count?: string;
+  record_limit_tag_set?: string;
+
+  // Idempotency Configuration
+  idempotency_entity?: string;
+  idempotency_entity_set?: string;
   idempotency_list?: string;
+  idempotency_list_set?: string;
+  idempotency_list_entity_rel?: string;
+  idempotency_list_entity_rel_set?: string;
+  idempotency_entity_reaction?: string;
+  idempotency_entity_reaction_set?: string;
+  idempotency_list_reaction?: string;
+  idempotency_list_reaction_set?: string;
+  idempotency_tag?: string;
+  idempotency_tag_set?: string;
+
+  // Dynamic kind-specific configurations
+  [key: `uniqueness_entity_fields_for_${string}`]: string;
+  [key: `uniqueness_list_fields_for_${string}`]: string;
+  [key: `uniqueness_list_entity_rel_fields_for_${string}`]: string;
+  [key: `uniqueness_entity_set_for_${string}`]: string;
+  [key: `uniqueness_list_set_for_${string}`]: string;
+  [key: `uniqueness_list_entity_rel_set_for_${string}`]: string;
+
+  [key: `visibility_entity_for_${string}`]: string;
+  [key: `visibility_list_for_${string}`]: string;
+  [key: `visibility_entity_reaction_for_${string}`]: string;
+  [key: `visibility_list_reaction_for_${string}`]: string;
+  [key: `visibility_tag_for_${string}`]: string;
+
+  [key: `autoapprove_entity_for_${string}`]: string;
+  [key: `autoapprove_list_for_${string}`]: string;
+  [key: `autoapprove_list_entity_rel_for_${string}`]: string;
+  [key: `autoapprove_entity_reaction_for_${string}`]: string;
+  [key: `autoapprove_list_reaction_for_${string}`]: string;
+  [key: `autoapprove_tag_for_${string}`]: string;
+
+  [key: `response_limit_entity_for_${string}`]: string;
+  [key: `response_limit_list_for_${string}`]: string;
+  [key: `response_limit_list_entity_rel_for_${string}`]: string;
+  [key: `response_limit_entity_reaction_for_${string}`]: string;
+  [key: `response_limit_list_reaction_for_${string}`]: string;
+  [key: `response_limit_tag_for_${string}`]: string;
+
+  [key: `record_limit_entity_count_for_${string}`]: string;
+  [key: `record_limit_entity_set_for_${string}`]: string;
+  [key: `record_limit_list_count_for_${string}`]: string;
+  [key: `record_limit_list_set_for_${string}`]: string;
+  [key: `record_limit_list_entity_rel_count_for_${string}`]: string;
+  [key: `record_limit_list_entity_rel_set_for_${string}`]: string;
+  [key: `record_limit_entity_reaction_count_for_${string}`]: string;
+  [key: `record_limit_entity_reaction_set_for_${string}`]: string;
+  [key: `record_limit_list_reaction_count_for_${string}`]: string;
+  [key: `record_limit_list_reaction_set_for_${string}`]: string;
+  [key: `record_limit_tag_count_for_${string}`]: string;
+  [key: `record_limit_tag_set_for_${string}`]: string;
+
+  [key: `idempotency_entity_for_${string}`]: string;
+  [key: `idempotency_entity_set_for_${string}`]: string;
+  [key: `idempotency_list_for_${string}`]: string;
+  [key: `idempotency_list_set_for_${string}`]: string;
+  [key: `idempotency_list_entity_rel_for_${string}`]: string;
+  [key: `idempotency_list_entity_rel_set_for_${string}`]: string;
+  [key: `idempotency_entity_reaction_for_${string}`]: string;
+  [key: `idempotency_entity_reaction_set_for_${string}`]: string;
+  [key: `idempotency_list_reaction_for_${string}`]: string;
+  [key: `idempotency_list_reaction_set_for_${string}`]: string;
+  [key: `idempotency_tag_for_${string}`]: string;
+  [key: `idempotency_tag_set_for_${string}`]: string;
+
   [key: string]: string | undefined;
 }
 
@@ -35,13 +165,149 @@ export async function setupApplication(
 ): Promise<AppWithClient> {
   // Store original env vars
   const originalEnv = {
-    list_kinds: process.env.list_kinds,
-    default_list_kind: process.env.default_list_kind,
-    autoapprove_list: process.env.autoapprove_list,
-    visibility_list: process.env.visibility_list,
-    idempotency_list: process.env.idempotency_list,
+    // Database Configuration
     mongodb_url: process.env.mongodb_url,
     mongodb_database: process.env.mongodb_database,
+    mongodb_host: process.env.mongodb_host,
+    mongodb_port: process.env.mongodb_port,
+    mongodb_user: process.env.mongodb_user,
+    mongodb_password: process.env.mongodb_password,
+
+    // Collection Names
+    collection_entity: process.env.collection_entity,
+    collection_list: process.env.collection_list,
+    collection_list_entity_rel: process.env.collection_list_entity_rel,
+    collection_entity_reaction: process.env.collection_entity_reaction,
+    collection_list_reaction: process.env.collection_list_reaction,
+    collection_tag: process.env.collection_tag,
+    collection_list_tag_rel: process.env.collection_list_tag_rel,
+    collection_entity_tag_rel: process.env.collection_entity_tag_rel,
+
+    // Allowed Kinds Configuration
+    entity_kinds: process.env.entity_kinds,
+    list_kinds: process.env.list_kinds,
+    list_entity_rel_kinds: process.env.list_entity_rel_kinds,
+
+    // Default Values Configuration
+    default_entity_kind: process.env.default_entity_kind,
+    default_list_kind: process.env.default_list_kind,
+    default_relation_kind: process.env.default_relation_kind,
+
+    // Uniqueness Configuration
+    uniqueness_entity_fields: process.env.uniqueness_entity_fields,
+    uniqueness_list_fields: process.env.uniqueness_list_fields,
+    uniqueness_list_entity_rel_fields:
+      process.env.uniqueness_list_entity_rel_fields,
+    uniqueness_entity_set: process.env.uniqueness_entity_set,
+    uniqueness_list_set: process.env.uniqueness_list_set,
+    uniqueness_list_entity_rel_set: process.env.uniqueness_list_entity_rel_set,
+
+    // Auto Approve Configuration
+    autoapprove_entity: process.env.autoapprove_entity,
+    autoapprove_list: process.env.autoapprove_list,
+    autoapprove_list_entity_relations:
+      process.env.autoapprove_list_entity_relations,
+
+    // Visibility Configuration
+    visibility_entity: process.env.visibility_entity,
+    visibility_list: process.env.visibility_list,
+    visibility_entity_reaction: process.env.visibility_entity_reaction,
+    visibility_list_reaction: process.env.visibility_list_reaction,
+
+    // Response Limits Configuration
+    response_limit_entity: process.env.response_limit_entity,
+    response_limit_list_entity_rel: process.env.response_limit_list_entity_rel,
+    response_limit_entity_reaction: process.env.response_limit_entity_reaction,
+    response_limit_list_reaction: process.env.response_limit_list_reaction,
+
+    // Record Limits Configuration
+    record_limit_entity_count: process.env.record_limit_entity_count,
+    record_limit_entity_set: process.env.record_limit_entity_set,
+    record_limit_list_count: process.env.record_limit_list_count,
+    record_limit_list_set: process.env.record_limit_list_set,
+    record_limit_list_entity_rel_count:
+      process.env.record_limit_list_entity_rel_count,
+    record_limit_list_entity_rel_set:
+      process.env.record_limit_list_entity_rel_set,
+    record_limit_entity_reaction_count:
+      process.env.record_limit_entity_reaction_count,
+    record_limit_entity_reaction_set:
+      process.env.record_limit_entity_reaction_set,
+    record_limit_list_reaction_count:
+      process.env.record_limit_list_reaction_count,
+    record_limit_list_reaction_set: process.env.record_limit_list_reaction_set,
+    record_limit_tag_count: process.env.record_limit_tag_count,
+    record_limit_tag_set: process.env.record_limit_tag_set,
+
+    // Idempotency Configuration
+    idempotency_entity: process.env.idempotency_entity,
+    idempotency_entity_set: process.env.idempotency_entity_set,
+    idempotency_list: process.env.idempotency_list,
+    idempotency_list_set: process.env.idempotency_list_set,
+    idempotency_list_entity_rel: process.env.idempotency_list_entity_rel,
+    idempotency_list_entity_rel_set:
+      process.env.idempotency_list_entity_rel_set,
+    idempotency_entity_reaction: process.env.idempotency_entity_reaction,
+    idempotency_entity_reaction_set:
+      process.env.idempotency_entity_reaction_set,
+    idempotency_list_reaction: process.env.idempotency_list_reaction,
+    idempotency_list_reaction_set: process.env.idempotency_list_reaction_set,
+    idempotency_tag: process.env.idempotency_tag,
+    idempotency_tag_set: process.env.idempotency_tag_set,
+
+    // Store any existing dynamic kind-specific configurations
+    ...Object.entries(process.env)
+      .filter(
+        ([key]) =>
+          key.startsWith('uniqueness_entity_fields_for_') ||
+          key.startsWith('uniqueness_list_fields_for_') ||
+          key.startsWith('uniqueness_list_entity_rel_fields_for_') ||
+          key.startsWith('uniqueness_entity_set_for_') ||
+          key.startsWith('uniqueness_list_set_for_') ||
+          key.startsWith('uniqueness_list_entity_rel_set_for_') ||
+          key.startsWith('visibility_entity_for_') ||
+          key.startsWith('visibility_list_for_') ||
+          key.startsWith('visibility_entity_reaction_for_') ||
+          key.startsWith('visibility_list_reaction_for_') ||
+          key.startsWith('visibility_tag_for_') ||
+          key.startsWith('autoapprove_entity_for_') ||
+          key.startsWith('autoapprove_list_for_') ||
+          key.startsWith('autoapprove_list_entity_rel_for_') ||
+          key.startsWith('autoapprove_entity_reaction_for_') ||
+          key.startsWith('autoapprove_list_reaction_for_') ||
+          key.startsWith('autoapprove_tag_for_') ||
+          key.startsWith('response_limit_entity_for_') ||
+          key.startsWith('response_limit_list_for_') ||
+          key.startsWith('response_limit_list_entity_rel_for_') ||
+          key.startsWith('response_limit_entity_reaction_for_') ||
+          key.startsWith('response_limit_list_reaction_for_') ||
+          key.startsWith('response_limit_tag_for_') ||
+          key.startsWith('record_limit_entity_count_for_') ||
+          key.startsWith('record_limit_entity_set_for_') ||
+          key.startsWith('record_limit_list_count_for_') ||
+          key.startsWith('record_limit_list_set_for_') ||
+          key.startsWith('record_limit_list_entity_rel_count_for_') ||
+          key.startsWith('record_limit_list_entity_rel_set_for_') ||
+          key.startsWith('record_limit_entity_reaction_count_for_') ||
+          key.startsWith('record_limit_entity_reaction_set_for_') ||
+          key.startsWith('record_limit_list_reaction_count_for_') ||
+          key.startsWith('record_limit_list_reaction_set_for_') ||
+          key.startsWith('record_limit_tag_count_for_') ||
+          key.startsWith('record_limit_tag_set_for_') ||
+          key.startsWith('idempotency_entity_for_') ||
+          key.startsWith('idempotency_entity_set_for_') ||
+          key.startsWith('idempotency_list_for_') ||
+          key.startsWith('idempotency_list_set_for_') ||
+          key.startsWith('idempotency_list_entity_rel_for_') ||
+          key.startsWith('idempotency_list_entity_rel_set_for_') ||
+          key.startsWith('idempotency_entity_reaction_for_') ||
+          key.startsWith('idempotency_entity_reaction_set_for_') ||
+          key.startsWith('idempotency_list_reaction_for_') ||
+          key.startsWith('idempotency_list_reaction_set_for_') ||
+          key.startsWith('idempotency_tag_for_') ||
+          key.startsWith('idempotency_tag_set_for_'),
+      )
+      .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {}),
   };
 
   // Set test env vars

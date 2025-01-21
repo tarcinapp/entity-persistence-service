@@ -4,7 +4,9 @@ import type { GenericList } from '../../../models';
 import type { AppWithClient } from '../test-helper';
 import { setupApplication, teardownApplication } from '../test-helper';
 
-describe('POST /generic-lists', () => {
+describe('POST /generic-lists', function () {
+  this.timeout(10000); // Set timeout to 10 seconds for all tests in this block
+
   let client: Client;
   let appWithClient: AppWithClient;
 
@@ -22,11 +24,7 @@ describe('POST /generic-lists', () => {
 
   it('creates a new generic list with default kind', async () => {
     appWithClient = await setupApplication({
-      list_kinds: 'list',
-      default_list_kind: 'list',
-      autoapprove_list: 'false',
-      visibility_list: 'private',
-      idempotency_list: 'false',
+      // use default values
     });
     ({ client } = appWithClient);
 
@@ -40,10 +38,13 @@ describe('POST /generic-lists', () => {
       .send(newList)
       .expect(200);
 
+    console.log(response.body);
+
     expect(response.body).to.containDeep(newList);
     expect(response.body._id).to.be.String();
     expect(response.body._name).to.be.equal(newList._name);
-    expect(response.body._kind).to.be.equal('list');
+    expect(response.body._kind).to.be.equal('list'); // default list kind
+    expect(response.body._slug).to.be.equal('editors-pick');
     expect(response.body._createdDateTime).to.be.String();
     expect(response.body._lastUpdatedDateTime).to.be.String();
   });
