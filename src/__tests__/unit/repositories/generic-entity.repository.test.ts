@@ -989,6 +989,50 @@ describe('GenericEntityRepository', () => {
           _lastUpdatedDateTime: now,
         });
       });
+
+      it('should preserve existing idempotency key when updating with same values', async () => {
+        const existingIdempotencyKey =
+          '63ea389183badf7004ee26e06f5ecf13995d26b088d9fcb8a7fe17502eb218a4';
+        const existingData = {
+          _id: existingId,
+          _name: 'Test Entity',
+          _kind: 'test-kind',
+          _version: 1,
+          _createdDateTime: '2023-01-01T00:00:00.000Z',
+          _lastUpdatedDateTime: '2023-01-01T00:00:00.000Z',
+          _validFromDateTime: null,
+          _validUntilDateTime: null,
+          _ownerUsers: ['user1'],
+          _ownerGroups: ['group1'],
+          _viewerUsers: ['user2'],
+          _viewerGroups: ['group2'],
+          _idempotencyKey: existingIdempotencyKey,
+          foo: null,
+          bar: undefined,
+        };
+        superFindByIdStub.resolves(existingData);
+
+        // Setup idempotency configuration
+        sinon
+          .stub(
+            repository['idempotencyConfigReader'],
+            'getIdempotencyForEntities',
+          )
+          .returns(['_name', '_kind', 'foo', 'bar']);
+
+        // Update with same values
+        const updateData = {
+          _name: 'Test Entity',
+          _kind: 'test-kind',
+        };
+
+        await repository.updateById(existingId, updateData);
+
+        expect(superUpdateByIdStub.calledOnce).to.be.true();
+        const [calledId, calledData] = superUpdateByIdStub.firstCall.args;
+        expect(calledId).to.equal(existingId);
+        expect(calledData._idempotencyKey).to.equal(existingIdempotencyKey);
+      });
     });
   });
 
