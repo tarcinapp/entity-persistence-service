@@ -198,7 +198,9 @@ export class GenericEntityRepository extends DefaultCrudRepository<
         const idempotencyKey = this.calculateIdempotencyKey(mergedData);
 
         // set idempotencyKey
-        collection.data._idempotencyKey = idempotencyKey;
+        if (idempotencyKey) {
+          collection.data._idempotencyKey = idempotencyKey;
+        }
 
         return collection;
       })

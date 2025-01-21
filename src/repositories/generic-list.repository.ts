@@ -249,8 +249,9 @@ export class GenericListRepository extends DefaultCrudRepository<
         // calculate idempotency key
         const idempotencyKey = this.calculateIdempotencyKey(mergedData);
 
-        // set idempotency key to the data
-        collection.data._idempotencyKey = idempotencyKey;
+        if (idempotencyKey) {
+          collection.data._idempotencyKey = idempotencyKey;
+        }
 
         return collection;
       })

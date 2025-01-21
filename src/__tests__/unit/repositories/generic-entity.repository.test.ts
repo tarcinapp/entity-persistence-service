@@ -967,6 +967,7 @@ describe('GenericEntityRepository', () => {
           _ownerGroups: ['group1'],
           _viewerUsers: ['user2'],
           _viewerGroups: ['group2'],
+          _idempotencyKey: 'test-idempotency-key',
         };
         superFindByIdStub.resolves(existingData);
 
@@ -981,7 +982,7 @@ describe('GenericEntityRepository', () => {
         expect(calledId).to.equal(existingId);
 
         // version, lastUpdatedDateTime, slug and name must be updated
-        expect(calledData).to.containDeep({
+        expect(calledData).to.deepEqual({
           _name: 'Updated Name',
           _slug: 'updated-name',
           _version: 2,
