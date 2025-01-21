@@ -473,6 +473,45 @@ describe('GenericEntityRepository', () => {
           expect(error.message).to.match(/Entity already exists/);
         }
       });
+
+      it('should throw error when _name is missing', async () => {
+        const inputData = { _kind: 'test-kind' };
+
+        try {
+          await repository.create(inputData);
+          throw new Error('Expected error was not thrown');
+        } catch (error) {
+          expect(error).to.be.instanceOf(HttpErrorResponse);
+          expect(error.message).to.match(/Entity _name is required/);
+        }
+
+        expect(superCreateStub.called).to.be.false();
+      });
+
+      it('should use default entity kind when _kind is missing', async () => {
+        const inputData = { _name: 'test' };
+        const defaultKind = 'default-kind';
+
+        // Setup stubs for default kind
+        sinon
+          .stub(repository['kindLimitConfigReader'], 'defaultEntityKind')
+          .get(() => defaultKind);
+        kindLimitStub.returns(true);
+        sinon
+          .stub(
+            repository['visibilityConfigReader'],
+            'getVisibilityForEntities',
+          )
+          .returns('public');
+        sinon
+          .stub(repository['validfromConfigReader'], 'getValidFromForEntities')
+          .returns(true);
+
+        const result = await repository.create(inputData);
+
+        expect(result._kind).to.equal(defaultKind);
+        expect(superCreateStub.calledOnce).to.be.true();
+      });
     });
   });
 
