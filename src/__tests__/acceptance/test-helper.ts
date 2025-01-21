@@ -163,8 +163,14 @@ export interface TestEnvironmentVariables {
 export async function setupApplication(
   envVars?: TestEnvironmentVariables,
 ): Promise<AppWithClient> {
+  // Set test environment
+  process.env.NODE_ENV = 'test';
+
+  // Set higher timeout for tests
+  process.env.MOCHA_TIMEOUT = '10000';
+
   // Store original env vars
-  const originalEnv = {
+  const originalEnv: TestEnvironmentVariables = {
     // Database Configuration
     mongodb_url: process.env.mongodb_url,
     mongodb_database: process.env.mongodb_database,

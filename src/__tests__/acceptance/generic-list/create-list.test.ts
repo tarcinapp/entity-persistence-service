@@ -4,9 +4,7 @@ import type { GenericList } from '../../../models';
 import type { AppWithClient } from '../test-helper';
 import { setupApplication, teardownApplication } from '../test-helper';
 
-describe('POST /generic-lists', function () {
-  this.timeout(10000); // Set timeout to 10 seconds for all tests in this block
-
+describe('POST /generic-lists', () => {
   let client: Client;
   let appWithClient: AppWithClient;
 
@@ -38,15 +36,23 @@ describe('POST /generic-lists', function () {
       .send(newList)
       .expect(200);
 
-    console.log(response.body);
-
+    // checks name and description
     expect(response.body).to.containDeep(newList);
+
+    // checks managed fields
     expect(response.body._id).to.be.String();
-    expect(response.body._name).to.be.equal(newList._name);
     expect(response.body._kind).to.be.equal('list'); // default list kind
     expect(response.body._slug).to.be.equal('editors-pick');
     expect(response.body._createdDateTime).to.be.String();
     expect(response.body._lastUpdatedDateTime).to.be.String();
+    expect(response.body._visibility).to.be.equal('protected'); // default visibility
+    expect(response.body._validFromDateTime).to.be.equal(null);
+    expect(response.body._validUntilDateTime).to.be.equal(null);
+    expect(response.body._version).to.be.equal(1);
+    expect(response.body._ownerUsers).to.be.Array().lengthOf(0);
+    expect(response.body._ownerGroups).to.be.Array().lengthOf(0);
+    expect(response.body._viewerUsers).to.be.Array().lengthOf(0);
+    expect(response.body._viewerGroups).to.be.Array().lengthOf(0);
   });
 
   it('creates a list with specified kind', async () => {
