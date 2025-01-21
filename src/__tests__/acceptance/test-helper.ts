@@ -46,9 +46,9 @@ export interface TestEnvironmentVariables {
   list_entity_rel_kinds?: string;
 
   // Default Values Configuration
-  default_entity_kind?: string;
-  default_list_kind?: string;
-  default_relation_kind?: string;
+  // default_entity_kind?: string;
+  // default_list_kind?: string;
+  // default_relation_kind?: string;
 
   // Uniqueness Configuration
   uniqueness_entity_fields?: string;

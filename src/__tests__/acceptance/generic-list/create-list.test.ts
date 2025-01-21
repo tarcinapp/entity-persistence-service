@@ -58,17 +58,13 @@ describe('POST /generic-lists', () => {
   it('creates a list with specified kind', async () => {
     appWithClient = await setupApplication({
       list_kinds: 'editors-pick,featured',
-      default_list_kind: 'editors-pick',
-      autoapprove_list: 'true',
-      visibility_list: 'public',
-      idempotency_list: 'false',
     });
     ({ client } = appWithClient);
 
     const newList: Partial<GenericList> = {
       _name: 'Featured List',
-      description: 'A featured list',
       _kind: 'featured',
+      description: 'A featured list',
     };
 
     const response = await client
@@ -82,17 +78,13 @@ describe('POST /generic-lists', () => {
   it('rejects invalid list kind', async () => {
     appWithClient = await setupApplication({
       list_kinds: 'only-featured,trending',
-      default_list_kind: 'only-featured',
-      autoapprove_list: 'true',
-      visibility_list: 'public',
-      idempotency_list: 'false',
     });
     ({ client } = appWithClient);
 
     const newList: Partial<GenericList> = {
       _name: 'Invalid Kind List',
-      description: 'A list with invalid kind',
       _kind: 'editors-pick', // This is now invalid
+      description: 'A list with invalid kind',
     };
 
     await client.post('/generic-lists').send(newList).expect(422);
