@@ -1,4 +1,3 @@
-import '@loopback/repository';
 import type { Where } from '@loopback/repository';
 import type { Set } from '../set';
 
@@ -9,6 +8,5 @@ declare module '@loopback/repository' {
     whereThrough?: Where<any>;
   }
 }
-
-// Export an empty object to make this a module
-export {};
+// Re-export types from @loopback/repository to ensure the augmentation is loaded
+export type { Inclusion } from '@loopback/repository';

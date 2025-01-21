@@ -1,4 +1,4 @@
-import type {} from './extensions/types/inclusion-augmentation.ts';
+import type {} from './extensions/types/inclusion-augmentation';
 import { RestBindings } from '@loopback/rest';
 import { parse } from 'qs';
 import type { ApplicationConfig } from './application';
