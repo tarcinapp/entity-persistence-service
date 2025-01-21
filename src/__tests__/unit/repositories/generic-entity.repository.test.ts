@@ -961,6 +961,8 @@ describe('GenericEntityRepository', () => {
           _version: 1,
           _createdDateTime: '2023-01-01T00:00:00.000Z',
           _lastUpdatedDateTime: '2023-01-01T00:00:00.000Z',
+          _validFromDateTime: null,
+          _validUntilDateTime: null,
           _ownerUsers: ['user1'],
           _ownerGroups: ['group1'],
           _viewerUsers: ['user2'],
@@ -972,22 +974,18 @@ describe('GenericEntityRepository', () => {
           _name: 'Updated Name',
         };
 
-        const result = await repository.updateById(existingId, updateData);
+        await repository.updateById(existingId, updateData);
 
-        expect(result).to.containDeep({
+        expect(superUpdateByIdStub.calledOnce).to.be.true();
+        const [calledId, calledData] = superUpdateByIdStub.firstCall.args;
+        expect(calledId).to.equal(existingId);
+
+        // version, lastUpdatedDateTime, slug and name must be updated
+        expect(calledData).to.containDeep({
           _name: 'Updated Name',
-          _kind: 'test-kind',
+          _slug: 'updated-name',
           _version: 2,
-          _createdDateTime: '2023-01-01T00:00:00.000Z',
           _lastUpdatedDateTime: now,
-          _ownerUsers: ['user1'],
-          _ownerGroups: ['group1'],
-          _viewerUsers: ['user2'],
-          _viewerGroups: ['group2'],
-          _ownerUsersCount: 1,
-          _ownerGroupsCount: 1,
-          _viewerUsersCount: 1,
-          _viewerGroupsCount: 1,
         });
       });
     });
