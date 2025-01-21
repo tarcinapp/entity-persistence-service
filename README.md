@@ -376,13 +376,6 @@ This option only applies when visibility field is not provided. If you want to a
 | **visibility_list**                   | Default value to be filled for `visibility` field while list creation.                                                                  | protected     | public, private |
 | **visibility_list_for_{kind_name}**   | Default value to be filled for `visibility` field while list creation. This configuration will only be applied to that specific kind.   | protected     | public, private |
 
-### Validation
-
-| Configuration                            | Description                            | Default Value |
-| ---------------------------------------- | -------------------------------------- | ------------- |
-| **validation_tag_maxlength**             | Max length limit for tag content.      | 50            |
-| **validation_reactioncontent_maxlength** | Max length limit for reaction content. | 400           |
-
 ### Response Limits
 
 These setting limits the number of record can be returned for each data model. If user asks more items than the limits, it is silently reduced to the limits given the configuration below.
