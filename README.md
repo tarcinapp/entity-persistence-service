@@ -237,12 +237,12 @@ The application comes with a set of prebuilt sets to simplify common data select
 
 | Set Name  | Description                                                                                                                                                                                                                                                                                  |
 | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| publics   | Selects all data with a visibility (visibility) value of public.                                                                                                                                                                                                                                          |
-| actives   | Selects all data where the _validFromDateTime is not null, less than the current date time, and the_validUntilDateTime field is either null or greater than the current date time.                                                                                                            |
-| inactives | Selects all data where the _validUntilDateTime field has a value and is less than the current date time.                                                                                                                                                                                      |
-| pendings  | Selects all data where the _validFromDateTime field is empty.                                                                                                                                                                                                                                 |
-| owners    | Selects all data where the given user ID is in the _ownerUsers or the given group is in the_ownerGroups. User IDs and groups should be provided as comma-separated values in the query variable: set[owners][userIds]=userId1,userId2&set[owners][groupIds]=groupId1,groupId2.                |
-| viewers   | Selects all data where the given user ID is in the _viewerUsers or the given group is in the_viewerGroups. User IDs and groups should be provided as comma-separated values in the query variable: set[viewers][userIds]=userId1,userId2&set[viewers][groupIds]=groupId1,groupId2.            |
+| publics   | Selects all data with a visibility (visibility) value of public.                                                                                                                                                                                                                             |
+| actives   | Selects all data where the _validFromDateTime is not null, less than the current date time, and the_validUntilDateTime field is either null or greater than the current date time.                                                                                                           |
+| inactives | Selects all data where the _validUntilDateTime field has a value and is less than the current date time.                                                                                                                                                                                     |
+| pendings  | Selects all data where the _validFromDateTime field is empty.                                                                                                                                                                                                                                |
+| owners    | Selects all data where the given user ID is in the _ownerUsers or the given group is in the_ownerGroups. User IDs and groups should be provided as comma-separated values in the query variable: set[owners][userIds]=userId1,userId2&set[owners][groupIds]=groupId1,groupId2.               |
+| viewers   | Selects all data where the given user ID is in the _viewerUsers or the given group is in the_viewerGroups. User IDs and groups should be provided as comma-separated values in the query variable: set[viewers][userIds]=userId1,userId2&set[viewers][groupIds]=groupId1,groupId2.           |
 | day       | Selects all data where the creationDateTime field is within the last 24 hours.                                                                                                                                                                                                               |
 | week      | Selects all data where the creationDateTime field is within the last 7 days.                                                                                                                                                                                                                 |
 | month     | Selects all data where the creationDateTime field is within the last 30 days.                                                                                                                                                                                                                |
@@ -261,13 +261,13 @@ The updateAll operation is not available for tags since their content is unique,
 3. All managed fields are prefixed with underscore.
 Here are the list of common field names.
 
-| Field Name              | Description                                                                                                                                                                                                                                                                                                                                                                                   |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Field Name               | Description                                                                                                                                                                                                                                                                                                                                                                                   |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **_kind\***              | A string field represents the kind of the record.  As this application built on top of a schemaless database, objects with different schemas can be considered as different kinds can be stored in same collection. This field is using in order to seggregate objects in same collection. Most of the configuration parameters can be specialized to be applied on specific kind of objects. |
 | **_name\***              | String field represents the name of the record. Mandatory field.                                                                                                                                                                                                                                                                                                                              |
 | **_slug**                | Automatically filled while create or update with the slug format of the value of the name field.                                                                                                                                                                                                                                                                                              |
 | **_visibility**          | Record's visibility level. Can be either `private`, `protected` or `public`.                                                                                                                                                                                                                                                                                                                  |
-| **_version**             | A number field that automatically incremented each update and replace operation. Note: `_version` is not incremented if record is updated with `updateAll` operation.                                                                                                                                                                                                                          |
+| **_version**             | A number field that automatically incremented each update and replace operation. Note: `_version` is not incremented if record is updated with `updateAll` operation.                                                                                                                                                                                                                         |
 | **_ownerUsers**          | An array of user ids.                                                                                                                                                                                                                                                                                                                                                                         |
 | **_ownerGroups**         | An array of user groups.                                                                                                                                                                                                                                                                                                                                                                      |
 | **_ownerUsersCount**     | A number field keeps the number of items in ownerUsers array                                                                                                                                                                                                                                                                                                                                  |
@@ -307,26 +307,26 @@ We can divide configurations into 9 categories:
 
 ### Database
 
-| Configration          | Description                                                 | Default Value   |
-| --------------------- | ----------------------------------------------------------- | --------------- |
-| **mongodb_host**      | MongoDB database hostname                                   | localhost       |
-| **mongodb_port**      | MongoDB database port number                                | 27017           |
-| **mongodb_user**      | MongoDB database user                                       | tappuser        |
-| **mongodb_password**  | MongoDB password. Provide through k8s secrets               | tapppass123!    |
-| **mongodb_database**  | Name of the database                                        | tappdb          |
-| **mongodb_url**       | Connection URL can be used instead of host, port and user   | localhost       |
-| **collection_entity** | Name of the collection which generic entities are persisted | GenericEntities |
-| **collection_list**   | Name of the collection which generic lists are persisted | GenericLists    |
-| **collection_list_list_entity_rel**   | Name of the collection which relationships between list and entity are persisted | GenericLists    |
+| Configration                        | Description                                                                      | Default Value   |
+| ----------------------------------- | -------------------------------------------------------------------------------- | --------------- |
+| **mongodb_host**                    | MongoDB database hostname                                                        | localhost       |
+| **mongodb_port**                    | MongoDB database port number                                                     | 27017           |
+| **mongodb_user**                    | MongoDB database user                                                            | tappuser        |
+| **mongodb_password**                | MongoDB password. Provide through k8s secrets                                    | tapppass123!    |
+| **mongodb_database**                | Name of the database                                                             | tappdb          |
+| **mongodb_url**                     | Connection URL can be used instead of host, port and user                        | localhost       |
+| **collection_entity**               | Name of the collection which generic entities are persisted                      | GenericEntities |
+| **collection_list**                 | Name of the collection which generic lists are persisted                         | GenericLists    |
+| **collection_list_list_entity_rel** | Name of the collection which relationships between list and entity are persisted | GenericLists    |
 
 ### Allowed Kinds
 
 You can limit acceptable values for `kind` fields for the records.
 
-| Configuration             | Description                                                        | Default Value |
-| ------------------------- | ------------------------------------------------------------------ | ------------- |
-| **entity_kinds**          | Comma seperated list of allowed values for kind field of entities. |               |
-| **list_kinds**            | Comma seperated list of allowed values for kind field of lists. |               |
+| Configuration             | Description                                                                            | Default Value |
+| ------------------------- | -------------------------------------------------------------------------------------- | ------------- |
+| **entity_kinds**          | Comma seperated list of allowed values for kind field of entities.                     |               |
+| **list_kinds**            | Comma seperated list of allowed values for kind field of lists.                        |               |
 | **list_entity_rel_kinds** | Comma seperated list of allowed values for kind field of list to entity relationships. | relation      |
 
 ### Uniqueness
@@ -337,33 +337,33 @@ Field types should be primitive types such as string or number.
 
 Uniqueness configuration is implemented in application logic. MongoDB has composite unique index feature but this feature supports only one array. Thus, it cannot support ownerUsers and ownerGroups together. Furthermore, MongoDB's unique index on arrays cannot be used to implement 'unique per user' approach as it takes arrays contribute to unique index as a whole.
 
-| Configration                                 | Description                                                                                                                                                                                 | Default Value | Example Value        |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | -------------------- |
-| **uniqueness_entity_fields**                 | Composite index-like comma seperated list of field names of generic entity                                                                                                                  | -             | slug,kind,ownerUsers |
-| **uniqueness_entity_set**                    | Specify the scope where the uniqueness should be checked with set queries.                                                                                                                  | -             | set[actives]         |
-| **uniqueness_entity_fields_for_{kind_name}** | Composite index-like comma seperated list of field names of generic entity. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind. | -             | slug,kind,ownerUsers |
-| **uniqueness_entity_set_for_{kind_name}**    | Specify the scope where the uniqueness should be checked with set queries. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.  | -             | set[actives]         |
-| **uniqueness_list_fields**                   | Composite index-like comma seperated list of field names of list                                                                                                                            | -             | slug,kind,ownerUsers |
-| **uniqueness_list_set**                      | Specify the scope where the uniqueness should be checked with set queries                                                                                                                   | false         | set[publics]         |
-| **uniqueness_list_fields_for_{kind_name}**   | Composite index-like comma seperated list of field names of list. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.           | -             | slug,kind,ownerUsers |
-| **uniqueness_list_set_for_{kind_name}**      | Specify the scope where the uniqueness should be checked with set queries. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.  | false         | set[publics]         |
-| **uniqueness_list_entity_rel_fields**                   | Composite index-like comma seperated list of field names of the relation                                                                                                                            | -             | slug,kind |
-| **uniqueness_list_entity_rel_set**                      | Specify the scope where the uniqueness should be checked with set queries                                                                                                                   | false         | set[publics]         |
-| **uniqueness_list_entity_rel_fields_for_{kind_name}**   | Composite index-like comma seperated list of field names of the relation. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.           | -             | slug,kind |
-| **uniqueness_list_entity_rel_set_for_{kind_name}**      | Specify the scope where the uniqueness should be checked with set queries. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.  | false         | set[publics]         |
+| Configration                                          | Description                                                                                                                                                                                 | Default Value | Example Value        |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | -------------------- |
+| **uniqueness_entity_fields**                          | Composite index-like comma seperated list of field names of generic entity. Note that the array fields are not supported. Consider using set feature to implement uniqueness per user.      | -             | slug,kind,ownerUsers |
+| **uniqueness_entity_set**                             | Specify the scope where the uniqueness should be checked with set queries.                                                                                                                  | -             | set[actives]         |
+| **uniqueness_entity_fields_for_{kind_name}**          | Composite index-like comma seperated list of field names of generic entity. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind. | -             | slug,kind,ownerUsers |
+| **uniqueness_entity_set_for_{kind_name}**             | Specify the scope where the uniqueness should be checked with set queries. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.  | -             | set[actives]         |
+| **uniqueness_list_fields**                            | Composite index-like comma seperated list of field names of list                                                                                                                            | -             | slug,kind,ownerUsers |
+| **uniqueness_list_set**                               | Specify the scope where the uniqueness should be checked with set queries                                                                                                                   | false         | set[publics]         |
+| **uniqueness_list_fields_for_{kind_name}**            | Composite index-like comma seperated list of field names of list. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.           | -             | slug,kind,ownerUsers |
+| **uniqueness_list_set_for_{kind_name}**               | Specify the scope where the uniqueness should be checked with set queries. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.  | false         | set[publics]         |
+| **uniqueness_list_entity_rel_fields**                 | Composite index-like comma seperated list of field names of the relation                                                                                                                    | -             | slug,kind            |
+| **uniqueness_list_entity_rel_set**                    | Specify the scope where the uniqueness should be checked with set queries                                                                                                                   | false         | set[publics]         |
+| **uniqueness_list_entity_rel_fields_for_{kind_name}** | Composite index-like comma seperated list of field names of the relation. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.   | -             | slug,kind            |
+| **uniqueness_list_entity_rel_set_for_{kind_name}**    | Specify the scope where the uniqueness should be checked with set queries. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.  | false         | set[publics]         |
 
 ### Auto Approve
 
-| Configration                          | Description                                                                                                          | Default Value | Example Value |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------- | ------------- |
-| **autoapprove_entity**                | If true, `validFromDateTime` field of entity record is automatically filled with the creation datetime.              | false         | true          |
-| **autoapprove_entity_for_{kindName}** | If true, `validFromDateTime` field of entity record in this kind is automatically filled with the creation datetime. | false         | true          |
-| **autoapprove_list**                  | If true, `validFromDateTime` field of list record is automatically filled with the creation datetime.                | false         | true          |
-| **autoapprove_list_for_{kindName}**   | If true, `validFromDateTime` field of list record in this kind is automatically filled with the creation datetime.   | true          | false         |
-| **autoapprove_list_entity_relations** | If true, `validFromDateTime` field of relation record is automatically filled with the creation datetime.            | false         | true          |
+| Configration                                         | Description                                                                                                          | Default Value | Example Value |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------- | ------------- |
+| **autoapprove_entity**                               | If true, `validFromDateTime` field of entity record is automatically filled with the creation datetime.              | false         | true          |
+| **autoapprove_entity_for_{kindName}**                | If true, `validFromDateTime` field of entity record in this kind is automatically filled with the creation datetime. | false         | true          |
+| **autoapprove_list**                                 | If true, `validFromDateTime` field of list record is automatically filled with the creation datetime.                | false         | true          |
+| **autoapprove_list_for_{kindName}**                  | If true, `validFromDateTime` field of list record in this kind is automatically filled with the creation datetime.   | true          | false         |
+| **autoapprove_list_entity_relations**                | If true, `validFromDateTime` field of relation record is automatically filled with the creation datetime.            | false         | true          |
 | **autoapprove_list_entity_relations_for_{kindName}** | If true, `validFromDateTime` field of relation record is automatically filled with the creation datetime.            | false         | true          |
-| **autoapprove_entity_reaction**       | If true, `validFromDateTime` field of entity reaction record is automatically filled with the creation datetime.     | false         | true          |
-| **autoapprove_list_reaction**         | If true, `validFromDateTime` field of list reaction record is automatically filled with the creation datetime.       | false         | true          |
+| **autoapprove_entity_reaction**                      | If true, `validFromDateTime` field of entity reaction record is automatically filled with the creation datetime.     | false         | true          |
+| **autoapprove_list_reaction**                        | If true, `validFromDateTime` field of list reaction record is automatically filled with the creation datetime.       | false         | true          |
 
 ### Visibility
 
@@ -384,7 +384,7 @@ These setting limits the number of record can be returned for each data model. I
 | ---------------------------------- | -------------------------------------------------------- | ------------- |
 | **response_limit_entity**          | Max items can be returned from entity response.          | 50            |
 | **response_limit_list**            | Max items can be returned from list response.            | 50            |
-| **response_limit_list_entity_rel**            | Max items can be returned from list response.            | 50            |
+| **response_limit_list_entity_rel** | Max items can be returned from list response.            | 50            |
 | **response_limit_entity_reaction** | Max items can be returned from entity reaction response. | 50            |
 | **response_limit_list_reaction**   | Max items can be returned from list reaction response.   | 50            |
 | **response_limit_tag**             | Max items can be returned from tags response.            | 50            |
@@ -394,20 +394,20 @@ These setting limits the number of record can be returned for each data model. I
 These settings limits the number of records can be created for entities and lists. There is no limits for reactions and tags. But you can configure daily or hourly limits from gateway.
 Limits can be configured through sets. For instance, you can limit active or public entities a user can have. You can even set these configurations per entity kind by adding `_for_{kindname}` suffix to the configuration name.
 
-| Configration                                  | Description                                                          | Example Value   |
-| --------------------------------------------- | -------------------------------------------------------------------- | --------------- |
-| **record_limit_entity_count**                 | Max entities can be created.                                         | 100             |
-| **record_limit_entity_set**                   | A set string where record limits will be applied.                    | `set[audience]` |
-| **record_limit_entity_count_for_{kind_name}** | Max entities can be created for a specific entity kind.              | 100             |
-| **record_limit_entity_set_for_{kind_name}**   | A set string where record limits will be applied for a specific kind | 50              |
-| **record_limit_list_count**                   | Max lists can be created.                                            | 50              |
-| **record_limit_list_set**                     | A set string where record limits will be applied.                    | `set[audience]` |
-| **record_limit_list_count_for_{kind_name}**   | Max lists can be created for a specific entity kind.                 | 50              |
-| **record_limit_list_set_for_{kind_name}**     | A set string where record limits will be applied for a specific kind | 50              |
-| **record_limit_list_entity_rel_count**                   | Max number of relations can be created between list and entity.                                            | 50              |
-| **record_limit_list_entity_rel_set**                     | A set string where record limits will be applied.                    | `set[audience]` |
-| **record_limit_list_entity_rel_count_for_{kind_name}**   | Max lists can be created for a specific entity kind.                 | 50              |
-| **record_limit_list_entity_rel_set_for_{kind_name}**     | A set string where record limits will be applied for a specific kind | 50              |
+| Configration                                           | Description                                                          | Example Value   |
+| ------------------------------------------------------ | -------------------------------------------------------------------- | --------------- |
+| **record_limit_entity_count**                          | Max entities can be created.                                         | 100             |
+| **record_limit_entity_set**                            | A set string where record limits will be applied.                    | `set[audience]` |
+| **record_limit_entity_count_for_{kind_name}**          | Max entities can be created for a specific entity kind.              | 100             |
+| **record_limit_entity_set_for_{kind_name}**            | A set string where record limits will be applied for a specific kind | 50              |
+| **record_limit_list_count**                            | Max lists can be created.                                            | 50              |
+| **record_limit_list_set**                              | A set string where record limits will be applied.                    | `set[audience]` |
+| **record_limit_list_count_for_{kind_name}**            | Max lists can be created for a specific entity kind.                 | 50              |
+| **record_limit_list_set_for_{kind_name}**              | A set string where record limits will be applied for a specific kind | 50              |
+| **record_limit_list_entity_rel_count**                 | Max number of relations can be created between list and entity.      | 50              |
+| **record_limit_list_entity_rel_set**                   | A set string where record limits will be applied.                    | `set[audience]` |
+| **record_limit_list_entity_rel_count_for_{kind_name}** | Max lists can be created for a specific entity kind.                 | 50              |
+| **record_limit_list_entity_rel_set_for_{kind_name}**   | A set string where record limits will be applied for a specific kind | 50              |
 
 ### Idempotency
 
