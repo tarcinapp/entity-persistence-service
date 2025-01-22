@@ -167,4 +167,102 @@ describe('POST /generic-lists', () => {
       code: 'LIST-ALREADY-EXISTS',
     });
   });
+
+  it('rejects duplicate list based on uniqueness configuration including owner users', async () => {
+    // Set up the environment variables
+    appWithClient = await setupApplication({
+      list_kinds: 'book-list',
+      uniqueness_list_fields: '_slug,_kind,_ownerUsers',
+    });
+    ({ client } = appWithClient);
+
+    // Debug log
+    console.log('Environment variables:', {
+      list_kinds: process.env.list_kinds,
+      uniqueness_list_fields: process.env.uniqueness_list_fields,
+    });
+
+    // First list creation - should succeed
+    const firstList: Partial<GenericList> = {
+      _name: 'Science Fiction Books',
+      _kind: 'book-list',
+      _ownerUsers: ['user-123'],
+      description: 'A list of science fiction books',
+    };
+
+    const response = await client
+      .post('/generic-lists')
+      .send(firstList)
+      .expect(200);
+
+    expect(response.body._slug).to.be.equal('science-fiction-books');
+    expect(response.body._kind).to.be.equal('book-list');
+    expect(response.body._ownerUsers).to.containDeep(['user-123']);
+
+    // Second list with same resulting slug, kind and owner - should fail
+    const secondList: Partial<GenericList> = {
+      _name: 'Science Fiction Books', // Will generate same slug
+      _kind: 'book-list',
+      _ownerUsers: ['user-123'],
+      description: 'Another list of science fiction books',
+    };
+
+    const errorResponse = await client
+      .post('/generic-lists')
+      .send(secondList)
+      .expect(409);
+
+    expect(errorResponse.body.error).to.containDeep({
+      statusCode: 409,
+      name: 'DataUniquenessViolationError',
+      message: 'List already exists.',
+      code: 'LIST-ALREADY-EXISTS',
+    });
+  });
+
+  it('allows duplicate list with different owner users when uniqueness includes owner users', async () => {
+    // Set up the environment variables
+    appWithClient = await setupApplication({
+      list_kinds: 'book-list',
+      uniqueness_list_fields: '_slug,_kind,_ownerUsers', // _ownerUsers is not contributing to uniqueness check
+    });
+    ({ client } = appWithClient);
+
+    // First list creation - should succeed
+    const firstList: Partial<GenericList> = {
+      _name: 'Science Fiction Books',
+      _kind: 'book-list',
+      _ownerUsers: ['user-123', 'user-456'],
+      description: 'A list of science fiction books',
+    };
+
+    const firstResponse = await client
+      .post('/generic-lists')
+      .send(firstList)
+      .expect(200);
+
+    expect(firstResponse.body._slug).to.be.equal('science-fiction-books');
+    expect(firstResponse.body._kind).to.be.equal('book-list');
+    expect(firstResponse.body._ownerUsers).to.containDeep([
+      'user-123',
+      'user-456',
+    ]);
+
+    // Second list with same name and kind and with same owner - should succeed because uniqueness is not enforced for array fields
+    const secondList: Partial<GenericList> = {
+      _name: 'Science Fiction Books',
+      _kind: 'book-list',
+      _ownerUsers: ['user-123'], // Different owner
+      description: 'Another list of science fiction books',
+    };
+
+    const secondResponse = await client
+      .post('/generic-lists')
+      .send(secondList)
+      .expect(200);
+
+    expect(secondResponse.body._slug).to.be.equal('science-fiction-books');
+    expect(secondResponse.body._kind).to.be.equal('book-list');
+    expect(secondResponse.body._ownerUsers).to.containDeep(['user-123']);
+  });
 });
