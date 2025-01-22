@@ -9,8 +9,6 @@ import {
   UniquenessConfigurationReader,
   RecordLimitsBindings,
   RecordLimitsConfigurationReader,
-  KindBindings,
-  KindConfigurationReader,
   VisibilityConfigBindings,
   VisibilityConfigurationReader,
   IdempotencyConfigBindings,
@@ -19,6 +17,8 @@ import {
   ValidfromConfigurationReader,
   ResponseLimitConfigBindings,
   ResponseLimitConfigurationReader,
+  KindBindings,
+  KindConfigurationReader,
 } from '../../extensions';
 
 export interface TestEnvironmentVariables {
@@ -330,9 +330,6 @@ export async function setupApplication(
     });
   }
 
-  // Reset all configuration readers after setting new environment variables
-  KindConfigurationReader.resetConfiguration();
-
   const mongod = await MongoMemoryServer.create();
 
   // Set MongoDB environment variables
@@ -392,7 +389,7 @@ export async function setupApplication(
     .bind(RecordLimitsBindings.CONFIG_READER)
     .toClass(RecordLimitsConfigurationReader);
 
-  // add kind configuration reader to context
+  // add kind limits configuration reader to context
   app.bind(KindBindings.CONFIG_READER).toClass(KindConfigurationReader);
 
   app
@@ -418,6 +415,7 @@ export async function setupApplication(
   const client = createRestAppClient(app);
 
   // Debug log
+  // eslint-disable-next-line no-console
   console.log('App configuration:', {
     port: app.restServer.config.port,
     url: app.restServer.url,

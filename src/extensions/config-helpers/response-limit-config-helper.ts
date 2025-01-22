@@ -8,40 +8,40 @@ export const ResponseLimitConfigBindings = {
 } as const;
 
 export class ResponseLimitConfigurationReader {
-  private static entityResponseLimit: number;
-  private static listResponseLimit: number;
-  private static listEntityRelResponseLimit: number;
-  private static DEFAULT_RESPONSE_LIMIT = 50;
+  private readonly defaultResponseLimit = 50;
+  private entityResponseLimit: number;
+  private listResponseLimit: number;
+  private listEntityRelResponseLimit: number;
 
-  static {
+  constructor() {
     this.initResponseLimits();
   }
 
-  private static initResponseLimits() {
+  private initResponseLimits() {
     const envEntityLimit = process.env.response_limit_entity;
     const envListLimit = process.env.response_limit_list;
     const envListEntityRelLimit = process.env.response_limit_list_entity_rel;
 
     this.entityResponseLimit = envEntityLimit
       ? _.parseInt(envEntityLimit)
-      : this.DEFAULT_RESPONSE_LIMIT;
+      : this.defaultResponseLimit;
     this.listResponseLimit = envListLimit
       ? _.parseInt(envListLimit)
-      : this.DEFAULT_RESPONSE_LIMIT;
+      : this.defaultResponseLimit;
     this.listEntityRelResponseLimit = envListEntityRelLimit
       ? _.parseInt(envListEntityRelLimit)
-      : this.DEFAULT_RESPONSE_LIMIT;
+      : this.defaultResponseLimit;
   }
 
   public getEntityResponseLimit(): number {
-    return ResponseLimitConfigurationReader.entityResponseLimit;
+    return this.entityResponseLimit;
   }
 
   public getListResponseLimit(): number {
-    return ResponseLimitConfigurationReader.listResponseLimit;
+    return this.listResponseLimit;
   }
 
   public getListEntityRelResponseLimit(): number {
-    return ResponseLimitConfigurationReader.listEntityRelResponseLimit;
+    return this.listEntityRelResponseLimit;
   }
 }
