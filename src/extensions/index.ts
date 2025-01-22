@@ -1,5 +1,4 @@
 export * from './config-helpers/idempotency-config-helper';
-export * from './config-helpers/kind-limits-config-helper';
 export * from './config-helpers/record-limits-config-helper';
 export * from './config-helpers/response-limit-config-helper';
 export * from './utils/set';
@@ -7,3 +6,4 @@ export * from './config-helpers/uniqueness-config-helper';
 export * from './config-helpers/validfrom-config-helper';
 export * from './config-helpers/visibility-config-helper';
 export * from './types/inclusion-augmentation';
+export * from './config-helpers/kind-config-helper';

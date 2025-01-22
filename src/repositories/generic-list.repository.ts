@@ -19,7 +19,7 @@ import slugify from 'slugify';
 import { EntityDbDataSource } from '../datasources';
 import {
   IdempotencyConfigurationReader,
-  KindLimitsConfigurationReader,
+  KindConfigurationReader,
   RecordLimitsConfigurationReader,
   UniquenessConfigurationReader,
   ValidfromConfigurationReader,
@@ -106,8 +106,8 @@ export class GenericListRepository extends DefaultCrudRepository<
     @inject('extensions.record-limits.configurationreader')
     private recordLimitConfigReader: RecordLimitsConfigurationReader,
 
-    @inject('extensions.kind-limits.configurationreader')
-    private kindLimitConfigReader: KindLimitsConfigurationReader,
+    @inject('extensions.kind.configurationreader')
+    private kindConfigReader: KindConfigurationReader,
 
     @inject('extensions.visibility.configurationreader')
     private visibilityConfigReader: VisibilityConfigurationReader,
@@ -512,7 +512,7 @@ export class GenericListRepository extends DefaultCrudRepository<
   private async enrichIncomingListForCreation(
     data: DataObject<GenericList>,
   ): Promise<DataObject<GenericList>> {
-    data._kind = data._kind ?? this.kindLimitConfigReader.defaultListKind;
+    data._kind = data._kind ?? this.kindConfigReader.defaultListKind;
 
     // take the date of now to make sure we have exactly the same date in all date fields
     const now = new Date().toISOString();
@@ -709,8 +709,8 @@ export class GenericListRepository extends DefaultCrudRepository<
      */
     const kind = data._kind ?? '';
 
-    if (!this.kindLimitConfigReader.isKindAcceptableForList(kind)) {
-      const validValues = this.kindLimitConfigReader.allowedKindsForLists;
+    if (!this.kindConfigReader.isKindAcceptableForList(kind)) {
+      const validValues = this.kindConfigReader.allowedKindsForLists;
 
       throw new HttpErrorResponse({
         statusCode: 422,

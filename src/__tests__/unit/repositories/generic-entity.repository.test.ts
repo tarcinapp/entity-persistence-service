@@ -45,7 +45,7 @@ describe('GenericEntityRepository', () => {
       Getter.fromValue(listEntityRelationRepoStub),
       testSetup.configReaders.uniquenessConfigReader,
       testSetup.configReaders.recordLimitConfigReader,
-      testSetup.configReaders.kindLimitConfigReader,
+      testSetup.configReaders.kindConfigReader,
       testSetup.configReaders.visibilityConfigReader,
       testSetup.configReaders.validfromConfigReader,
       testSetup.configReaders.idempotencyConfigReader,
@@ -194,10 +194,7 @@ describe('GenericEntityRepository', () => {
           )
           .returns(idempotencyFields);
         sinon
-          .stub(
-            repository['kindLimitConfigReader'],
-            'isKindAcceptableForEntity',
-          )
+          .stub(repository['kindConfigReader'], 'isKindAcceptableForEntity')
           .returns(true);
         sinon
           .stub(
@@ -227,10 +224,7 @@ describe('GenericEntityRepository', () => {
           )
           .returns([]);
         sinon
-          .stub(
-            repository['kindLimitConfigReader'],
-            'isKindAcceptableForEntity',
-          )
+          .stub(repository['kindConfigReader'], 'isKindAcceptableForEntity')
           .returns(true);
         sinon
           .stub(
@@ -250,7 +244,7 @@ describe('GenericEntityRepository', () => {
     });
 
     describe('validation and enrichment', () => {
-      let kindLimitStub: sinon.SinonStub;
+      let kindStub: sinon.SinonStub;
       let uniquenessStub: sinon.SinonStub;
       let recordLimitStub: sinon.SinonStub;
 
@@ -262,11 +256,8 @@ describe('GenericEntityRepository', () => {
             'getIdempotencyForEntities',
           )
           .returns([]);
-        kindLimitStub = sinon
-          .stub(
-            repository['kindLimitConfigReader'],
-            'isKindAcceptableForEntity',
-          )
+        kindStub = sinon
+          .stub(repository['kindConfigReader'], 'isKindAcceptableForEntity')
           .returns(true);
         sinon
           .stub(
@@ -405,9 +396,9 @@ describe('GenericEntityRepository', () => {
         const inputData = { _name: 'test', _kind: 'invalid-kind' };
 
         // Override the default stub
-        kindLimitStub.returns(false);
+        kindStub.returns(false);
         sinon
-          .stub(repository['kindLimitConfigReader'], 'allowedKindsForEntities')
+          .stub(repository['kindConfigReader'], 'allowedKindsForEntities')
           .get(() => ['allowed-kind']);
 
         try {
@@ -480,9 +471,9 @@ describe('GenericEntityRepository', () => {
 
         // Setup stubs for default kind
         sinon
-          .stub(repository['kindLimitConfigReader'], 'defaultEntityKind')
+          .stub(repository['kindConfigReader'], 'defaultEntityKind')
           .get(() => defaultKind);
-        kindLimitStub.returns(true);
+        kindStub.returns(true);
 
         const result = await repository.create(inputData);
 
@@ -531,16 +522,13 @@ describe('GenericEntityRepository', () => {
     });
 
     describe('validation and enrichment', () => {
-      let kindLimitStub: sinon.SinonStub;
+      let kindStub: sinon.SinonStub;
       let uniquenessStub: sinon.SinonStub;
 
       beforeEach(() => {
         // Common stubs for validation tests
-        kindLimitStub = sinon
-          .stub(
-            repository['kindLimitConfigReader'],
-            'isKindAcceptableForEntity',
-          )
+        kindStub = sinon
+          .stub(repository['kindConfigReader'], 'isKindAcceptableForEntity')
           .returns(true);
         uniquenessStub = sinon
           .stub(
@@ -594,9 +582,9 @@ describe('GenericEntityRepository', () => {
       it('should throw error when kind is not in allowed values', async () => {
         const updateData = { _kind: 'invalid-kind', _name: 'test' };
 
-        kindLimitStub.returns(false);
+        kindStub.returns(false);
         sinon
-          .stub(repository['kindLimitConfigReader'], 'allowedKindsForEntities')
+          .stub(repository['kindConfigReader'], 'allowedKindsForEntities')
           .get(() => ['allowed-kind']);
 
         try {
@@ -857,16 +845,13 @@ describe('GenericEntityRepository', () => {
     });
 
     describe('validation and enrichment', () => {
-      let kindLimitStub: sinon.SinonStub;
+      let kindStub: sinon.SinonStub;
       let uniquenessStub: sinon.SinonStub;
 
       beforeEach(() => {
         // Common stubs for validation tests
-        kindLimitStub = sinon
-          .stub(
-            repository['kindLimitConfigReader'],
-            'isKindAcceptableForEntity',
-          )
+        kindStub = sinon
+          .stub(repository['kindConfigReader'], 'isKindAcceptableForEntity')
           .returns(true);
         uniquenessStub = sinon
           .stub(
@@ -958,9 +943,9 @@ describe('GenericEntityRepository', () => {
       it('should throw error when kind is not in allowed values', async () => {
         const updateData = { _kind: 'invalid-kind' };
 
-        kindLimitStub.returns(false);
+        kindStub.returns(false);
         sinon
-          .stub(repository['kindLimitConfigReader'], 'allowedKindsForEntities')
+          .stub(repository['kindConfigReader'], 'allowedKindsForEntities')
           .get(() => ['allowed-kind']);
 
         try {
@@ -1268,10 +1253,10 @@ describe('GenericEntityRepository', () => {
       const updateData = { _kind: 'invalid kind' };
 
       sinon
-        .stub(repository['kindLimitConfigReader'], 'isKindAcceptableForEntity')
+        .stub(repository['kindConfigReader'], 'isKindAcceptableForEntity')
         .returns(false);
       sinon
-        .stub(repository['kindLimitConfigReader'], 'allowedKindsForEntities')
+        .stub(repository['kindConfigReader'], 'allowedKindsForEntities')
         .get(() => ['allowed-kind']);
 
       try {

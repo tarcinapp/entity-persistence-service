@@ -59,7 +59,7 @@ describe('GenericListRepository', () => {
       Getter.fromValue(customListEntityRelRepoStub),
       testSetup.configReaders.uniquenessConfigReader,
       testSetup.configReaders.recordLimitConfigReader,
-      testSetup.configReaders.kindLimitConfigReader,
+      testSetup.configReaders.kindConfigReader,
       testSetup.configReaders.visibilityConfigReader,
       testSetup.configReaders.validfromConfigReader,
       testSetup.configReaders.idempotencyConfigReader,
@@ -203,7 +203,7 @@ describe('GenericListRepository', () => {
           .stub(repository['idempotencyConfigReader'], 'getIdempotencyForLists')
           .returns(idempotencyFields);
         sinon
-          .stub(repository['kindLimitConfigReader'], 'isKindAcceptableForList')
+          .stub(repository['kindConfigReader'], 'isKindAcceptableForList')
           .returns(true);
         sinon
           .stub(repository['visibilityConfigReader'], 'getVisibilityForLists')
@@ -227,7 +227,7 @@ describe('GenericListRepository', () => {
           .stub(repository['idempotencyConfigReader'], 'getIdempotencyForLists')
           .returns([]);
         sinon
-          .stub(repository['kindLimitConfigReader'], 'isKindAcceptableForList')
+          .stub(repository['kindConfigReader'], 'isKindAcceptableForList')
           .returns(true);
         sinon
           .stub(repository['visibilityConfigReader'], 'getVisibilityForLists')
@@ -244,7 +244,7 @@ describe('GenericListRepository', () => {
     });
 
     describe('validation and enrichment', () => {
-      let kindLimitStub: sinon.SinonStub;
+      let kindStub: sinon.SinonStub;
       let uniquenessStub: sinon.SinonStub;
       let recordLimitStub: sinon.SinonStub;
 
@@ -253,8 +253,8 @@ describe('GenericListRepository', () => {
         sinon
           .stub(repository['idempotencyConfigReader'], 'getIdempotencyForLists')
           .returns([]);
-        kindLimitStub = sinon
-          .stub(repository['kindLimitConfigReader'], 'isKindAcceptableForList')
+        kindStub = sinon
+          .stub(repository['kindConfigReader'], 'isKindAcceptableForList')
           .returns(true);
         sinon
           .stub(repository['visibilityConfigReader'], 'getVisibilityForLists')
@@ -327,9 +327,9 @@ describe('GenericListRepository', () => {
       it('should throw error when kind is not in allowed values', async () => {
         const inputData = { _kind: 'invalid-kind', _name: 'test' };
 
-        kindLimitStub.returns(false);
+        kindStub.returns(false);
         sinon
-          .stub(repository['kindLimitConfigReader'], 'allowedKindsForLists')
+          .stub(repository['kindConfigReader'], 'allowedKindsForLists')
           .get(() => ['allowed-kind']);
 
         try {
@@ -478,13 +478,13 @@ describe('GenericListRepository', () => {
     });
 
     describe('validation and enrichment', () => {
-      let kindLimitStub: sinon.SinonStub;
+      let kindStub: sinon.SinonStub;
       let uniquenessStub: sinon.SinonStub;
 
       beforeEach(() => {
         // Common stubs for validation tests
-        kindLimitStub = sinon
-          .stub(repository['kindLimitConfigReader'], 'isKindAcceptableForList')
+        kindStub = sinon
+          .stub(repository['kindConfigReader'], 'isKindAcceptableForList')
           .returns(true);
         uniquenessStub = sinon
           .stub(
@@ -535,9 +535,9 @@ describe('GenericListRepository', () => {
       it('should throw error when kind is not in allowed values', async () => {
         const updateData = { _kind: 'invalid-kind', _name: 'test' };
 
-        kindLimitStub.returns(false);
+        kindStub.returns(false);
         sinon
-          .stub(repository['kindLimitConfigReader'], 'allowedKindsForLists')
+          .stub(repository['kindConfigReader'], 'allowedKindsForLists')
           .get(() => ['allowed-kind']);
 
         try {
@@ -796,13 +796,13 @@ describe('GenericListRepository', () => {
     });
 
     describe('validation and enrichment', () => {
-      let kindLimitStub: sinon.SinonStub;
+      let kindStub: sinon.SinonStub;
       let uniquenessStub: sinon.SinonStub;
 
       beforeEach(() => {
         // Common stubs for validation tests
-        kindLimitStub = sinon
-          .stub(repository['kindLimitConfigReader'], 'isKindAcceptableForList')
+        kindStub = sinon
+          .stub(repository['kindConfigReader'], 'isKindAcceptableForList')
           .returns(true);
         uniquenessStub = sinon
           .stub(
@@ -894,9 +894,9 @@ describe('GenericListRepository', () => {
       it('should throw error when kind is not in allowed values', async () => {
         const updateData = { _kind: 'invalid-kind' };
 
-        kindLimitStub.returns(false);
+        kindStub.returns(false);
         sinon
-          .stub(repository['kindLimitConfigReader'], 'allowedKindsForLists')
+          .stub(repository['kindConfigReader'], 'allowedKindsForLists')
           .get(() => ['allowed-kind']);
 
         try {
@@ -1201,10 +1201,10 @@ describe('GenericListRepository', () => {
       const updateData = { _kind: 'invalid-kind' };
 
       sinon
-        .stub(repository['kindLimitConfigReader'], 'isKindAcceptableForList')
+        .stub(repository['kindConfigReader'], 'isKindAcceptableForList')
         .returns(false);
       sinon
-        .stub(repository['kindLimitConfigReader'], 'allowedKindsForLists')
+        .stub(repository['kindConfigReader'], 'allowedKindsForLists')
         .get(() => ['allowed-kind']);
 
       try {

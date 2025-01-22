@@ -3,7 +3,7 @@ import { EntityPersistenceApplication } from '../../..';
 import type { EntityDbDataSource } from '../../../datasources';
 import {
   IdempotencyConfigurationReader,
-  KindLimitsConfigurationReader,
+  KindConfigurationReader,
   RecordLimitsConfigurationReader,
   UniquenessConfigurationReader,
   ValidfromConfigurationReader,
@@ -17,7 +17,7 @@ export async function setupRepositoryTest(): Promise<{
   configReaders: {
     uniquenessConfigReader: UniquenessConfigurationReader;
     recordLimitConfigReader: RecordLimitsConfigurationReader;
-    kindLimitConfigReader: KindLimitsConfigurationReader;
+    kindConfigReader: KindConfigurationReader;
     visibilityConfigReader: VisibilityConfigurationReader;
     validfromConfigReader: ValidfromConfigurationReader;
     idempotencyConfigReader: IdempotencyConfigurationReader;
@@ -41,7 +41,7 @@ export async function setupRepositoryTest(): Promise<{
   // Create configuration readers with default test settings
   const uniquenessConfigReader = new UniquenessConfigurationReader();
   const recordLimitConfigReader = new RecordLimitsConfigurationReader();
-  const kindLimitConfigReader = new KindLimitsConfigurationReader();
+  const kindConfigReader = new KindConfigurationReader();
   const visibilityConfigReader = new VisibilityConfigurationReader();
   const validfromConfigReader = new ValidfromConfigurationReader();
   const idempotencyConfigReader = new IdempotencyConfigurationReader();
@@ -53,7 +53,7 @@ export async function setupRepositoryTest(): Promise<{
     configReaders: {
       uniquenessConfigReader,
       recordLimitConfigReader,
-      kindLimitConfigReader,
+      kindConfigReader,
       visibilityConfigReader,
       validfromConfigReader,
       idempotencyConfigReader,

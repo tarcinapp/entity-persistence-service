@@ -18,7 +18,7 @@ import slugify from 'slugify';
 import { EntityDbDataSource } from '../datasources';
 import {
   IdempotencyConfigurationReader,
-  KindLimitsConfigurationReader,
+  KindConfigurationReader,
   RecordLimitsConfigurationReader,
   UniquenessConfigurationReader,
   ValidfromConfigurationReader,
@@ -90,8 +90,8 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     @inject('extensions.record-limits.configurationreader')
     private recordLimitConfigReader: RecordLimitsConfigurationReader,
 
-    @inject('extensions.kind-limits.configurationreader')
-    private kindLimitConfigReader: KindLimitsConfigurationReader,
+    @inject('extensions.kind.configurationreader')
+    private kindConfigReader: KindConfigurationReader,
 
     @inject('extensions.visibility.configurationreader')
     private visibilityConfigReader: VisibilityConfigurationReader,
@@ -427,7 +427,7 @@ export class GenericEntityRepository extends DefaultCrudRepository<
     data._kind =
       data._kind ??
       process.env.default_entity_kind ??
-      this.kindLimitConfigReader.defaultEntityKind;
+      this.kindConfigReader.defaultEntityKind;
 
     // take the date of now to make sure we have exactly the same date in all date fields
     const now = new Date().toISOString();
@@ -629,8 +629,8 @@ export class GenericEntityRepository extends DefaultCrudRepository<
      */
     const kind = data._kind ?? '';
 
-    if (!this.kindLimitConfigReader.isKindAcceptableForEntity(kind)) {
-      const validValues = this.kindLimitConfigReader.allowedKindsForEntities;
+    if (!this.kindConfigReader.isKindAcceptableForEntity(kind)) {
+      const validValues = this.kindConfigReader.allowedKindsForEntities;
 
       throw new HttpErrorResponse({
         statusCode: 422,

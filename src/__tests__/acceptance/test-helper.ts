@@ -9,8 +9,8 @@ import {
   UniquenessConfigurationReader,
   RecordLimitsBindings,
   RecordLimitsConfigurationReader,
-  KindLimitsBindings,
-  KindLimitsConfigurationReader,
+  KindBindings,
+  KindConfigurationReader,
   VisibilityConfigBindings,
   VisibilityConfigurationReader,
   IdempotencyConfigBindings,
@@ -331,7 +331,7 @@ export async function setupApplication(
   }
 
   // Reset all configuration readers after setting new environment variables
-  KindLimitsConfigurationReader.resetConfiguration();
+  KindConfigurationReader.resetConfiguration();
 
   const mongod = await MongoMemoryServer.create();
 
@@ -392,10 +392,8 @@ export async function setupApplication(
     .bind(RecordLimitsBindings.CONFIG_READER)
     .toClass(RecordLimitsConfigurationReader);
 
-  // add kind limits configuration reader to context
-  app
-    .bind(KindLimitsBindings.CONFIG_READER)
-    .toClass(KindLimitsConfigurationReader);
+  // add kind configuration reader to context
+  app.bind(KindBindings.CONFIG_READER).toClass(KindConfigurationReader);
 
   app
     .bind(VisibilityConfigBindings.CONFIG_READER)

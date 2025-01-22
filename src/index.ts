@@ -4,8 +4,6 @@ import { parse } from 'qs';
 import type { ApplicationConfig } from './application';
 import { EntityPersistenceApplication } from './application';
 import {
-  KindLimitsBindings,
-  KindLimitsConfigurationReader,
   UniquenessBindings,
   UniquenessConfigurationReader,
   VisibilityConfigBindings,
@@ -18,6 +16,8 @@ import {
   ValidfromConfigurationReader,
   ResponseLimitConfigBindings,
   ResponseLimitConfigurationReader,
+  KindBindings,
+  KindConfigurationReader,
 } from './extensions';
 
 export * from './application';
@@ -41,9 +41,6 @@ export async function main(options: ApplicationConfig = {}) {
     .toClass(RecordLimitsConfigurationReader);
 
   // add kind limits configuration reader to context
-  app
-    .bind(KindLimitsBindings.CONFIG_READER)
-    .toClass(KindLimitsConfigurationReader);
 
   app
     .bind(VisibilityConfigBindings.CONFIG_READER)
@@ -61,6 +58,8 @@ export async function main(options: ApplicationConfig = {}) {
   app
     .bind(ResponseLimitConfigBindings.CONFIG_READER)
     .toClass(ResponseLimitConfigurationReader);
+
+  app.bind(KindBindings.CONFIG_READER).toClass(KindConfigurationReader);
 
   await app.boot();
   await app.start();

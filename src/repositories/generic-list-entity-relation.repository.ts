@@ -16,7 +16,7 @@ import { parse } from 'qs';
 import { EntityDbDataSource } from '../datasources';
 import {
   IdempotencyConfigurationReader,
-  KindLimitsConfigurationReader,
+  KindConfigurationReader,
   RecordLimitsConfigurationReader,
   SetFilterBuilder,
   UniquenessConfigurationReader,
@@ -51,8 +51,8 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
     @inject('extensions.idempotency.configurationreader')
     private idempotencyConfigReader: IdempotencyConfigurationReader,
 
-    @inject('extensions.kind-limits.configurationreader')
-    private kindLimitConfigReader: KindLimitsConfigurationReader,
+    @inject('extensions.kind.configurationreader')
+    private kindConfigReader: KindConfigurationReader,
 
     @inject('extensions.validfrom.configurationreader')
     private validfromConfigReader: ValidfromConfigurationReader,
@@ -551,7 +551,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
     data._kind =
       data._kind ??
       process.env.default_relation_kind ??
-      this.kindLimitConfigReader.defaultRelationKind;
+      this.kindConfigReader.defaultRelationKind;
     data._createdDateTime = data._createdDateTime ?? now;
     data._lastUpdatedDateTime = data._lastUpdatedDateTime ?? now;
     data._version = 1;
@@ -626,11 +626,9 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
      */
     const kind = data._kind ?? '';
 
-    if (
-      !this.kindLimitConfigReader.isKindAcceptableForListEntityRelations(kind)
-    ) {
+    if (!this.kindConfigReader.isKindAcceptableForListEntityRelations(kind)) {
       const validValues =
-        this.kindLimitConfigReader.allowedKindsForEntityListRelations;
+        this.kindConfigReader.allowedKindsForEntityListRelations;
 
       throw new HttpErrorResponse({
         statusCode: 422,
