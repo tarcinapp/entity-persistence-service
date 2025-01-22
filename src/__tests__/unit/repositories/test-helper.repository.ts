@@ -9,7 +9,7 @@ import {
   ValidfromConfigurationReader,
   VisibilityConfigurationReader,
 } from '../../../extensions';
-import { ResponseLimitConfigurationReader } from '../../../extensions/response-limit-config-helper';
+import { ResponseLimitConfigurationReader } from '../../../extensions/config-helpers/response-limit-config-helper';
 
 export async function setupRepositoryTest(): Promise<{
   app: EntityPersistenceApplication;

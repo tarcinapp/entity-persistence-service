@@ -25,8 +25,8 @@ import {
   ValidfromConfigurationReader,
   VisibilityConfigurationReader,
 } from '../extensions';
-import { ResponseLimitConfigurationReader } from '../extensions/response-limit-config-helper';
-import { SetFilterBuilder } from '../extensions/set';
+import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
+import { SetFilterBuilder } from '../extensions/utils/set';
 import {
   GenericEntity,
   GenericList,

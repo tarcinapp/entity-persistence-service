@@ -17,7 +17,7 @@ import {
   put,
   requestBody,
 } from '@loopback/rest';
-import { Set, SetFilterBuilder } from '../extensions/set';
+import { Set, SetFilterBuilder } from '../extensions/utils/set';
 import { sanitizeFilterFields } from '../helpers/filter.helper';
 import { GenericListToEntityRelation } from '../models';
 import { GenericListEntityRelationRepository } from '../repositories';

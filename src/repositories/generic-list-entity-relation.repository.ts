@@ -22,7 +22,7 @@ import {
   UniquenessConfigurationReader,
   ValidfromConfigurationReader,
 } from '../extensions';
-import { Set } from '../extensions/set';
+import { Set } from '../extensions/utils/set';
 import {
   GenericListEntityRelationRelations,
   GenericListToEntityRelation,
@@ -31,7 +31,7 @@ import {
 } from '../models';
 import { GenericEntityRepository } from './generic-entity.repository';
 import { GenericListRepository } from './generic-list.repository';
-import { ResponseLimitConfigurationReader } from '../extensions/response-limit-config-helper';
+import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
 
 export class GenericListEntityRelationRepository extends DefaultCrudRepository<
   GenericListToEntityRelation,

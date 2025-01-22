@@ -1,7 +1,7 @@
 import { BindingKey } from '@loopback/core';
 import _, { cloneDeepWith, isEmpty } from 'lodash';
 import { parse } from 'qs';
-import type { Set, UserAndGroupInfo } from '../extensions/set';
+import type { Set, UserAndGroupInfo } from '../utils/set';
 
 export const RecordLimitsBindings = {
   CONFIG_READER: BindingKey.create<RecordLimitsConfigurationReader>(

@@ -25,7 +25,7 @@ import {
   VisibilityConfigurationReader,
 } from '../extensions';
 
-import { SetFilterBuilder } from '../extensions/set';
+import { SetFilterBuilder } from '../extensions/utils/set';
 
 import {
   EntityRelation,
@@ -42,7 +42,7 @@ import { ReactionsRepository } from './reactions.repository';
 import { RelationRepository } from './relation.repository';
 import { TagEntityRelationRepository } from './tag-entity-relation.repository';
 import { TagRepository } from './tag.repository';
-import { ResponseLimitConfigurationReader } from '../extensions/response-limit-config-helper';
+import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
 
 export class GenericEntityRepository extends DefaultCrudRepository<
   GenericEntity,
