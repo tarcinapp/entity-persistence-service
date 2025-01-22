@@ -19,8 +19,8 @@ import {
   requestBody,
 } from '@loopback/rest';
 import { Set, SetFilterBuilder } from '../extensions';
-import { sanitizeFilterFields } from '../helpers/filter.helper';
-import { processIncludes } from '../helpers/sets-in-inclusions';
+import { processIncludes } from '../extensions/types/sets-in-inclusions';
+import { sanitizeFilterFields } from '../extensions/utils/filter.helper';
 import { GenericList, HttpErrorResponse } from '../models';
 import {
   UNMODIFIABLE_COMMON_FIELDS,
