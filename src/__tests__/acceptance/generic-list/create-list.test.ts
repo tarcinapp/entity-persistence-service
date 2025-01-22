@@ -1,23 +1,41 @@
 import type { Client } from '@loopback/testlab';
 import { expect } from '@loopback/testlab';
+import type { UniquenessConfigurationReader } from '../../../extensions';
 import type { GenericList } from '../../../models';
 import type { AppWithClient } from '../test-helper';
 import { setupApplication, teardownApplication } from '../test-helper';
 
 describe('POST /generic-lists', () => {
   let client: Client;
-  let appWithClient: AppWithClient;
+  let appWithClient: AppWithClient | undefined;
 
   beforeEach(async () => {
     if (appWithClient) {
       await teardownApplication(appWithClient);
     }
+
+    appWithClient = undefined;
+
+    // Clear all environment variables
+    Object.keys(process.env).forEach((key) => {
+      delete process.env[key];
+    });
+  });
+
+  afterEach(async () => {
+    if (appWithClient) {
+      await teardownApplication(appWithClient);
+    }
+
+    appWithClient = undefined;
   });
 
   after(async () => {
     if (appWithClient) {
       await teardownApplication(appWithClient);
     }
+
+    appWithClient = undefined;
   });
 
   it('creates a new generic list with default kind', async () => {
@@ -88,5 +106,65 @@ describe('POST /generic-lists', () => {
     };
 
     await client.post('/generic-lists').send(newList).expect(422);
+  });
+
+  it('rejects duplicate list based on uniqueness configuration', async () => {
+    // Set up the environment variables
+    appWithClient = await setupApplication({
+      list_kinds: 'book-list',
+      uniqueness_list_fields: '_slug,_kind',
+    });
+    ({ client } = appWithClient);
+
+    // Debug log
+    console.log('Environment variables:', {
+      list_kinds: process.env.list_kinds,
+      uniqueness_list_fields: process.env.uniqueness_list_fields,
+    });
+
+    // Get the uniqueness configuration reader
+    const uniquenessReader =
+      await appWithClient.app.get<UniquenessConfigurationReader>(
+        'extensions.uniqueness.configurationreader',
+      );
+    console.log('Uniqueness configuration:', {
+      isConfigured:
+        uniquenessReader.isUniquenessConfiguredForLists('book-list'),
+      fields: uniquenessReader.getFieldsForLists('book-list'),
+    });
+
+    // First list creation - should succeed
+    const firstList: Partial<GenericList> = {
+      _name: 'Science Fiction Books',
+      _kind: 'book-list',
+      description: 'A list of science fiction books',
+    };
+
+    const response = await client
+      .post('/generic-lists')
+      .send(firstList)
+      .expect(200);
+
+    expect(response.body._slug).to.be.equal('science-fiction-books');
+    expect(response.body._kind).to.be.equal('book-list');
+
+    // Second list with same resulting slug and kind - should fail
+    const secondList: Partial<GenericList> = {
+      _name: 'Science Fiction Books', // Will generate same slug
+      _kind: 'book-list',
+      description: 'Another list of science fiction books',
+    };
+
+    const errorResponse = await client
+      .post('/generic-lists')
+      .send(secondList)
+      .expect(409);
+
+    expect(errorResponse.body.error).to.containDeep({
+      statusCode: 409,
+      name: 'DataUniquenessViolationError',
+      message: 'List already exists.',
+      code: 'LIST-ALREADY-EXISTS',
+    });
   });
 });
