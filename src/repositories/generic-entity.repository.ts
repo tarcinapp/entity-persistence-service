@@ -621,15 +621,10 @@ export class GenericEntityRepository extends DefaultCrudRepository<
   }
 
   private checkDataKindValues(data: DataObject<GenericEntity>) {
-    /**
-     * This function checks if the 'kind' field in the 'data' object is valid
-     * for the entity. Although 'kind' is required, we ensure it has a value by
-     * this point. If it's not valid, we raise an error with the allowed valid
-     * values for 'kind'.
-     */
-    const kind = data._kind ?? '';
-
-    if (!this.kindConfigReader.isKindAcceptableForEntity(kind)) {
+    if (
+      data._kind &&
+      !this.kindConfigReader.isKindAcceptableForEntity(data._kind)
+    ) {
       const validValues = this.kindConfigReader.allowedKindsForEntities;
 
       throw new HttpErrorResponse({

@@ -443,10 +443,18 @@ export async function teardownApplication(appWithClient: AppWithClient) {
   });
 
   if (appWithClient.app) {
+    // Stop the application and disconnect all datasources
     await appWithClient.app.stop();
+    for (const ds of appWithClient.app.find('datasources.*')) {
+      const dataSource = appWithClient.app.getSync(ds.key);
+      if (dataSource.disconnect) {
+        await dataSource.disconnect();
+      }
+    }
   }
 
   if (appWithClient.mongod) {
+    // Ensure MongoDB memory server is properly stopped
     await appWithClient.mongod.stop();
   }
 }
