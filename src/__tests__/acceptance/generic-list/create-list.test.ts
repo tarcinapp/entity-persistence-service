@@ -265,4 +265,55 @@ describe('POST /generic-lists', () => {
     expect(secondResponse.body._kind).to.be.equal('book-list');
     expect(secondResponse.body._ownerUsers).to.containDeep(['user-123']);
   });
+
+  it('rejects duplicate list when uniqueness set includes owners and same user exists', async () => {
+    // Set up the environment variables with set[owners] uniqueness
+    appWithClient = await setupApplication({
+      list_kinds: 'book-list',
+      uniqueness_list_fields: '_slug,_kind',
+      uniqueness_list_set: 'set[owners]',
+    });
+    ({ client } = appWithClient);
+
+    // First list creation with multiple owners - should succeed
+    const firstList: Partial<GenericList> = {
+      _name: 'Science Fiction Books',
+      _kind: 'book-list',
+      _ownerUsers: ['user-123', 'user-456', 'user-789'],
+      description: 'A list of science fiction books',
+    };
+
+    const firstResponse = await client
+      .post('/generic-lists')
+      .send(firstList)
+      .expect(200);
+
+    expect(firstResponse.body._slug).to.be.equal('science-fiction-books');
+    expect(firstResponse.body._kind).to.be.equal('book-list');
+    expect(firstResponse.body._ownerUsers).to.containDeep([
+      'user-123',
+      'user-456',
+      'user-789',
+    ]);
+
+    // Second list with same name and kind, and one overlapping owner - should fail
+    const secondList: Partial<GenericList> = {
+      _name: 'Science Fiction Books',
+      _kind: 'book-list',
+      _ownerUsers: ['user-123', 'user-999'], // user-123 exists in first list
+      description: 'Another list of science fiction books',
+    };
+
+    const errorResponse = await client
+      .post('/generic-lists')
+      .send(secondList)
+      .expect(409);
+
+    expect(errorResponse.body.error).to.containDeep({
+      statusCode: 409,
+      name: 'DataUniquenessViolationError',
+      message: 'List already exists.',
+      code: 'LIST-ALREADY-EXISTS',
+    });
+  });
 });
