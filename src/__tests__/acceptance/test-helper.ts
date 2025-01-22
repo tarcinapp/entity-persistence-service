@@ -1,3 +1,4 @@
+import type { DataSource } from '@loopback/repository';
 import { RestBindings } from '@loopback/rest';
 import type { Client } from '@loopback/testlab';
 import { createRestAppClient, givenHttpServerConfig } from '@loopback/testlab';
@@ -446,7 +447,7 @@ export async function teardownApplication(appWithClient: AppWithClient) {
     // Stop the application and disconnect all datasources
     await appWithClient.app.stop();
     for (const ds of appWithClient.app.find('datasources.*')) {
-      const dataSource = appWithClient.app.getSync(ds.key);
+      const dataSource = appWithClient.app.getSync<DataSource>(ds.key);
       if (dataSource.disconnect) {
         await dataSource.disconnect();
       }
