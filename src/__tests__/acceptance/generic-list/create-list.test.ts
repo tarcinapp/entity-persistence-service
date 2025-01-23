@@ -623,4 +623,433 @@ describe('POST /generic-lists', () => {
       code: 'VALIDATION_FAILED',
     });
   });
+
+  it('enforces global record count limit', async () => {
+    // Set up the environment variables with record limit
+    appWithClient = await setupApplication({
+      list_kinds: 'book-list',
+      record_limit_list_count: '2', // Only allow 2 records total
+    });
+    ({ client } = appWithClient);
+
+    // First list - should succeed
+    const firstList = {
+      _name: 'First List',
+      _kind: 'book-list',
+      description: 'First list within limit',
+    };
+    await client.post('/generic-lists').send(firstList).expect(200);
+
+    // Second list - should succeed
+    const secondList = {
+      _name: 'Second List',
+      _kind: 'book-list',
+      description: 'Second list within limit',
+    };
+    await client.post('/generic-lists').send(secondList).expect(200);
+
+    // Third list - should fail due to limit
+    const thirdList = {
+      _name: 'Third List',
+      _kind: 'book-list',
+      description: 'Third list exceeding limit',
+    };
+    const errorResponse = await client
+      .post('/generic-lists')
+      .send(thirdList)
+      .expect(429);
+
+    expect(errorResponse.body.error).to.containDeep({
+      statusCode: 429,
+      name: 'LimitExceededError',
+      message: 'List limit is exceeded.',
+      code: 'LIST-LIMIT-EXCEEDED',
+      status: 429,
+      details: [
+        {
+          code: 'LIST-LIMIT-EXCEEDED',
+          info: {
+            limit: 2,
+          },
+        },
+      ],
+    });
+  });
+
+  it('enforces kind-specific record count limit', async () => {
+    // Set up the environment variables with kind-specific record limit
+    appWithClient = await setupApplication({
+      list_kinds: 'book-list,featured-list',
+      'record_limit_list_count_for_book-list': '1', // Only allow 1 book-list
+    });
+    ({ client } = appWithClient);
+
+    // First book list - should succeed
+    const firstBookList = {
+      _name: 'First Book List',
+      _kind: 'book-list',
+      description: 'First book list within limit',
+    };
+    await client.post('/generic-lists').send(firstBookList).expect(200);
+
+    // Featured list - should succeed (different kind)
+    const featuredList = {
+      _name: 'Featured List',
+      _kind: 'featured-list',
+      description: 'Featured list not affected by book-list limit',
+    };
+    await client.post('/generic-lists').send(featuredList).expect(200);
+
+    // Second book list - should fail due to kind-specific limit
+    const secondBookList = {
+      _name: 'Second Book List',
+      _kind: 'book-list',
+      description: 'Second book list exceeding limit',
+    };
+    const errorResponse = await client
+      .post('/generic-lists')
+      .send(secondBookList)
+      .expect(429);
+
+    expect(errorResponse.body.error).to.containDeep({
+      statusCode: 429,
+      name: 'LimitExceededError',
+      message: 'List limit is exceeded.',
+      code: 'LIST-LIMIT-EXCEEDED',
+      status: 429,
+      details: [
+        {
+          code: 'LIST-LIMIT-EXCEEDED',
+          info: {
+            limit: 1,
+          },
+        },
+      ],
+    });
+  });
+
+  it('enforces record set limit for active records', async () => {
+    // Set up the environment variables with record set limit for active records
+    appWithClient = await setupApplication({
+      list_kinds: 'book-list',
+      record_limit_list_count: '2', // Allow 2 records total and active at a time
+      record_limit_list_set: 'set[actives]', // Limit applies to active records
+    });
+    ({ client } = appWithClient);
+
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 7);
+
+    // First active list - should succeed
+    const firstList = {
+      _name: 'First Active List',
+      _kind: 'book-list',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      description: 'First active list within limit',
+    };
+    await client.post('/generic-lists').send(firstList).expect(200);
+
+    // Second active list - should succeed
+    const secondList = {
+      _name: 'Second Active List',
+      _kind: 'book-list',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      description: 'Second active list within limit',
+    };
+    await client.post('/generic-lists').send(secondList).expect(200);
+
+    // Inactive list - should succeed despite active records limit
+    const inactiveList = {
+      _name: 'Inactive List',
+      _kind: 'book-list',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(), // Already expired
+      description: 'Inactive list not counted in active limit',
+    };
+    await client.post('/generic-lists').send(inactiveList).expect(200);
+
+    // Third active list - should fail due to active records limit
+    const thirdActiveList = {
+      _name: 'Third Active List',
+      _kind: 'book-list',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      description: 'Third active list exceeding limit',
+    };
+    const errorResponse = await client
+      .post('/generic-lists')
+      .send(thirdActiveList)
+      .expect(429);
+
+    expect(errorResponse.body.error).to.containDeep({
+      statusCode: 429,
+      name: 'LimitExceededError',
+      message: 'List limit is exceeded.',
+      code: 'LIST-LIMIT-EXCEEDED',
+      status: 429,
+      details: [
+        {
+          code: 'LIST-LIMIT-EXCEEDED',
+          info: {
+            limit: 2,
+          },
+        },
+      ],
+    });
+  });
+
+  it('enforces kind-specific record set limit for active records', async () => {
+    // Set up the environment variables with kind-specific record set limit
+    appWithClient = await setupApplication({
+      list_kinds: 'book-list,featured-list',
+      'record_limit_list_set_for_book-list': 'set[actives]',
+      'record_limit_list_count_for_book-list': '1', // Only 1 active book-list
+    });
+    ({ client } = appWithClient);
+
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 7);
+
+    // First active book list - should succeed
+    const firstBookList = {
+      _name: 'First Active Book List',
+      _kind: 'book-list',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      description: 'First active book list within limit',
+    };
+    await client.post('/generic-lists').send(firstBookList).expect(200);
+
+    // Active featured list - should succeed (different kind)
+    const featuredList = {
+      _name: 'Active Featured List',
+      _kind: 'featured-list',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      description: 'Featured list not affected by book-list limit',
+    };
+    await client.post('/generic-lists').send(featuredList).expect(200);
+
+    // Second active book list - should fail due to kind-specific active limit
+    const secondBookList = {
+      _name: 'Second Active Book List',
+      _kind: 'book-list',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      description: 'Second active book list exceeding limit',
+    };
+    const errorResponse = await client
+      .post('/generic-lists')
+      .send(secondBookList)
+      .expect(429);
+
+    expect(errorResponse.body.error).to.containDeep({
+      statusCode: 429,
+      name: 'LimitExceededError',
+      message: 'List limit is exceeded.',
+      code: 'LIST-LIMIT-EXCEEDED',
+      status: 429,
+      details: [
+        {
+          code: 'LIST-LIMIT-EXCEEDED',
+          info: {
+            limit: 1,
+          },
+        },
+      ],
+    });
+  });
+
+  it('enforces record set limit for active and public records', async () => {
+    // Set up the environment variables with record set limit for both active and public records
+    appWithClient = await setupApplication({
+      list_kinds: 'book-list',
+      record_limit_list_count: '2', // Allow 2 records total that are both active and public
+      record_limit_list_set: 'set[actives]&set[publics]', // Limit applies to records that are both active and public
+    });
+    ({ client } = appWithClient);
+
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 7);
+
+    // First active and public list - should succeed
+    const firstList = {
+      _name: 'First Active Public List',
+      _kind: 'book-list',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      _visibility: 'public',
+      description: 'First active and public list within limit',
+    };
+    await client.post('/generic-lists').send(firstList).expect(200);
+
+    // Second active and public list - should succeed
+    const secondList = {
+      _name: 'Second Active Public List',
+      _kind: 'book-list',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      _visibility: 'public',
+      description: 'Second active and public list within limit',
+    };
+    await client.post('/generic-lists').send(secondList).expect(200);
+
+    // Active but private list - should succeed despite limit (not public)
+    const privateList = {
+      _name: 'Private Active List',
+      _kind: 'book-list',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      _visibility: 'private',
+      description: 'Private active list not counted in limit',
+    };
+    await client.post('/generic-lists').send(privateList).expect(200);
+
+    // Public but inactive list - should succeed despite limit (not active)
+    const inactiveList = {
+      _name: 'Inactive Public List',
+      _kind: 'book-list',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(), // Already expired
+      _visibility: 'public',
+      description: 'Inactive public list not counted in limit',
+    };
+    await client.post('/generic-lists').send(inactiveList).expect(200);
+
+    // Third active and public list - should fail due to combined active+public limit
+    const thirdActivePublicList = {
+      _name: 'Third Active Public List',
+      _kind: 'book-list',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      _visibility: 'public',
+      description: 'Third active and public list exceeding limit',
+    };
+    const errorResponse = await client
+      .post('/generic-lists')
+      .send(thirdActivePublicList)
+      .expect(429);
+
+    expect(errorResponse.body.error).to.containDeep({
+      statusCode: 429,
+      name: 'LimitExceededError',
+      message: 'List limit is exceeded.',
+      code: 'LIST-LIMIT-EXCEEDED',
+      status: 429,
+      details: [
+        {
+          code: 'LIST-LIMIT-EXCEEDED',
+          info: {
+            limit: 2,
+          },
+        },
+      ],
+    });
+  });
+
+  it('enforces record limit per user using owners set', async () => {
+    // Set up the environment variables with record set limit for owners
+    appWithClient = await setupApplication({
+      list_kinds: 'book-list',
+      record_limit_list_count: '2', // Allow 2 records per user
+      record_limit_list_set: 'set[owners]', // Limit applies per owner
+    });
+    ({ client } = appWithClient);
+
+    const userId = 'user-123';
+
+    // First list for user - should succeed
+    const firstList = {
+      _name: 'First User List',
+      _kind: 'book-list',
+      _ownerUsers: [userId],
+      description: 'First list for the user within limit',
+    };
+    await client.post('/generic-lists').send(firstList).expect(200);
+
+    // Second list for user - should succeed
+    const secondList = {
+      _name: 'Second User List',
+      _kind: 'book-list',
+      _ownerUsers: [userId],
+      description: 'Second list for the user within limit',
+    };
+    await client.post('/generic-lists').send(secondList).expect(200);
+
+    // List for different user - should succeed despite limit
+    const differentUserList = {
+      _name: 'Different User List',
+      _kind: 'book-list',
+      _ownerUsers: ['user-456'],
+      description: 'List for different user not counted in limit',
+    };
+    await client.post('/generic-lists').send(differentUserList).expect(200);
+
+    // List with multiple owners including our user - should fail due to user's limit
+    const multiOwnerList = {
+      _name: 'Multi Owner List',
+      _kind: 'book-list',
+      _ownerUsers: [userId, 'user-789'], // Includes the limited user
+      description: 'List with multiple owners including limited user',
+    };
+    const errorResponse = await client
+      .post('/generic-lists')
+      .send(multiOwnerList)
+      .expect(429);
+
+    expect(errorResponse.body.error).to.containDeep({
+      statusCode: 429,
+      name: 'LimitExceededError',
+      message: 'List limit is exceeded.',
+      code: 'LIST-LIMIT-EXCEEDED',
+      status: 429,
+      details: [
+        {
+          code: 'LIST-LIMIT-EXCEEDED',
+          info: {
+            limit: 2,
+          },
+        },
+      ],
+    });
+
+    // Third list for user - should fail due to user's limit
+    const thirdList = {
+      _name: 'Third User List',
+      _kind: 'book-list',
+      _ownerUsers: [userId],
+      description: 'Third list for the user exceeding limit',
+    };
+    const secondErrorResponse = await client
+      .post('/generic-lists')
+      .send(thirdList)
+      .expect(429);
+
+    expect(secondErrorResponse.body.error).to.containDeep({
+      statusCode: 429,
+      name: 'LimitExceededError',
+      message: 'List limit is exceeded.',
+      code: 'LIST-LIMIT-EXCEEDED',
+      status: 429,
+      details: [
+        {
+          code: 'LIST-LIMIT-EXCEEDED',
+          info: {
+            limit: 2,
+          },
+        },
+      ],
+    });
+  });
 });
