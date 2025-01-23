@@ -444,4 +444,106 @@ describe('POST /generic-lists', () => {
       futureDate.toISOString(),
     );
   });
+
+  it('automatically sets validFromDateTime when autoapprove_list is true', async () => {
+    // Set up the environment variables with autoapprove_list enabled
+    appWithClient = await setupApplication({
+      list_kinds: 'book-list',
+      autoapprove_list: 'true',
+    });
+    ({ client } = appWithClient);
+
+    const newList: Partial<GenericList> = {
+      _name: 'Auto Approved List',
+      _kind: 'book-list',
+      description: 'A list that should be auto-approved',
+    };
+
+    const response = await client
+      .post('/generic-lists')
+      .send(newList)
+      .expect(200);
+
+    // Verify the response
+    expect(response.body._slug).to.be.equal('auto-approved-list');
+    expect(response.body._kind).to.be.equal('book-list');
+
+    // Verify that _validFromDateTime was automatically set to current time
+    const now = new Date();
+    const validFrom = new Date(response.body._validFromDateTime);
+    expect(validFrom).to.be.Date();
+    expect(validFrom.getTime()).to.be.approximately(now.getTime(), 5000); // Allow 5 second difference
+
+    // Verify other fields
+    expect(response.body.description).to.be.equal(
+      'A list that should be auto-approved',
+    );
+  });
+
+  it('automatically sets validFromDateTime when autoapprove_list_for_kind matches', async () => {
+    // Set up the environment variables with kind-specific auto-approve
+    appWithClient = await setupApplication({
+      list_kinds: 'book-list,featured-list',
+      autoapprove_list_for_book_list: 'true',
+    });
+    ({ client } = appWithClient);
+
+    const newList: Partial<GenericList> = {
+      _name: 'Auto Approved Book List',
+      _kind: 'book-list', // This kind matches the auto-approve configuration
+      description: 'A book list that should be auto-approved',
+    };
+
+    const response = await client
+      .post('/generic-lists')
+      .send(newList)
+      .expect(200);
+
+    // Verify the response
+    expect(response.body._slug).to.be.equal('auto-approved-book-list');
+    expect(response.body._kind).to.be.equal('book-list');
+
+    // Verify that _validFromDateTime was automatically set to current time
+    const now = new Date();
+    const validFrom = new Date(response.body._validFromDateTime);
+    expect(validFrom).to.be.Date();
+    expect(validFrom.getTime()).to.be.approximately(now.getTime(), 5000); // Allow 5 second difference
+
+    // Verify other fields
+    expect(response.body.description).to.be.equal(
+      'A book list that should be auto-approved',
+    );
+  });
+
+  it('does not set validFromDateTime when autoapprove_list_for_kind does not match', async () => {
+    // Set up the environment variables with kind-specific auto-approve for a different kind
+    appWithClient = await setupApplication({
+      list_kinds: 'book-list,featured-list',
+      autoapprove_list_for_featured_list: 'true', // Auto-approve only for featured-list
+    });
+    ({ client } = appWithClient);
+
+    const newList: Partial<GenericList> = {
+      _name: 'Non Auto Approved Book List',
+      _kind: 'book-list', // This kind does not match the auto-approve configuration
+      description: 'A book list that should not be auto-approved',
+    };
+
+    const response = await client
+      .post('/generic-lists')
+      .send(newList)
+      .expect(200);
+
+    // Verify the response
+    expect(response.body._slug).to.be.equal('non-auto-approved-book-list');
+    expect(response.body._kind).to.be.equal('book-list');
+
+    // Verify that _validFromDateTime was not automatically set
+    expect(response.body._validFromDateTime).to.be.null();
+
+    // Verify other fields
+    expect(response.body.description).to.be.equal(
+      'A book list that should not be auto-approved',
+    );
+  });
 });
