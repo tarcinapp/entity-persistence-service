@@ -546,4 +546,81 @@ describe('POST /generic-lists', () => {
       'A book list that should not be auto-approved',
     );
   });
+
+  it('sets visibility to private when visibility_list is configured as private', async () => {
+    // Set up the environment variables with visibility configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'book-list',
+      visibility_list: 'private',
+    });
+    ({ client } = appWithClient);
+
+    const newList: Partial<GenericList> = {
+      _name: 'Private List',
+      _kind: 'book-list',
+      description: 'A list that should be private by default',
+    };
+
+    const response = await client
+      .post('/generic-lists')
+      .send(newList)
+      .expect(200);
+
+    // Verify the response
+    expect(response.body._slug).to.be.equal('private-list');
+    expect(response.body._kind).to.be.equal('book-list');
+    expect(response.body._visibility).to.be.equal('private');
+  });
+
+  it('sets visibility to public when visibility_list_for_kind is configured as public', async () => {
+    // Set up the environment variables with kind-specific visibility
+    appWithClient = await setupApplication({
+      list_kinds: 'book-list,featured-list',
+      'visibility_list_for_book-list': 'public',
+    });
+    ({ client } = appWithClient);
+
+    const newList: Partial<GenericList> = {
+      _name: 'Public Book List',
+      _kind: 'book-list',
+      description: 'A book list that should be public by default',
+    };
+
+    const response = await client
+      .post('/generic-lists')
+      .send(newList)
+      .expect(200);
+
+    // Verify the response
+    expect(response.body._slug).to.be.equal('public-book-list');
+    expect(response.body._kind).to.be.equal('book-list');
+    expect(response.body._visibility).to.be.equal('public');
+  });
+
+  it('rejects list creation with invalid visibility value', async () => {
+    appWithClient = await setupApplication({
+      list_kinds: 'book-list',
+    });
+    ({ client } = appWithClient);
+
+    const newList: Partial<GenericList> = {
+      _name: 'Invalid Visibility List',
+      _kind: 'book-list',
+      _visibility: 'invalid-value', // Invalid visibility value
+      description: 'A list with invalid visibility',
+    };
+
+    const errorResponse = await client
+      .post('/generic-lists')
+      .send(newList)
+      .expect(422);
+
+    expect(errorResponse.body.error).to.containDeep({
+      statusCode: 422,
+      name: 'UnprocessableEntityError',
+      message:
+        'The request body is invalid. See error object `details` property for more info.',
+      code: 'VALIDATION_FAILED',
+    });
+  });
 });
