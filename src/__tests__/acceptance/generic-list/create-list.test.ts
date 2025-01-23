@@ -484,13 +484,13 @@ describe('POST /generic-lists', () => {
     // Set up the environment variables with kind-specific auto-approve
     appWithClient = await setupApplication({
       list_kinds: 'book-list,featured-list',
-      autoapprove_list_for_book_list: 'true',
+      'autoapprove_list_for_book-list': 'true',
     });
     ({ client } = appWithClient);
 
     const newList: Partial<GenericList> = {
       _name: 'Auto Approved Book List',
-      _kind: 'book-list', // This kind matches the auto-approve configuration
+      _kind: 'book-list',
       description: 'A book list that should be auto-approved',
     };
 
@@ -519,13 +519,13 @@ describe('POST /generic-lists', () => {
     // Set up the environment variables with kind-specific auto-approve for a different kind
     appWithClient = await setupApplication({
       list_kinds: 'book-list,featured-list',
-      autoapprove_list_for_featured_list: 'true', // Auto-approve only for featured-list
+      'autoapprove-list-for-featured-list': 'true',
     });
     ({ client } = appWithClient);
 
     const newList: Partial<GenericList> = {
       _name: 'Non Auto Approved Book List',
-      _kind: 'book-list', // This kind does not match the auto-approve configuration
+      _kind: 'book-list',
       description: 'A book list that should not be auto-approved',
     };
 
