@@ -25,8 +25,7 @@ import {
   ValidfromConfigurationReader,
   VisibilityConfigurationReader,
 } from '../extensions';
-import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
-import { SetFilterBuilder } from '../extensions/utils/set';
+import { FilterMatcher } from '../extensions/utils/filter-matcher';
 import {
   GenericEntity,
   GenericList,
@@ -46,6 +45,8 @@ import { ListReactionsRepository } from './list-reactions.repository';
 import { ListRelationRepository } from './list-relation.repository';
 import { TagListRelationRepository } from './tag-list-relation.repository';
 import { TagRepository } from './tag.repository';
+import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
+import { SetFilterBuilder } from '../extensions/utils/set';
 
 export class GenericListRepository extends DefaultCrudRepository<
   GenericList,
@@ -614,6 +615,7 @@ export class GenericListRepository extends DefaultCrudRepository<
       newData._ownerGroups,
       newData._kind,
     );
+
     let filterBuilder: FilterBuilder<GenericList>;
 
     if (
@@ -637,6 +639,12 @@ export class GenericListRepository extends DefaultCrudRepository<
       filter = new SetFilterBuilder<GenericList>(set, {
         filter: filter,
       }).build();
+
+      // Check if the new record would match the set filter
+      if (!this.wouldRecordMatchFilter(newData, filter.where)) {
+        // Record wouldn't be part of the set, no need to check limits
+        return;
+      }
     }
 
     const currentCount = await this.count(filter.where);
@@ -658,6 +666,19 @@ export class GenericListRepository extends DefaultCrudRepository<
         ],
       });
     }
+  }
+
+  /**
+   * Evaluates if a record would match a given filter
+   * @param record The record to evaluate
+   * @param whereClause The filter conditions to check
+   * @returns boolean indicating if the record would match the filter
+   */
+  private wouldRecordMatchFilter(
+    record: DataObject<GenericList>,
+    whereClause: Where<GenericList> | undefined,
+  ): boolean {
+    return FilterMatcher.matches(record, whereClause);
   }
 
   private generateSlug(data: DataObject<GenericList>) {
