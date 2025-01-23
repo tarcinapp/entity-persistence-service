@@ -1,3 +1,4 @@
+import type { DataObject } from '@loopback/repository';
 import type { Client } from '@loopback/testlab';
 import { expect } from '@loopback/testlab';
 import type { UniquenessConfigurationReader } from '../../../extensions';
@@ -301,6 +302,68 @@ describe('POST /generic-lists', () => {
       _name: 'Science Fiction Books',
       _kind: 'book-list',
       _ownerUsers: ['user-123', 'user-999'], // user-123 exists in first list
+      description: 'Another list of science fiction books',
+    };
+
+    const errorResponse = await client
+      .post('/generic-lists')
+      .send(secondList)
+      .expect(409);
+
+    expect(errorResponse.body.error).to.containDeep({
+      statusCode: 409,
+      name: 'DataUniquenessViolationError',
+      message: 'List already exists.',
+      code: 'LIST-ALREADY-EXISTS',
+    });
+  });
+
+  it('rejects duplicate list when uniqueness set includes actives and both lists are active', async () => {
+    // Set up the environment variables with set[actives] uniqueness
+    appWithClient = await setupApplication({
+      list_kinds: 'book-list',
+      uniqueness_list_fields: '_slug,_kind',
+      uniqueness_list_set: 'set[actives]',
+    });
+    ({ client } = appWithClient);
+
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - 1); // Yesterday
+
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 7); // 7 days from now
+
+    // First list creation with validity period - should succeed
+    const firstList: DataObject<GenericList> = {
+      _name: 'Science Fiction Books',
+      _kind: 'book-list',
+      _ownerUsers: ['user-123'],
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      description: 'A list of science fiction books',
+    };
+
+    const firstResponse = await client
+      .post('/generic-lists')
+      .send(firstList)
+      .expect(200);
+
+    expect(firstResponse.body._slug).to.be.equal('science-fiction-books');
+    expect(firstResponse.body._kind).to.be.equal('book-list');
+    expect(firstResponse.body._validFromDateTime).to.be.equal(
+      pastDate.toISOString(),
+    );
+    expect(firstResponse.body._validUntilDateTime).to.be.equal(
+      futureDate.toISOString(),
+    );
+
+    // Second list with same name and kind, different owner, but also active - should fail
+    const secondList: Partial<GenericList> = {
+      _name: 'Science Fiction Books',
+      _kind: 'book-list',
+      _ownerUsers: ['user-999'], // Different owner
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: null, // No end date, meaning indefinitely active
       description: 'Another list of science fiction books',
     };
 

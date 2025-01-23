@@ -439,18 +439,18 @@ export class GenericEntityRepository extends DefaultCrudRepository<
       : now;
 
     // autoapprove the record if it is configured
+    const shouldAutoValidate =
+      this.validfromConfigReader.getValidFromForEntities(data._kind);
     data._validFromDateTime =
-      this.validfromConfigReader.getValidFromForEntities(data._kind)
-        ? now
-        : undefined;
+      data._validFromDateTime ?? (shouldAutoValidate ? now : undefined);
 
     // new data is starting from version 1
     data._version = 1;
 
     // set visibility
-    data._visibility = this.visibilityConfigReader.getVisibilityForEntities(
-      data._kind,
-    );
+    data._visibility = data._visibility
+      ? data._visibility
+      : this.visibilityConfigReader.getVisibilityForEntities(data._kind);
 
     // prepare slug from the name and set to the record
     this.generateSlug(data);

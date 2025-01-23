@@ -523,21 +523,22 @@ export class GenericListRepository extends DefaultCrudRepository<
       ? data._lastUpdatedDateTime
       : now;
 
-    // autoapprove the record if it is configured
-
-    data._validFromDateTime = this.validfromConfigReader.getValidFromForLists(
+    // If validFromDateTime is already set, use that value
+    // Otherwise, check if auto-validation is enabled for this kind
+    // If enabled, set to current time, if not, leave undefined
+    const shouldAutoValidate = this.validfromConfigReader.getValidFromForLists(
       data._kind,
-    )
-      ? now
-      : undefined;
+    );
+    data._validFromDateTime =
+      data._validFromDateTime ?? (shouldAutoValidate ? now : undefined);
 
     // new data is starting from version 1
     data._version = 1;
 
     // set visibility
-    data._visibility = this.visibilityConfigReader.getVisibilityForLists(
-      data._kind,
-    );
+    data._visibility = data._visibility
+      ? data._visibility
+      : this.visibilityConfigReader.getVisibilityForLists(data._kind);
 
     // prepare slug from the name and set to the record
     this.generateSlug(data);
