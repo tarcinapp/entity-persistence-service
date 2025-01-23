@@ -379,4 +379,69 @@ describe('POST /generic-lists', () => {
       code: 'LIST-ALREADY-EXISTS',
     });
   });
+
+  it('allows duplicate list when uniqueness set includes actives and existing list is inactive', async () => {
+    // Set up the environment variables with set[actives] uniqueness
+    appWithClient = await setupApplication({
+      list_kinds: 'book-list',
+      uniqueness_list_fields: '_slug,_kind',
+      uniqueness_list_set: 'set[actives]',
+    });
+    ({ client } = appWithClient);
+
+    const pastStartDate = new Date();
+    pastStartDate.setDate(pastStartDate.getDate() - 7); // 7 days ago
+
+    const pastEndDate = new Date();
+    pastEndDate.setDate(pastEndDate.getDate() - 1); // Yesterday
+
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 7); // 7 days from now
+
+    // First list creation with validity period in the past - should succeed
+    const firstList: DataObject<GenericList> = {
+      _name: 'Science Fiction Books',
+      _kind: 'book-list',
+      _ownerUsers: ['user-123'],
+      _validFromDateTime: pastStartDate.toISOString(),
+      _validUntilDateTime: pastEndDate.toISOString(), // List is now inactive
+      description: 'A list of science fiction books',
+    };
+
+    const firstResponse = await client
+      .post('/generic-lists')
+      .send(firstList)
+      .expect(200);
+
+    expect(firstResponse.body._slug).to.be.equal('science-fiction-books');
+    expect(firstResponse.body._kind).to.be.equal('book-list');
+    expect(firstResponse.body._validFromDateTime).to.be.equal(
+      pastStartDate.toISOString(),
+    );
+    expect(firstResponse.body._validUntilDateTime).to.be.equal(
+      pastEndDate.toISOString(),
+    );
+
+    // Second list with same name and kind, different owner, and active - should succeed since first list is inactive
+    const secondList: Partial<GenericList> = {
+      _name: 'Science Fiction Books',
+      _kind: 'book-list',
+      _ownerUsers: ['user-999'], // Different owner
+      _validFromDateTime: new Date().toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      description: 'Another list of science fiction books',
+    };
+
+    const secondResponse = await client
+      .post('/generic-lists')
+      .send(secondList)
+      .expect(200);
+
+    expect(secondResponse.body._slug).to.be.equal('science-fiction-books');
+    expect(secondResponse.body._kind).to.be.equal('book-list');
+    expect(secondResponse.body._validFromDateTime).to.not.be.null();
+    expect(secondResponse.body._validUntilDateTime).to.be.equal(
+      futureDate.toISOString(),
+    );
+  });
 });
