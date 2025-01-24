@@ -4,7 +4,11 @@ import { expect } from '@loopback/testlab';
 import type { UniquenessConfigurationReader } from '../../../extensions';
 import type { GenericList } from '../../../models';
 import type { AppWithClient } from '../test-helper';
-import { setupApplication, teardownApplication } from '../test-helper';
+import {
+  setupApplication,
+  teardownApplication,
+  expectResponseToMatch,
+} from '../test-helper';
 
 describe('POST /generic-lists', () => {
   let client: Client;
@@ -262,9 +266,12 @@ describe('POST /generic-lists', () => {
       .send(secondList)
       .expect(200);
 
-    expect(secondResponse.body._slug).to.be.equal('science-fiction-books');
-    expect(secondResponse.body._kind).to.be.equal('book-list');
-    expect(secondResponse.body._ownerUsers).to.containDeep(['user-123']);
+    // Verify all fields in the second response match the first response
+    expectResponseToMatch(secondResponse.body, firstResponse.body);
+
+    // Verify only one record exists by getting all lists
+    const getAllResponse = await client.get('/generic-lists').expect(200);
+    expect(getAllResponse.body).to.be.Array().lengthOf(1); // Only one record should exist
   });
 
   it('rejects duplicate list when uniqueness set includes owners and same user exists', async () => {
@@ -437,12 +444,12 @@ describe('POST /generic-lists', () => {
       .send(secondList)
       .expect(200);
 
-    expect(secondResponse.body._slug).to.be.equal('science-fiction-books');
-    expect(secondResponse.body._kind).to.be.equal('book-list');
-    expect(secondResponse.body._validFromDateTime).to.not.be.null();
-    expect(secondResponse.body._validUntilDateTime).to.be.equal(
-      futureDate.toISOString(),
-    );
+    // Verify all fields in the second response match the first response
+    expectResponseToMatch(secondResponse.body, firstResponse.body);
+
+    // Verify only one record exists by getting all lists
+    const getAllResponse = await client.get('/generic-lists').expect(200);
+    expect(getAllResponse.body).to.be.Array().lengthOf(1); // Only one record should exist
   });
 
   it('automatically sets validFromDateTime when autoapprove_list is true', async () => {
@@ -1051,5 +1058,226 @@ describe('POST /generic-lists', () => {
         },
       ],
     });
+  });
+
+  it('enforces idempotency based on configured fields', async () => {
+    // Set up the environment variables with idempotency configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'book-list',
+      idempotency_list: '_kind,_slug,description', // Configure idempotency fields
+    });
+    ({ client } = appWithClient);
+
+    // First list creation - should succeed
+    const firstList = {
+      _name: 'Science Books',
+      _kind: 'book-list',
+      description: 'A list of science books', // This will be part of idempotency check
+      _ownerUsers: ['user-123'], // This field is not part of idempotency
+      _visibility: 'private', // This field is not part of idempotency
+    };
+
+    const firstResponse = await client
+      .post('/generic-lists')
+      .send(firstList)
+      .expect(200);
+
+    // Verify the first response
+    expect(firstResponse.body._slug).to.be.equal('science-books');
+    expect(firstResponse.body._kind).to.be.equal('book-list');
+    expect(firstResponse.body.description).to.be.equal(
+      'A list of science books',
+    );
+    expect(firstResponse.body._ownerUsers).to.containDeep(['user-123']);
+    expect(firstResponse.body._visibility).to.be.equal('private');
+    expect(firstResponse.body._idempotencyKey).to.be.String();
+
+    // Second list with same idempotency fields but different other fields
+    const secondList = {
+      _name: 'Science Books', // Same name will generate same slug
+      _kind: 'book-list', // Same kind
+      description: 'A list of science books', // Same description
+      _ownerUsers: ['user-456'], // Different owner
+      _visibility: 'public', // Different visibility
+    };
+
+    const secondResponse = await client
+      .post('/generic-lists')
+      .send(secondList)
+      .expect(200);
+
+    // Verify all fields in the second response match the first response
+    expectResponseToMatch(secondResponse.body, firstResponse.body);
+
+    // Verify only one record exists by getting all lists
+    const getAllResponse = await client.get('/generic-lists').expect(200);
+    expect(getAllResponse.body).to.be.Array().lengthOf(1); // Only one record should exist
+  });
+
+  it('enforces kind-specific idempotency configuration', async () => {
+    // Set up the environment variables with kind-specific idempotency
+    appWithClient = await setupApplication({
+      list_kinds: 'book-list,featured-list',
+      'idempotency_list_for_book-list': '_kind,_slug,_ownerUsers', // Different fields for book-list
+      'idempotency_list_for_featured-list': '_kind,description', // Different fields for featured-list
+    });
+    ({ client } = appWithClient);
+
+    // First book list - should succeed
+    const firstBookList = {
+      _name: 'Science Books',
+      _kind: 'book-list',
+      description: 'First description', // Not part of idempotency for book-list
+      _ownerUsers: ['user-123'], // Part of idempotency for book-list
+    };
+
+    const firstBookResponse = await client
+      .post('/generic-lists')
+      .send(firstBookList)
+      .expect(200);
+
+    // Second book list with same idempotency fields - should return same record
+    const secondBookList = {
+      _name: 'Science Books', // Will generate same slug
+      _kind: 'book-list',
+      description: 'Different description', // Can be different as not part of idempotency
+      _ownerUsers: ['user-123'], // Same owner
+    };
+
+    const secondBookResponse = await client
+      .post('/generic-lists')
+      .send(secondBookList)
+      .expect(200);
+
+    // Verify responses match
+    expectResponseToMatch(secondBookResponse.body, firstBookResponse.body);
+
+    // First featured list - should succeed
+    const firstFeaturedList = {
+      _name: 'Featured Books',
+      _kind: 'featured-list',
+      description: 'Featured description', // Part of idempotency for featured-list
+      _ownerUsers: ['user-456'], // Not part of idempotency for featured-list
+    };
+
+    const firstFeaturedResponse = await client
+      .post('/generic-lists')
+      .send(firstFeaturedList)
+      .expect(200);
+
+    // Second featured list with same idempotency fields - should return same record
+    const secondFeaturedList = {
+      _name: 'Different Name', // Can be different as not part of idempotency
+      _kind: 'featured-list',
+      description: 'Featured description', // Same description
+      _ownerUsers: ['user-789'], // Can be different as not part of idempotency
+    };
+
+    const secondFeaturedResponse = await client
+      .post('/generic-lists')
+      .send(secondFeaturedList)
+      .expect(200);
+
+    // Verify responses match
+    expectResponseToMatch(
+      secondFeaturedResponse.body,
+      firstFeaturedResponse.body,
+    );
+
+    // Verify only two records exist (one for each kind)
+    const getAllResponse = await client.get('/generic-lists').expect(200);
+    expect(getAllResponse.body).to.be.Array().lengthOf(2);
+  });
+
+  it('enforces idempotency with array fields', async () => {
+    // Set up the environment variables with array fields in idempotency
+    appWithClient = await setupApplication({
+      list_kinds: 'book-list',
+      idempotency_list: '_kind,_ownerUsers,_viewerUsers', // Using array fields for idempotency
+    });
+    ({ client } = appWithClient);
+
+    // First list - should succeed
+    const firstList = {
+      _name: 'First List',
+      _kind: 'book-list',
+      _ownerUsers: ['user-123', 'user-456'],
+      _viewerUsers: ['viewer-1', 'viewer-2'],
+      description: 'First description',
+    };
+
+    const firstResponse = await client
+      .post('/generic-lists')
+      .send(firstList)
+      .expect(200);
+
+    // Second list with same array values but different order - should return same record
+    const secondList = {
+      _name: 'Different Name',
+      _kind: 'book-list',
+      _ownerUsers: ['user-456', 'user-123'], // Same values, different order
+      _viewerUsers: ['viewer-2', 'viewer-1'], // Same values, different order
+      description: 'Different description',
+    };
+
+    const secondResponse = await client
+      .post('/generic-lists')
+      .send(secondList)
+      .expect(200);
+
+    // Verify responses match
+    expectResponseToMatch(secondResponse.body, firstResponse.body);
+
+    // Verify only one record exists
+    const getAllResponse = await client.get('/generic-lists').expect(200);
+    expect(getAllResponse.body).to.be.Array().lengthOf(1);
+  });
+
+  it('enforces idempotency with date fields', async () => {
+    // Set up the environment variables with date fields in idempotency
+    appWithClient = await setupApplication({
+      list_kinds: 'book-list',
+      idempotency_list: '_kind,_validFromDateTime,_validUntilDateTime', // Using date fields for idempotency
+    });
+    ({ client } = appWithClient);
+
+    const validFrom = new Date();
+    const validUntil = new Date();
+    validUntil.setDate(validUntil.getDate() + 7);
+
+    // First list - should succeed
+    const firstList = {
+      _name: 'First List',
+      _kind: 'book-list',
+      _validFromDateTime: validFrom.toISOString(),
+      _validUntilDateTime: validUntil.toISOString(),
+      description: 'First description',
+    };
+
+    const firstResponse = await client
+      .post('/generic-lists')
+      .send(firstList)
+      .expect(200);
+
+    // Second list with same dates but different other fields - should return same record
+    const secondList = {
+      _name: 'Different Name',
+      _kind: 'book-list',
+      _validFromDateTime: validFrom.toISOString(),
+      _validUntilDateTime: validUntil.toISOString(),
+      description: 'Different description',
+    };
+
+    const secondResponse = await client
+      .post('/generic-lists')
+      .send(secondList)
+      .expect(200);
+
+    // Verify responses match
+    expectResponseToMatch(secondResponse.body, firstResponse.body);
+
+    // Verify only one record exists
+    const getAllResponse = await client.get('/generic-lists').expect(200);
+    expect(getAllResponse.body).to.be.Array().lengthOf(1);
   });
 });

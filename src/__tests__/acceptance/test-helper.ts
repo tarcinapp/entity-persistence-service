@@ -1,7 +1,11 @@
 import type { DataSource } from '@loopback/repository';
 import { RestBindings } from '@loopback/rest';
 import type { Client } from '@loopback/testlab';
-import { createRestAppClient, givenHttpServerConfig } from '@loopback/testlab';
+import {
+  createRestAppClient,
+  givenHttpServerConfig,
+  expect,
+} from '@loopback/testlab';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { EntityPersistenceApplication } from '../..';
 import { EntityDbDataSource } from '../../datasources/entity-db.datasource';
@@ -21,6 +25,33 @@ import {
   KindBindings,
   KindConfigurationReader,
 } from '../../extensions';
+
+/**
+ * Utility function to verify that all fields in two responses match exactly
+ * @param actual The actual response to verify
+ * @param expected The expected response to compare against
+ */
+export function expectResponseToMatch(actual: object, expected: object): void {
+  // Get all keys from both objects
+  const allKeys = new Set([...Object.keys(actual), ...Object.keys(expected)]);
+
+  allKeys.forEach((key) => {
+    expect(actual).to.have.property(key);
+    expect(expected).to.have.property(key);
+
+    if (Array.isArray(actual[key as keyof typeof actual])) {
+      expect(actual[key as keyof typeof actual]).to.deepEqual(
+        expected[key as keyof typeof expected],
+        `Array field ${key} should match`,
+      );
+    } else {
+      expect(actual[key as keyof typeof actual]).to.equal(
+        expected[key as keyof typeof expected],
+        `Field ${key} should match`,
+      );
+    }
+  });
+}
 
 export interface TestEnvironmentVariables {
   // Database Configuration
