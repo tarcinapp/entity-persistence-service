@@ -26,15 +26,15 @@
     "test": "cross-env NODE_ENV=test lb-mocha --allow-console-logs \"dist/__tests__\"",
     "posttest": "npm run lint",
     "test:dev": "lb-mocha --allow-console-logs dist/__tests__/**/*.js && npm run posttest",
+    "test:unit": "cross-env NODE_ENV=test lb-mocha \"dist/__tests__/unit/**/*.test.js\"",
+    "test:acceptance": "cross-env NODE_ENV=test lb-mocha \"dist/__tests__/acceptance/**/*.acceptance.js\"",
     "docker:build": "docker build -t entity-persistence-service .",
     "docker:run": "docker run -p 30003:3000 -d entity-persistence-service",
     "migrate": "node ./dist/migrate",
     "openapi-spec": "node ./dist/openapi-spec",
     "prestart": "npm run build",
     "start": "node -r source-map-support/register .",
-    "clean": "lb-clean dist *.tsbuildinfo .eslintcache",
-    "test:unit": "cross-env NODE_ENV=test lb-mocha \"dist/__tests__/unit/**/*.test.js\"",
-    "test:acceptance": "cross-env NODE_ENV=test lb-mocha \"dist/__tests__/acceptance/**/*.acceptance.js\""
+    "clean": "lb-clean dist *.tsbuildinfo .eslintcache"
   },
   "repository": {
     "type": "git"
