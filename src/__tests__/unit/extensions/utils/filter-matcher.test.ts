@@ -2,7 +2,7 @@ import type { Where } from '@loopback/repository';
 import { expect } from '@loopback/testlab';
 import { FilterMatcher } from '../../../../extensions/utils/filter-matcher';
 
-describe('FilterMatcher', () => {
+describe('Utilities: FilterMatcher', () => {
   describe('matches', () => {
     it('returns true when whereClause is undefined', () => {
       const record = { name: 'test' };
