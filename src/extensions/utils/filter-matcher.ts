@@ -1,4 +1,4 @@
-import type { Where } from '@loopback/repository';
+import type { Condition, Where } from '@loopback/repository';
 import _ from 'lodash';
 
 /**
@@ -58,13 +58,23 @@ export class FilterMatcher {
           return false;
         }
       } else {
-        // Direct equality comparison
-        // For arrays, check if the array contains the value (MongoDB behavior)
         if (Array.isArray(value)) {
-          if (!value.includes(condition)) {
+          if (Array.isArray(condition)) {
+            // For array-to-array comparison, check if arrays are equal
+            if (_.isEqual(value, condition)) {
+              continue;
+            }
+
+            // If not equal, check if condition is a subset of value
+            if (condition.every((item) => value.includes(item))) {
+              continue;
+            }
+
+            return false;
+          } else if (!value.includes(condition)) {
             return false;
           }
-        } else if (value !== condition) {
+        } else if (!_.isEqual(value, condition)) {
           return false;
         }
       }
@@ -81,27 +91,75 @@ export class FilterMatcher {
    */
   private static matchesOperatorCondition(
     value: any,
-    condition: object,
+    condition: Condition<any>,
   ): boolean {
     if (!condition || typeof condition !== 'object') {
       return false;
     }
 
-    // Handle each operator
-    for (const [operator, operand] of Object.entries(condition)) {
+    // Handle array conditions
+    if (Array.isArray(condition)) {
+      if (!Array.isArray(value)) {
+        return false;
+      }
+
+      // For array-to-array comparison, check if arrays are equal
+      if (_.isEqual(value, condition)) {
+        return true;
+      }
+
+      // If not equal, check if condition is a subset of value
+      return condition.every((item) => value.includes(item));
+    }
+
+    // Handle array values
+    if (Array.isArray(value)) {
+      if (typeof condition === 'string' || typeof condition === 'number') {
+        return value.includes(condition);
+      }
+    }
+
+    // Handle operator conditions
+    if (condition && typeof condition === 'object') {
+      const operator = Object.keys(condition)[0];
+      const operatorValue = condition[operator];
+
       // Convert dates to milliseconds for comparison
       const compareValue = FilterMatcher.toMillis(value);
-      const compareOperand = FilterMatcher.toMillis(operand);
+      const compareOperand = FilterMatcher.toMillis(operatorValue);
 
-      // Variables for array operations
+      // Variables for all operations
       let start: any, end: any;
       let inqValues: any[], ninValues: any[];
+      let pattern: RegExp;
+
+      // Process array values if needed
+      if (
+        operator === 'between' &&
+        Array.isArray(operatorValue) &&
+        operatorValue.length === 2
+      ) {
+        start = FilterMatcher.toMillis(operatorValue[0]);
+        end = FilterMatcher.toMillis(operatorValue[1]);
+      }
 
       switch (operator) {
         case 'eq':
-          // For arrays, check if array contains the value
-          if (Array.isArray(compareValue)) {
-            if (!compareValue.includes(compareOperand)) {
+          if (Array.isArray(value)) {
+            if (Array.isArray(compareOperand)) {
+              // For array-to-array comparison, check if arrays have same elements
+              const valueSet = new Set(value);
+              const operandSet = new Set(compareOperand);
+              if (valueSet.size !== operandSet.size) {
+                return false;
+              }
+
+              for (const item of valueSet) {
+                if (!operandSet.has(item)) {
+                  return false;
+                }
+              }
+            } else if (!value.includes(compareOperand)) {
               return false;
             }
           } else if (compareValue !== compareOperand) {
@@ -111,7 +169,6 @@ export class FilterMatcher {
           break;
 
         case 'neq':
-          // For arrays, check if array does not contain the value
           if (Array.isArray(compareValue)) {
             if (compareValue.includes(compareOperand)) {
               return false;
@@ -151,11 +208,10 @@ export class FilterMatcher {
           break;
 
         case 'between':
-          if (!Array.isArray(operand) || operand.length !== 2) {
+          if (!Array.isArray(operatorValue) || operatorValue.length !== 2) {
             return false;
           }
 
-          [start, end] = operand.map(FilterMatcher.toMillis);
           if (!(compareValue >= start && compareValue <= end)) {
             return false;
           }
@@ -163,12 +219,11 @@ export class FilterMatcher {
           break;
 
         case 'inq':
-          if (!Array.isArray(operand)) {
+          if (!Array.isArray(operatorValue)) {
             return false;
           }
 
-          inqValues = operand.map(FilterMatcher.toMillis);
-          // For arrays, check if any array element is in the inq values
+          inqValues = operatorValue.map(FilterMatcher.toMillis);
           if (Array.isArray(compareValue)) {
             if (
               !compareValue.some((v) =>
@@ -184,12 +239,11 @@ export class FilterMatcher {
           break;
 
         case 'nin':
-          if (!Array.isArray(operand)) {
+          if (!Array.isArray(operatorValue)) {
             return false;
           }
 
-          ninValues = operand.map(FilterMatcher.toMillis);
-          // For arrays, check if all array elements are not in nin values
+          ninValues = operatorValue.map(FilterMatcher.toMillis);
           if (Array.isArray(compareValue)) {
             if (
               compareValue.some((v) =>
@@ -205,48 +259,85 @@ export class FilterMatcher {
           break;
 
         case 'like':
-          if (typeof operand !== 'string') {
+        case 'nlike': {
+          if (typeof operatorValue !== 'string' || typeof value !== 'string') {
             return false;
           }
 
+          const options = condition.options === 'i' ? 'i' : '';
+          const escapedPattern = operatorValue
+            .replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // Escape special regex chars first
+            .replace(/\\\\/g, '\\') // Handle escaped backslashes
+            .replace(/\\\./g, '\\.') // Keep escaped dots as literal dots
+            .replace(/\\\*/g, '.*') // Replace * with .*
+            .replace(/%/g, '.*') // Replace % with .*
+            .replace(/\\\\\./g, '\\.'); // Handle double-escaped dots
+          pattern = new RegExp(escapedPattern, options);
+          const matches = pattern.test(value);
+          if (operator === 'like' ? !matches : matches) {
+            return false;
+          }
+
+          break;
+        }
+
+        case 'ilike':
+        case 'nilike': {
+          if (typeof operatorValue !== 'string' || typeof value !== 'string') {
+            return false;
+          }
+
+          const escapedPattern = operatorValue
+            .replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // Escape special regex chars
+            .replace(/\\\*/g, '.*') // Replace * with .*
+            .replace(/%/g, '.*'); // Replace % with .*
+          pattern = new RegExp(escapedPattern, 'i');
+          const matches = pattern.test(value);
+          if (operator === 'ilike' ? !matches : matches) {
+            return false;
+          }
+
+          break;
+        }
+
+        case 'regexp': {
           if (
-            !new RegExp(operand.replace(/%/g, '.*')).test(String(compareValue))
+            !(
+              operatorValue instanceof RegExp ||
+              typeof operatorValue === 'string'
+            ) ||
+            typeof value !== 'string'
           ) {
             return false;
           }
 
-          break;
-
-        case 'nlike':
-          if (typeof operand !== 'string') {
-            return false;
+          let regex: RegExp;
+          if (typeof operatorValue === 'string') {
+            const match = operatorValue.match(/^\/(.+)\/([gimuy]*)$/);
+            if (match) {
+              // Handle /pattern/flags format
+              regex = new RegExp(match[1], match[2]);
+            } else {
+              // Handle raw pattern
+              regex = new RegExp(operatorValue);
+            }
+          } else {
+            regex = operatorValue;
           }
 
-          if (
-            new RegExp(operand.replace(/%/g, '.*')).test(String(compareValue))
-          ) {
-            return false;
-          }
-
-          break;
-
-        case 'regexp':
-          if (!(operand instanceof RegExp || typeof operand === 'string')) {
-            return false;
-          }
-
-          if (!new RegExp(operand).test(String(compareValue))) {
+          if (!regex.test(value)) {
             return false;
           }
 
           break;
+        }
 
         case 'exists':
-          if (operand && compareValue === undefined) {
+          if (operatorValue && value === undefined) {
             return false;
           }
 
-          if (!operand && compareValue !== undefined) {
+          if (!operatorValue && value !== undefined) {
             return false;
           }
 
@@ -261,17 +352,20 @@ export class FilterMatcher {
   }
 
   /**
-   * Converts a value to milliseconds if it's a date, otherwise returns the value as is
+   * Converts a value to milliseconds if it's a Date
    * @param value The value to convert
-   * @returns The value in milliseconds if it's a date, otherwise the original value
+   * @returns The value in milliseconds if it's a Date, otherwise the original value
    */
   private static toMillis(value: any): any {
-    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
-      return new Date(value).getTime();
-    }
-
     if (value instanceof Date) {
       return value.getTime();
+    }
+
+    if (typeof value === 'string') {
+      const date = new Date(value);
+      if (!isNaN(date.getTime())) {
+        return date.getTime();
+      }
     }
 
     return value;
