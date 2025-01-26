@@ -16,7 +16,7 @@ import {
   post,
   requestBody,
 } from '@loopback/rest';
-import { sanitizeFilterFields } from '../extensions/utils/filter.helper';
+import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
 import { Set, SetFilterBuilder } from '../extensions/utils/set';
 import {
   GenericEntity,

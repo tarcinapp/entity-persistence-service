@@ -20,7 +20,7 @@ import {
 } from '@loopback/rest';
 import { Set, SetFilterBuilder } from '../extensions';
 import { processIncludes } from '../extensions/types/sets-in-inclusions';
-import { sanitizeFilterFields } from '../extensions/utils/filter.helper';
+import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
 import { GenericList, HttpErrorResponse } from '../models';
 import {
   UNMODIFIABLE_COMMON_FIELDS,
