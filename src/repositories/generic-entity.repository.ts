@@ -25,7 +25,7 @@ import {
   VisibilityConfigurationReader,
 } from '../extensions';
 
-import { SetFilterBuilder } from '../extensions/utils/set';
+import { SetFilterBuilder } from '../extensions/utils/set-helper';
 
 import {
   EntityRelation,

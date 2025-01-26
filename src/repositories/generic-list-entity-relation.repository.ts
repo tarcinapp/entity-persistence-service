@@ -22,7 +22,7 @@ import {
   UniquenessConfigurationReader,
   ValidfromConfigurationReader,
 } from '../extensions';
-import { Set } from '../extensions/utils/set';
+import { Set } from '../extensions/utils/set-helper';
 import {
   GenericListEntityRelationRelations,
   GenericListToEntityRelation,

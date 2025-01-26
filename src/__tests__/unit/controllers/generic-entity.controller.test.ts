@@ -3,7 +3,7 @@ import { expect, sinon } from '@loopback/testlab';
 import { setupApplication, teardownApplication } from './test-helper';
 import type { EntityPersistenceApplication } from '../../..';
 import { GenericEntityController } from '../../../controllers';
-import type { Set } from '../../../extensions/utils/set';
+import type { Set } from '../../../extensions/utils/set-helper';
 import { GenericEntity } from '../../../models';
 import { GenericEntityRepository } from '../../../repositories';
 

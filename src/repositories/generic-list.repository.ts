@@ -46,7 +46,7 @@ import { ListRelationRepository } from './list-relation.repository';
 import { TagListRelationRepository } from './tag-list-relation.repository';
 import { TagRepository } from './tag.repository';
 import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
-import { SetFilterBuilder } from '../extensions/utils/set';
+import { SetFilterBuilder } from '../extensions/utils/set-helper';
 
 export class GenericListRepository extends DefaultCrudRepository<
   GenericList,

@@ -1,5 +1,5 @@
 import type { Where } from '@loopback/repository';
-import type { Set } from '../utils/set';
+import type { Set } from '../utils/set-helper';
 
 declare module '@loopback/repository' {
   interface Inclusion {

@@ -1,5 +1,5 @@
 import type { Filter, InclusionFilter } from '@loopback/repository';
-import { SetFilterBuilder } from '../utils/set';
+import { SetFilterBuilder } from '../utils/set-helper';
 
 export function processIncludes<T extends object>(
   filter: Filter<T> | undefined,
