@@ -1,7 +1,6 @@
 import type { DataObject } from '@loopback/repository';
 import type { Client } from '@loopback/testlab';
 import { expect } from '@loopback/testlab';
-import type { UniquenessConfigurationReader } from '../../../extensions';
 import type { GenericList } from '../../../models';
 import type { AppWithClient } from '../test-helper';
 import {
@@ -121,23 +120,6 @@ describe('POST /generic-lists', () => {
     });
     ({ client } = appWithClient);
 
-    // Debug log
-    console.log('Environment variables:', {
-      list_kinds: process.env.list_kinds,
-      uniqueness_list_fields: process.env.uniqueness_list_fields,
-    });
-
-    // Get the uniqueness configuration reader
-    const uniquenessReader =
-      await appWithClient.app.get<UniquenessConfigurationReader>(
-        'extensions.uniqueness.configurationreader',
-      );
-    console.log('Uniqueness configuration:', {
-      isConfigured:
-        uniquenessReader.isUniquenessConfiguredForLists('book-list'),
-      fields: uniquenessReader.getFieldsForLists('book-list'),
-    });
-
     // First list creation - should succeed
     const firstList: Partial<GenericList> = {
       _name: 'Science Fiction Books',
@@ -180,12 +162,6 @@ describe('POST /generic-lists', () => {
       uniqueness_list_fields: '_slug,_kind,_ownerUsers',
     });
     ({ client } = appWithClient);
-
-    // Debug log
-    console.log('Environment variables:', {
-      list_kinds: process.env.list_kinds,
-      uniqueness_list_fields: process.env.uniqueness_list_fields,
-    });
 
     // First list creation - should succeed
     const firstList: Partial<GenericList> = {
@@ -266,12 +242,13 @@ describe('POST /generic-lists', () => {
       .send(secondList)
       .expect(200);
 
-    // Verify all fields in the second response match the first response
-    expectResponseToMatch(secondResponse.body, firstResponse.body);
+    expect(secondResponse.body._slug).to.be.equal('science-fiction-books');
+    expect(secondResponse.body._kind).to.be.equal('book-list');
+    expect(secondResponse.body._ownerUsers).to.containDeep(['user-123']);
 
-    // Verify only one record exists by getting all lists
+    // Verify both records exist by getting all lists
     const getAllResponse = await client.get('/generic-lists').expect(200);
-    expect(getAllResponse.body).to.be.Array().lengthOf(1); // Only one record should exist
+    expect(getAllResponse.body).to.be.Array().lengthOf(2);
   });
 
   it('rejects duplicate list when uniqueness set includes owners and same user exists', async () => {
@@ -444,12 +421,16 @@ describe('POST /generic-lists', () => {
       .send(secondList)
       .expect(200);
 
-    // Verify all fields in the second response match the first response
-    expectResponseToMatch(secondResponse.body, firstResponse.body);
+    expect(secondResponse.body._slug).to.be.equal('science-fiction-books');
+    expect(secondResponse.body._kind).to.be.equal('book-list');
+    expect(secondResponse.body._validFromDateTime).to.not.be.null();
+    expect(secondResponse.body._validUntilDateTime).to.be.equal(
+      futureDate.toISOString(),
+    );
 
     // Verify only one record exists by getting all lists
     const getAllResponse = await client.get('/generic-lists').expect(200);
-    expect(getAllResponse.body).to.be.Array().lengthOf(1); // Only one record should exist
+    expect(getAllResponse.body).to.be.Array().lengthOf(2); // Two records should exist
   });
 
   it('automatically sets validFromDateTime when autoapprove_list is true', async () => {

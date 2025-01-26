@@ -446,14 +446,6 @@ export async function setupApplication(
 
   const client = createRestAppClient(app);
 
-  // Debug log
-  // eslint-disable-next-line no-console
-  console.log('App configuration:', {
-    port: app.restServer.config.port,
-    url: app.restServer.url,
-    mongodb: mongod.getUri(),
-  });
-
   return { app, client, mongod, originalEnv };
 }
 
