@@ -86,9 +86,9 @@ export interface TestEnvironmentVariables {
   uniqueness_entity_fields?: string;
   uniqueness_list_fields?: string;
   uniqueness_list_entity_rel_fields?: string;
-  uniqueness_entity_set?: string;
-  uniqueness_list_set?: string;
-  uniqueness_list_entity_rel_set?: string;
+  uniqueness_entity_scope?: string;
+  uniqueness_list_scope?: string;
+  uniqueness_list_entity_rel_scope?: string;
 
   // Auto Approve Configuration
   autoapprove_entity?: string;
@@ -139,9 +139,9 @@ export interface TestEnvironmentVariables {
   [key: `uniqueness_entity_fields_for_${string}`]: string;
   [key: `uniqueness_list_fields_for_${string}`]: string;
   [key: `uniqueness_list_entity_rel_fields_for_${string}`]: string;
-  [key: `uniqueness_entity_set_for_${string}`]: string;
-  [key: `uniqueness_list_set_for_${string}`]: string;
-  [key: `uniqueness_list_entity_rel_set_for_${string}`]: string;
+  [key: `uniqueness_entity_scope_for_${string}`]: string;
+  [key: `uniqueness_list_scope_for_${string}`]: string;
+  [key: `uniqueness_list_entity_rel_scope_for_${string}`]: string;
 
   [key: `visibility_entity_for_${string}`]: string;
   [key: `visibility_list_for_${string}`]: string;
@@ -188,6 +188,13 @@ export interface TestEnvironmentVariables {
   [key: `idempotency_list_reaction_set_for_${string}`]: string;
   [key: `idempotency_tag_for_${string}`]: string;
   [key: `idempotency_tag_set_for_${string}`]: string;
+
+  [key: `record_limit_entity_scope_for_${string}`]: string;
+  [key: `record_limit_list_scope_for_${string}`]: string;
+  [key: `record_limit_list_entity_rel_scope_for_${string}`]: string;
+  [key: `record_limit_entity_reaction_scope_for_${string}`]: string;
+  [key: `record_limit_list_reaction_scope_for_${string}`]: string;
+  [key: `record_limit_tag_scope_for_${string}`]: string;
 
   [key: string]: string | undefined;
 }
@@ -236,9 +243,10 @@ export async function setupApplication(
     uniqueness_list_fields: process.env.uniqueness_list_fields,
     uniqueness_list_entity_rel_fields:
       process.env.uniqueness_list_entity_rel_fields,
-    uniqueness_entity_set: process.env.uniqueness_entity_set,
-    uniqueness_list_set: process.env.uniqueness_list_set,
-    uniqueness_list_entity_rel_set: process.env.uniqueness_list_entity_rel_set,
+    uniqueness_entity_scope: process.env.uniqueness_entity_scope,
+    uniqueness_list_scope: process.env.uniqueness_list_scope,
+    uniqueness_list_entity_rel_scope:
+      process.env.uniqueness_list_entity_rel_scope,
 
     // Auto Approve Configuration
     autoapprove_entity: process.env.autoapprove_entity,
@@ -300,9 +308,9 @@ export async function setupApplication(
           key.startsWith('uniqueness_entity_fields_for_') ||
           key.startsWith('uniqueness_list_fields_for_') ||
           key.startsWith('uniqueness_list_entity_rel_fields_for_') ||
-          key.startsWith('uniqueness_entity_set_for_') ||
-          key.startsWith('uniqueness_list_set_for_') ||
-          key.startsWith('uniqueness_list_entity_rel_set_for_') ||
+          key.startsWith('uniqueness_entity_scope_for_') ||
+          key.startsWith('uniqueness_list_scope_for_') ||
+          key.startsWith('uniqueness_list_entity_rel_scope_for_') ||
           key.startsWith('visibility_entity_for_') ||
           key.startsWith('visibility_list_for_') ||
           key.startsWith('visibility_entity_reaction_for_') ||
@@ -343,7 +351,13 @@ export async function setupApplication(
           key.startsWith('idempotency_list_reaction_for_') ||
           key.startsWith('idempotency_list_reaction_set_for_') ||
           key.startsWith('idempotency_tag_for_') ||
-          key.startsWith('idempotency_tag_set_for_'),
+          key.startsWith('idempotency_tag_set_for_') ||
+          key.startsWith('record_limit_entity_scope_for_') ||
+          key.startsWith('record_limit_list_scope_for_') ||
+          key.startsWith('record_limit_list_entity_rel_scope_for_') ||
+          key.startsWith('record_limit_entity_reaction_scope_for_') ||
+          key.startsWith('record_limit_list_reaction_scope_for_') ||
+          key.startsWith('record_limit_tag_scope_for_'),
       )
       .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {}),
   };

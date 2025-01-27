@@ -342,17 +342,17 @@ Uniqueness configuration is implemented in application logic. MongoDB has compos
 | Configration                                          | Description                                                                                                                                                                                 | Default Value | Example Value        |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | -------------------- |
 | **uniqueness_entity_fields**                          | Composite index-like comma seperated list of field names of generic entity. Note that the array fields are not supported. Consider using set feature to implement uniqueness per user.      | -             | slug,kind,ownerUsers |
-| **uniqueness_entity_set**                             | Specify the scope where the uniqueness should be checked with set queries.                                                                                                                  | -             | set[actives]         |
+| **uniqueness_entity_scope**                             | Specify the scope where the uniqueness should be checked.                                                                                                                  | -             | set[actives]         |
 | **uniqueness_entity_fields_for_{kind_name}**          | Composite index-like comma seperated list of field names of generic entity. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind. | -             | slug,kind,ownerUsers |
-| **uniqueness_entity_set_for_{kind_name}**             | Specify the scope where the uniqueness should be checked with set queries. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.  | -             | set[actives]         |
+| **uniqueness_entity_scope_for_{kind_name}**             | Specify the scope where the uniqueness should be checked. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.  | -             | set[actives]         |
 | **uniqueness_list_fields**                            | Composite index-like comma seperated list of field names of list                                                                                                                            | -             | slug,kind,ownerUsers |
-| **uniqueness_list_set**                               | Specify the scope where the uniqueness should be checked with set queries                                                                                                                   | false         | set[publics]         |
+| **uniqueness_list_scope**                               | Specify the scope where the uniqueness should be checked.                                                                                                                   | false         | set[publics]         |
 | **uniqueness_list_fields_for_{kind_name}**            | Composite index-like comma seperated list of field names of list. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.           | -             | slug,kind,ownerUsers |
-| **uniqueness_list_set_for_{kind_name}**               | Specify the scope where the uniqueness should be checked with set queries. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.  | false         | set[publics]         |
+| **uniqueness_list_scope_for_{kind_name}**               | Specify the scope where the uniqueness should be checked. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.  | false         | set[publics]         |
 | **uniqueness_list_entity_rel_fields**                 | Composite index-like comma seperated list of field names of the relation                                                                                                                    | -             | slug,kind            |
-| **uniqueness_list_entity_rel_set**                    | Specify the scope where the uniqueness should be checked with set queries                                                                                                                   | false         | set[publics]         |
+| **uniqueness_list_entity_rel_scope**                    | Specify the scope where the uniqueness should be checked.                                                                                                                   | false         | set[publics]         |
 | **uniqueness_list_entity_rel_fields_for_{kind_name}** | Composite index-like comma seperated list of field names of the relation. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.   | -             | slug,kind            |
-| **uniqueness_list_entity_rel_set_for_{kind_name}**    | Specify the scope where the uniqueness should be checked with set queries. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.  | false         | set[publics]         |
+| **uniqueness_list_entity_rel_scope_for_{kind_name}**    | Specify the scope where the uniqueness should be checked. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.  | false         | set[publics]         |
 
 ### Auto Approve
 
@@ -399,17 +399,17 @@ Limits can be configured through sets. For instance, you can limit active or pub
 | Configration                                           | Description                                                          | Example Value   |
 | ------------------------------------------------------ | -------------------------------------------------------------------- | --------------- |
 | **record_limit_entity_count**                          | Max entities can be created.                                         | 100             |
-| **record_limit_entity_set**                            | A set string where record limits will be applied.                    | `set[audience]` |
+| **record_limit_entity_scope**                            | Scope where record limits will be applied.                    | `set[audience]` |
 | **record_limit_entity_count_for_{kind_name}**          | Max entities can be created for a specific entity kind.              | 100             |
-| **record_limit_entity_set_for_{kind_name}**            | A set string where record limits will be applied for a specific kind | 50              |
+| **record_limit_entity_scope_for_{kind_name}**            | Scope where record limits will be applied for a specific kind | 50              |
 | **record_limit_list_count**                            | Max lists can be created.                                            | 50              |
-| **record_limit_list_set**                              | A set string where record limits will be applied.                    | `set[audience]` |
+| **record_limit_list_scope**                              | Scope where record limits will be applied.                    | `set[audience]` |
 | **record_limit_list_count_for_{kind_name}**            | Max lists can be created for a specific entity kind.                 | 50              |
-| **record_limit_list_set_for_{kind_name}**              | A set string where record limits will be applied for a specific kind | 50              |
+| **record_limit_list_scope_for_{kind_name}**              | Scope where record limits will be applied for a specific kind | 50              |
 | **record_limit_list_entity_rel_count**                 | Max number of relations can be created between list and entity.      | 50              |
-| **record_limit_list_entity_rel_set**                   | A set string where record limits will be applied.                    | `set[audience]` |
+| **record_limit_list_entity_rel_scope**                   | Scope where record limits will be applied.                    | `set[audience]` |
 | **record_limit_list_entity_rel_count_for_{kind_name}** | Max lists can be created for a specific entity kind.                 | 50              |
-| **record_limit_list_entity_rel_set_for_{kind_name}**   | A set string where record limits will be applied for a specific kind | 50              |
+| **record_limit_list_entity_rel_scope_for_{kind_name}**   | Scope where record limits will be applied for a specific kind | 50              |
 
 ### Idempotency
 

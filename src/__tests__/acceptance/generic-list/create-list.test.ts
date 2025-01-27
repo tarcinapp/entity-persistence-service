@@ -256,7 +256,7 @@ describe('POST /generic-lists', () => {
     appWithClient = await setupApplication({
       list_kinds: 'book-list',
       uniqueness_list_fields: '_slug,_kind',
-      uniqueness_list_set: 'set[owners]',
+      uniqueness_list_scope: 'set[owners]',
     });
     ({ client } = appWithClient);
 
@@ -307,7 +307,7 @@ describe('POST /generic-lists', () => {
     appWithClient = await setupApplication({
       list_kinds: 'book-list',
       uniqueness_list_fields: '_slug,_kind',
-      uniqueness_list_set: 'set[actives]',
+      uniqueness_list_scope: 'set[actives]',
     });
     ({ client } = appWithClient);
 
@@ -369,7 +369,7 @@ describe('POST /generic-lists', () => {
     appWithClient = await setupApplication({
       list_kinds: 'book-list',
       uniqueness_list_fields: '_slug,_kind',
-      uniqueness_list_set: 'set[actives]',
+      uniqueness_list_scope: 'set[actives]',
     });
     ({ client } = appWithClient);
 
@@ -721,7 +721,7 @@ describe('POST /generic-lists', () => {
     appWithClient = await setupApplication({
       list_kinds: 'book-list',
       record_limit_list_count: '2', // Allow 2 records total and active at a time
-      record_limit_list_set: 'set[actives]', // Limit applies to active records
+      record_limit_list_scope: 'set[actives]', // Limit applies to active records
     });
     ({ client } = appWithClient);
 
@@ -795,7 +795,7 @@ describe('POST /generic-lists', () => {
     // Set up the environment variables with kind-specific record set limit
     appWithClient = await setupApplication({
       list_kinds: 'book-list,featured-list',
-      'record_limit_list_set_for_book-list': 'set[actives]',
+      'record_limit_list_scope_for_book-list': 'set[actives]',
       'record_limit_list_count_for_book-list': '1', // Only 1 active book-list
     });
     ({ client } = appWithClient);
@@ -861,7 +861,7 @@ describe('POST /generic-lists', () => {
     appWithClient = await setupApplication({
       list_kinds: 'book-list',
       record_limit_list_count: '2', // Allow 2 records total that are both active and public
-      record_limit_list_set: 'set[actives]&set[publics]', // Limit applies to records that are both active and public
+      record_limit_list_scope: 'set[actives]&set[publics]', // Limit applies to records that are both active and public
     });
     ({ client } = appWithClient);
 
@@ -951,7 +951,7 @@ describe('POST /generic-lists', () => {
     appWithClient = await setupApplication({
       list_kinds: 'book-list',
       record_limit_list_count: '2', // Allow 2 records per user
-      record_limit_list_set: 'set[owners]', // Limit applies per owner
+      record_limit_list_scope: 'set[owners]', // Limit applies per owner
     });
     ({ client } = appWithClient);
 
