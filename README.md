@@ -17,7 +17,7 @@ The Tarcinapp suite is a comprehensive and flexible application framework, harmo
 At its core is the **Entity Persistence Service**, an easily adaptable REST-based backend application built on the [Loopback 4](https://loopback.io) framework. This service utilizes on a schemaless MongoDB database to provide a scalable and highly adaptable data persistence layer. Offering a generic data model with predefined fields such as `id`, `name`,  `kind`, `lastUpdateDateTime`, `creationDateTime`, `ownerUsers` and [more](#programming-conventions), it effortlessly adapts to diverse use cases.  
 
 The integration with the **Entity Persistence Gateway** empowers users to implement enhanced validation, authentication, authorization, and rate-limiting functionalities, ensuring a secure and efficient environment. Leveraging the power of **Redis**, the application seamlessly manages distributed locks, enabling robust data synchronization and rate limiting. Furthermore, the ecosystem includes the **Open Policy Agent (OPA)** to enforce policies, safeguarding your application against unauthorized access and ensuring compliance with your security and operational requirements. These policies, combined with the entire suite of components, form a cohesive and powerful ecosystem, paving the way for efficient and secure microservice development.  
-Here is an example request and response to the one of the most basic endpoint: `/generic-entities`:
+Here is an example request and response to the one of the most basic endpoint: `/entities`:
 <p align="left">
   <img src="./doc/img/request-response.png" alt="Sample request and response">
 </p>  
@@ -30,12 +30,12 @@ Here is an example request and response to the one of the most basic endpoint: `
 
 This service is equipped with a versatile set of endpoints, each serving a specific purpose in managing and interacting with your data:
 
-* `/generic-entities`: Handle your primary data models with this endpoint, facilitating CRUD (Create, Read, Update, Delete) operations.
+* `/entities`: Handle your primary data models with this endpoint, facilitating CRUD (Create, Read, Update, Delete) operations.
 * `/generic-lists`: Create, organize, and manage lists, enabling you to associate related data effortlessly.
-* `/generic-lists/{listId}/generic-entities`: Create, organize, and manage lists, enabling you to associate related data effortlessly.
-* `/generic-entities/{id}/reactions`: Capture user reactions, comments, likes, and more on specific entities.
+* `/generic-lists/{listId}/entities`: Create, organize, and manage lists, enabling you to associate related data effortlessly.
+* `/entities/{id}/reactions`: Capture user reactions, comments, likes, and more on specific entities.
 * `/generic-lists/{id}/list-reactions`: Manage reactions, comments, likes, and other interactions associated with your lists.
-* `/generic-entities/{id}/tags`: Add, modify, or remove tags associated with specific entities for efficient data categorization.
+* `/entities/{id}/tags`: Add, modify, or remove tags associated with specific entities for efficient data categorization.
 * `/generic-lists/{id}/tags`: Employ tags to categorize and organize your lists efficiently, ensuring effective data management.
 
 ## Data Model
@@ -81,7 +81,7 @@ Model of the relation object is as follows:
 ```
 
 * You can query (get), create (post), replace (put), update (patch), delete (delete) entities through lists calling the endpoint: `/generic-list-entity-relations`.
-* This endpoint supports `sets` just like other endpoints like `/generic-lists` and `/generic-entities`.
+* This endpoint supports `sets` just like other endpoints like `/generic-lists` and `/entities`.
 * Uniqueness, default visibility, idempotency, auto-approve, record-limit, response-limit settings can be configured for individual relationship records.
 
 A sample response to the `/generic-list-entity-relations` endpoint is as follows:
@@ -131,9 +131,9 @@ Notice fields like `_fromMetadata` and `_toMetadata` fields are are added to the
 
 **Note:** Creation or update operations always require existence of the list and entity specified by the ids.
 
-With the help of the relationship between lists and entities users can interact with entities under a specific list calling this endpoint: `/generic-lists/{listId}/generic-entities`.
+With the help of the relationship between lists and entities users can interact with entities under a specific list calling this endpoint: `/generic-lists/{listId}/entities`.
 
-A sample response of the `GET` call to the `/generic-lists/{listId}/generic-entities` endpoint is as follows:
+A sample response of the `GET` call to the `/generic-lists/{listId}/entities` endpoint is as follows:
 
 ```json
 
@@ -212,11 +212,11 @@ The Tags data model offers a structured approach to categorizing and organizing 
 
 ### Relations
 
-Relations are individual records just like generic-entities and lists. Relations can hold arbitrary data along with the managed fields. Each time a relation is queried existence of the source and the target record is always checked. With the help of the relations entities under specific list, or reactions under specific list or entity can be queried.  
-`/generic-lists/{listId}/generic-entities`  
-`/generic-entities/{entityId}/reactions`  
+Relations are individual records just like entities and lists. Relations can hold arbitrary data along with the managed fields. Each time a relation is queried existence of the source and the target record is always checked. With the help of the relations entities under specific list, or reactions under specific list or entity can be queried.  
+`/generic-lists/{listId}/entities`  
+`/entities/{entityId}/reactions`  
 While querying the target record with the notation above, users can filter by the relation object using the `filterThrough` extension. For instance:  
-`/generic-lists/{listId}/generic-entities?filterThrough[where][kind]=consists`  
+`/generic-lists/{listId}/entities?filterThrough[where][kind]=consists`  
 
 ### Sets
 
@@ -227,10 +227,10 @@ Sets are a powerful feature introduced in the application, designed to streamlin
 1. **Combining Sets with Logical Operators:** Sets can be combined using logical operators such as AND, OR, and NOT, enabling users to construct complex queries tailored to their specific needs.
 `?set[and][0][actives]&set[and][1][publics]`
 2. **Default Filtering with Sets:** Users can still apply default filtering to sets. For example, using the query parameter **`set[actives]&filter[where][kind]=config`** allows users to select all active data with a **`kind`** value of **`config`**.
-3. **setThrough:** Users can apply `setThrough` query parameter while querying a data through relationship such as `/generic-lists/{listId}/generic-entities?setThrough[actives]`. This query will retrieve entities under the list specified by `{listId}` and relation record is active.
+3. **setThrough:** Users can apply `setThrough` query parameter while querying a data through relationship such as `/generic-lists/{listId}/entities?setThrough[actives]`. This query will retrieve entities under the list specified by `{listId}` and relation record is active.
 4. **Enforced Sets for Role-Based Access Control:** Sets can be enforced, ensuring that users work on specific predefined sets. The Gateway application facilitates the creation of sets according to role-based access control policies, enhancing data security and access control.
-5. **whereThrough**: Users can apply `whereThrough` query parameter while performing delete or updateAll on the generic-entities through relationship such as `PATCH /generic-lists/{listId}/generic-entities?whereThrough[foo]=bar`. This operation will be applied to the entities under the list specified by `{listId}` and the relationship record with the field `foo` equals to `bar`.
-6. **Sets with Inclusion Filter**: Users can apply sets to include filter. For example: `?filter[include][0][relation]=_genericEntities&filter[include][0][set][and][0][actives]&filter[include][0][set][and][1][publics]`
+5. **whereThrough**: Users can apply `whereThrough` query parameter while performing delete or updateAll on the generic-entities through relationship such as `PATCH /generic-lists/{listId}/entities?whereThrough[foo]=bar`. This operation will be applied to the entities under the list specified by `{listId}` and the relationship record with the field `foo` equals to `bar`.
+6. **Sets with Inclusion Filter**: Users can apply sets to include filter. For example: `?filter[include][0][relation]=_entities&filter[include][0][set][and][0][actives]&filter[include][0][set][and][1][publics]`
 
 **List of Prebuilt Sets:**
 The application comes with a set of prebuilt sets to simplify common data selections. Each set is designed to retrieve specific subsets of data based on predefined conditions. Here are the prebuilt sets:

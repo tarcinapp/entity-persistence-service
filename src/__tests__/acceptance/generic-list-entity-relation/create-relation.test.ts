@@ -29,7 +29,7 @@ describe('POST /generic-list-entity-relations', () => {
     const list = listResponse.body;
 
     // Then create an entity
-    const entityResponse = await client.post('/generic-entities').send({
+    const entityResponse = await client.post('/entities').send({
       _name: 'test entity',
     });
     expect(entityResponse.status).to.equal(200);
@@ -69,7 +69,7 @@ describe('POST /generic-list-entity-relations', () => {
     const list = listResponse.body;
 
     // Then create an entity
-    const entityResponse = await client.post('/generic-entities').send({
+    const entityResponse = await client.post('/entities').send({
       _name: 'test entity',
     });
     expect(entityResponse.status).to.equal(200);
@@ -112,7 +112,7 @@ describe('POST /generic-list-entity-relations', () => {
     const list = listResponse.body;
 
     // Then create an entity
-    const entityResponse = await client.post('/generic-entities').send({
+    const entityResponse = await client.post('/entities').send({
       _name: 'test entity',
     });
     expect(entityResponse.status).to.equal(200);
@@ -164,7 +164,7 @@ describe('POST /generic-list-entity-relations', () => {
     const entities = await Promise.all(
       Array.from({ length: 3 }, (_, i) =>
         client
-          .post('/generic-entities')
+          .post('/entities')
           .send({ _name: `test entity ${i + 1}` })
           .then((res) => res.body),
       ),
@@ -235,7 +235,7 @@ describe('POST /generic-list-entity-relations', () => {
     const entities = await Promise.all(
       Array.from({ length: 3 }, (_, i) =>
         client
-          .post('/generic-entities')
+          .post('/entities')
           .send({ _name: `test entity ${i + 1}` })
           .then((res) => res.body),
       ),
@@ -362,7 +362,7 @@ describe('POST /generic-list-entity-relations', () => {
     const entities = await Promise.all(
       Array.from({ length: 4 }, (_, i) =>
         client
-          .post('/generic-entities')
+          .post('/entities')
           .send({ _name: `test entity ${i + 1}` })
           .then((res) => res.body),
       ),
@@ -449,7 +449,7 @@ describe('POST /generic-list-entity-relations', () => {
     const entities = await Promise.all(
       Array.from({ length: 3 }, (_, i) =>
         client
-          .post('/generic-entities')
+          .post('/entities')
           .send({ _name: `test entity ${i + 1}` })
           .then((res) => res.body),
       ),
@@ -535,7 +535,7 @@ describe('POST /generic-list-entity-relations', () => {
     const entities = await Promise.all(
       Array.from({ length: 3 }, (_, i) =>
         client
-          .post('/generic-entities')
+          .post('/entities')
           .send({ _name: `test entity ${i + 1}` })
           .then((res) => res.body),
       ),

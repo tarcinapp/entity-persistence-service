@@ -33,7 +33,7 @@ export class GenericEntityController {
     public genericEntityRepository: GenericEntityRepository,
   ) {}
 
-  @post('/generic-entities', {
+  @post('/entities', {
     responses: {
       '200': {
         description: 'GenericEntity model instance',
@@ -96,7 +96,7 @@ export class GenericEntityController {
     return this.genericEntityRepository.create(genericEntity);
   }
 
-  @get('/generic-entities/count', {
+  @get('/entities/count', {
     responses: {
       '200': {
         description: 'GenericEntity model count',
@@ -125,7 +125,7 @@ export class GenericEntityController {
     return this.genericEntityRepository.count(filter.where);
   }
 
-  @get('/generic-entities', {
+  @get('/entities', {
     responses: {
       '200': {
         description: 'Array of GenericEntity model instances',
@@ -157,7 +157,7 @@ export class GenericEntityController {
     return this.genericEntityRepository.find(filter);
   }
 
-  @patch('/generic-entities', {
+  @patch('/entities', {
     responses: {
       '200': {
         description: 'GenericEntity PATCH success count',
@@ -198,7 +198,7 @@ export class GenericEntityController {
     return this.genericEntityRepository.updateAll(genericEntity, filter.where);
   }
 
-  @get('/generic-entities/{id}', {
+  @get('/entities/{id}', {
     responses: {
       '200': {
         description: 'GenericEntity model instance',
@@ -232,7 +232,7 @@ export class GenericEntityController {
     return this.genericEntityRepository.findById(id, filter);
   }
 
-  @patch('/generic-entities/{id}', {
+  @patch('/entities/{id}', {
     responses: {
       '204': {
         description: 'GenericEntity PATCH success',
@@ -282,7 +282,7 @@ export class GenericEntityController {
     await this.genericEntityRepository.updateById(id, genericEntity);
   }
 
-  @put('/generic-entities/{id}', {
+  @put('/entities/{id}', {
     responses: {
       '204': {
         description: 'GenericEntity PUT success',
@@ -331,7 +331,7 @@ export class GenericEntityController {
     await this.genericEntityRepository.replaceById(id, genericEntity);
   }
 
-  @del('/generic-entities/{id}', {
+  @del('/entities/{id}', {
     responses: {
       '204': {
         description: 'GenericEntity DELETE success',

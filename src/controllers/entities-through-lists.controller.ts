@@ -31,7 +31,7 @@ export class GenericListGenericEntityController {
     protected listRepository: GenericListRepository,
   ) {}
 
-  @get('/generic-lists/{id}/generic-entities', {
+  @get('/generic-lists/{id}/entities', {
     responses: {
       '200': {
         description:
@@ -73,7 +73,7 @@ export class GenericListGenericEntityController {
     return this.listRepository.genericEntities(id).find(filter, filterThrough);
   }
 
-  @post('/generic-lists/{id}/generic-entities', {
+  @post('/generic-lists/{id}/entities', {
     responses: {
       '200': {
         description: 'create a GenericEntity model instance',
@@ -109,7 +109,7 @@ export class GenericListGenericEntityController {
     return this.listRepository.genericEntities(id).create(genericEntity);
   }
 
-  @patch('/generic-lists/{id}/generic-entities', {
+  @patch('/generic-lists/{id}/entities', {
     responses: {
       '200': {
         description: 'GenericList.GenericEntity PATCH success count',
@@ -137,7 +137,7 @@ export class GenericListGenericEntityController {
       .updateAll(genericEntity, where, whereThrough);
   }
 
-  @del('/generic-lists/{id}/generic-entities', {
+  @del('/generic-lists/{id}/entities', {
     responses: {
       '200': {
         description: 'GenericList.GenericEntity DELETE success count',
