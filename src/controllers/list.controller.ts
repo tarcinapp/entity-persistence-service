@@ -34,10 +34,10 @@ export class GenericListController {
     public genericListRepository: GenericListRepository,
   ) {}
 
-  @post('/generic-lists', {
+  @post('/lists', {
     responses: {
       '200': {
-        description: 'Generic List model instance',
+        description: 'List model instance',
         content: {
           'application/json': { schema: getModelSchemaRef(GenericList) },
         },
@@ -97,10 +97,10 @@ export class GenericListController {
     return this.genericListRepository.create(list);
   }
 
-  @get('/generic-lists/count', {
+  @get('/lists/count', {
     responses: {
       '200': {
-        description: 'Generic List model count',
+        description: 'List model count',
         content: { 'application/json': { schema: CountSchema } },
       },
     },
@@ -126,10 +126,10 @@ export class GenericListController {
     return this.genericListRepository.count(filter.where);
   }
 
-  @get('/generic-lists', {
+  @get('/lists', {
     responses: {
       '200': {
-        description: 'Array of Generic List model instances',
+        description: 'Array of List model instances',
         content: {
           'application/json': {
             schema: {
@@ -158,10 +158,10 @@ export class GenericListController {
     return this.genericListRepository.find(filter);
   }
 
-  @patch('/generic-lists', {
+  @patch('/lists', {
     responses: {
       '200': {
-        description: 'Generic List PATCH success count',
+        description: 'List PATCH success count',
         content: { 'application/json': { schema: CountSchema } },
       },
     },
@@ -199,10 +199,10 @@ export class GenericListController {
     return this.genericListRepository.updateAll(list, filter.where);
   }
 
-  @get('/generic-lists/{id}', {
+  @get('/lists/{id}', {
     responses: {
       '200': {
-        description: 'Generic List model instance',
+        description: 'List model instance',
         content: {
           'application/json': {
             schema: getModelSchemaRef(GenericList, { includeRelations: true }),
@@ -231,10 +231,10 @@ export class GenericListController {
     return this.genericListRepository.findById(id, filter);
   }
 
-  @patch('/generic-lists/{id}', {
+  @patch('/lists/{id}', {
     responses: {
       '204': {
-        description: 'Generic List PATCH success',
+        description: 'List PATCH success',
       },
       '404': {
         description: 'List not found',
@@ -280,10 +280,10 @@ export class GenericListController {
     await this.genericListRepository.updateById(id, list);
   }
 
-  @put('/generic-lists/{id}', {
+  @put('/lists/{id}', {
     responses: {
       '204': {
-        description: 'Generic List PUT success',
+        description: 'List PUT success',
       },
       '404': {
         description: 'List not found',
@@ -329,10 +329,10 @@ export class GenericListController {
     await this.genericListRepository.replaceById(id, list);
   }
 
-  @del('/generic-lists/{id}', {
+  @del('/lists/{id}', {
     responses: {
       '204': {
-        description: 'Generic List DELETE success',
+        description: 'List DELETE success',
       },
       '404': {
         description: 'List not found',

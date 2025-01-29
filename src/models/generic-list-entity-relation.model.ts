@@ -7,8 +7,7 @@ import { SourceAndTargetMetadata } from './base-types/source-and-target-metadata
     strict: false,
     mongodb: {
       collection:
-        process.env.collection_list_list_entity_rel ??
-        'GenericListToEntityRelation',
+        process.env.collection_list_list_entity_rel ?? 'ListToEntityRelation',
     },
   },
 })

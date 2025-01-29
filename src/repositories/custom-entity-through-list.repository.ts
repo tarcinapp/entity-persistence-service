@@ -17,8 +17,8 @@ import {
   GenericList,
   GenericListToEntityRelation,
 } from '../models';
-import { GenericEntityRepository } from './generic-entity.repository';
-import { GenericListEntityRelationRepository } from './generic-list-entity-relation.repository';
+import { GenericEntityRepository } from './entity.repository';
+import { GenericListEntityRelationRepository } from './list-entity-relation.repository';
 
 export class CustomEntityThroughListRepository extends DefaultCrudRepository<
   GenericEntity,

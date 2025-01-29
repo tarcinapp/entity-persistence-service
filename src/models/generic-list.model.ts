@@ -14,7 +14,7 @@ import { Tag } from './tag.model';
   settings: {
     strict: false,
     mongodb: {
-      collection: process.env.collection_list ?? 'GenericList',
+      collection: process.env.collection_list ?? 'List',
     },
   },
 })
@@ -26,7 +26,7 @@ export class GenericList extends ListEntityCommonBase {
       keyTo: '_entityId',
     },
   })
-  _genericEntities: GenericEntity[];
+  _entities: GenericEntity[];
 
   @hasMany(() => ListRelation, { keyTo: 'from' })
   _children: ListRelation[];
@@ -50,7 +50,7 @@ export class GenericList extends ListEntityCommonBase {
 }
 
 export interface ListRelations {
-  genericEntities?: GenericEntityWithRelations;
+  entities?: GenericEntityWithRelations;
 }
 
 export type ListWithRelations = GenericList & ListRelations;

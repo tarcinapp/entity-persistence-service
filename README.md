@@ -31,12 +31,12 @@ Here is an example request and response to the one of the most basic endpoint: `
 This service is equipped with a versatile set of endpoints, each serving a specific purpose in managing and interacting with your data:
 
 * `/entities`: Handle your primary data models with this endpoint, facilitating CRUD (Create, Read, Update, Delete) operations.
-* `/generic-lists`: Create, organize, and manage lists, enabling you to associate related data effortlessly.
-* `/generic-lists/{listId}/entities`: Create, organize, and manage lists, enabling you to associate related data effortlessly.
+* `/lists`: Create, organize, and manage lists, enabling you to associate related data effortlessly.
+* `/lists/{listId}/entities`: Create, organize, and manage lists, enabling you to associate related data effortlessly.
 * `/entities/{id}/reactions`: Capture user reactions, comments, likes, and more on specific entities.
-* `/generic-lists/{id}/list-reactions`: Manage reactions, comments, likes, and other interactions associated with your lists.
+* `/lists/{id}/list-reactions`: Manage reactions, comments, likes, and other interactions associated with your lists.
 * `/entities/{id}/tags`: Add, modify, or remove tags associated with specific entities for efficient data categorization.
-* `/generic-lists/{id}/tags`: Employ tags to categorize and organize your lists efficiently, ensuring effective data management.
+* `/lists/{id}/tags`: Employ tags to categorize and organize your lists efficiently, ensuring effective data management.
 
 ## Data Model
 
@@ -57,7 +57,7 @@ The List data model is designed to efficiently organize collections of generic e
 
 #### List-Entity Relation
 
-Lists and entities are connected through the `GenericListGenericEntityRel` model. Having a seperated model for the relation helps user to store arbitrary data about the relation with the relation object. Relation objects have a dedicated endpoint, just like lists and entities. To interact with relation objects you can call `/generic-list-entity-relations` endpoint.
+Lists and entities are connected through the `GenericListGenericEntityRel` model. Having a seperated model for the relation helps user to store arbitrary data about the relation with the relation object. Relation objects have a dedicated endpoint, just like lists and entities. To interact with relation objects you can call `/list-entity-relations` endpoint.
 
 Model of the relation object is as follows:
 
@@ -80,11 +80,11 @@ Model of the relation object is as follows:
 }
 ```
 
-* You can query (get), create (post), replace (put), update (patch), delete (delete) entities through lists calling the endpoint: `/generic-list-entity-relations`.
-* This endpoint supports `sets` just like other endpoints like `/generic-lists` and `/entities`.
+* You can query (get), create (post), replace (put), update (patch), delete (delete) entities through lists calling the endpoint: `/list-entity-relations`.
+* This endpoint supports `sets` just like other endpoints like `/lists` and `/entities`.
 * Uniqueness, default visibility, idempotency, auto-approve, record-limit, response-limit settings can be configured for individual relationship records.
 
-A sample response to the `/generic-list-entity-relations` endpoint is as follows:
+A sample response to the `/list-entity-relations` endpoint is as follows:
 
 ```json
 [
@@ -131,9 +131,9 @@ Notice fields like `_fromMetadata` and `_toMetadata` fields are are added to the
 
 **Note:** Creation or update operations always require existence of the list and entity specified by the ids.
 
-With the help of the relationship between lists and entities users can interact with entities under a specific list calling this endpoint: `/generic-lists/{listId}/entities`.
+With the help of the relationship between lists and entities users can interact with entities under a specific list calling this endpoint: `/lists/{listId}/entities`.
 
-A sample response of the `GET` call to the `/generic-lists/{listId}/entities` endpoint is as follows:
+A sample response of the `GET` call to the `/lists/{listId}/entities` endpoint is as follows:
 
 ```json
 
@@ -213,10 +213,10 @@ The Tags data model offers a structured approach to categorizing and organizing 
 ### Relations
 
 Relations are individual records just like entities and lists. Relations can hold arbitrary data along with the managed fields. Each time a relation is queried existence of the source and the target record is always checked. With the help of the relations entities under specific list, or reactions under specific list or entity can be queried.  
-`/generic-lists/{listId}/entities`  
+`/lists/{listId}/entities`  
 `/entities/{entityId}/reactions`  
 While querying the target record with the notation above, users can filter by the relation object using the `filterThrough` extension. For instance:  
-`/generic-lists/{listId}/entities?filterThrough[where][kind]=consists`  
+`/lists/{listId}/entities?filterThrough[where][kind]=consists`  
 
 ### Sets
 
@@ -227,9 +227,9 @@ Sets are a powerful feature introduced in the application, designed to streamlin
 1. **Combining Sets with Logical Operators:** Sets can be combined using logical operators such as AND, OR, and NOT, enabling users to construct complex queries tailored to their specific needs.
 `?set[and][0][actives]&set[and][1][publics]`
 2. **Default Filtering with Sets:** Users can still apply default filtering to sets. For example, using the query parameter **`set[actives]&filter[where][kind]=config`** allows users to select all active data with a **`kind`** value of **`config`**.
-3. **setThrough:** Users can apply `setThrough` query parameter while querying a data through relationship such as `/generic-lists/{listId}/entities?setThrough[actives]`. This query will retrieve entities under the list specified by `{listId}` and relation record is active.
+3. **setThrough:** Users can apply `setThrough` query parameter while querying a data through relationship such as `/lists/{listId}/entities?setThrough[actives]`. This query will retrieve entities under the list specified by `{listId}` and relation record is active.
 4. **Enforced Sets for Role-Based Access Control:** Sets can be enforced, ensuring that users work on specific predefined sets. The Gateway application facilitates the creation of sets according to role-based access control policies, enhancing data security and access control.
-5. **whereThrough**: Users can apply `whereThrough` query parameter while performing delete or updateAll on the generic-entities through relationship such as `PATCH /generic-lists/{listId}/entities?whereThrough[foo]=bar`. This operation will be applied to the entities under the list specified by `{listId}` and the relationship record with the field `foo` equals to `bar`.
+5. **whereThrough**: Users can apply `whereThrough` query parameter while performing delete or updateAll on the generic-entities through relationship such as `PATCH /lists/{listId}/entities?whereThrough[foo]=bar`. This operation will be applied to the entities under the list specified by `{listId}` and the relationship record with the field `foo` equals to `bar`.
 6. **Sets with Inclusion Filter**: Users can apply sets to include filter. For example: `?filter[include][0][relation]=_entities&filter[include][0][set][and][0][actives]&filter[include][0][set][and][1][publics]`
 
 **List of Prebuilt Sets:**
@@ -270,12 +270,12 @@ Here are the list of common field names.
 | **_version**             | A number field that automatically incremented each update and replace operation. Note: `_version` is not incremented if record is updated with `updateAll` operation. Callers are not allowed to modify this field.                                                                                                                                                                           |
 | **_ownerUsers**          | An array of user ids.                                                                                                                                                                                                                                                                                                                                                                         |
 | **_ownerGroups**         | An array of user groups.                                                                                                                                                                                                                                                                                                                                                                      |
-| **_ownerUsersCount**     | A number field keeps the number of items in ownerUsers array. Facilitates querying records with no-owners with allowing queries like: `/generic-lists?filter[where][_ownerUsersCount]=0`                                                                                                                                                                                                      |
-| **_ownerGroupsCount**    | A number field keeps the number of items in ownerGroups array. Facilitates querying records with no-owners with allowing queries like: `/generic-lists?filter[where][_ownerGroupsCount]=0`                                                                                                                                                                                                    |
+| **_ownerUsersCount**     | A number field keeps the number of items in ownerUsers array. Facilitates querying records with no-owners with allowing queries like: `/lists?filter[where][_ownerUsersCount]=0`                                                                                                                                                                                                      |
+| **_ownerGroupsCount**    | A number field keeps the number of items in ownerGroups array. Facilitates querying records with no-owners with allowing queries like: `/lists?filter[where][_ownerGroupsCount]=0`                                                                                                                                                                                                    |
 | **_viewerUsers**         | An array of user ids.                                                                                                                                                                                                                                                                                                                                                                         |
 | **_viewerGroups**        | An array of user groups.                                                                                                                                                                                                                                                                                                                                                                      |
-| **_viewerUsersCount**    | A number field keeps the number of items in viewerUsers array. Facilitates querying records with no-viewers with allowing queries like: `/generic-lists?filter[where][_viewerUsersCount]=0`                                                                                                                                                                                                   |
-| **_viewerGroupsCount**   | A number field keeps the number of items in viewerGroups array. Facilitates querying records with no-viewers with allowing queries like: `/generic-lists?filter[where][_viewerGroupsCount]=0`                                                                                                                                                                                                 |
+| **_viewerUsersCount**    | A number field keeps the number of items in viewerUsers array. Facilitates querying records with no-viewers with allowing queries like: `/lists?filter[where][_viewerUsersCount]=0`                                                                                                                                                                                                   |
+| **_viewerGroupsCount**   | A number field keeps the number of items in viewerGroups array. Facilitates querying records with no-viewers with allowing queries like: `/lists?filter[where][_viewerGroupsCount]=0`                                                                                                                                                                                                 |
 | **_createdBy**           | Id of the user who created the record. Gateway *may* allow caller to modify this field. By default only admin users can modify this field.                                                                                                                                                                                                                                                    |
 | **_creationDateTime**    | A date time object automatically filled with the datetime of entity create operation. Gateway *may* allow caller to modify this field. By default only admin users can modify this field.                                                                                                                                                                                                     |
 | **_lastUpdatedDateTime** | A date time object automatically filled with the datetime of any entity update operation. Gateway *may* allow caller to modify this field. By default only admin users can modify this field.                                                                                                                                                                                                 |

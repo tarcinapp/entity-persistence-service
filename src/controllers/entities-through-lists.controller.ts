@@ -70,7 +70,7 @@ export class GenericListGenericEntityController {
     sanitizeFilterFields(filter);
     sanitizeFilterFields(filterThrough);
 
-    return this.listRepository.genericEntities(id).find(filter, filterThrough);
+    return this.listRepository.entities(id).find(filter, filterThrough);
   }
 
   @post('/generic-lists/{id}/entities', {
@@ -106,7 +106,7 @@ export class GenericListGenericEntityController {
     })
     genericEntity: Omit<GenericEntity, 'id'>,
   ): Promise<GenericEntity> {
-    return this.listRepository.genericEntities(id).create(genericEntity);
+    return this.listRepository.entities(id).create(genericEntity);
   }
 
   @patch('/generic-lists/{id}/entities', {
@@ -133,7 +133,7 @@ export class GenericListGenericEntityController {
     whereThrough?: Where<GenericListToEntityRelation>,
   ): Promise<Count> {
     return this.listRepository
-      .genericEntities(id)
+      .entities(id)
       .updateAll(genericEntity, where, whereThrough);
   }
 
@@ -168,7 +168,7 @@ export class GenericListGenericEntityController {
     }
 
     return this.listRepository
-      .genericEntities(id)
+      .entities(id)
       .deleteAll(filter.where, whereThrough);
   }
 }

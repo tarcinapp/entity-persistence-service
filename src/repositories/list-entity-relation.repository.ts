@@ -30,8 +30,8 @@ import {
   HttpErrorResponse,
   SingleError,
 } from '../models';
-import { GenericEntityRepository } from './generic-entity.repository';
-import { GenericListRepository } from './generic-list.repository';
+import { GenericEntityRepository } from './entity.repository';
+import { GenericListRepository } from './list.repository';
 import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
 
 export class GenericListEntityRelationRepository extends DefaultCrudRepository<

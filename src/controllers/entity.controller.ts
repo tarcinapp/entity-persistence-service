@@ -36,7 +36,7 @@ export class GenericEntityController {
   @post('/entities', {
     responses: {
       '200': {
-        description: 'GenericEntity model instance',
+        description: 'Entity model instance',
         content: {
           'application/json': { schema: getModelSchemaRef(GenericEntity) },
         },
@@ -84,7 +84,7 @@ export class GenericEntityController {
       content: {
         'application/json': {
           schema: getModelSchemaRef(GenericEntity, {
-            title: 'NewGenericEntity',
+            title: 'NewEntity',
             exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof GenericEntity)[],
             includeRelations: false,
           }),
@@ -99,7 +99,7 @@ export class GenericEntityController {
   @get('/entities/count', {
     responses: {
       '200': {
-        description: 'GenericEntity model count',
+        description: 'Entity model count',
         content: { 'application/json': { schema: CountSchema } },
       },
     },
@@ -128,7 +128,7 @@ export class GenericEntityController {
   @get('/entities', {
     responses: {
       '200': {
-        description: 'Array of GenericEntity model instances',
+        description: 'Array of Entity model instances',
         content: {
           'application/json': {
             schema: {
@@ -160,7 +160,7 @@ export class GenericEntityController {
   @patch('/entities', {
     responses: {
       '200': {
-        description: 'GenericEntity PATCH success count',
+        description: 'Entity PATCH success count',
         content: { 'application/json': { schema: CountSchema } },
       },
     },
@@ -170,7 +170,7 @@ export class GenericEntityController {
       content: {
         'application/json': {
           schema: getModelSchemaRef(GenericEntity, {
-            title: 'NewGenericEntity',
+            title: 'NewEntity',
             exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof GenericEntity)[],
             includeRelations: false,
           }),
@@ -201,7 +201,7 @@ export class GenericEntityController {
   @get('/entities/{id}', {
     responses: {
       '200': {
-        description: 'GenericEntity model instance',
+        description: 'Entity model instance',
         content: {
           'application/json': {
             schema: getModelSchemaRef(GenericEntity, {
@@ -235,7 +235,7 @@ export class GenericEntityController {
   @patch('/entities/{id}', {
     responses: {
       '204': {
-        description: 'GenericEntity PATCH success',
+        description: 'Entity PATCH success',
       },
       '404': {
         description: 'Entity not found',
@@ -269,7 +269,7 @@ export class GenericEntityController {
       content: {
         'application/json': {
           schema: getModelSchemaRef(GenericEntity, {
-            title: 'PatchGenericEntity',
+            title: 'PatchEntity',
             partial: true,
             exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof GenericEntity)[],
             includeRelations: false,
@@ -285,7 +285,7 @@ export class GenericEntityController {
   @put('/entities/{id}', {
     responses: {
       '204': {
-        description: 'GenericEntity PUT success',
+        description: 'Entity PUT success',
       },
       '404': {
         description: 'Entity not found',
@@ -319,7 +319,7 @@ export class GenericEntityController {
       content: {
         'application/json': {
           schema: getModelSchemaRef(GenericEntity, {
-            title: 'ReplaceGenericEntity',
+            title: 'ReplaceEntity',
             exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof GenericEntity)[],
             includeRelations: false,
           }),
@@ -334,7 +334,7 @@ export class GenericEntityController {
   @del('/entities/{id}', {
     responses: {
       '204': {
-        description: 'GenericEntity DELETE success',
+        description: 'Entity DELETE success',
       },
       '404': {
         description: 'Entity not found',

@@ -12,7 +12,7 @@ import { GenericEntityRepository } from '../../../repositories';
  * Tests all CRUD operations and their error cases.
  * Uses sinon stubs to isolate the controller from the repository layer.
  */
-describe('GenericEntityController', () => {
+describe('EntityController', () => {
   let app: EntityPersistenceApplication;
   let controller: GenericEntityController;
   let repository: sinon.SinonStubbedInstance<GenericEntityRepository>;

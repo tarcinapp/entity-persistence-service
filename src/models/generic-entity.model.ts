@@ -9,7 +9,7 @@ import { Tag } from './tag.model';
   settings: {
     strict: false,
     mongodb: {
-      collection: process.env.collection_entity ?? 'GenericEntity',
+      collection: process.env.collection_entity ?? 'Entity',
     },
   },
 })

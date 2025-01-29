@@ -15,9 +15,9 @@ import {
   TagListRelationRepository,
   TagRepository,
 } from '../../../repositories';
-import { GenericListRepository } from '../../../repositories/generic-list.repository';
+import { GenericListRepository } from '../../../repositories/list.repository';
 
-describe('GenericListRepository', () => {
+describe('ListRepository', () => {
   let app: EntityPersistenceApplication;
   let repository: GenericListRepository;
 
@@ -79,7 +79,7 @@ describe('GenericListRepository', () => {
     expect(repository.children).to.not.be.undefined();
     expect(repository.reactions).to.not.be.undefined();
     expect(repository.tags).to.not.be.undefined();
-    expect(repository.genericEntities).to.not.be.undefined();
+    expect(repository.entities).to.not.be.undefined();
   });
 
   describe('find', () => {

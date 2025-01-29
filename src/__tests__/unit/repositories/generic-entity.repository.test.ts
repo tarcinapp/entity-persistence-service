@@ -13,9 +13,9 @@ import {
   TagEntityRelationRepository,
   TagRepository,
 } from '../../../repositories';
-import { GenericEntityRepository } from '../../../repositories/generic-entity.repository';
+import { GenericEntityRepository } from '../../../repositories/entity.repository';
 
-describe('GenericEntityRepository', () => {
+describe('EntityRepository', () => {
   let app: EntityPersistenceApplication;
   let repository: GenericEntityRepository;
 

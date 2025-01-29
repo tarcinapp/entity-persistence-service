@@ -28,7 +28,7 @@ export class GenericListEntityRelController {
     public genericListEntityRelationRepository: GenericListEntityRelationRepository,
   ) {}
 
-  @post('/generic-list-entity-relations', {
+  @post('/list-entity-relations', {
     responses: {
       '200': {
         description: 'GenericListEntityRelation model instance',
@@ -62,7 +62,7 @@ export class GenericListEntityRelController {
     return this.genericListEntityRelationRepository.create(listEntityRelation);
   }
 
-  @get('/generic-list-entity-relations/count', {
+  @get('/list-entity-relations/count', {
     responses: {
       '200': {
         description: 'GenericListEntityRelation model count',
@@ -92,7 +92,7 @@ export class GenericListEntityRelController {
     return this.genericListEntityRelationRepository.count(filter.where);
   }
 
-  @get('/generic-list-entity-relations', {
+  @get('/list-entity-relations', {
     responses: {
       '200': {
         description: 'Array of GenericListEntityRelation model instances',
@@ -125,7 +125,7 @@ export class GenericListEntityRelController {
     return this.genericListEntityRelationRepository.find(filter);
   }
 
-  @patch('/generic-list-entity-relations', {
+  @patch('/list-entity-relations', {
     responses: {
       '200': {
         description: 'GenericListEntityRelation PATCH success count',
@@ -160,7 +160,7 @@ export class GenericListEntityRelController {
     );
   }
 
-  @get('/generic-list-entity-relations/{id}', {
+  @get('/list-entity-relations/{id}', {
     responses: {
       '200': {
         description: 'GenericListEntityRelation model instance',
@@ -182,7 +182,7 @@ export class GenericListEntityRelController {
     return this.genericListEntityRelationRepository.findById(id, filter);
   }
 
-  @patch('/generic-list-entity-relations/{id}', {
+  @patch('/list-entity-relations/{id}', {
     responses: {
       '204': {
         description: 'GenericListEntityRelation PATCH success',
@@ -215,7 +215,7 @@ export class GenericListEntityRelController {
     );
   }
 
-  @put('/generic-list-entity-relations/{id}', {
+  @put('/list-entity-relations/{id}', {
     responses: {
       '204': {
         description: 'GenericListEntityRelation PUT success',
@@ -243,7 +243,7 @@ export class GenericListEntityRelController {
     );
   }
 
-  @del('/generic-list-entity-relations/{id}', {
+  @del('/list-entity-relations/{id}', {
     responses: {
       '204': {
         description: 'GenericListEntityRelation DELETE success',

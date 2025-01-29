@@ -37,7 +37,7 @@ import {
   Tag,
   TagEntityRelation,
 } from '../models';
-import { GenericListEntityRelationRepository } from './generic-list-entity-relation.repository';
+import { GenericListEntityRelationRepository } from './list-entity-relation.repository';
 import { ReactionsRepository } from './reactions.repository';
 import { RelationRepository } from './relation.repository';
 import { TagEntityRelationRepository } from './tag-entity-relation.repository';

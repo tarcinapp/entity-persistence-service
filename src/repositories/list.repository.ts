@@ -39,8 +39,8 @@ import {
   TagListRelation,
 } from '../models';
 import { CustomEntityThroughListRepository } from './custom-entity-through-list.repository';
-import { GenericEntityRepository } from './generic-entity.repository';
-import { GenericListEntityRelationRepository } from './generic-list-entity-relation.repository';
+import { GenericEntityRepository } from './entity.repository';
+import { GenericListEntityRelationRepository } from './list-entity-relation.repository';
 import { ListReactionsRepository } from './list-reactions.repository';
 import { ListRelationRepository } from './list-relation.repository';
 import { TagListRelationRepository } from './tag-list-relation.repository';
@@ -53,7 +53,7 @@ export class GenericListRepository extends DefaultCrudRepository<
   typeof GenericList.prototype._id,
   ListRelations
 > {
-  public readonly genericEntities: (
+  public readonly entities: (
     listId: typeof GenericList.prototype._id,
   ) => CustomEntityThroughListRepository;
 
@@ -147,7 +147,7 @@ export class GenericListRepository extends DefaultCrudRepository<
     );
 
     // make genericEntities inclusion available through a custom repository
-    this.genericEntities = (listId: typeof GenericList.prototype._id) => {
+    this.entities = (listId: typeof GenericList.prototype._id) => {
       const repo = new CustomEntityThroughListRepository(
         this.dataSource,
         this.genericEntityRepositoryGetter,
@@ -164,7 +164,7 @@ export class GenericListRepository extends DefaultCrudRepository<
     //const genericEntitiesInclusionResolver = this.createHasManyThroughRepositoryFactoryFor('_genericEntities', genericEntityRepositoryGetter, listEntityRelationRepositoryGetter).inclusionResolver
 
     this.registerInclusionResolver(
-      '_genericEntities',
+      '_entities',
       this.createEntitiesInclusionResolver(
         listEntityRelationRepositoryGetter,
         genericEntityRepositoryGetter,

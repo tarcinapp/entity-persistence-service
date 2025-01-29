@@ -9,7 +9,7 @@ import {
   expectResponseToMatch,
 } from '../test-helper';
 
-describe('POST /generic-lists', () => {
+describe('POST /lists', () => {
   let client: Client;
   let appWithClient: AppWithClient | undefined;
 
@@ -53,10 +53,7 @@ describe('POST /generic-lists', () => {
       description: 'List of items that the editor has picked',
     };
 
-    const response = await client
-      .post('/generic-lists')
-      .send(newList)
-      .expect(200);
+    const response = await client.post('/lists').send(newList).expect(200);
 
     // checks name and description
     expect(response.body).to.containDeep(newList);
@@ -89,10 +86,7 @@ describe('POST /generic-lists', () => {
       description: 'A featured list',
     };
 
-    const response = await client
-      .post('/generic-lists')
-      .send(newList)
-      .expect(200);
+    const response = await client.post('/lists').send(newList).expect(200);
 
     expect(response.body._kind).to.be.equal('featured');
   });
@@ -109,7 +103,7 @@ describe('POST /generic-lists', () => {
       description: 'A list with invalid kind',
     };
 
-    await client.post('/generic-lists').send(newList).expect(422);
+    await client.post('/lists').send(newList).expect(422);
   });
 
   it('rejects duplicate list based on uniqueness configuration', async () => {
@@ -127,10 +121,7 @@ describe('POST /generic-lists', () => {
       description: 'A list of science fiction books',
     };
 
-    const response = await client
-      .post('/generic-lists')
-      .send(firstList)
-      .expect(200);
+    const response = await client.post('/lists').send(firstList).expect(200);
 
     expect(response.body._slug).to.be.equal('science-fiction-books');
     expect(response.body._kind).to.be.equal('book-list');
@@ -143,7 +134,7 @@ describe('POST /generic-lists', () => {
     };
 
     const errorResponse = await client
-      .post('/generic-lists')
+      .post('/lists')
       .send(secondList)
       .expect(409);
 
@@ -171,10 +162,7 @@ describe('POST /generic-lists', () => {
       description: 'A list of science fiction books',
     };
 
-    const response = await client
-      .post('/generic-lists')
-      .send(firstList)
-      .expect(200);
+    const response = await client.post('/lists').send(firstList).expect(200);
 
     expect(response.body._slug).to.be.equal('science-fiction-books');
     expect(response.body._kind).to.be.equal('book-list');
@@ -189,7 +177,7 @@ describe('POST /generic-lists', () => {
     };
 
     const errorResponse = await client
-      .post('/generic-lists')
+      .post('/lists')
       .send(secondList)
       .expect(409);
 
@@ -218,7 +206,7 @@ describe('POST /generic-lists', () => {
     };
 
     const firstResponse = await client
-      .post('/generic-lists')
+      .post('/lists')
       .send(firstList)
       .expect(200);
 
@@ -238,7 +226,7 @@ describe('POST /generic-lists', () => {
     };
 
     const secondResponse = await client
-      .post('/generic-lists')
+      .post('/lists')
       .send(secondList)
       .expect(200);
 
@@ -247,7 +235,7 @@ describe('POST /generic-lists', () => {
     expect(secondResponse.body._ownerUsers).to.containDeep(['user-123']);
 
     // Verify both records exist by getting all lists
-    const getAllResponse = await client.get('/generic-lists').expect(200);
+    const getAllResponse = await client.get('/lists').expect(200);
     expect(getAllResponse.body).to.be.Array().lengthOf(2);
   });
 
@@ -269,7 +257,7 @@ describe('POST /generic-lists', () => {
     };
 
     const firstResponse = await client
-      .post('/generic-lists')
+      .post('/lists')
       .send(firstList)
       .expect(200);
 
@@ -290,7 +278,7 @@ describe('POST /generic-lists', () => {
     };
 
     const errorResponse = await client
-      .post('/generic-lists')
+      .post('/lists')
       .send(secondList)
       .expect(409);
 
@@ -328,7 +316,7 @@ describe('POST /generic-lists', () => {
     };
 
     const firstResponse = await client
-      .post('/generic-lists')
+      .post('/lists')
       .send(firstList)
       .expect(200);
 
@@ -352,7 +340,7 @@ describe('POST /generic-lists', () => {
     };
 
     const errorResponse = await client
-      .post('/generic-lists')
+      .post('/lists')
       .send(secondList)
       .expect(409);
 
@@ -393,7 +381,7 @@ describe('POST /generic-lists', () => {
     };
 
     const firstResponse = await client
-      .post('/generic-lists')
+      .post('/lists')
       .send(firstList)
       .expect(200);
 
@@ -417,7 +405,7 @@ describe('POST /generic-lists', () => {
     };
 
     const secondResponse = await client
-      .post('/generic-lists')
+      .post('/lists')
       .send(secondList)
       .expect(200);
 
@@ -429,7 +417,7 @@ describe('POST /generic-lists', () => {
     );
 
     // Verify only one record exists by getting all lists
-    const getAllResponse = await client.get('/generic-lists').expect(200);
+    const getAllResponse = await client.get('/lists').expect(200);
     expect(getAllResponse.body).to.be.Array().lengthOf(2); // Two records should exist
   });
 
@@ -447,10 +435,7 @@ describe('POST /generic-lists', () => {
       description: 'A list that should be auto-approved',
     };
 
-    const response = await client
-      .post('/generic-lists')
-      .send(newList)
-      .expect(200);
+    const response = await client.post('/lists').send(newList).expect(200);
 
     // Verify the response
     expect(response.body._slug).to.be.equal('auto-approved-list');
@@ -482,10 +467,7 @@ describe('POST /generic-lists', () => {
       description: 'A book list that should be auto-approved',
     };
 
-    const response = await client
-      .post('/generic-lists')
-      .send(newList)
-      .expect(200);
+    const response = await client.post('/lists').send(newList).expect(200);
 
     // Verify the response
     expect(response.body._slug).to.be.equal('auto-approved-book-list');
@@ -517,10 +499,7 @@ describe('POST /generic-lists', () => {
       description: 'A book list that should not be auto-approved',
     };
 
-    const response = await client
-      .post('/generic-lists')
-      .send(newList)
-      .expect(200);
+    const response = await client.post('/lists').send(newList).expect(200);
 
     // Verify the response
     expect(response.body._slug).to.be.equal('non-auto-approved-book-list');
@@ -549,10 +528,7 @@ describe('POST /generic-lists', () => {
       description: 'A list that should be private by default',
     };
 
-    const response = await client
-      .post('/generic-lists')
-      .send(newList)
-      .expect(200);
+    const response = await client.post('/lists').send(newList).expect(200);
 
     // Verify the response
     expect(response.body._slug).to.be.equal('private-list');
@@ -574,10 +550,7 @@ describe('POST /generic-lists', () => {
       description: 'A book list that should be public by default',
     };
 
-    const response = await client
-      .post('/generic-lists')
-      .send(newList)
-      .expect(200);
+    const response = await client.post('/lists').send(newList).expect(200);
 
     // Verify the response
     expect(response.body._slug).to.be.equal('public-book-list');
@@ -598,10 +571,7 @@ describe('POST /generic-lists', () => {
       description: 'A list with invalid visibility',
     };
 
-    const errorResponse = await client
-      .post('/generic-lists')
-      .send(newList)
-      .expect(422);
+    const errorResponse = await client.post('/lists').send(newList).expect(422);
 
     expect(errorResponse.body.error).to.containDeep({
       statusCode: 422,
@@ -626,7 +596,7 @@ describe('POST /generic-lists', () => {
       _kind: 'book-list',
       description: 'First list within limit',
     };
-    await client.post('/generic-lists').send(firstList).expect(200);
+    await client.post('/lists').send(firstList).expect(200);
 
     // Second list - should succeed
     const secondList = {
@@ -634,7 +604,7 @@ describe('POST /generic-lists', () => {
       _kind: 'book-list',
       description: 'Second list within limit',
     };
-    await client.post('/generic-lists').send(secondList).expect(200);
+    await client.post('/lists').send(secondList).expect(200);
 
     // Third list - should fail due to limit
     const thirdList = {
@@ -643,7 +613,7 @@ describe('POST /generic-lists', () => {
       description: 'Third list exceeding limit',
     };
     const errorResponse = await client
-      .post('/generic-lists')
+      .post('/lists')
       .send(thirdList)
       .expect(429);
 
@@ -678,7 +648,7 @@ describe('POST /generic-lists', () => {
       _kind: 'book-list',
       description: 'First book list within limit',
     };
-    await client.post('/generic-lists').send(firstBookList).expect(200);
+    await client.post('/lists').send(firstBookList).expect(200);
 
     // Featured list - should succeed (different kind)
     const featuredList = {
@@ -686,7 +656,7 @@ describe('POST /generic-lists', () => {
       _kind: 'featured-list',
       description: 'Featured list not affected by book-list limit',
     };
-    await client.post('/generic-lists').send(featuredList).expect(200);
+    await client.post('/lists').send(featuredList).expect(200);
 
     // Second book list - should fail due to kind-specific limit
     const secondBookList = {
@@ -695,7 +665,7 @@ describe('POST /generic-lists', () => {
       description: 'Second book list exceeding limit',
     };
     const errorResponse = await client
-      .post('/generic-lists')
+      .post('/lists')
       .send(secondBookList)
       .expect(429);
 
@@ -739,7 +709,7 @@ describe('POST /generic-lists', () => {
       _validUntilDateTime: futureDate.toISOString(),
       description: 'First active list within limit',
     };
-    await client.post('/generic-lists').send(firstList).expect(200);
+    await client.post('/lists').send(firstList).expect(200);
 
     // Second active list - should succeed
     const secondList = {
@@ -749,7 +719,7 @@ describe('POST /generic-lists', () => {
       _validUntilDateTime: futureDate.toISOString(),
       description: 'Second active list within limit',
     };
-    await client.post('/generic-lists').send(secondList).expect(200);
+    await client.post('/lists').send(secondList).expect(200);
 
     // Inactive list - should succeed despite active records limit
     const inactiveList = {
@@ -759,7 +729,7 @@ describe('POST /generic-lists', () => {
       _validUntilDateTime: pastDate.toISOString(), // Already expired
       description: 'Inactive list not counted in active limit',
     };
-    await client.post('/generic-lists').send(inactiveList).expect(200);
+    await client.post('/lists').send(inactiveList).expect(200);
 
     // Third active list - should fail due to active records limit
     const thirdActiveList = {
@@ -770,7 +740,7 @@ describe('POST /generic-lists', () => {
       description: 'Third active list exceeding limit',
     };
     const errorResponse = await client
-      .post('/generic-lists')
+      .post('/lists')
       .send(thirdActiveList)
       .expect(429);
 
@@ -814,7 +784,7 @@ describe('POST /generic-lists', () => {
       _validUntilDateTime: futureDate.toISOString(),
       description: 'First active book list within limit',
     };
-    await client.post('/generic-lists').send(firstBookList).expect(200);
+    await client.post('/lists').send(firstBookList).expect(200);
 
     // Active featured list - should succeed (different kind)
     const featuredList = {
@@ -824,7 +794,7 @@ describe('POST /generic-lists', () => {
       _validUntilDateTime: futureDate.toISOString(),
       description: 'Featured list not affected by book-list limit',
     };
-    await client.post('/generic-lists').send(featuredList).expect(200);
+    await client.post('/lists').send(featuredList).expect(200);
 
     // Second active book list - should fail due to kind-specific active limit
     const secondBookList = {
@@ -835,7 +805,7 @@ describe('POST /generic-lists', () => {
       description: 'Second active book list exceeding limit',
     };
     const errorResponse = await client
-      .post('/generic-lists')
+      .post('/lists')
       .send(secondBookList)
       .expect(429);
 
@@ -880,7 +850,7 @@ describe('POST /generic-lists', () => {
       _visibility: 'public',
       description: 'First active and public list within limit',
     };
-    await client.post('/generic-lists').send(firstList).expect(200);
+    await client.post('/lists').send(firstList).expect(200);
 
     // Second active and public list - should succeed
     const secondList = {
@@ -891,7 +861,7 @@ describe('POST /generic-lists', () => {
       _visibility: 'public',
       description: 'Second active and public list within limit',
     };
-    await client.post('/generic-lists').send(secondList).expect(200);
+    await client.post('/lists').send(secondList).expect(200);
 
     // Active but private list - should succeed despite limit (not public)
     const privateList = {
@@ -902,7 +872,7 @@ describe('POST /generic-lists', () => {
       _visibility: 'private',
       description: 'Private active list not counted in limit',
     };
-    await client.post('/generic-lists').send(privateList).expect(200);
+    await client.post('/lists').send(privateList).expect(200);
 
     // Public but inactive list - should succeed despite limit (not active)
     const inactiveList = {
@@ -913,7 +883,7 @@ describe('POST /generic-lists', () => {
       _visibility: 'public',
       description: 'Inactive public list not counted in limit',
     };
-    await client.post('/generic-lists').send(inactiveList).expect(200);
+    await client.post('/lists').send(inactiveList).expect(200);
 
     // Third active and public list - should fail due to combined active+public limit
     const thirdActivePublicList = {
@@ -925,7 +895,7 @@ describe('POST /generic-lists', () => {
       description: 'Third active and public list exceeding limit',
     };
     const errorResponse = await client
-      .post('/generic-lists')
+      .post('/lists')
       .send(thirdActivePublicList)
       .expect(429);
 
@@ -964,7 +934,7 @@ describe('POST /generic-lists', () => {
       _ownerUsers: [userId],
       description: 'First list for the user within limit',
     };
-    await client.post('/generic-lists').send(firstList).expect(200);
+    await client.post('/lists').send(firstList).expect(200);
 
     // Second list for user - should succeed
     const secondList = {
@@ -973,7 +943,7 @@ describe('POST /generic-lists', () => {
       _ownerUsers: [userId],
       description: 'Second list for the user within limit',
     };
-    await client.post('/generic-lists').send(secondList).expect(200);
+    await client.post('/lists').send(secondList).expect(200);
 
     // List for different user - should succeed despite limit
     const differentUserList = {
@@ -982,7 +952,7 @@ describe('POST /generic-lists', () => {
       _ownerUsers: ['user-456'],
       description: 'List for different user not counted in limit',
     };
-    await client.post('/generic-lists').send(differentUserList).expect(200);
+    await client.post('/lists').send(differentUserList).expect(200);
 
     // List with multiple owners including our user - should fail due to user's limit
     const multiOwnerList = {
@@ -992,7 +962,7 @@ describe('POST /generic-lists', () => {
       description: 'List with multiple owners including limited user',
     };
     const errorResponse = await client
-      .post('/generic-lists')
+      .post('/lists')
       .send(multiOwnerList)
       .expect(429);
 
@@ -1020,7 +990,7 @@ describe('POST /generic-lists', () => {
       description: 'Third list for the user exceeding limit',
     };
     const secondErrorResponse = await client
-      .post('/generic-lists')
+      .post('/lists')
       .send(thirdList)
       .expect(429);
 
@@ -1059,7 +1029,7 @@ describe('POST /generic-lists', () => {
     };
 
     const firstResponse = await client
-      .post('/generic-lists')
+      .post('/lists')
       .send(firstList)
       .expect(200);
 
@@ -1083,7 +1053,7 @@ describe('POST /generic-lists', () => {
     };
 
     const secondResponse = await client
-      .post('/generic-lists')
+      .post('/lists')
       .send(secondList)
       .expect(200);
 
@@ -1091,7 +1061,7 @@ describe('POST /generic-lists', () => {
     expectResponseToMatch(secondResponse.body, firstResponse.body);
 
     // Verify only one record exists by getting all lists
-    const getAllResponse = await client.get('/generic-lists').expect(200);
+    const getAllResponse = await client.get('/lists').expect(200);
     expect(getAllResponse.body).to.be.Array().lengthOf(1); // Only one record should exist
   });
 
@@ -1113,7 +1083,7 @@ describe('POST /generic-lists', () => {
     };
 
     const firstBookResponse = await client
-      .post('/generic-lists')
+      .post('/lists')
       .send(firstBookList)
       .expect(200);
 
@@ -1126,7 +1096,7 @@ describe('POST /generic-lists', () => {
     };
 
     const secondBookResponse = await client
-      .post('/generic-lists')
+      .post('/lists')
       .send(secondBookList)
       .expect(200);
 
@@ -1142,7 +1112,7 @@ describe('POST /generic-lists', () => {
     };
 
     const firstFeaturedResponse = await client
-      .post('/generic-lists')
+      .post('/lists')
       .send(firstFeaturedList)
       .expect(200);
 
@@ -1155,7 +1125,7 @@ describe('POST /generic-lists', () => {
     };
 
     const secondFeaturedResponse = await client
-      .post('/generic-lists')
+      .post('/lists')
       .send(secondFeaturedList)
       .expect(200);
 
@@ -1166,7 +1136,7 @@ describe('POST /generic-lists', () => {
     );
 
     // Verify only two records exist (one for each kind)
-    const getAllResponse = await client.get('/generic-lists').expect(200);
+    const getAllResponse = await client.get('/lists').expect(200);
     expect(getAllResponse.body).to.be.Array().lengthOf(2);
   });
 
@@ -1188,7 +1158,7 @@ describe('POST /generic-lists', () => {
     };
 
     const firstResponse = await client
-      .post('/generic-lists')
+      .post('/lists')
       .send(firstList)
       .expect(200);
 
@@ -1202,7 +1172,7 @@ describe('POST /generic-lists', () => {
     };
 
     const secondResponse = await client
-      .post('/generic-lists')
+      .post('/lists')
       .send(secondList)
       .expect(200);
 
@@ -1210,7 +1180,7 @@ describe('POST /generic-lists', () => {
     expectResponseToMatch(secondResponse.body, firstResponse.body);
 
     // Verify only one record exists
-    const getAllResponse = await client.get('/generic-lists').expect(200);
+    const getAllResponse = await client.get('/lists').expect(200);
     expect(getAllResponse.body).to.be.Array().lengthOf(1);
   });
 
@@ -1236,7 +1206,7 @@ describe('POST /generic-lists', () => {
     };
 
     const firstResponse = await client
-      .post('/generic-lists')
+      .post('/lists')
       .send(firstList)
       .expect(200);
 
@@ -1250,7 +1220,7 @@ describe('POST /generic-lists', () => {
     };
 
     const secondResponse = await client
-      .post('/generic-lists')
+      .post('/lists')
       .send(secondList)
       .expect(200);
 
@@ -1258,7 +1228,7 @@ describe('POST /generic-lists', () => {
     expectResponseToMatch(secondResponse.body, firstResponse.body);
 
     // Verify only one record exists
-    const getAllResponse = await client.get('/generic-lists').expect(200);
+    const getAllResponse = await client.get('/lists').expect(200);
     expect(getAllResponse.body).to.be.Array().lengthOf(1);
   });
 });

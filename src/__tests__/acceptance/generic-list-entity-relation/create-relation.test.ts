@@ -7,7 +7,7 @@ import {
   type AppWithClient,
 } from '../test-helper';
 
-describe('POST /generic-list-entity-relations', () => {
+describe('POST /list-entity-relations', () => {
   let client: Client;
   let appWithClient: AppWithClient;
 
@@ -22,7 +22,7 @@ describe('POST /generic-list-entity-relations', () => {
     client = appWithClient.client;
 
     // First create a list
-    const listResponse = await client.post('/generic-lists').send({
+    const listResponse = await client.post('/lists').send({
       _name: 'test list',
     });
     expect(listResponse.status).to.equal(200);
@@ -36,12 +36,10 @@ describe('POST /generic-list-entity-relations', () => {
     const entity = entityResponse.body;
 
     // Finally create the relation
-    const relationResponse = await client
-      .post('/generic-list-entity-relations')
-      .send({
-        _listId: list._id,
-        _entityId: entity._id,
-      });
+    const relationResponse = await client.post('/list-entity-relations').send({
+      _listId: list._id,
+      _entityId: entity._id,
+    });
 
     expect(relationResponse.status).to.equal(200);
     expect(relationResponse.body).to.have.property('_id');
@@ -62,7 +60,7 @@ describe('POST /generic-list-entity-relations', () => {
     client = appWithClient.client;
 
     // First create a list
-    const listResponse = await client.post('/generic-lists').send({
+    const listResponse = await client.post('/lists').send({
       _name: 'test list',
     });
     expect(listResponse.status).to.equal(200);
@@ -83,7 +81,7 @@ describe('POST /generic-list-entity-relations', () => {
     };
 
     const response = await client
-      .post('/generic-list-entity-relations')
+      .post('/list-entity-relations')
       .send(newRelation)
       .expect(200);
 
@@ -105,7 +103,7 @@ describe('POST /generic-list-entity-relations', () => {
     client = appWithClient.client;
 
     // First create a list
-    const listResponse = await client.post('/generic-lists').send({
+    const listResponse = await client.post('/lists').send({
       _name: 'test list',
     });
     expect(listResponse.status).to.equal(200);
@@ -126,7 +124,7 @@ describe('POST /generic-list-entity-relations', () => {
     };
 
     const response = await client
-      .post('/generic-list-entity-relations')
+      .post('/list-entity-relations')
       .send(newRelation)
       .expect(422);
 
@@ -154,7 +152,7 @@ describe('POST /generic-list-entity-relations', () => {
     client = appWithClient.client;
 
     // First create a list
-    const listResponse = await client.post('/generic-lists').send({
+    const listResponse = await client.post('/lists').send({
       _name: 'test list',
     });
     expect(listResponse.status).to.equal(200);
@@ -172,7 +170,7 @@ describe('POST /generic-list-entity-relations', () => {
 
     // Create first relation - should succeed
     await client
-      .post('/generic-list-entity-relations')
+      .post('/list-entity-relations')
       .send({
         _listId: list._id,
         _entityId: entities[0]._id,
@@ -181,7 +179,7 @@ describe('POST /generic-list-entity-relations', () => {
 
     // Create second relation - should succeed
     await client
-      .post('/generic-list-entity-relations')
+      .post('/list-entity-relations')
       .send({
         _listId: list._id,
         _entityId: entities[1]._id,
@@ -190,7 +188,7 @@ describe('POST /generic-list-entity-relations', () => {
 
     // Try to create third relation - should fail due to limit
     const response = await client
-      .post('/generic-list-entity-relations')
+      .post('/list-entity-relations')
       .send({
         _listId: list._id,
         _entityId: entities[2]._id,
@@ -225,7 +223,7 @@ describe('POST /generic-list-entity-relations', () => {
     client = appWithClient.client;
 
     // First create a list
-    const listResponse = await client.post('/generic-lists').send({
+    const listResponse = await client.post('/lists').send({
       _name: 'test list',
     });
     expect(listResponse.status).to.equal(200);
@@ -243,7 +241,7 @@ describe('POST /generic-list-entity-relations', () => {
 
     // Create first 'consists' relation - should succeed
     await client
-      .post('/generic-list-entity-relations')
+      .post('/list-entity-relations')
       .send({
         _listId: list._id,
         _entityId: entities[0]._id,
@@ -253,7 +251,7 @@ describe('POST /generic-list-entity-relations', () => {
 
     // Try to create second 'consists' relation - should fail due to kind-specific limit
     const consistsResponse = await client
-      .post('/generic-list-entity-relations')
+      .post('/list-entity-relations')
       .send({
         _listId: list._id,
         _entityId: entities[1]._id,
@@ -285,7 +283,7 @@ describe('POST /generic-list-entity-relations', () => {
 
     // Create first 'references' relation - should succeed
     await client
-      .post('/generic-list-entity-relations')
+      .post('/list-entity-relations')
       .send({
         _listId: list._id,
         _entityId: entities[1]._id,
@@ -295,7 +293,7 @@ describe('POST /generic-list-entity-relations', () => {
 
     // Create second 'references' relation - should succeed
     await client
-      .post('/generic-list-entity-relations')
+      .post('/list-entity-relations')
       .send({
         _listId: list._id,
         _entityId: entities[2]._id,
@@ -305,7 +303,7 @@ describe('POST /generic-list-entity-relations', () => {
 
     // Try to create third 'references' relation - should fail due to kind-specific limit
     const referencesResponse = await client
-      .post('/generic-list-entity-relations')
+      .post('/list-entity-relations')
       .send({
         _listId: list._id,
         _entityId: entities[0]._id,
@@ -352,7 +350,7 @@ describe('POST /generic-list-entity-relations', () => {
     futureDate.setDate(futureDate.getDate() + 7);
 
     // First create a list
-    const listResponse = await client.post('/generic-lists').send({
+    const listResponse = await client.post('/lists').send({
       _name: 'test list',
     });
     expect(listResponse.status).to.equal(200);
@@ -370,7 +368,7 @@ describe('POST /generic-list-entity-relations', () => {
 
     // Create first active relation - should succeed
     await client
-      .post('/generic-list-entity-relations')
+      .post('/list-entity-relations')
       .send({
         _listId: list._id,
         _entityId: entities[0]._id,
@@ -381,7 +379,7 @@ describe('POST /generic-list-entity-relations', () => {
 
     // Create second active relation - should succeed
     await client
-      .post('/generic-list-entity-relations')
+      .post('/list-entity-relations')
       .send({
         _listId: list._id,
         _entityId: entities[1]._id,
@@ -392,7 +390,7 @@ describe('POST /generic-list-entity-relations', () => {
 
     // Create inactive relation - should succeed despite active records limit
     await client
-      .post('/generic-list-entity-relations')
+      .post('/list-entity-relations')
       .send({
         _listId: list._id,
         _entityId: entities[2]._id,
@@ -403,7 +401,7 @@ describe('POST /generic-list-entity-relations', () => {
 
     // Try to create third active relation - should fail due to active records limit
     const response = await client
-      .post('/generic-list-entity-relations')
+      .post('/list-entity-relations')
       .send({
         _listId: list._id,
         _entityId: entities[3]._id,
@@ -439,7 +437,7 @@ describe('POST /generic-list-entity-relations', () => {
     client = appWithClient.client;
 
     // First create a list
-    const listResponse = await client.post('/generic-lists').send({
+    const listResponse = await client.post('/lists').send({
       _name: 'test list',
     });
     expect(listResponse.status).to.equal(200);
@@ -457,7 +455,7 @@ describe('POST /generic-list-entity-relations', () => {
 
     // Create first relation - should succeed
     await client
-      .post('/generic-list-entity-relations')
+      .post('/list-entity-relations')
       .send({
         _listId: list._id,
         _entityId: entities[0]._id,
@@ -466,7 +464,7 @@ describe('POST /generic-list-entity-relations', () => {
 
     // Create second relation - should succeed
     await client
-      .post('/generic-list-entity-relations')
+      .post('/list-entity-relations')
       .send({
         _listId: list._id,
         _entityId: entities[1]._id,
@@ -475,7 +473,7 @@ describe('POST /generic-list-entity-relations', () => {
 
     // Try to create third relation - should fail due to list entity count limit
     const response = await client
-      .post('/generic-list-entity-relations')
+      .post('/list-entity-relations')
       .send({
         _listId: list._id,
         _entityId: entities[2]._id,
@@ -515,7 +513,7 @@ describe('POST /generic-list-entity-relations', () => {
 
     // Create a reading list (limit: 1)
     const readingList = await client
-      .post('/generic-lists')
+      .post('/lists')
       .send({
         _name: 'My Reading List',
         _kind: 'reading-list',
@@ -524,7 +522,7 @@ describe('POST /generic-list-entity-relations', () => {
 
     // Create a watch list (limit: 2)
     const watchList = await client
-      .post('/generic-lists')
+      .post('/lists')
       .send({
         _name: 'My Watch List',
         _kind: 'watch-list',
@@ -544,7 +542,7 @@ describe('POST /generic-list-entity-relations', () => {
     // Test reading-list (limit: 1)
     // Add first entity to reading list - should succeed
     await client
-      .post('/generic-list-entity-relations')
+      .post('/list-entity-relations')
       .send({
         _listId: readingList._id,
         _entityId: entities[0]._id,
@@ -553,7 +551,7 @@ describe('POST /generic-list-entity-relations', () => {
 
     // Try to add second entity to reading list - should fail due to kind-specific limit
     const readingListResponse = await client
-      .post('/generic-list-entity-relations')
+      .post('/list-entity-relations')
       .send({
         _listId: readingList._id,
         _entityId: entities[1]._id,
@@ -589,7 +587,7 @@ describe('POST /generic-list-entity-relations', () => {
     // Test watch-list (limit: 2)
     // Add first entity to watch list - should succeed
     await client
-      .post('/generic-list-entity-relations')
+      .post('/list-entity-relations')
       .send({
         _listId: watchList._id,
         _entityId: entities[0]._id,
@@ -598,7 +596,7 @@ describe('POST /generic-list-entity-relations', () => {
 
     // Add second entity to watch list - should succeed
     await client
-      .post('/generic-list-entity-relations')
+      .post('/list-entity-relations')
       .send({
         _listId: watchList._id,
         _entityId: entities[1]._id,
@@ -607,7 +605,7 @@ describe('POST /generic-list-entity-relations', () => {
 
     // Try to add third entity to watch list - should fail due to kind-specific limit
     const watchListResponse = await client
-      .post('/generic-list-entity-relations')
+      .post('/list-entity-relations')
       .send({
         _listId: watchList._id,
         _entityId: entities[2]._id,
