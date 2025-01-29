@@ -8,18 +8,18 @@ import type { EntityPersistenceApplication } from '../../..';
 import { HttpErrorResponse } from '../../../models';
 import {
   CustomEntityThroughListRepository,
-  GenericEntityRepository,
+  EntityRepository,
   GenericListEntityRelationRepository,
   ListReactionsRepository,
   ListRelationRepository,
   TagListRelationRepository,
   TagRepository,
 } from '../../../repositories';
-import { GenericListRepository } from '../../../repositories/list.repository';
+import { ListRepository } from '../../../repositories/list.repository';
 
 describe('ListRepository', () => {
   let app: EntityPersistenceApplication;
-  let repository: GenericListRepository;
+  let repository: ListRepository;
 
   before(async () => {
     // Set up test environment
@@ -30,9 +30,7 @@ describe('ListRepository', () => {
     const listEntityRelationRepoStub = sinon.createStubInstance(
       GenericListEntityRelationRepository,
     );
-    const genericEntityRepoStub = sinon.createStubInstance(
-      GenericEntityRepository,
-    );
+    const genericEntityRepoStub = sinon.createStubInstance(EntityRepository);
     const listRelationRepoStub = sinon.createStubInstance(
       ListRelationRepository,
     );
@@ -48,7 +46,7 @@ describe('ListRepository', () => {
     );
 
     // Create main repository instance with stubbed dependencies
-    repository = new GenericListRepository(
+    repository = new ListRepository(
       testSetup.dataSource,
       Getter.fromValue(listEntityRelationRepoStub),
       Getter.fromValue(genericEntityRepoStub),
@@ -72,7 +70,7 @@ describe('ListRepository', () => {
   });
 
   it('should be properly instantiated', () => {
-    expect(repository).to.be.instanceOf(GenericListRepository);
+    expect(repository).to.be.instanceOf(ListRepository);
   });
 
   it('should have all required relations configured', () => {

@@ -4,8 +4,8 @@ import { setupApplication, teardownApplication } from './test-helper';
 import type { EntityPersistenceApplication } from '../../..';
 import { GenericListController } from '../../../controllers';
 import type { Set } from '../../../extensions/utils/set-helper';
-import { GenericList } from '../../../models';
-import { GenericListRepository } from '../../../repositories';
+import { List } from '../../../models';
+import { ListRepository } from '../../../repositories';
 
 /**
  * Test suite for GenericListController
@@ -15,7 +15,7 @@ import { GenericListRepository } from '../../../repositories';
 describe('ListController', () => {
   let app: EntityPersistenceApplication;
   let controller: GenericListController;
-  let repository: sinon.SinonStubbedInstance<GenericListRepository>;
+  let repository: sinon.SinonStubbedInstance<ListRepository>;
 
   before(async () => {
     ({ app } = await setupApplication());
@@ -27,7 +27,7 @@ describe('ListController', () => {
 
   beforeEach(() => {
     // Create a fresh stub for each test to avoid interference
-    repository = sinon.createStubInstance(GenericListRepository);
+    repository = sinon.createStubInstance(ListRepository);
     controller = new GenericListController(repository);
   });
 
@@ -41,12 +41,12 @@ describe('ListController', () => {
   describe('create()', () => {
     it('should successfully call GenericListRepository.create() with correct data', async () => {
       // Arrange
-      const inputList: DataObject<GenericList> = {
+      const inputList: DataObject<List> = {
         _name: 'testList',
         foo: 'bar',
       };
 
-      const expectedList = new GenericList({
+      const expectedList = new List({
         _id: '123',
         _name: 'testList',
         foo: 'bar',
@@ -100,7 +100,7 @@ describe('ListController', () => {
       repository.create.rejects({ statusCode: 422 });
 
       try {
-        await controller.create(inputList as DataObject<GenericList>);
+        await controller.create(inputList as DataObject<List>);
         throw new Error('Expected error was not thrown');
       } catch (error) {
         expect(error).to.have.property('statusCode', 422);
@@ -110,7 +110,7 @@ describe('ListController', () => {
 
   describe('findById()', () => {
     it('should retrieve a list by id', async () => {
-      const expectedList = new GenericList({
+      const expectedList = new List({
         _id: '123',
         _name: 'testList',
         foo: 'bar',
@@ -124,7 +124,7 @@ describe('ListController', () => {
     });
 
     it('should retrieve a list by id with filter', async () => {
-      const expectedList = new GenericList({
+      const expectedList = new List({
         _id: '123',
         _name: 'testList',
         foo: 'bar',
@@ -159,7 +159,7 @@ describe('ListController', () => {
    */
   describe('find()', () => {
     it('should retrieve lists with no filter or set', async () => {
-      const expectedLists = [new GenericList({ _id: '123', _name: 'list1' })];
+      const expectedLists = [new List({ _id: '123', _name: 'list1' })];
       repository.find.resolves(expectedLists);
 
       const result = await controller.find();
@@ -169,9 +169,7 @@ describe('ListController', () => {
 
     it('should retrieve lists with only filter', async () => {
       const filter = { where: { _name: 'testList' } };
-      const expectedLists = [
-        new GenericList({ _id: '123', _name: 'testList' }),
-      ];
+      const expectedLists = [new List({ _id: '123', _name: 'testList' })];
       repository.find.resolves(expectedLists);
 
       const result = await controller.find(filter);
@@ -182,7 +180,7 @@ describe('ListController', () => {
     it('should retrieve lists with only set', async () => {
       const set: Set = { actives: 'true' };
       const expectedLists = [
-        new GenericList({
+        new List({
           _id: '123',
           _validFromDateTime: new Date(Date.now() - 10000).toISOString(),
         }),
@@ -199,7 +197,7 @@ describe('ListController', () => {
       const set: Set = { actives: 'true' };
       const filter = { where: { _name: 'testList' }, limit: 10 };
       const expectedLists = [
-        new GenericList({
+        new List({
           _id: '123',
           _name: 'testList',
           _validFromDateTime: new Date(Date.now() - 10000).toISOString(),
@@ -277,7 +275,7 @@ describe('ListController', () => {
 
     it('should throw 422 when trying to modify unmodifiable fields', async () => {
       const id = '123';
-      const updateData = { _id: 'newId' } as DataObject<GenericList>;
+      const updateData = { _id: 'newId' } as DataObject<List>;
       repository.updateById.rejects({ statusCode: 422 });
 
       try {
@@ -383,7 +381,7 @@ describe('ListController', () => {
     });
 
     it('should throw 422 when trying to modify unmodifiable fields', async () => {
-      const updateData = { _id: 'newId' } as DataObject<GenericList>;
+      const updateData = { _id: 'newId' } as DataObject<List>;
       repository.updateAll.rejects({ statusCode: 422 });
 
       try {
@@ -424,7 +422,7 @@ describe('ListController', () => {
 
     it('should throw 422 for invalid data', async () => {
       const id = '123';
-      const invalidData = { _id: 'invalid' } as DataObject<GenericList>;
+      const invalidData = { _id: 'invalid' } as DataObject<List>;
       repository.replaceById.rejects({ statusCode: 422 });
 
       try {
@@ -437,7 +435,7 @@ describe('ListController', () => {
 
     it('should throw 422 when required fields are missing', async () => {
       const id = '123';
-      const incompleteData = {} as DataObject<GenericList>;
+      const incompleteData = {} as DataObject<List>;
       repository.replaceById.rejects({ statusCode: 422 });
 
       try {

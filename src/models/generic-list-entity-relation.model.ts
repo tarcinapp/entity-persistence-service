@@ -11,7 +11,7 @@ import { SourceAndTargetMetadata } from './base-types/source-and-target-metadata
     },
   },
 })
-export class GenericListToEntityRelation extends RecordsCommonBase {
+export class ListToEntityRelation extends RecordsCommonBase {
   @property({
     type: 'string',
     required: true,
@@ -42,14 +42,14 @@ export class GenericListToEntityRelation extends RecordsCommonBase {
 
   //[prop: string]: any;
 
-  constructor(data?: Partial<GenericListToEntityRelation>) {
+  constructor(data?: Partial<ListToEntityRelation>) {
     super(data);
   }
 }
 
-export interface GenericListEntityRelationRelations {
+export interface ListEntityRelationRelations {
   // describe navigational properties here
 }
 
-export type ListEntityRelationWithRelations = GenericListToEntityRelation &
-  GenericListEntityRelationRelations;
+export type ListEntityRelationWithRelations = ListToEntityRelation &
+  ListEntityRelationRelations;

@@ -44,7 +44,7 @@ import { TagEntityRelationRepository } from './tag-entity-relation.repository';
 import { TagRepository } from './tag.repository';
 import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
 
-export class GenericEntityRepository extends DefaultCrudRepository<
+export class EntityRepository extends DefaultCrudRepository<
   GenericEntity,
   typeof GenericEntity.prototype._id,
   GenericEntityRelations

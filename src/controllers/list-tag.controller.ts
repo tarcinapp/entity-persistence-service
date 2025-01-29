@@ -15,13 +15,13 @@ import {
   post,
   requestBody,
 } from '@loopback/rest';
-import { GenericList, Tag } from '../models';
-import { GenericListRepository } from '../repositories';
+import { List, Tag } from '../models';
+import { ListRepository } from '../repositories';
 
 export class ListTagController {
   constructor(
-    @repository(GenericListRepository)
-    protected listRepository: GenericListRepository,
+    @repository(ListRepository)
+    protected listRepository: ListRepository,
   ) {}
 
   @get('/generic-lists/{id}/tags', {
@@ -52,7 +52,7 @@ export class ListTagController {
     },
   })
   async create(
-    @param.path.string('id') id: typeof GenericList.prototype._id,
+    @param.path.string('id') id: typeof List.prototype._id,
     @requestBody({
       content: {
         'application/json': {

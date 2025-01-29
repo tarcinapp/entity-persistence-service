@@ -21,17 +21,17 @@ import {
 import { Set, SetFilterBuilder } from '../extensions';
 import { processIncludes } from '../extensions/types/sets-in-inclusions';
 import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
-import { GenericList, HttpErrorResponse } from '../models';
+import { List, HttpErrorResponse } from '../models';
 import {
   UNMODIFIABLE_COMMON_FIELDS,
   UnmodifiableCommonFields,
 } from '../models/base-types/unmodifiable-common-fields';
-import { GenericListRepository } from '../repositories';
+import { ListRepository } from '../repositories';
 
 export class GenericListController {
   constructor(
-    @repository(GenericListRepository)
-    public genericListRepository: GenericListRepository,
+    @repository(ListRepository)
+    public genericListRepository: ListRepository,
   ) {}
 
   @post('/lists', {
@@ -39,7 +39,7 @@ export class GenericListController {
       '200': {
         description: 'List model instance',
         content: {
-          'application/json': { schema: getModelSchemaRef(GenericList) },
+          'application/json': { schema: getModelSchemaRef(List) },
         },
       },
       '429': {
@@ -84,16 +84,16 @@ export class GenericListController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(GenericList, {
+          schema: getModelSchemaRef(List, {
             title: 'NewList',
-            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof GenericList)[],
+            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof List)[],
             includeRelations: false,
           }),
         },
       },
     })
-    list: Omit<GenericList, UnmodifiableCommonFields>,
-  ): Promise<GenericList> {
+    list: Omit<List, UnmodifiableCommonFields>,
+  ): Promise<List> {
     return this.genericListRepository.create(list);
   }
 
@@ -107,9 +107,9 @@ export class GenericListController {
   })
   async count(
     @param.query.object('set') set?: Set,
-    @param.where(GenericList) where?: Where<GenericList>,
+    @param.where(List) where?: Where<List>,
   ): Promise<Count> {
-    const filterBuilder = new FilterBuilder<GenericList>();
+    const filterBuilder = new FilterBuilder<List>();
 
     if (where) {
       filterBuilder.where(where);
@@ -118,7 +118,7 @@ export class GenericListController {
     let filter = filterBuilder.build();
 
     if (set) {
-      filter = new SetFilterBuilder<GenericList>(set, {
+      filter = new SetFilterBuilder<List>(set, {
         filter: filter,
       }).build();
     }
@@ -134,7 +134,7 @@ export class GenericListController {
           'application/json': {
             schema: {
               type: 'array',
-              items: getModelSchemaRef(GenericList, { includeRelations: true }),
+              items: getModelSchemaRef(List, { includeRelations: true }),
             },
           },
         },
@@ -142,16 +142,16 @@ export class GenericListController {
     },
   })
   async find(
-    @param.filter(GenericList) filter?: Filter<GenericList>,
+    @param.filter(List) filter?: Filter<List>,
     @param.query.object('set') set?: Set,
-  ): Promise<GenericList[]> {
+  ): Promise<List[]> {
     if (set) {
-      filter = new SetFilterBuilder<GenericList>(set, {
+      filter = new SetFilterBuilder<List>(set, {
         filter: filter,
       }).build();
     }
 
-    processIncludes<GenericList>(filter);
+    processIncludes<List>(filter);
 
     sanitizeFilterFields(filter);
 
@@ -170,19 +170,19 @@ export class GenericListController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(GenericList, {
+          schema: getModelSchemaRef(List, {
             title: 'NewList',
-            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof GenericList)[],
+            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof List)[],
             includeRelations: false,
           }),
         },
       },
     })
-    list: Omit<GenericList, UnmodifiableCommonFields>,
+    list: Omit<List, UnmodifiableCommonFields>,
     @param.query.object('set') set?: Set,
-    @param.where(GenericList) where?: Where<GenericList>,
+    @param.where(List) where?: Where<List>,
   ): Promise<Count> {
-    const filterBuilder = new FilterBuilder<GenericList>();
+    const filterBuilder = new FilterBuilder<List>();
 
     if (where) {
       filterBuilder.where(where);
@@ -191,7 +191,7 @@ export class GenericListController {
     let filter = filterBuilder.build();
 
     if (set) {
-      filter = new SetFilterBuilder<GenericList>(set, {
+      filter = new SetFilterBuilder<List>(set, {
         filter: filter,
       }).build();
     }
@@ -205,7 +205,7 @@ export class GenericListController {
         description: 'List model instance',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(GenericList, { includeRelations: true }),
+            schema: getModelSchemaRef(List, { includeRelations: true }),
           },
         },
       },
@@ -225,9 +225,9 @@ export class GenericListController {
   })
   async findById(
     @param.path.string('id') id: string,
-    @param.filter(GenericList, { exclude: 'where' })
-    filter?: FilterExcludingWhere<GenericList>,
-  ): Promise<GenericList> {
+    @param.filter(List, { exclude: 'where' })
+    filter?: FilterExcludingWhere<List>,
+  ): Promise<List> {
     return this.genericListRepository.findById(id, filter);
   }
 
@@ -267,15 +267,15 @@ export class GenericListController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(GenericList, {
+          schema: getModelSchemaRef(List, {
             title: 'NewList',
-            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof GenericList)[],
+            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof List)[],
             includeRelations: false,
           }),
         },
       },
     })
-    list: Omit<GenericList, UnmodifiableCommonFields>,
+    list: Omit<List, UnmodifiableCommonFields>,
   ): Promise<void> {
     await this.genericListRepository.updateById(id, list);
   }
@@ -316,15 +316,15 @@ export class GenericListController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(GenericList, {
+          schema: getModelSchemaRef(List, {
             title: 'NewList',
-            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof GenericList)[],
+            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof List)[],
             includeRelations: false,
           }),
         },
       },
     })
-    list: Omit<GenericList, UnmodifiableCommonFields>,
+    list: Omit<List, UnmodifiableCommonFields>,
   ): Promise<void> {
     await this.genericListRepository.replaceById(id, list);
   }

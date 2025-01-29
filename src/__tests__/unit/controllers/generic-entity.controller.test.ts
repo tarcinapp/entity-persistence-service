@@ -5,7 +5,7 @@ import type { EntityPersistenceApplication } from '../../..';
 import { GenericEntityController } from '../../../controllers';
 import type { Set } from '../../../extensions/utils/set-helper';
 import { GenericEntity } from '../../../models';
-import { GenericEntityRepository } from '../../../repositories';
+import { EntityRepository } from '../../../repositories';
 
 /**
  * Test suite for GenericEntityController
@@ -15,7 +15,7 @@ import { GenericEntityRepository } from '../../../repositories';
 describe('EntityController', () => {
   let app: EntityPersistenceApplication;
   let controller: GenericEntityController;
-  let repository: sinon.SinonStubbedInstance<GenericEntityRepository>;
+  let repository: sinon.SinonStubbedInstance<EntityRepository>;
   let originalEntityKinds: string | undefined;
 
   before(async () => {
@@ -32,7 +32,7 @@ describe('EntityController', () => {
     process.env.entity_kinds = 'book';
 
     // Create a fresh stub for each test to avoid interference
-    repository = sinon.createStubInstance(GenericEntityRepository);
+    repository = sinon.createStubInstance(EntityRepository);
     controller = new GenericEntityController(repository);
   });
 

@@ -16,12 +16,12 @@ import {
   requestBody,
 } from '@loopback/rest';
 import { GenericEntity, Reactions } from '../models';
-import { GenericEntityRepository } from '../repositories';
+import { EntityRepository } from '../repositories';
 
 export class GenericEntityReactionsController {
   constructor(
-    @repository(GenericEntityRepository)
-    protected genericEntityRepository: GenericEntityRepository,
+    @repository(EntityRepository)
+    protected genericEntityRepository: EntityRepository,
   ) {}
 
   @get('/generic-entities/{id}/reactions', {

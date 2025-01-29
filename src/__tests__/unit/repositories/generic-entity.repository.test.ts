@@ -13,11 +13,11 @@ import {
   TagEntityRelationRepository,
   TagRepository,
 } from '../../../repositories';
-import { GenericEntityRepository } from '../../../repositories/entity.repository';
+import { EntityRepository } from '../../../repositories/entity.repository';
 
 describe('EntityRepository', () => {
   let app: EntityPersistenceApplication;
-  let repository: GenericEntityRepository;
+  let repository: EntityRepository;
 
   before(async () => {
     // Set up test environment
@@ -36,7 +36,7 @@ describe('EntityRepository', () => {
     );
 
     // Create main repository instance with stubbed dependencies
-    repository = new GenericEntityRepository(
+    repository = new EntityRepository(
       testSetup.dataSource,
       Getter.fromValue(relationRepoStub),
       Getter.fromValue(reactionsRepoStub),
@@ -58,7 +58,7 @@ describe('EntityRepository', () => {
   });
 
   it('should be properly instantiated', () => {
-    expect(repository).to.be.instanceOf(GenericEntityRepository);
+    expect(repository).to.be.instanceOf(EntityRepository);
   });
 
   it('should have all required relations configured', () => {

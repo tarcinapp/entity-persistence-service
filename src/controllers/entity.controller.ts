@@ -25,12 +25,12 @@ import {
   UNMODIFIABLE_COMMON_FIELDS,
   UnmodifiableCommonFields,
 } from '../models/base-types/unmodifiable-common-fields';
-import { GenericEntityRepository } from '../repositories';
+import { EntityRepository } from '../repositories';
 
 export class GenericEntityController {
   constructor(
-    @repository(GenericEntityRepository)
-    public genericEntityRepository: GenericEntityRepository,
+    @repository(EntityRepository)
+    public genericEntityRepository: EntityRepository,
   ) {}
 
   @post('/entities', {

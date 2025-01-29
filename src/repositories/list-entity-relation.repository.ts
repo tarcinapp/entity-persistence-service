@@ -25,29 +25,29 @@ import {
 import { FilterMatcher } from '../extensions/utils/filter-matcher';
 import { Set } from '../extensions/utils/set-helper';
 import {
-  GenericListEntityRelationRelations,
-  GenericListToEntityRelation,
+  ListEntityRelationRelations,
+  ListToEntityRelation,
   HttpErrorResponse,
   SingleError,
 } from '../models';
-import { GenericEntityRepository } from './entity.repository';
-import { GenericListRepository } from './list.repository';
+import { EntityRepository } from './entity.repository';
+import { ListRepository } from './list.repository';
 import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
 
 export class GenericListEntityRelationRepository extends DefaultCrudRepository<
-  GenericListToEntityRelation,
-  typeof GenericListToEntityRelation.prototype._id,
-  GenericListEntityRelationRelations
+  ListToEntityRelation,
+  typeof ListToEntityRelation.prototype._id,
+  ListEntityRelationRelations
 > {
   constructor(
     @inject('datasources.EntityDb')
     dataSource: EntityDbDataSource,
 
     @repository.getter('GenericEntityRepository')
-    protected genericEntityRepositoryGetter: Getter<GenericEntityRepository>,
+    protected genericEntityRepositoryGetter: Getter<EntityRepository>,
 
     @repository.getter('GenericListRepository')
-    protected genericListRepositoryGetter: Getter<GenericListRepository>,
+    protected genericListRepositoryGetter: Getter<ListRepository>,
 
     @inject('extensions.idempotency.configurationreader')
     private idempotencyConfigReader: IdempotencyConfigurationReader,
@@ -67,10 +67,10 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
     @inject('extensions.response-limit.configurationreader')
     private responseLimitConfigReader: ResponseLimitConfigurationReader,
   ) {
-    super(GenericListToEntityRelation, dataSource);
+    super(ListToEntityRelation, dataSource);
   }
 
-  async find(filter?: Filter<GenericListToEntityRelation>, options?: Options) {
+  async find(filter?: Filter<ListToEntityRelation>, options?: Options) {
     // Calculate the limit value using optional chaining and nullish coalescing
     // If filter.limit is defined, use its value; otherwise, use the configured response limit
     const limit =
@@ -92,9 +92,9 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
 
   async findById(
     id: string,
-    filter?: FilterExcludingWhere<GenericListToEntityRelation>,
+    filter?: FilterExcludingWhere<ListToEntityRelation>,
     options?: Options,
-  ): Promise<GenericListToEntityRelation> {
+  ): Promise<ListToEntityRelation> {
     // Fetch a single raw relation from the database
     return super.findById(id, filter, options).then(async (rawRelation) => {
       if (!rawRelation) {
@@ -155,10 +155,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
   /**
    * Create a new relation ensuring idempotency and validation.
    */
-  async create(
-    data: DataObject<GenericListToEntityRelation>,
-    options?: Options,
-  ) {
+  async create(data: DataObject<ListToEntityRelation>, options?: Options) {
     const idempotencyKey = this.calculateIdempotencyKey(data);
 
     return this.findIdempotentRelation(idempotencyKey).then(
@@ -174,7 +171,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
     );
   }
 
-  async replaceById(id: string, data: DataObject<GenericListToEntityRelation>) {
+  async replaceById(id: string, data: DataObject<ListToEntityRelation>) {
     return this.enrichIncomingRelForUpdates(id, data)
       .then((collection) => {
         // calculate idempotencyKey
@@ -191,7 +188,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
       .then((validEnrichedData) => super.replaceById(id, validEnrichedData));
   }
 
-  async updateById(id: string, data: DataObject<GenericListToEntityRelation>) {
+  async updateById(id: string, data: DataObject<ListToEntityRelation>) {
     return this.enrichIncomingRelForUpdates(id, data)
       .then((collection) => {
         const mergedData = {
@@ -219,8 +216,8 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
   }
 
   async updateAll(
-    data: DataObject<GenericListToEntityRelation>,
-    where?: Where<GenericListToEntityRelation>,
+    data: DataObject<ListToEntityRelation>,
+    where?: Where<ListToEntityRelation>,
     options?: Options,
   ) {
     const now = new Date().toISOString();
@@ -235,9 +232,9 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
    * Handle creation flow: Enrich, validate, and store relation.
    */
   async createNewRelationFacade(
-    data: DataObject<GenericListToEntityRelation>,
+    data: DataObject<ListToEntityRelation>,
     options?: Options,
-  ): Promise<GenericListToEntityRelation> {
+  ): Promise<ListToEntityRelation> {
     return this.enrichIncomingRelationForCreation(data)
       .then((enrichedData) =>
         this.validateIncomingRelationForCreation(enrichedData),
@@ -249,15 +246,15 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
    * Ensure data validity by verifying referenced IDs, uniqueness, and formatting.
    */
   async validateIncomingRelationForCreation(
-    data: DataObject<GenericListToEntityRelation>,
-  ): Promise<DataObject<GenericListToEntityRelation>> {
+    data: DataObject<ListToEntityRelation>,
+  ): Promise<DataObject<ListToEntityRelation>> {
     this.checkDataKindValues(data);
     this.checkDataKindFormat(data);
 
     return Promise.all([
       this.checkUniquenessForRelation(data),
       this.checkDependantsExistence(
-        data as DataObject<GenericListToEntityRelation> & {
+        data as DataObject<ListToEntityRelation> & {
           _entityId: string;
           _listId: string;
         },
@@ -268,7 +265,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
 
   async enrichIncomingRelForUpdates(
     id: string,
-    data: DataObject<GenericListToEntityRelation>,
+    data: DataObject<ListToEntityRelation>,
   ) {
     const existingData = await this.findById(id);
 
@@ -301,14 +298,14 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
 
   async validateIncomingRelForUpdate(
     id: string,
-    existingData: DataObject<GenericListToEntityRelation>,
-    data: DataObject<GenericListToEntityRelation>,
+    existingData: DataObject<ListToEntityRelation>,
+    data: DataObject<ListToEntityRelation>,
   ) {
     // we need to merge existing data with incoming data in order to check limits and uniquenesses
     const mergedData = {
       ...data,
       ...(existingData && _.pickBy(existingData, (value) => value !== null)),
-    } as DataObject<GenericListToEntityRelation>;
+    } as DataObject<ListToEntityRelation>;
 
     if (mergedData._kind) {
       this.checkDataKindFormat(mergedData);
@@ -318,7 +315,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
     return Promise.all([
       this.checkUniquenessForUpdate(id, mergedData),
       this.checkDependantsExistence(
-        mergedData as DataObject<GenericListToEntityRelation> & {
+        mergedData as DataObject<ListToEntityRelation> & {
           _entityId: string;
           _listId: string;
         },
@@ -328,14 +325,14 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
 
   async validateIncomingRelForReplace(
     id: string,
-    data: DataObject<GenericListToEntityRelation>,
+    data: DataObject<ListToEntityRelation>,
   ) {
     this.checkDataKindValues(data);
     this.checkDataKindFormat(data);
 
     return Promise.all([
       this.checkDependantsExistence(
-        data as DataObject<GenericListToEntityRelation> & {
+        data as DataObject<ListToEntityRelation> & {
           _entityId: string;
           _listId: string;
         },
@@ -346,7 +343,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
 
   private async checkUniquenessForUpdate(
     id: string,
-    newData: DataObject<GenericListToEntityRelation>,
+    newData: DataObject<ListToEntityRelation>,
   ) {
     // return if no uniqueness is configured
     if (
@@ -356,8 +353,8 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
       return;
     }
 
-    const whereBuilder: WhereBuilder<GenericListToEntityRelation> =
-      new WhereBuilder<GenericListToEntityRelation>();
+    const whereBuilder: WhereBuilder<ListToEntityRelation> =
+      new WhereBuilder<ListToEntityRelation>();
 
     // add uniqueness fields if configured
     if (process.env.uniqueness_list_entity_rel_fields) {
@@ -392,7 +389,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
       },
     });
 
-    let filter = new FilterBuilder<GenericListToEntityRelation>()
+    let filter = new FilterBuilder<ListToEntityRelation>()
       .where(whereBuilder.build())
       .fields('_id')
       .build();
@@ -402,12 +399,9 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
       const uniquenessStr = process.env.uniqueness_list_entity_set;
       const uniquenessSet = parse(uniquenessStr).set as Set;
 
-      filter = new SetFilterBuilder<GenericListToEntityRelation>(
-        uniquenessSet,
-        {
-          filter: filter,
-        },
-      ).build();
+      filter = new SetFilterBuilder<ListToEntityRelation>(uniquenessSet, {
+        filter: filter,
+      }).build();
     }
 
     // final uniqueness controlling filter
@@ -426,9 +420,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
     }
   }
 
-  private async checkRecordLimits(
-    newData: DataObject<GenericListToEntityRelation>,
-  ) {
+  private async checkRecordLimits(newData: DataObject<ListToEntityRelation>) {
     await Promise.all([
       this.checkListEntityRelationLimits(newData),
       this.checkListEntityCountLimits(newData),
@@ -436,7 +428,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
   }
 
   private async checkListEntityRelationLimits(
-    newData: DataObject<GenericListToEntityRelation>,
+    newData: DataObject<ListToEntityRelation>,
   ) {
     // Check if record limits are configured for the given kind
     if (
@@ -458,26 +450,26 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
       );
 
     // Build the initial filter
-    let filterBuilder: FilterBuilder<GenericListToEntityRelation>;
+    let filterBuilder: FilterBuilder<ListToEntityRelation>;
     if (
       this.recordLimitConfigReader.isLimitConfiguredForKindForListEntityRelations(
         newData._kind,
       )
     ) {
-      filterBuilder = new FilterBuilder<GenericListToEntityRelation>({
+      filterBuilder = new FilterBuilder<ListToEntityRelation>({
         where: {
           _kind: newData._kind,
         },
       });
     } else {
-      filterBuilder = new FilterBuilder<GenericListToEntityRelation>();
+      filterBuilder = new FilterBuilder<ListToEntityRelation>();
     }
 
     let filter = filterBuilder.build();
 
     // Apply set filter if configured
     if (set) {
-      filter = new SetFilterBuilder<GenericListToEntityRelation>(set, {
+      filter = new SetFilterBuilder<ListToEntityRelation>(set, {
         filter: filter,
       }).build();
 
@@ -518,14 +510,14 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
    * @returns boolean indicating if the record would match the filter
    */
   private wouldRecordMatchFilter(
-    record: DataObject<GenericListToEntityRelation>,
-    whereClause: Where<GenericListToEntityRelation> | undefined,
+    record: DataObject<ListToEntityRelation>,
+    whereClause: Where<ListToEntityRelation> | undefined,
   ): boolean {
     return FilterMatcher.matches(record, whereClause);
   }
 
   private async checkListEntityCountLimits(
-    newData: DataObject<GenericListToEntityRelation>,
+    newData: DataObject<ListToEntityRelation>,
   ) {
     // Ensure listId exists
     if (!newData._listId) {
@@ -588,7 +580,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
   }
 
   async checkDependantsExistence(
-    data: DataObject<GenericListToEntityRelation> & {
+    data: DataObject<ListToEntityRelation> & {
       _entityId: string;
       _listId: string;
     },
@@ -636,8 +628,8 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
    * Add system fields and prepare data for storage.
    */
   enrichIncomingRelationForCreation(
-    data: DataObject<GenericListToEntityRelation>,
-  ): Promise<DataObject<GenericListToEntityRelation>> {
+    data: DataObject<ListToEntityRelation>,
+  ): Promise<DataObject<ListToEntityRelation>> {
     const now = new Date().toISOString();
 
     data._kind =
@@ -660,7 +652,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
   /**
    * Calculate idempotency key for deduplication.
    */
-  calculateIdempotencyKey(data: DataObject<GenericListToEntityRelation>) {
+  calculateIdempotencyKey(data: DataObject<ListToEntityRelation>) {
     const idempotencyFields =
       this.idempotencyConfigReader.getIdempotencyForListEntityRels(data._kind);
 
@@ -684,7 +676,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
    */
   private async findIdempotentRelation(
     idempotencyKey: string | undefined,
-  ): Promise<GenericListToEntityRelation | null> {
+  ): Promise<ListToEntityRelation | null> {
     if (_.isString(idempotencyKey) && !_.isEmpty(idempotencyKey)) {
       return this.findOne({
         where: { _idempotencyKey: idempotencyKey },
@@ -697,7 +689,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
   /**
    * Ensure data kind is properly formatted.
    */
-  private checkDataKindFormat(data: DataObject<GenericListToEntityRelation>) {
+  private checkDataKindFormat(data: DataObject<ListToEntityRelation>) {
     if (data._kind) {
       const formattedKind = _.kebabCase(data._kind);
       if (formattedKind !== data._kind) {
@@ -709,7 +701,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
   /**
    * Ensure data kind values are valid.
    */
-  private checkDataKindValues(data: DataObject<GenericListToEntityRelation>) {
+  private checkDataKindValues(data: DataObject<ListToEntityRelation>) {
     /**
      * This function checks if the 'kind' field in the 'data' object is valid
      * for the list. Although 'kind' is required, we ensure it has a value by
@@ -736,7 +728,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
    * Ensure the uniqueness of the relation.
    */
   private async checkUniquenessForRelation(
-    data: DataObject<GenericListToEntityRelation>,
+    data: DataObject<ListToEntityRelation>,
   ) {
     // Return if no uniqueness is configured
     if (
@@ -747,8 +739,8 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
       return;
     }
 
-    const whereBuilder: WhereBuilder<GenericListToEntityRelation> =
-      new WhereBuilder<GenericListToEntityRelation>();
+    const whereBuilder: WhereBuilder<ListToEntityRelation> =
+      new WhereBuilder<ListToEntityRelation>();
 
     // Read the uniqueness fields for this kind
     const fields: string[] =
@@ -764,13 +756,13 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
       });
     });
 
-    let filter = new FilterBuilder<GenericListToEntityRelation>()
+    let filter = new FilterBuilder<ListToEntityRelation>()
       .where(whereBuilder.build())
       .build();
 
     // Add set filter if configured
     if (set) {
-      filter = new SetFilterBuilder<GenericListToEntityRelation>(set, {
+      filter = new SetFilterBuilder<ListToEntityRelation>(set, {
         filter: filter,
       }).build();
     }

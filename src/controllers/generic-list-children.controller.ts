@@ -15,13 +15,13 @@ import {
   post,
   requestBody,
 } from '@loopback/rest';
-import { GenericList, ListRelation } from '../models';
-import { GenericListRepository } from '../repositories';
+import { List, ListRelation } from '../models';
+import { ListRepository } from '../repositories';
 
 export class GenericListChildrenController {
   constructor(
-    @repository(GenericListRepository)
-    protected listRepository: GenericListRepository,
+    @repository(ListRepository)
+    protected listRepository: ListRepository,
   ) {}
 
   @get('/generic-lists/{id}/children', {
@@ -54,7 +54,7 @@ export class GenericListChildrenController {
     },
   })
   async create(
-    @param.path.string('id') id: typeof GenericList.prototype._id,
+    @param.path.string('id') id: typeof List.prototype._id,
     @requestBody({
       content: {
         'application/json': {

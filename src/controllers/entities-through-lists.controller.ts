@@ -18,17 +18,13 @@ import {
 } from '@loopback/rest';
 import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
 import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
-import {
-  GenericEntity,
-  GenericList,
-  GenericListToEntityRelation,
-} from '../models';
-import { GenericListRepository } from '../repositories';
+import { GenericEntity, List, ListToEntityRelation } from '../models';
+import { ListRepository } from '../repositories';
 
 export class GenericListGenericEntityController {
   constructor(
-    @repository(GenericListRepository)
-    protected listRepository: GenericListRepository,
+    @repository(ListRepository)
+    protected listRepository: ListRepository,
   ) {}
 
   @get('/generic-lists/{id}/entities', {
@@ -50,7 +46,7 @@ export class GenericListGenericEntityController {
     @param.query.object('filter') filter?: Filter<GenericEntity>,
     @param.query.object('setThrough') setThrough?: Set,
     @param.query.object('filterThrough')
-    filterThrough?: Filter<GenericListToEntityRelation>,
+    filterThrough?: Filter<ListToEntityRelation>,
   ): Promise<GenericEntity[]> {
     if (set) {
       filter = new SetFilterBuilder<GenericEntity>(set, {
@@ -59,12 +55,9 @@ export class GenericListGenericEntityController {
     }
 
     if (setThrough) {
-      filterThrough = new SetFilterBuilder<GenericListToEntityRelation>(
-        setThrough,
-        {
-          filter: filterThrough,
-        },
-      ).build();
+      filterThrough = new SetFilterBuilder<ListToEntityRelation>(setThrough, {
+        filter: filterThrough,
+      }).build();
     }
 
     sanitizeFilterFields(filter);
@@ -84,7 +77,7 @@ export class GenericListGenericEntityController {
     },
   })
   async create(
-    @param.path.string('id') id: typeof GenericList.prototype._id,
+    @param.path.string('id') id: typeof List.prototype._id,
     @requestBody({
       content: {
         'application/json': {
@@ -130,7 +123,7 @@ export class GenericListGenericEntityController {
     @param.query.object('where', getWhereSchemaFor(GenericEntity))
     where?: Where<GenericEntity>,
     @param.query.object('whereThrough')
-    whereThrough?: Where<GenericListToEntityRelation>,
+    whereThrough?: Where<ListToEntityRelation>,
   ): Promise<Count> {
     return this.listRepository
       .entities(id)
@@ -151,7 +144,7 @@ export class GenericListGenericEntityController {
     @param.query.object('where', getWhereSchemaFor(GenericEntity))
     where?: Where<GenericEntity>,
     @param.query.object('whereThrough')
-    whereThrough?: Where<GenericListToEntityRelation>,
+    whereThrough?: Where<ListToEntityRelation>,
   ): Promise<Count> {
     const filterBuilder = new FilterBuilder<GenericEntity>();
 

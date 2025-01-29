@@ -1,6 +1,6 @@
 import type { Client } from '@loopback/testlab';
 import { expect } from '@loopback/testlab';
-import type { GenericListToEntityRelation } from '../../../models';
+import type { ListToEntityRelation } from '../../../models';
 import {
   setupApplication,
   teardownApplication,
@@ -74,7 +74,7 @@ describe('POST /list-entity-relations', () => {
     const entity = entityResponse.body;
 
     // Finally create the relation with a specific kind
-    const newRelation: Partial<GenericListToEntityRelation> = {
+    const newRelation: Partial<ListToEntityRelation> = {
       _listId: list._id,
       _entityId: entity._id,
       _kind: 'consists',
@@ -117,7 +117,7 @@ describe('POST /list-entity-relations', () => {
     const entity = entityResponse.body;
 
     // Try to create relation with invalid kind
-    const newRelation: Partial<GenericListToEntityRelation> = {
+    const newRelation: Partial<ListToEntityRelation> = {
       _listId: list._id,
       _entityId: entity._id,
       _kind: 'invalid-kind',

@@ -4,7 +4,7 @@ import {
   GenericEntity,
   GenericEntityWithRelations,
 } from './generic-entity.model';
-import { GenericListToEntityRelation } from './generic-list-entity-relation.model';
+import { ListToEntityRelation } from './generic-list-entity-relation.model';
 import { ListReactions } from './list-reactions.model';
 import { ListRelation } from './list-relation.model';
 import { TagListRelation } from './tag-list-relation.model';
@@ -18,10 +18,10 @@ import { Tag } from './tag.model';
     },
   },
 })
-export class GenericList extends ListEntityCommonBase {
+export class List extends ListEntityCommonBase {
   @hasMany(() => GenericEntity, {
     through: {
-      model: () => GenericListToEntityRelation,
+      model: () => ListToEntityRelation,
       keyFrom: '_listId',
       keyTo: '_entityId',
     },
@@ -44,7 +44,7 @@ export class GenericList extends ListEntityCommonBase {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [prop: string]: any;
 
-  constructor(data?: Partial<GenericList>) {
+  constructor(data?: Partial<List>) {
     super(data);
   }
 }
@@ -53,4 +53,4 @@ export interface ListRelations {
   entities?: GenericEntityWithRelations;
 }
 
-export type ListWithRelations = GenericList & ListRelations;
+export type ListWithRelations = List & ListRelations;

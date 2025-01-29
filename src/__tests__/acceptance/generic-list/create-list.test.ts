@@ -1,7 +1,7 @@
 import type { DataObject } from '@loopback/repository';
 import type { Client } from '@loopback/testlab';
 import { expect } from '@loopback/testlab';
-import type { GenericList } from '../../../models';
+import type { List } from '../../../models';
 import type { AppWithClient } from '../test-helper';
 import {
   setupApplication,
@@ -48,7 +48,7 @@ describe('POST /lists', () => {
     });
     ({ client } = appWithClient);
 
-    const newList: Partial<GenericList> = {
+    const newList: Partial<List> = {
       _name: "Editor's Pick",
       description: 'List of items that the editor has picked',
     };
@@ -80,7 +80,7 @@ describe('POST /lists', () => {
     });
     ({ client } = appWithClient);
 
-    const newList: Partial<GenericList> = {
+    const newList: Partial<List> = {
       _name: 'Featured List',
       _kind: 'featured',
       description: 'A featured list',
@@ -97,7 +97,7 @@ describe('POST /lists', () => {
     });
     ({ client } = appWithClient);
 
-    const newList: Partial<GenericList> = {
+    const newList: Partial<List> = {
       _name: 'Invalid Kind List',
       _kind: 'editors-pick', // This is now invalid
       description: 'A list with invalid kind',
@@ -115,7 +115,7 @@ describe('POST /lists', () => {
     ({ client } = appWithClient);
 
     // First list creation - should succeed
-    const firstList: Partial<GenericList> = {
+    const firstList: Partial<List> = {
       _name: 'Science Fiction Books',
       _kind: 'book-list',
       description: 'A list of science fiction books',
@@ -127,7 +127,7 @@ describe('POST /lists', () => {
     expect(response.body._kind).to.be.equal('book-list');
 
     // Second list with same resulting slug and kind - should fail
-    const secondList: Partial<GenericList> = {
+    const secondList: Partial<List> = {
       _name: 'Science Fiction Books', // Will generate same slug
       _kind: 'book-list',
       description: 'Another list of science fiction books',
@@ -155,7 +155,7 @@ describe('POST /lists', () => {
     ({ client } = appWithClient);
 
     // First list creation - should succeed
-    const firstList: Partial<GenericList> = {
+    const firstList: Partial<List> = {
       _name: 'Science Fiction Books',
       _kind: 'book-list',
       _ownerUsers: ['user-123'],
@@ -169,7 +169,7 @@ describe('POST /lists', () => {
     expect(response.body._ownerUsers).to.containDeep(['user-123']);
 
     // Second list with same resulting slug, kind and owner - should fail
-    const secondList: Partial<GenericList> = {
+    const secondList: Partial<List> = {
       _name: 'Science Fiction Books', // Will generate same slug
       _kind: 'book-list',
       _ownerUsers: ['user-123'],
@@ -198,7 +198,7 @@ describe('POST /lists', () => {
     ({ client } = appWithClient);
 
     // First list creation - should succeed
-    const firstList: Partial<GenericList> = {
+    const firstList: Partial<List> = {
       _name: 'Science Fiction Books',
       _kind: 'book-list',
       _ownerUsers: ['user-123', 'user-456'],
@@ -218,7 +218,7 @@ describe('POST /lists', () => {
     ]);
 
     // Second list with same name and kind and with same owner - should succeed because uniqueness is not enforced for array fields
-    const secondList: Partial<GenericList> = {
+    const secondList: Partial<List> = {
       _name: 'Science Fiction Books',
       _kind: 'book-list',
       _ownerUsers: ['user-123'], // Different owner
@@ -249,7 +249,7 @@ describe('POST /lists', () => {
     ({ client } = appWithClient);
 
     // First list creation with multiple owners - should succeed
-    const firstList: Partial<GenericList> = {
+    const firstList: Partial<List> = {
       _name: 'Science Fiction Books',
       _kind: 'book-list',
       _ownerUsers: ['user-123', 'user-456', 'user-789'],
@@ -270,7 +270,7 @@ describe('POST /lists', () => {
     ]);
 
     // Second list with same name and kind, and one overlapping owner - should fail
-    const secondList: Partial<GenericList> = {
+    const secondList: Partial<List> = {
       _name: 'Science Fiction Books',
       _kind: 'book-list',
       _ownerUsers: ['user-123', 'user-999'], // user-123 exists in first list
@@ -306,7 +306,7 @@ describe('POST /lists', () => {
     futureDate.setDate(futureDate.getDate() + 7); // 7 days from now
 
     // First list creation with validity period - should succeed
-    const firstList: DataObject<GenericList> = {
+    const firstList: DataObject<List> = {
       _name: 'Science Fiction Books',
       _kind: 'book-list',
       _ownerUsers: ['user-123'],
@@ -330,7 +330,7 @@ describe('POST /lists', () => {
     );
 
     // Second list with same name and kind, different owner, but also active - should fail
-    const secondList: Partial<GenericList> = {
+    const secondList: Partial<List> = {
       _name: 'Science Fiction Books',
       _kind: 'book-list',
       _ownerUsers: ['user-999'], // Different owner
@@ -371,7 +371,7 @@ describe('POST /lists', () => {
     futureDate.setDate(futureDate.getDate() + 7); // 7 days from now
 
     // First list creation with validity period in the past - should succeed
-    const firstList: DataObject<GenericList> = {
+    const firstList: DataObject<List> = {
       _name: 'Science Fiction Books',
       _kind: 'book-list',
       _ownerUsers: ['user-123'],
@@ -395,7 +395,7 @@ describe('POST /lists', () => {
     );
 
     // Second list with same name and kind, different owner, and active - should succeed since first list is inactive
-    const secondList: Partial<GenericList> = {
+    const secondList: Partial<List> = {
       _name: 'Science Fiction Books',
       _kind: 'book-list',
       _ownerUsers: ['user-999'], // Different owner
@@ -429,7 +429,7 @@ describe('POST /lists', () => {
     });
     ({ client } = appWithClient);
 
-    const newList: Partial<GenericList> = {
+    const newList: Partial<List> = {
       _name: 'Auto Approved List',
       _kind: 'book-list',
       description: 'A list that should be auto-approved',
@@ -461,7 +461,7 @@ describe('POST /lists', () => {
     });
     ({ client } = appWithClient);
 
-    const newList: Partial<GenericList> = {
+    const newList: Partial<List> = {
       _name: 'Auto Approved Book List',
       _kind: 'book-list',
       description: 'A book list that should be auto-approved',
@@ -493,7 +493,7 @@ describe('POST /lists', () => {
     });
     ({ client } = appWithClient);
 
-    const newList: Partial<GenericList> = {
+    const newList: Partial<List> = {
       _name: 'Non Auto Approved Book List',
       _kind: 'book-list',
       description: 'A book list that should not be auto-approved',
@@ -522,7 +522,7 @@ describe('POST /lists', () => {
     });
     ({ client } = appWithClient);
 
-    const newList: Partial<GenericList> = {
+    const newList: Partial<List> = {
       _name: 'Private List',
       _kind: 'book-list',
       description: 'A list that should be private by default',
@@ -544,7 +544,7 @@ describe('POST /lists', () => {
     });
     ({ client } = appWithClient);
 
-    const newList: Partial<GenericList> = {
+    const newList: Partial<List> = {
       _name: 'Public Book List',
       _kind: 'book-list',
       description: 'A book list that should be public by default',
@@ -564,7 +564,7 @@ describe('POST /lists', () => {
     });
     ({ client } = appWithClient);
 
-    const newList: Partial<GenericList> = {
+    const newList: Partial<List> = {
       _name: 'Invalid Visibility List',
       _kind: 'book-list',
       _visibility: 'invalid-value', // Invalid visibility value

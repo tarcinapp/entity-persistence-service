@@ -14,10 +14,10 @@ import { EntityDbDataSource } from '../datasources';
 import {
   GenericEntity,
   GenericEntityWithRelations,
-  GenericList,
-  GenericListToEntityRelation,
+  List,
+  ListToEntityRelation,
 } from '../models';
-import { GenericEntityRepository } from './entity.repository';
+import { EntityRepository } from './entity.repository';
 import { GenericListEntityRelationRepository } from './list-entity-relation.repository';
 
 export class CustomEntityThroughListRepository extends DefaultCrudRepository<
@@ -25,13 +25,13 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
   typeof GenericEntity.prototype._id,
   GenericEntityWithRelations
 > {
-  protected sourceListId: typeof GenericList.prototype._id;
+  protected sourceListId: typeof List.prototype._id;
 
   constructor(
     @inject('datasources.EntityDb') dataSource: EntityDbDataSource,
 
     @repository.getter('GenericEntityRepository')
-    protected genericEntityRepositoryGetter: Getter<GenericEntityRepository>,
+    protected genericEntityRepositoryGetter: Getter<EntityRepository>,
 
     @repository.getter('GenericListEntityRelationRepository')
     protected genericListEntityRepositoryGetter: Getter<GenericListEntityRelationRepository>,
@@ -41,7 +41,7 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
 
   async find(
     filter?: Filter<GenericEntity>,
-    filterThrough?: Filter<GenericListToEntityRelation>,
+    filterThrough?: Filter<ListToEntityRelation>,
     options?: Options,
   ): Promise<GenericEntity[]> {
     // Get the through repository
@@ -49,7 +49,7 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
       await this.genericListEntityRepositoryGetter();
 
     // Calculate fields logic
-    let fields: Fields<GenericListToEntityRelation> | undefined;
+    let fields: Fields<ListToEntityRelation> | undefined;
 
     if (Array.isArray(filterThrough?.fields)) {
       // If fields is an array, ensure listId and entityId exists
@@ -168,7 +168,7 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
   async updateAll(
     data: DataObject<GenericEntity>,
     where?: Where<GenericEntity>,
-    whereThrough?: Where<GenericListToEntityRelation>,
+    whereThrough?: Where<ListToEntityRelation>,
     options?: Options,
   ) {
     const genericEntitiesRepo = await this.genericEntityRepositoryGetter();
@@ -190,7 +190,7 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
 
   async deleteAll(
     where?: Where<GenericEntity>,
-    whereThrough?: Where<GenericListToEntityRelation>,
+    whereThrough?: Where<ListToEntityRelation>,
     options?: Options,
   ) {
     const genericEntitiesRepo = await this.genericEntityRepositoryGetter();
