@@ -149,6 +149,30 @@ export class RecordLimitsConfigurationReader {
   }
 
   ///
+  public isRecordLimitsConfiguredForListEntityCount(kind?: string) {
+    return (
+      _.has(process.env, 'record_limit_list_entity_count') ||
+      this.isLimitConfiguredForKindForListEntityCount(kind)
+    );
+  }
+
+  public isLimitConfiguredForKindForListEntityCount(kind?: string) {
+    return _.has(process.env, `record_limit_list_entity_count_for_${kind}`);
+  }
+
+  public getRecordLimitsCountForListEntityCount(kind?: string) {
+    if (_.has(process.env, `record_limit_list_entity_count_for_${kind}`)) {
+      return _.toInteger(
+        _.get(process.env, `record_limit_list_entity_count_for_${kind}`),
+      );
+    }
+
+    if (_.has(process.env, `record_limit_list_entity_count`)) {
+      return _.toInteger(_.get(process.env, `record_limit_list_entity_count`));
+    }
+  }
+
+  ///
   public isRecordLimitsConfiguredForListEntityRelations(kind?: string) {
     return (
       _.has(process.env, 'record_limit_list_entity_rel_count') ||

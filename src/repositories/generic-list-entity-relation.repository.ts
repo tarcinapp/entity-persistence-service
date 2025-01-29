@@ -22,6 +22,7 @@ import {
   UniquenessConfigurationReader,
   ValidfromConfigurationReader,
 } from '../extensions';
+import { FilterMatcher } from '../extensions/utils/filter-matcher';
 import { Set } from '../extensions/utils/set-helper';
 import {
   GenericListEntityRelationRelations,
@@ -428,6 +429,15 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
   private async checkRecordLimits(
     newData: DataObject<GenericListToEntityRelation>,
   ) {
+    await Promise.all([
+      this.checkListEntityRelationLimits(newData),
+      this.checkListEntityCountLimits(newData),
+    ]);
+  }
+
+  private async checkListEntityRelationLimits(
+    newData: DataObject<GenericListToEntityRelation>,
+  ) {
     // Check if record limits are configured for the given kind
     if (
       !this.recordLimitConfigReader.isRecordLimitsConfiguredForListEntityRelations(
@@ -470,6 +480,12 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
       filter = new SetFilterBuilder<GenericListToEntityRelation>(set, {
         filter: filter,
       }).build();
+
+      // Check if the new record would match the set filter
+      if (!this.wouldRecordMatchFilter(newData, filter.where)) {
+        // Record wouldn't be part of the set, no need to check limits
+        return;
+      }
     }
 
     // Get the current count of records
@@ -488,6 +504,82 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
             code: 'RELATION-LIMIT-EXCEEDED',
             info: {
               limit: limit,
+            },
+          }),
+        ],
+      });
+    }
+  }
+
+  /**
+   * Evaluates if a record would match a given filter
+   * @param record The record to evaluate
+   * @param whereClause The filter conditions to check
+   * @returns boolean indicating if the record would match the filter
+   */
+  private wouldRecordMatchFilter(
+    record: DataObject<GenericListToEntityRelation>,
+    whereClause: Where<GenericListToEntityRelation> | undefined,
+  ): boolean {
+    return FilterMatcher.matches(record, whereClause);
+  }
+
+  private async checkListEntityCountLimits(
+    newData: DataObject<GenericListToEntityRelation>,
+  ) {
+    // Ensure listId exists
+    if (!newData._listId) {
+      throw new HttpErrorResponse({
+        statusCode: 400,
+        name: 'BadRequestError',
+        message: 'List id is required.',
+        code: 'MISSING-LIST-ID',
+        status: 400,
+      });
+    }
+
+    const listId = newData._listId; // TypeScript now knows this is string
+
+    // Get the list to check its kind
+    const list = await this.genericListRepositoryGetter().then((repo) =>
+      repo.findById(listId),
+    );
+
+    // Check if entity count limits are configured for the list's kind
+    if (
+      !this.recordLimitConfigReader.isRecordLimitsConfiguredForListEntityCount(
+        list._kind,
+      )
+    ) {
+      return;
+    }
+
+    // Get the configured limit for this kind of list
+    const limit =
+      this.recordLimitConfigReader.getRecordLimitsCountForListEntityCount(
+        list._kind,
+      );
+
+    // Count existing relations for this list
+    const currentCount = await this.count({
+      _listId: listId,
+    });
+
+    // Throw an error if the limit would be exceeded
+    if (currentCount.count >= limit!) {
+      throw new HttpErrorResponse({
+        statusCode: 429,
+        name: 'LimitExceededError',
+        message: `List entity limit is exceeded. This list cannot contain more than ${limit} entities.`,
+        code: 'LIST-ENTITY-LIMIT-EXCEEDED',
+        status: 429,
+        details: [
+          new SingleError({
+            code: 'LIST-ENTITY-LIMIT-EXCEEDED',
+            info: {
+              limit: limit,
+              listId: listId,
+              listKind: list._kind,
             },
           }),
         ],
