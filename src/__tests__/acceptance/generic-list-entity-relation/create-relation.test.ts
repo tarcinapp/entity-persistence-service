@@ -429,4 +429,215 @@ describe('POST /generic-list-entity-relations', () => {
       info: { limit: 2 },
     });
   });
+
+  it('enforces list entity count limit', async () => {
+    appWithClient = await setupApplication({
+      autoapprove_list_entity_relations: 'true',
+      list_entity_rel_kinds: 'consists,references',
+      record_limit_list_entity_count: '2',
+    });
+    client = appWithClient.client;
+
+    // First create a list
+    const listResponse = await client.post('/generic-lists').send({
+      _name: 'test list',
+    });
+    expect(listResponse.status).to.equal(200);
+    const list = listResponse.body;
+
+    // Create three entities
+    const entities = await Promise.all(
+      Array.from({ length: 3 }, (_, i) =>
+        client
+          .post('/generic-entities')
+          .send({ _name: `test entity ${i + 1}` })
+          .then((res) => res.body),
+      ),
+    );
+
+    // Create first relation - should succeed
+    await client
+      .post('/generic-list-entity-relations')
+      .send({
+        _listId: list._id,
+        _entityId: entities[0]._id,
+      })
+      .expect(200);
+
+    // Create second relation - should succeed
+    await client
+      .post('/generic-list-entity-relations')
+      .send({
+        _listId: list._id,
+        _entityId: entities[1]._id,
+      })
+      .expect(200);
+
+    // Try to create third relation - should fail due to list entity count limit
+    const response = await client
+      .post('/generic-list-entity-relations')
+      .send({
+        _listId: list._id,
+        _entityId: entities[2]._id,
+      })
+      .expect(429);
+
+    expect(response.body).to.have.property('error');
+    expect(response.body.error).to.have.property('name', 'LimitExceededError');
+    expect(response.body.error).to.have.property('statusCode', 429);
+    expect(response.body.error).to.have.property(
+      'code',
+      'LIST-ENTITY-LIMIT-EXCEEDED',
+    );
+    expect(response.body.error).to.have.property(
+      'message',
+      'List entity limit is exceeded. This list cannot contain more than 2 entities.',
+    );
+    expect(response.body.error).to.have.property('details').which.is.an.Array();
+    expect(response.body.error.details[0]).to.have.properties({
+      code: 'LIST-ENTITY-LIMIT-EXCEEDED',
+      info: {
+        limit: 2,
+        listId: list._id,
+        listKind: 'list',
+      },
+    });
+  });
+
+  it('enforces kind-specific list entity count limit', async () => {
+    appWithClient = await setupApplication({
+      autoapprove_list_entity_relations: 'true',
+      list_kinds: 'reading-list,watch-list',
+      'record_limit_list_entity_count_for_reading-list': '1',
+      'record_limit_list_entity_count_for_watch-list': '2',
+    });
+    client = appWithClient.client;
+
+    // Create a reading list (limit: 1)
+    const readingList = await client
+      .post('/generic-lists')
+      .send({
+        _name: 'My Reading List',
+        _kind: 'reading-list',
+      })
+      .then((res) => res.body);
+
+    // Create a watch list (limit: 2)
+    const watchList = await client
+      .post('/generic-lists')
+      .send({
+        _name: 'My Watch List',
+        _kind: 'watch-list',
+      })
+      .then((res) => res.body);
+
+    // Create three entities
+    const entities = await Promise.all(
+      Array.from({ length: 3 }, (_, i) =>
+        client
+          .post('/generic-entities')
+          .send({ _name: `test entity ${i + 1}` })
+          .then((res) => res.body),
+      ),
+    );
+
+    // Test reading-list (limit: 1)
+    // Add first entity to reading list - should succeed
+    await client
+      .post('/generic-list-entity-relations')
+      .send({
+        _listId: readingList._id,
+        _entityId: entities[0]._id,
+      })
+      .expect(200);
+
+    // Try to add second entity to reading list - should fail due to kind-specific limit
+    const readingListResponse = await client
+      .post('/generic-list-entity-relations')
+      .send({
+        _listId: readingList._id,
+        _entityId: entities[1]._id,
+      })
+      .expect(429);
+
+    expect(readingListResponse.body).to.have.property('error');
+    expect(readingListResponse.body.error).to.have.property(
+      'name',
+      'LimitExceededError',
+    );
+    expect(readingListResponse.body.error).to.have.property('statusCode', 429);
+    expect(readingListResponse.body.error).to.have.property(
+      'code',
+      'LIST-ENTITY-LIMIT-EXCEEDED',
+    );
+    expect(readingListResponse.body.error).to.have.property(
+      'message',
+      'List entity limit is exceeded. This list cannot contain more than 1 entities.',
+    );
+    expect(readingListResponse.body.error)
+      .to.have.property('details')
+      .which.is.an.Array();
+    expect(readingListResponse.body.error.details[0]).to.have.properties({
+      code: 'LIST-ENTITY-LIMIT-EXCEEDED',
+      info: {
+        limit: 1,
+        listId: readingList._id,
+        listKind: 'reading-list',
+      },
+    });
+
+    // Test watch-list (limit: 2)
+    // Add first entity to watch list - should succeed
+    await client
+      .post('/generic-list-entity-relations')
+      .send({
+        _listId: watchList._id,
+        _entityId: entities[0]._id,
+      })
+      .expect(200);
+
+    // Add second entity to watch list - should succeed
+    await client
+      .post('/generic-list-entity-relations')
+      .send({
+        _listId: watchList._id,
+        _entityId: entities[1]._id,
+      })
+      .expect(200);
+
+    // Try to add third entity to watch list - should fail due to kind-specific limit
+    const watchListResponse = await client
+      .post('/generic-list-entity-relations')
+      .send({
+        _listId: watchList._id,
+        _entityId: entities[2]._id,
+      })
+      .expect(429);
+
+    expect(watchListResponse.body).to.have.property('error');
+    expect(watchListResponse.body.error).to.have.property(
+      'name',
+      'LimitExceededError',
+    );
+    expect(watchListResponse.body.error).to.have.property('statusCode', 429);
+    expect(watchListResponse.body.error).to.have.property(
+      'code',
+      'LIST-ENTITY-LIMIT-EXCEEDED',
+    );
+    expect(watchListResponse.body.error).to.have.property(
+      'message',
+      'List entity limit is exceeded. This list cannot contain more than 2 entities.',
+    );
+    expect(watchListResponse.body.error)
+      .to.have.property('details')
+      .which.is.an.Array();
+    expect(watchListResponse.body.error.details[0]).to.have.properties({
+      code: 'LIST-ENTITY-LIMIT-EXCEEDED',
+      info: {
+        limit: 2,
+        listId: watchList._id,
+        listKind: 'watch-list',
+      },
+    });
+  });
 });
