@@ -30,8 +30,8 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
   constructor(
     @inject('datasources.EntityDb') dataSource: EntityDbDataSource,
 
-    @repository.getter('GenericEntityRepository')
-    protected genericEntityRepositoryGetter: Getter<EntityRepository>,
+    @repository.getter('EntityRepository')
+    protected entityRepositoryGetter: Getter<EntityRepository>,
 
     @repository.getter('GenericListEntityRelationRepository')
     protected genericListEntityRepositoryGetter: Getter<GenericListEntityRelationRepository>,
@@ -134,7 +134,7 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
     data: DataObject<GenericEntity>,
     options?: Options,
   ): Promise<GenericEntity> {
-    const genericEntitiesRepo = await this.genericEntityRepositoryGetter();
+    const genericEntitiesRepo = await this.entityRepositoryGetter();
     const genericListEntityRelationRepo =
       await this.genericListEntityRepositoryGetter();
 
@@ -171,7 +171,7 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
     whereThrough?: Where<ListToEntityRelation>,
     options?: Options,
   ) {
-    const genericEntitiesRepo = await this.genericEntityRepositoryGetter();
+    const genericEntitiesRepo = await this.entityRepositoryGetter();
     const genericListEntityRelationRepo =
       await this.genericListEntityRepositoryGetter();
 
@@ -193,7 +193,7 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
     whereThrough?: Where<ListToEntityRelation>,
     options?: Options,
   ) {
-    const genericEntitiesRepo = await this.genericEntityRepositoryGetter();
+    const genericEntitiesRepo = await this.entityRepositoryGetter();
     const genericListEntityRelationRepo =
       await this.genericListEntityRepositoryGetter();
 

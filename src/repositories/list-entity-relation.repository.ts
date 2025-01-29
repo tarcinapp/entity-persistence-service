@@ -43,11 +43,11 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
     @inject('datasources.EntityDb')
     dataSource: EntityDbDataSource,
 
-    @repository.getter('GenericEntityRepository')
-    protected genericEntityRepositoryGetter: Getter<EntityRepository>,
+    @repository.getter('EntityRepository')
+    protected entityRepositoryGetter: Getter<EntityRepository>,
 
-    @repository.getter('GenericListRepository')
-    protected genericListRepositoryGetter: Getter<ListRepository>,
+    @repository.getter('ListRepository')
+    protected listRepositoryGetter: Getter<ListRepository>,
 
     @inject('extensions.idempotency.configurationreader')
     private idempotencyConfigReader: IdempotencyConfigurationReader,
@@ -109,10 +109,10 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
 
       // Fetch required metadata for the list and entity
       const [listMetadata, entityMetadata] = await Promise.all([
-        this.genericListRepositoryGetter().then((listRepo) =>
+        this.listRepositoryGetter().then((listRepo) =>
           listRepo.findById(rawRelation._listId).catch(() => null),
         ),
-        this.genericEntityRepositoryGetter().then((entityRepo) =>
+        this.entityRepositoryGetter().then((entityRepo) =>
           entityRepo.findById(rawRelation._entityId).catch(() => null),
         ),
       ]);
@@ -533,7 +533,7 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
     const listId = newData._listId; // TypeScript now knows this is string
 
     // Get the list to check its kind
-    const list = await this.genericListRepositoryGetter().then((repo) =>
+    const list = await this.listRepositoryGetter().then((repo) =>
       repo.findById(listId),
     );
 
@@ -586,8 +586,8 @@ export class GenericListEntityRelationRepository extends DefaultCrudRepository<
     },
   ) {
     const [genericEntityRepo, genericListRepo] = await Promise.all([
-      this.genericEntityRepositoryGetter(),
-      this.genericListRepositoryGetter(),
+      this.entityRepositoryGetter(),
+      this.listRepositoryGetter(),
     ]);
 
     if (!data._entityId || !data._listId) {

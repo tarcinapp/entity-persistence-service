@@ -83,8 +83,8 @@ export class ListRepository extends DefaultCrudRepository<
     @repository.getter('GenericListEntityRelationRepository')
     protected listEntityRelationRepositoryGetter: Getter<GenericListEntityRelationRepository>,
 
-    @repository.getter('GenericEntityRepository')
-    protected genericEntityRepositoryGetter: Getter<EntityRepository>,
+    @repository.getter('EntityRepository')
+    protected entityRepositoryGetter: Getter<EntityRepository>,
 
     @repository.getter('ListRelationRepository')
     protected listRelationRepositoryGetter: Getter<ListRelationRepository>,
@@ -150,7 +150,7 @@ export class ListRepository extends DefaultCrudRepository<
     this.entities = (listId: typeof List.prototype._id) => {
       const repo = new CustomEntityThroughListRepository(
         this.dataSource,
-        this.genericEntityRepositoryGetter,
+        this.entityRepositoryGetter,
         this.listEntityRelationRepositoryGetter,
       );
 
@@ -161,13 +161,13 @@ export class ListRepository extends DefaultCrudRepository<
       return repo;
     };
 
-    //const genericEntitiesInclusionResolver = this.createHasManyThroughRepositoryFactoryFor('_genericEntities', genericEntityRepositoryGetter, listEntityRelationRepositoryGetter).inclusionResolver
+    //const genericEntitiesInclusionResolver = this.createHasManyThroughRepositoryFactoryFor('_genericEntities', entityRepositoryGetter, listEntityRelationRepositoryGetter).inclusionResolver
 
     this.registerInclusionResolver(
       '_entities',
       this.createEntitiesInclusionResolver(
         listEntityRelationRepositoryGetter,
-        genericEntityRepositoryGetter,
+        entityRepositoryGetter,
       ),
     );
 
@@ -327,16 +327,16 @@ export class ListRepository extends DefaultCrudRepository<
   /**
    * Custom inclusion resolver for the _genericEntities relation aware of whereThrough and setThrough
    * @param listEntityRelationRepositoryGetter
-   * @param genericEntityRepositoryGetter
+   * @param entityRepositoryGetter
    * @returns
    */
   createEntitiesInclusionResolver(
     listEntityRelationRepositoryGetter: Getter<GenericListEntityRelationRepository>,
-    genericEntityRepositoryGetter: Getter<EntityRepository>,
+    entityRepositoryGetter: Getter<EntityRepository>,
   ): InclusionResolver<List, GenericEntity> {
     return async (lists, inclusion) => {
       const listEntityRelationRepo = await listEntityRelationRepositoryGetter();
-      const entityRepo = await genericEntityRepositoryGetter();
+      const entityRepo = await entityRepositoryGetter();
 
       // Extract filters from the inclusion object
       const relationFilter: Where<ListToEntityRelation> =

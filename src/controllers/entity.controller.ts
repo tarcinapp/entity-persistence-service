@@ -30,7 +30,7 @@ import { EntityRepository } from '../repositories';
 export class GenericEntityController {
   constructor(
     @repository(EntityRepository)
-    public genericEntityRepository: EntityRepository,
+    public entityRepository: EntityRepository,
   ) {}
 
   @post('/entities', {
@@ -93,7 +93,7 @@ export class GenericEntityController {
     })
     genericEntity: Omit<GenericEntity, UnmodifiableCommonFields>,
   ): Promise<GenericEntity> {
-    return this.genericEntityRepository.create(genericEntity);
+    return this.entityRepository.create(genericEntity);
   }
 
   @get('/entities/count', {
@@ -122,7 +122,7 @@ export class GenericEntityController {
       }).build();
     }
 
-    return this.genericEntityRepository.count(filter.where);
+    return this.entityRepository.count(filter.where);
   }
 
   @get('/entities', {
@@ -154,7 +154,7 @@ export class GenericEntityController {
 
     sanitizeFilterFields(filter);
 
-    return this.genericEntityRepository.find(filter);
+    return this.entityRepository.find(filter);
   }
 
   @patch('/entities', {
@@ -195,7 +195,7 @@ export class GenericEntityController {
       }).build();
     }
 
-    return this.genericEntityRepository.updateAll(genericEntity, filter.where);
+    return this.entityRepository.updateAll(genericEntity, filter.where);
   }
 
   @get('/entities/{id}', {
@@ -229,7 +229,7 @@ export class GenericEntityController {
     @param.filter(GenericEntity, { exclude: 'where' })
     filter?: FilterExcludingWhere<GenericEntity>,
   ): Promise<GenericEntity> {
-    return this.genericEntityRepository.findById(id, filter);
+    return this.entityRepository.findById(id, filter);
   }
 
   @patch('/entities/{id}', {
@@ -279,7 +279,7 @@ export class GenericEntityController {
     })
     genericEntity: Omit<GenericEntity, UnmodifiableCommonFields>,
   ): Promise<void> {
-    await this.genericEntityRepository.updateById(id, genericEntity);
+    await this.entityRepository.updateById(id, genericEntity);
   }
 
   @put('/entities/{id}', {
@@ -328,7 +328,7 @@ export class GenericEntityController {
     })
     genericEntity: Omit<GenericEntity, UnmodifiableCommonFields>,
   ): Promise<void> {
-    await this.genericEntityRepository.replaceById(id, genericEntity);
+    await this.entityRepository.replaceById(id, genericEntity);
   }
 
   @del('/entities/{id}', {
@@ -351,6 +351,6 @@ export class GenericEntityController {
     },
   })
   async deleteById(@param.path.string('id') id: string): Promise<void> {
-    await this.genericEntityRepository.deleteById(id);
+    await this.entityRepository.deleteById(id);
   }
 }

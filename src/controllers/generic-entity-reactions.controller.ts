@@ -21,7 +21,7 @@ import { EntityRepository } from '../repositories';
 export class GenericEntityReactionsController {
   constructor(
     @repository(EntityRepository)
-    protected genericEntityRepository: EntityRepository,
+    protected entityRepo: EntityRepository,
   ) {}
 
   @get('/generic-entities/{id}/reactions', {
@@ -40,7 +40,7 @@ export class GenericEntityReactionsController {
     @param.path.string('id') id: string,
     @param.query.object('filter') filter?: Filter<Reactions>,
   ): Promise<Reactions[]> {
-    return this.genericEntityRepository.reactions(id).find(filter);
+    return this.entityRepo.reactions(id).find(filter);
   }
 
   @post('/generic-entities/{id}/reactions', {
@@ -68,7 +68,7 @@ export class GenericEntityReactionsController {
     })
     reactions: Omit<Reactions, 'id'>,
   ): Promise<Reactions> {
-    return this.genericEntityRepository.reactions(id).create(reactions);
+    return this.entityRepo.reactions(id).create(reactions);
   }
 
   @patch('/generic-entities/{id}/reactions', {
@@ -92,7 +92,7 @@ export class GenericEntityReactionsController {
     @param.query.object('where', getWhereSchemaFor(Reactions))
     where?: Where<Reactions>,
   ): Promise<Count> {
-    return this.genericEntityRepository.reactions(id).patch(reactions, where);
+    return this.entityRepo.reactions(id).patch(reactions, where);
   }
 
   @del('/generic-entities/{id}/reactions', {
@@ -108,6 +108,6 @@ export class GenericEntityReactionsController {
     @param.query.object('where', getWhereSchemaFor(Reactions))
     where?: Where<Reactions>,
   ): Promise<Count> {
-    return this.genericEntityRepository.reactions(id).delete(where);
+    return this.entityRepo.reactions(id).delete(where);
   }
 }

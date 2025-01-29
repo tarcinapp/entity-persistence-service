@@ -49,7 +49,7 @@ describe('EntityController', () => {
    * - 429: Entity limit exceeded
    */
   describe('create()', () => {
-    it('should successfully call GenericEntityRepository.create() with correct data', async () => {
+    it('should successfully call EntityRepository.create() with correct data', async () => {
       // Arrange
       const inputEntity: DataObject<GenericEntity> = {
         _name: 'testEntity',

@@ -21,7 +21,7 @@ import { EntityRepository } from '../repositories';
 export class GenericEntityTagController {
   constructor(
     @repository(EntityRepository)
-    protected genericEntityRepository: EntityRepository,
+    protected entityRepo: EntityRepository,
   ) {}
 
   @get('/generic-entities/{id}/tags', {
@@ -41,7 +41,7 @@ export class GenericEntityTagController {
     @param.path.string('id') id: string,
     @param.query.object('filter') filter?: Filter<Tag>,
   ): Promise<Tag[]> {
-    return this.genericEntityRepository.tags(id).find(filter);
+    return this.entityRepo.tags(id).find(filter);
   }
 
   @post('/generic-entities/{id}/tags', {
@@ -66,7 +66,7 @@ export class GenericEntityTagController {
     })
     tag: Omit<Tag, 'id'>,
   ): Promise<Tag> {
-    return this.genericEntityRepository.tags(id).create(tag);
+    return this.entityRepo.tags(id).create(tag);
   }
 
   @patch('/generic-entities/{id}/tags', {
@@ -89,7 +89,7 @@ export class GenericEntityTagController {
     tag: Partial<Tag>,
     @param.query.object('where', getWhereSchemaFor(Tag)) where?: Where<Tag>,
   ): Promise<Count> {
-    return this.genericEntityRepository.tags(id).patch(tag, where);
+    return this.entityRepo.tags(id).patch(tag, where);
   }
 
   @del('/generic-entities/{id}/tags', {
@@ -104,6 +104,6 @@ export class GenericEntityTagController {
     @param.path.string('id') id: string,
     @param.query.object('where', getWhereSchemaFor(Tag)) where?: Where<Tag>,
   ): Promise<Count> {
-    return this.genericEntityRepository.tags(id).delete(where);
+    return this.entityRepo.tags(id).delete(where);
   }
 }

@@ -21,7 +21,7 @@ import { EntityRepository } from '../repositories';
 export class GenericEntityChildrenController {
   constructor(
     @repository(EntityRepository)
-    protected genericEntityRepository: EntityRepository,
+    protected entityRepo: EntityRepository,
   ) {}
 
   @get('/generic-entities/{id}/children', {
@@ -40,7 +40,7 @@ export class GenericEntityChildrenController {
     @param.path.string('id') id: string,
     @param.query.object('filter') filter?: Filter<EntityRelation>,
   ): Promise<EntityRelation[]> {
-    return this.genericEntityRepository.children(id).find(filter);
+    return this.entityRepo.children(id).find(filter);
   }
 
   @post('/generic-entities/{id}/children', {
@@ -68,7 +68,7 @@ export class GenericEntityChildrenController {
     })
     relation: Omit<EntityRelation, 'id'>,
   ): Promise<EntityRelation> {
-    return this.genericEntityRepository.children(id).create(relation);
+    return this.entityRepo.children(id).create(relation);
   }
 
   @patch('/generic-entities/{id}/children', {
@@ -92,7 +92,7 @@ export class GenericEntityChildrenController {
     @param.query.object('where', getWhereSchemaFor(EntityRelation))
     where?: Where<EntityRelation>,
   ): Promise<Count> {
-    return this.genericEntityRepository.children(id).patch(relation, where);
+    return this.entityRepo.children(id).patch(relation, where);
   }
 
   @del('/generic-entities/{id}/children', {
@@ -108,6 +108,6 @@ export class GenericEntityChildrenController {
     @param.query.object('where', getWhereSchemaFor(EntityRelation))
     where?: Where<EntityRelation>,
   ): Promise<Count> {
-    return this.genericEntityRepository.children(id).delete(where);
+    return this.entityRepo.children(id).delete(where);
   }
 }

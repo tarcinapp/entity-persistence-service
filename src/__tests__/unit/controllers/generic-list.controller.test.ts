@@ -39,7 +39,7 @@ describe('ListController', () => {
    * - 429: List limit exceeded
    */
   describe('create()', () => {
-    it('should successfully call GenericListRepository.create() with correct data', async () => {
+    it('should successfully call ListRepository.create() with correct data', async () => {
       // Arrange
       const inputList: DataObject<List> = {
         _name: 'testList',
