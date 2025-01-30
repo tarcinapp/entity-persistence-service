@@ -74,7 +74,6 @@ describe('ListRepository', () => {
   });
 
   it('should have all required relations configured', () => {
-    expect(repository.children).to.not.be.undefined();
     expect(repository.reactions).to.not.be.undefined();
     expect(repository.tags).to.not.be.undefined();
     expect(repository.entities).to.not.be.undefined();

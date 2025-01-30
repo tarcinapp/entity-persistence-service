@@ -1,7 +1,6 @@
 import { hasMany, model } from '@loopback/repository';
 import { ListEntityCommonBase } from './base-models/list-entity-common-base.model';
-import { Reactions } from './reactions.model';
-import { EntityRelation } from './relation.model';
+import { EntityReactions } from './reactions.model';
 import { TagEntityRelation } from './tag-entity-relation.model';
 import { Tag } from './tag.model';
 
@@ -14,11 +13,8 @@ import { Tag } from './tag.model';
   },
 })
 export class GenericEntity extends ListEntityCommonBase {
-  @hasMany(() => EntityRelation, { keyTo: 'from' })
-  _children?: EntityRelation[];
-
-  @hasMany(() => Reactions, { keyTo: 'entityId' })
-  _reactions?: Reactions[];
+  @hasMany(() => EntityReactions, { keyTo: 'entityId' })
+  _reactions?: EntityReactions[];
 
   @hasMany(() => Tag, {
     through: { model: () => TagEntityRelation, keyFrom: 'entityId' },

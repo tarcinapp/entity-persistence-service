@@ -10,7 +10,6 @@ import {
   ListEntityRelationRepository,
   ListRepository,
   ReactionsRepository,
-  RelationRepository,
   TagEntityRelationRepository,
   TagRepository,
 } from '../../../repositories';
@@ -26,7 +25,6 @@ describe('EntityRepository', () => {
     app = testSetup.app;
 
     // Create stubs for related repositories
-    const relationRepoStub = sinon.createStubInstance(RelationRepository);
     const reactionsRepoStub = sinon.createStubInstance(ReactionsRepository);
     const tagEntityRelationRepoStub = sinon.createStubInstance(
       TagEntityRelationRepository,
@@ -40,7 +38,6 @@ describe('EntityRepository', () => {
     repository = new EntityRepository(
       testSetup.dataSource,
       Getter.fromValue(listRepoStub),
-      Getter.fromValue(relationRepoStub),
       Getter.fromValue(reactionsRepoStub),
       Getter.fromValue(tagEntityRelationRepoStub),
       Getter.fromValue(tagRepoStub),
@@ -64,7 +61,6 @@ describe('EntityRepository', () => {
   });
 
   it('should have all required relations configured', () => {
-    expect(repository.children).to.not.be.undefined();
     expect(repository.reactions).to.not.be.undefined();
     expect(repository.tags).to.not.be.undefined();
   });
@@ -1113,7 +1109,6 @@ describe('EntityRepository', () => {
 
   describe('deleteById', () => {
     let superDeleteByIdStub: sinon.SinonStub;
-    let relationRepoStub: sinon.SinonStubbedInstance<RelationRepository>;
     let reactionsRepoStub: sinon.SinonStubbedInstance<ReactionsRepository>;
     let tagEntityRelationRepoStub: sinon.SinonStubbedInstance<TagEntityRelationRepository>;
     let tagRepoStub: sinon.SinonStubbedInstance<TagRepository>;
@@ -1121,7 +1116,6 @@ describe('EntityRepository', () => {
 
     beforeEach(() => {
       // Create stubs for all related repositories
-      relationRepoStub = sinon.createStubInstance(RelationRepository);
       reactionsRepoStub = sinon.createStubInstance(ReactionsRepository);
       tagEntityRelationRepoStub = sinon.createStubInstance(
         TagEntityRelationRepository,
@@ -1132,8 +1126,6 @@ describe('EntityRepository', () => {
       );
 
       // Stub the repository getters
-      (repository as any).relationRepositoryGetter = () =>
-        Promise.resolve(relationRepoStub);
       (repository as any).reactionsRepositoryGetter = () =>
         Promise.resolve(reactionsRepoStub);
       (repository as any).tagEntityRelationRepositoryGetter = () =>
@@ -1289,7 +1281,6 @@ describe('EntityRepository', () => {
 
   describe('deleteAll', () => {
     let superDeleteAllStub: sinon.SinonStub;
-    let relationRepoStub: sinon.SinonStubbedInstance<RelationRepository>;
     let reactionsRepoStub: sinon.SinonStubbedInstance<ReactionsRepository>;
     let tagEntityRelationRepoStub: sinon.SinonStubbedInstance<TagEntityRelationRepository>;
     let tagRepoStub: sinon.SinonStubbedInstance<TagRepository>;
@@ -1297,7 +1288,6 @@ describe('EntityRepository', () => {
 
     beforeEach(() => {
       // Create stubs for all related repositories
-      relationRepoStub = sinon.createStubInstance(RelationRepository);
       reactionsRepoStub = sinon.createStubInstance(ReactionsRepository);
       tagEntityRelationRepoStub = sinon.createStubInstance(
         TagEntityRelationRepository,
@@ -1308,8 +1298,6 @@ describe('EntityRepository', () => {
       );
 
       // Stub the repository getters
-      (repository as any).relationRepositoryGetter = () =>
-        Promise.resolve(relationRepoStub);
       (repository as any).reactionsRepositoryGetter = () =>
         Promise.resolve(reactionsRepoStub);
       (repository as any).tagEntityRelationRepositoryGetter = () =>

@@ -8,17 +8,17 @@ import {
 } from '@loopback/repository';
 import _ from 'lodash';
 import { EntityDbDataSource } from '../datasources';
-import { Reactions, ReactionsRelations, SubReactions } from '../models';
+import { EntityReactions, ReactionsRelations, SubReactions } from '../models';
 import { SubReactionsRepository } from './sub-reactions.repository';
 
 export class ReactionsRepository extends DefaultCrudRepository<
-  Reactions,
-  typeof Reactions.prototype.id,
+  EntityReactions,
+  typeof EntityReactions.prototype.id,
   ReactionsRelations
 > {
   public readonly subReactions: HasManyRepositoryFactory<
     SubReactions,
-    typeof Reactions.prototype.id
+    typeof EntityReactions.prototype.id
   >;
 
   // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -31,7 +31,7 @@ export class ReactionsRepository extends DefaultCrudRepository<
     @repository.getter('SubReactionsRepository')
     protected subReactionsRepositoryGetter: Getter<SubReactionsRepository>,
   ) {
-    super(Reactions, dataSource);
+    super(EntityReactions, dataSource);
     this.subReactions = this.createHasManyRepositoryFactoryFor(
       'subReactions',
       subReactionsRepositoryGetter,
@@ -42,7 +42,7 @@ export class ReactionsRepository extends DefaultCrudRepository<
     );
   }
 
-  async find(filter?: Filter<Reactions>, options?: Options) {
+  async find(filter?: Filter<EntityReactions>, options?: Options) {
     if (filter?.limit && filter.limit > ReactionsRepository.response_limit) {
       filter.limit = ReactionsRepository.response_limit;
     }

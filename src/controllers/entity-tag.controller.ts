@@ -18,7 +18,7 @@ import {
 import { GenericEntity, Tag } from '../models';
 import { EntityRepository } from '../repositories';
 
-export class GenericEntityTagController {
+export class EntityTagController {
   constructor(
     @repository(EntityRepository)
     protected entityRepo: EntityRepository,

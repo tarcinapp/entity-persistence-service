@@ -16,7 +16,7 @@ import {
   requestBody,
 } from '@loopback/rest';
 
-import { Reactions, SubReactions } from '../models';
+import { EntityReactions, SubReactions } from '../models';
 import { ReactionsRepository } from '../repositories';
 
 export class ReactionsSubReactionsController {
@@ -55,7 +55,7 @@ export class ReactionsSubReactionsController {
     },
   })
   async create(
-    @param.path.string('id') id: typeof Reactions.prototype.id,
+    @param.path.string('id') id: typeof EntityReactions.prototype.id,
     @requestBody({
       content: {
         'application/json': {

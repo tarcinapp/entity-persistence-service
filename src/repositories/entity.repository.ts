@@ -29,11 +29,10 @@ import { CustomListThroughEntityRepository } from './custom-list-through-entity.
 import { SetFilterBuilder } from '../extensions/utils/set-helper';
 
 import {
-  EntityRelation,
   GenericEntity,
   GenericEntityRelations,
   HttpErrorResponse,
-  Reactions,
+  EntityReactions,
   SingleError,
   Tag,
   TagEntityRelation,
@@ -41,7 +40,7 @@ import {
 import { ListEntityRelationRepository } from './list-entity-relation.repository';
 import { ListRepository } from './list.repository';
 import { ReactionsRepository } from './reactions.repository';
-import { RelationRepository } from './relation.repository';
+
 import { TagEntityRelationRepository } from './tag-entity-relation.repository';
 import { TagRepository } from './tag.repository';
 import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
@@ -55,13 +54,8 @@ export class EntityRepository extends DefaultCrudRepository<
     entityId: typeof GenericEntity.prototype._id,
   ) => CustomListThroughEntityRepository;
 
-  public readonly children: HasManyRepositoryFactory<
-    EntityRelation,
-    typeof GenericEntity.prototype._id
-  >;
-
   public readonly reactions: HasManyRepositoryFactory<
-    Reactions,
+    EntityReactions,
     typeof GenericEntity.prototype._id
   >;
 
@@ -77,9 +71,6 @@ export class EntityRepository extends DefaultCrudRepository<
 
     @repository.getter('ListRepository')
     protected listRepositoryGetter: Getter<ListRepository>,
-
-    @repository.getter('RelationRepository')
-    protected relationRepositoryGetter: Getter<RelationRepository>,
 
     @repository.getter('ReactionsRepository')
     protected reactionsRepositoryGetter: Getter<ReactionsRepository>,
@@ -128,14 +119,7 @@ export class EntityRepository extends DefaultCrudRepository<
       '_reactions',
       this.reactions.inclusionResolver,
     );
-    this.children = this.createHasManyRepositoryFactoryFor(
-      '_children',
-      relationRepositoryGetter,
-    );
-    this.registerInclusionResolver(
-      '_children',
-      this.children.inclusionResolver,
-    );
+
     this.lists = (entityId: typeof GenericEntity.prototype._id) => {
       const repo = new CustomListThroughEntityRepository(
         this.dataSource,

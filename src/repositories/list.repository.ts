@@ -57,11 +57,6 @@ export class ListRepository extends DefaultCrudRepository<
     listId: typeof List.prototype._id,
   ) => CustomEntityThroughListRepository;
 
-  public readonly children: HasManyRepositoryFactory<
-    ListRelation,
-    typeof List.prototype._id
-  >;
-
   public readonly reactions: HasManyRepositoryFactory<
     ListReactions,
     typeof List.prototype._id
@@ -136,14 +131,6 @@ export class ListRepository extends DefaultCrudRepository<
     this.registerInclusionResolver(
       'reactions',
       this.reactions.inclusionResolver,
-    );
-    this.children = this.createHasManyRepositoryFactoryFor(
-      '_children',
-      listRelationRepositoryGetter,
-    );
-    this.registerInclusionResolver(
-      '_children',
-      this.children.inclusionResolver,
     );
 
     // make genericEntities inclusion available through a custom repository

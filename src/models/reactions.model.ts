@@ -2,7 +2,7 @@ import { Entity, hasMany, model, property } from '@loopback/repository';
 import { SubReactions } from './sub-reactions.model';
 
 @model({ settings: { strict: false } })
-export class Reactions extends Entity {
+export class EntityReactions extends Entity {
   @property({
     type: 'string',
     id: true,
@@ -56,7 +56,7 @@ export class Reactions extends Entity {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [prop: string]: any;
 
-  constructor(data?: Partial<Reactions>) {
+  constructor(data?: Partial<EntityReactions>) {
     super(data);
   }
 }
@@ -65,4 +65,4 @@ export interface ReactionsRelations {
   // describe navigational properties here
 }
 
-export type ReactionsWithRelations = Reactions & ReactionsRelations;
+export type ReactionsWithRelations = EntityReactions & ReactionsRelations;

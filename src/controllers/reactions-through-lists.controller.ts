@@ -18,13 +18,13 @@ import {
 import { List, ListReactions } from '../models';
 import { ListRepository } from '../repositories';
 
-export class ListListReactionsController {
+export class ReactionsThroughListsController {
   constructor(
     @repository(ListRepository)
     protected listRepository: ListRepository,
   ) {}
 
-  @get('/generic-lists/{id}/list-reactions', {
+  @get('/lists/{id}/reactions', {
     responses: {
       '200': {
         description: 'Array of List has many ListReactions',
@@ -43,7 +43,7 @@ export class ListListReactionsController {
     return this.listRepository.reactions(id).find(filter);
   }
 
-  @post('/generic-lists/{id}/list-reactions', {
+  @post('/lists/{id}/reactions', {
     responses: {
       '200': {
         description: 'List model instance',
@@ -71,7 +71,7 @@ export class ListListReactionsController {
     return this.listRepository.reactions(id).create(listReactions);
   }
 
-  @patch('/generic-lists/{id}/list-reactions', {
+  @patch('/lists/{id}/reactions', {
     responses: {
       '200': {
         description: 'List.ListReactions PATCH success count',
@@ -95,7 +95,7 @@ export class ListListReactionsController {
     return this.listRepository.reactions(id).patch(listReactions, where);
   }
 
-  @del('/generic-lists/{id}/list-reactions', {
+  @del('/lists/{id}/reactions', {
     responses: {
       '200': {
         description: 'List.ListReactions DELETE success count',

@@ -15,22 +15,25 @@ import {
   post,
   requestBody,
 } from '@loopback/rest';
-import { GenericEntity, Reactions } from '../models';
+import { GenericEntity, EntityReactions } from '../models';
 import { EntityRepository } from '../repositories';
 
-export class GenericEntityReactionsController {
+export class ReactionsThroughEntitiesController {
   constructor(
     @repository(EntityRepository)
     protected entityRepo: EntityRepository,
   ) {}
 
-  @get('/generic-entities/{id}/reactions', {
+  @get('/entities/{id}/reactions', {
     responses: {
       '200': {
         description: 'Array of GenericEntity has many Reactions',
         content: {
           'application/json': {
-            schema: { type: 'array', items: getModelSchemaRef(Reactions) },
+            schema: {
+              type: 'array',
+              items: getModelSchemaRef(EntityReactions),
+            },
           },
         },
       },
@@ -38,17 +41,17 @@ export class GenericEntityReactionsController {
   })
   async find(
     @param.path.string('id') id: string,
-    @param.query.object('filter') filter?: Filter<Reactions>,
-  ): Promise<Reactions[]> {
+    @param.query.object('filter') filter?: Filter<EntityReactions>,
+  ): Promise<EntityReactions[]> {
     return this.entityRepo.reactions(id).find(filter);
   }
 
-  @post('/generic-entities/{id}/reactions', {
+  @post('/entities/{id}/reactions', {
     responses: {
       '200': {
-        description: 'GenericEntity model instance',
+        description: 'Entity model instance',
         content: {
-          'application/json': { schema: getModelSchemaRef(Reactions) },
+          'application/json': { schema: getModelSchemaRef(EntityReactions) },
         },
       },
     },
@@ -58,7 +61,7 @@ export class GenericEntityReactionsController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(Reactions, {
+          schema: getModelSchemaRef(EntityReactions, {
             title: 'NewReactionsInGenericEntity',
             exclude: ['_id'],
             optional: ['entityId'],
@@ -66,15 +69,15 @@ export class GenericEntityReactionsController {
         },
       },
     })
-    reactions: Omit<Reactions, 'id'>,
-  ): Promise<Reactions> {
+    reactions: Omit<EntityReactions, 'id'>,
+  ): Promise<EntityReactions> {
     return this.entityRepo.reactions(id).create(reactions);
   }
 
-  @patch('/generic-entities/{id}/reactions', {
+  @patch('/entities/{id}/reactions', {
     responses: {
       '200': {
-        description: 'GenericEntity.Reactions PATCH success count',
+        description: 'Entity.Reactions PATCH success count',
         content: { 'application/json': { schema: CountSchema } },
       },
     },
@@ -84,29 +87,29 @@ export class GenericEntityReactionsController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(Reactions, { partial: true }),
+          schema: getModelSchemaRef(EntityReactions, { partial: true }),
         },
       },
     })
-    reactions: Partial<Reactions>,
-    @param.query.object('where', getWhereSchemaFor(Reactions))
-    where?: Where<Reactions>,
+    reactions: Partial<EntityReactions>,
+    @param.query.object('where', getWhereSchemaFor(EntityReactions))
+    where?: Where<EntityReactions>,
   ): Promise<Count> {
     return this.entityRepo.reactions(id).patch(reactions, where);
   }
 
-  @del('/generic-entities/{id}/reactions', {
+  @del('/entities/{id}/reactions', {
     responses: {
       '200': {
-        description: 'GenericEntity.Reactions DELETE success count',
+        description: 'Entity.Reactions DELETE success count',
         content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
   async delete(
     @param.path.string('id') id: string,
-    @param.query.object('where', getWhereSchemaFor(Reactions))
-    where?: Where<Reactions>,
+    @param.query.object('where', getWhereSchemaFor(EntityReactions))
+    where?: Where<EntityReactions>,
   ): Promise<Count> {
     return this.entityRepo.reactions(id).delete(where);
   }

@@ -1041,7 +1041,6 @@ describe('POST /lists', () => {
     );
     expect(firstResponse.body._ownerUsers).to.containDeep(['user-123']);
     expect(firstResponse.body._visibility).to.be.equal('private');
-    expect(firstResponse.body._idempotencyKey).to.be.String();
 
     // Second list with same idempotency fields but different other fields
     const secondList = {
