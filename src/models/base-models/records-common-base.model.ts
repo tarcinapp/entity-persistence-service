@@ -75,6 +75,7 @@ export class RecordsCommonBase extends Entity {
 
   @property({
     type: 'string',
+    hidden: true,
   })
   _idempotencyKey?: string | undefined;
 
