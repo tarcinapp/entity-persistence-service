@@ -28,7 +28,7 @@ import {
 } from '../models/base-types/unmodifiable-common-fields';
 import { ListRepository } from '../repositories';
 
-export class GenericListController {
+export class ListController {
   constructor(
     @repository(ListRepository)
     public listRepository: ListRepository,

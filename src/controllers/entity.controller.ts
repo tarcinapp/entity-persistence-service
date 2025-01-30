@@ -27,7 +27,7 @@ import {
 } from '../models/base-types/unmodifiable-common-fields';
 import { EntityRepository } from '../repositories';
 
-export class GenericEntityController {
+export class EntityController {
   constructor(
     @repository(EntityRepository)
     public entityRepository: EntityRepository,

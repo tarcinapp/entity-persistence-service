@@ -2,7 +2,7 @@ import type { DataObject } from '@loopback/repository';
 import { expect, sinon } from '@loopback/testlab';
 import { setupApplication, teardownApplication } from './test-helper';
 import type { EntityPersistenceApplication } from '../../..';
-import { GenericListController } from '../../../controllers';
+import { ListController } from '../../../controllers';
 import type { Set } from '../../../extensions/utils/set-helper';
 import { List } from '../../../models';
 import { ListRepository } from '../../../repositories';
@@ -14,7 +14,7 @@ import { ListRepository } from '../../../repositories';
  */
 describe('ListController', () => {
   let app: EntityPersistenceApplication;
-  let controller: GenericListController;
+  let controller: ListController;
   let repository: sinon.SinonStubbedInstance<ListRepository>;
 
   before(async () => {
@@ -28,7 +28,7 @@ describe('ListController', () => {
   beforeEach(() => {
     // Create a fresh stub for each test to avoid interference
     repository = sinon.createStubInstance(ListRepository);
-    controller = new GenericListController(repository);
+    controller = new ListController(repository);
   });
 
   /**

@@ -7,7 +7,8 @@ import {
 import type { EntityPersistenceApplication } from '../../..';
 import { HttpErrorResponse } from '../../../models';
 import {
-  GenericListEntityRelationRepository,
+  ListEntityRelationRepository,
+  ListRepository,
   ReactionsRepository,
   RelationRepository,
   TagEntityRelationRepository,
@@ -32,12 +33,13 @@ describe('EntityRepository', () => {
     );
     const tagRepoStub = sinon.createStubInstance(TagRepository);
     const listEntityRelationRepoStub = sinon.createStubInstance(
-      GenericListEntityRelationRepository,
+      ListEntityRelationRepository,
     );
-
+    const listRepoStub = sinon.createStubInstance(ListRepository);
     // Create main repository instance with stubbed dependencies
     repository = new EntityRepository(
       testSetup.dataSource,
+      Getter.fromValue(listRepoStub),
       Getter.fromValue(relationRepoStub),
       Getter.fromValue(reactionsRepoStub),
       Getter.fromValue(tagEntityRelationRepoStub),
@@ -1115,7 +1117,7 @@ describe('EntityRepository', () => {
     let reactionsRepoStub: sinon.SinonStubbedInstance<ReactionsRepository>;
     let tagEntityRelationRepoStub: sinon.SinonStubbedInstance<TagEntityRelationRepository>;
     let tagRepoStub: sinon.SinonStubbedInstance<TagRepository>;
-    let listEntityRelationRepoStub: sinon.SinonStubbedInstance<GenericListEntityRelationRepository>;
+    let listEntityRelationRepoStub: sinon.SinonStubbedInstance<ListEntityRelationRepository>;
 
     beforeEach(() => {
       // Create stubs for all related repositories
@@ -1126,7 +1128,7 @@ describe('EntityRepository', () => {
       );
       tagRepoStub = sinon.createStubInstance(TagRepository);
       listEntityRelationRepoStub = sinon.createStubInstance(
-        GenericListEntityRelationRepository,
+        ListEntityRelationRepository,
       );
 
       // Stub the repository getters
@@ -1291,7 +1293,7 @@ describe('EntityRepository', () => {
     let reactionsRepoStub: sinon.SinonStubbedInstance<ReactionsRepository>;
     let tagEntityRelationRepoStub: sinon.SinonStubbedInstance<TagEntityRelationRepository>;
     let tagRepoStub: sinon.SinonStubbedInstance<TagRepository>;
-    let listEntityRelationRepoStub: sinon.SinonStubbedInstance<GenericListEntityRelationRepository>;
+    let listEntityRelationRepoStub: sinon.SinonStubbedInstance<ListEntityRelationRepository>;
 
     beforeEach(() => {
       // Create stubs for all related repositories
@@ -1302,7 +1304,7 @@ describe('EntityRepository', () => {
       );
       tagRepoStub = sinon.createStubInstance(TagRepository);
       listEntityRelationRepoStub = sinon.createStubInstance(
-        GenericListEntityRelationRepository,
+        ListEntityRelationRepository,
       );
 
       // Stub the repository getters

@@ -18,7 +18,7 @@ import {
   ListToEntityRelation,
 } from '../models';
 import { EntityRepository } from './entity.repository';
-import { GenericListEntityRelationRepository } from './list-entity-relation.repository';
+import { ListEntityRelationRepository } from './list-entity-relation.repository';
 
 export class CustomEntityThroughListRepository extends DefaultCrudRepository<
   GenericEntity,
@@ -33,8 +33,8 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
     @repository.getter('EntityRepository')
     protected entityRepositoryGetter: Getter<EntityRepository>,
 
-    @repository.getter('GenericListEntityRelationRepository')
-    protected genericListEntityRepositoryGetter: Getter<GenericListEntityRelationRepository>,
+    @repository.getter('ListEntityRelationRepository')
+    protected genericListEntityRepositoryGetter: Getter<ListEntityRelationRepository>,
   ) {
     super(GenericEntity, dataSource);
   }
@@ -72,11 +72,11 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
         // if entityId explicitly given as false, remove it
         fields = _.omitBy(
           filterThrough.fields,
-          (v, k) => k === 'entityId' && v === false,
+          (v, k) => k === '_entityId' && v === false,
         );
 
         // if listId explicitly given as false, remove it
-        fields = _.omitBy(fields, (v, k) => k === 'listId' && v === false);
+        fields = _.omitBy(fields, (v, k) => k === '_listId' && v === false);
       }
     } else {
       fields = undefined;

@@ -40,7 +40,7 @@ import {
 } from '../models';
 import { CustomEntityThroughListRepository } from './custom-entity-through-list.repository';
 import { EntityRepository } from './entity.repository';
-import { GenericListEntityRelationRepository } from './list-entity-relation.repository';
+import { ListEntityRelationRepository } from './list-entity-relation.repository';
 import { ListReactionsRepository } from './list-reactions.repository';
 import { ListRelationRepository } from './list-relation.repository';
 import { TagListRelationRepository } from './tag-list-relation.repository';
@@ -80,8 +80,8 @@ export class ListRepository extends DefaultCrudRepository<
 
   constructor(
     @inject('datasources.EntityDb') dataSource: EntityDbDataSource,
-    @repository.getter('GenericListEntityRelationRepository')
-    protected listEntityRelationRepositoryGetter: Getter<GenericListEntityRelationRepository>,
+    @repository.getter('ListEntityRelationRepository')
+    protected listEntityRelationRepositoryGetter: Getter<ListEntityRelationRepository>,
 
     @repository.getter('EntityRepository')
     protected entityRepositoryGetter: Getter<EntityRepository>,
@@ -331,7 +331,7 @@ export class ListRepository extends DefaultCrudRepository<
    * @returns
    */
   createEntitiesInclusionResolver(
-    listEntityRelationRepositoryGetter: Getter<GenericListEntityRelationRepository>,
+    listEntityRelationRepositoryGetter: Getter<ListEntityRelationRepository>,
     entityRepositoryGetter: Getter<EntityRepository>,
   ): InclusionResolver<List, GenericEntity> {
     return async (lists, inclusion) => {

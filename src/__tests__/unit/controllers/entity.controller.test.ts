@@ -2,7 +2,7 @@ import type { DataObject } from '@loopback/repository';
 import { expect, sinon } from '@loopback/testlab';
 import { setupApplication, teardownApplication } from './test-helper';
 import type { EntityPersistenceApplication } from '../../..';
-import { GenericEntityController } from '../../../controllers';
+import { EntityController } from '../../../controllers';
 import type { Set } from '../../../extensions/utils/set-helper';
 import { GenericEntity } from '../../../models';
 import { EntityRepository } from '../../../repositories';
@@ -14,7 +14,7 @@ import { EntityRepository } from '../../../repositories';
  */
 describe('EntityController', () => {
   let app: EntityPersistenceApplication;
-  let controller: GenericEntityController;
+  let controller: EntityController;
   let repository: sinon.SinonStubbedInstance<EntityRepository>;
   let originalEntityKinds: string | undefined;
 
@@ -33,7 +33,7 @@ describe('EntityController', () => {
 
     // Create a fresh stub for each test to avoid interference
     repository = sinon.createStubInstance(EntityRepository);
-    controller = new GenericEntityController(repository);
+    controller = new EntityController(repository);
   });
 
   afterEach(() => {

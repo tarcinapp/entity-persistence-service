@@ -21,13 +21,13 @@ import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
 import { GenericEntity, List, ListToEntityRelation } from '../models';
 import { ListRepository } from '../repositories';
 
-export class GenericListGenericEntityController {
+export class EntitiesThroughListController {
   constructor(
     @repository(ListRepository)
     protected listRepository: ListRepository,
   ) {}
 
-  @get('/generic-lists/{id}/entities', {
+  @get('/lists/{id}/entities', {
     responses: {
       '200': {
         description:
@@ -66,7 +66,7 @@ export class GenericListGenericEntityController {
     return this.listRepository.entities(id).find(filter, filterThrough);
   }
 
-  @post('/generic-lists/{id}/entities', {
+  @post('/lists/{id}/entities', {
     responses: {
       '200': {
         description: 'create a GenericEntity model instance',
@@ -102,7 +102,7 @@ export class GenericListGenericEntityController {
     return this.listRepository.entities(id).create(genericEntity);
   }
 
-  @patch('/generic-lists/{id}/entities', {
+  @patch('/lists/{id}/entities', {
     responses: {
       '200': {
         description: 'GenericList.GenericEntity PATCH success count',
@@ -130,7 +130,7 @@ export class GenericListGenericEntityController {
       .updateAll(genericEntity, where, whereThrough);
   }
 
-  @del('/generic-lists/{id}/entities', {
+  @del('/lists/{id}/entities', {
     responses: {
       '200': {
         description: 'GenericList.GenericEntity DELETE success count',

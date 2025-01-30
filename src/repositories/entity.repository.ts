@@ -25,6 +25,7 @@ import {
   VisibilityConfigurationReader,
 } from '../extensions';
 
+import { CustomListThroughEntityRepository } from './custom-list-through-entity.repository';
 import { SetFilterBuilder } from '../extensions/utils/set-helper';
 
 import {
@@ -37,7 +38,8 @@ import {
   Tag,
   TagEntityRelation,
 } from '../models';
-import { GenericListEntityRelationRepository } from './list-entity-relation.repository';
+import { ListEntityRelationRepository } from './list-entity-relation.repository';
+import { ListRepository } from './list.repository';
 import { ReactionsRepository } from './reactions.repository';
 import { RelationRepository } from './relation.repository';
 import { TagEntityRelationRepository } from './tag-entity-relation.repository';
@@ -49,6 +51,10 @@ export class EntityRepository extends DefaultCrudRepository<
   typeof GenericEntity.prototype._id,
   GenericEntityRelations
 > {
+  public readonly lists: (
+    entityId: typeof GenericEntity.prototype._id,
+  ) => CustomListThroughEntityRepository;
+
   public readonly children: HasManyRepositoryFactory<
     EntityRelation,
     typeof GenericEntity.prototype._id
@@ -69,6 +75,9 @@ export class EntityRepository extends DefaultCrudRepository<
     @inject('datasources.EntityDb')
     dataSource: EntityDbDataSource,
 
+    @repository.getter('ListRepository')
+    protected listRepositoryGetter: Getter<ListRepository>,
+
     @repository.getter('RelationRepository')
     protected relationRepositoryGetter: Getter<RelationRepository>,
 
@@ -81,8 +90,8 @@ export class EntityRepository extends DefaultCrudRepository<
     @repository.getter('TagRepository')
     protected tagRepositoryGetter: Getter<TagRepository>,
 
-    @repository.getter('GenericListEntityRelationRepository')
-    protected listEntityRelationRepositoryGetter: Getter<GenericListEntityRelationRepository>,
+    @repository.getter('ListEntityRelationRepository')
+    protected listEntityRelationRepositoryGetter: Getter<ListEntityRelationRepository>,
 
     @inject('extensions.uniqueness.configurationreader')
     private uniquenessConfigReader: UniquenessConfigurationReader,
@@ -127,6 +136,17 @@ export class EntityRepository extends DefaultCrudRepository<
       '_children',
       this.children.inclusionResolver,
     );
+    this.lists = (entityId: typeof GenericEntity.prototype._id) => {
+      const repo = new CustomListThroughEntityRepository(
+        this.dataSource,
+        this.listRepositoryGetter,
+        this.listEntityRelationRepositoryGetter,
+      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (repo as any).sourceEntityId = entityId;
+
+      return repo;
+    };
   }
 
   async find(filter?: Filter<GenericEntity>, options?: Options) {

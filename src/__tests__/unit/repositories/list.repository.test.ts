@@ -9,7 +9,7 @@ import { HttpErrorResponse } from '../../../models';
 import {
   CustomEntityThroughListRepository,
   EntityRepository,
-  GenericListEntityRelationRepository,
+  ListEntityRelationRepository,
   ListReactionsRepository,
   ListRelationRepository,
   TagListRelationRepository,
@@ -28,7 +28,7 @@ describe('ListRepository', () => {
 
     // Create stubs for related repositories
     const listEntityRelationRepoStub = sinon.createStubInstance(
-      GenericListEntityRelationRepository,
+      ListEntityRelationRepository,
     );
     const genericEntityRepoStub = sinon.createStubInstance(EntityRepository);
     const listRelationRepoStub = sinon.createStubInstance(
@@ -1051,7 +1051,7 @@ describe('ListRepository', () => {
 
   describe('deleteById', () => {
     let superDeleteByIdStub: sinon.SinonStub;
-    let listEntityRelationRepoStub: sinon.SinonStubbedInstance<GenericListEntityRelationRepository>;
+    let listEntityRelationRepoStub: sinon.SinonStubbedInstance<ListEntityRelationRepository>;
     let listReactionsRepoStub: sinon.SinonStubbedInstance<ListReactionsRepository>;
     let listRelationRepoStub: sinon.SinonStubbedInstance<ListRelationRepository>;
     let tagListRelationRepoStub: sinon.SinonStubbedInstance<TagListRelationRepository>;
@@ -1061,7 +1061,7 @@ describe('ListRepository', () => {
     beforeEach(() => {
       // Create stubs for all related repositories
       listEntityRelationRepoStub = sinon.createStubInstance(
-        GenericListEntityRelationRepository,
+        ListEntityRelationRepository,
       );
       listReactionsRepoStub = sinon.createStubInstance(ListReactionsRepository);
       listRelationRepoStub = sinon.createStubInstance(ListRelationRepository);
@@ -1231,7 +1231,7 @@ describe('ListRepository', () => {
 
   describe('deleteAll', () => {
     let superDeleteAllStub: sinon.SinonStub;
-    let listEntityRelationRepoStub: sinon.SinonStubbedInstance<GenericListEntityRelationRepository>;
+    let listEntityRelationRepoStub: sinon.SinonStubbedInstance<ListEntityRelationRepository>;
     let listReactionsRepoStub: sinon.SinonStubbedInstance<ListReactionsRepository>;
     let listRelationRepoStub: sinon.SinonStubbedInstance<ListRelationRepository>;
     let tagListRelationRepoStub: sinon.SinonStubbedInstance<TagListRelationRepository>;
@@ -1241,7 +1241,7 @@ describe('ListRepository', () => {
     beforeEach(() => {
       // Create stubs for all related repositories
       listEntityRelationRepoStub = sinon.createStubInstance(
-        GenericListEntityRelationRepository,
+        ListEntityRelationRepository,
       );
       listReactionsRepoStub = sinon.createStubInstance(ListReactionsRepository);
       listRelationRepoStub = sinon.createStubInstance(ListRelationRepository);

@@ -129,6 +129,8 @@ Notice fields like `_fromMetadata` and `_toMetadata` fields are are added to the
 `_fromMetadata`: This field includes metadata (managed fields) of the source object, which is the list in this case.
 `_toMetadata`: This field includes metadata (managed fields) of the target objcet, which is the entity in this case.  
 
+
+
 **Note:** Creation or update operations always require existence of the list and entity specified by the ids.
 
 With the help of the relationship between lists and entities users can interact with entities under a specific list calling this endpoint: `/lists/{listId}/entities`.
@@ -138,6 +140,8 @@ A sample response of the `GET` call to the `/lists/{listId}/entities` endpoint i
 ```json
 
 ```
+
+Similarly, you can retrieve all lists associated with a specific entity using the `/entities/{id}/lists` endpoint. This endpoint allows you to find all lists that contain a particular entity, with support for filtering both the lists and the relationship data using `filter`, `filterThrough`, `set` and `setThrough` parameters respectively.
 
 ### Entity Reaction
 
@@ -249,6 +253,8 @@ The application comes with a set of prebuilt sets to simplify common data select
 | audience  | A combination of multiple sets. This set returns 'active' and 'public' records along with a user's own active and pending records. As a result, it requires user and group IDs similar to the owners set. Requires userIds and groupIds as defined in `owners` and `viewers` configurations. |
 
 The introduction of sets enhances the application's querying capabilities, allowing users to easily access and manage specific subsets of data based on predefined conditions or customized logical combinations.
+
+### Lookups
 
 ### Tags
 

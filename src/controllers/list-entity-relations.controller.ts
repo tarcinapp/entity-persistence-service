@@ -20,12 +20,12 @@ import {
 import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
 import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
 import { ListToEntityRelation } from '../models';
-import { GenericListEntityRelationRepository } from '../repositories';
+import { ListEntityRelationRepository } from '../repositories';
 
 export class GenericListEntityRelController {
   constructor(
-    @repository(GenericListEntityRelationRepository)
-    public genericListEntityRelationRepository: GenericListEntityRelationRepository,
+    @repository(ListEntityRelationRepository)
+    public listEntityRelationRepository: ListEntityRelationRepository,
   ) {}
 
   @post('/list-entity-relations', {
@@ -59,7 +59,7 @@ export class GenericListEntityRelController {
     })
     listEntityRelation: Omit<ListToEntityRelation, 'id'>,
   ): Promise<ListToEntityRelation> {
-    return this.genericListEntityRelationRepository.create(listEntityRelation);
+    return this.listEntityRelationRepository.create(listEntityRelation);
   }
 
   @get('/list-entity-relations/count', {
@@ -89,7 +89,7 @@ export class GenericListEntityRelController {
       }).build();
     }
 
-    return this.genericListEntityRelationRepository.count(filter.where);
+    return this.listEntityRelationRepository.count(filter.where);
   }
 
   @get('/list-entity-relations', {
@@ -122,7 +122,7 @@ export class GenericListEntityRelController {
 
     sanitizeFilterFields(filter);
 
-    return this.genericListEntityRelationRepository.find(filter);
+    return this.listEntityRelationRepository.find(filter);
   }
 
   @patch('/list-entity-relations', {
@@ -154,7 +154,7 @@ export class GenericListEntityRelController {
     @param.where(ListToEntityRelation)
     where?: Where<ListToEntityRelation>,
   ): Promise<Count> {
-    return this.genericListEntityRelationRepository.updateAll(
+    return this.listEntityRelationRepository.updateAll(
       listEntityRelation,
       where,
     );
@@ -179,7 +179,7 @@ export class GenericListEntityRelController {
     @param.filter(ListToEntityRelation, { exclude: 'where' })
     filter?: FilterExcludingWhere<ListToEntityRelation>,
   ): Promise<ListToEntityRelation> {
-    return this.genericListEntityRelationRepository.findById(id, filter);
+    return this.listEntityRelationRepository.findById(id, filter);
   }
 
   @patch('/list-entity-relations/{id}', {
@@ -209,7 +209,7 @@ export class GenericListEntityRelController {
     })
     listEntityRelation: ListToEntityRelation,
   ): Promise<void> {
-    await this.genericListEntityRelationRepository.updateById(
+    await this.listEntityRelationRepository.updateById(
       id,
       listEntityRelation,
     );
@@ -237,7 +237,7 @@ export class GenericListEntityRelController {
     })
     listEntityRelation: ListToEntityRelation,
   ): Promise<void> {
-    await this.genericListEntityRelationRepository.replaceById(
+    await this.listEntityRelationRepository.replaceById(
       id,
       listEntityRelation,
     );
@@ -251,6 +251,6 @@ export class GenericListEntityRelController {
     },
   })
   async deleteById(@param.path.string('id') id: string): Promise<void> {
-    await this.genericListEntityRelationRepository.deleteById(id);
+    await this.listEntityRelationRepository.deleteById(id);
   }
 }

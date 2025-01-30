@@ -34,7 +34,7 @@ import { EntityRepository } from './entity.repository';
 import { ListRepository } from './list.repository';
 import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
 
-export class GenericListEntityRelationRepository extends DefaultCrudRepository<
+export class ListEntityRelationRepository extends DefaultCrudRepository<
   ListToEntityRelation,
   typeof ListToEntityRelation.prototype._id,
   ListEntityRelationRelations
