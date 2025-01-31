@@ -82,8 +82,12 @@ export class SetFilterBuilder<T extends object = AnyObject> {
      * generated from the set.
      */
     if (this.options?.filter?.where) {
-      whereBuilder = new WhereBuilder<T>(this.options?.filter?.where);
-      whereBuilder.and(setWhere);
+      whereBuilder = new WhereBuilder<T>();
+      if (Array.isArray(setWhere)) {
+        whereBuilder.and([this.options.filter.where, ...setWhere]);
+      } else {
+        whereBuilder.and([this.options.filter.where, setWhere]);
+      }
     } else {
       if (Array.isArray(setWhere)) {
         whereBuilder = new WhereBuilder<T>();
@@ -437,25 +441,51 @@ class SetToFilterTransformer {
   }
 
   produceWhereClauseForDay(): Where<AnyObject> {
+    const now = new Date();
+    // Create start of day by using UTC methods to avoid timezone issues
+    const startOfDay = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+    );
+
     return {
       _creationDateTime: {
-        between: [Date.now() - 1, Date.now()],
+        between: [startOfDay.toISOString(), now.toISOString()],
       },
     };
   }
 
   produceWhereClauseForWeek(): Where<AnyObject> {
+    const now = new Date();
+    // Create start of week using UTC methods
+    const startOfWeek = new Date(
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate() - now.getUTCDay(), // Subtract days to get to Sunday
+      ),
+    );
+
     return {
       _creationDateTime: {
-        between: [Date.now() - 7, Date.now()],
+        between: [startOfWeek.toISOString(), now.toISOString()],
       },
     };
   }
 
   produceWhereClauseForMonth(): Where<AnyObject> {
+    const now = new Date();
+    // Create start of month using UTC methods
+    const startOfMonth = new Date(
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        1, // First day of the month
+      ),
+    );
+
     return {
       _creationDateTime: {
-        between: [Date.now() - 30, Date.now()],
+        between: [startOfMonth.toISOString(), now.toISOString()],
       },
     };
   }
