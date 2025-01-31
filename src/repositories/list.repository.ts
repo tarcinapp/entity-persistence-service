@@ -32,7 +32,6 @@ import {
   ListToEntityRelation,
   HttpErrorResponse,
   ListReactions,
-  ListRelation,
   ListRelations,
   SingleError,
   Tag,
