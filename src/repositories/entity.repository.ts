@@ -26,7 +26,7 @@ import {
 } from '../extensions';
 
 import { CustomListThroughEntityRepository } from './custom-list-through-entity.repository';
-import { SetFilterBuilder } from '../extensions/utils/set-helper';
+import { FilterMatcher } from '../extensions/utils/filter-matcher';
 
 import {
   GenericEntity,
@@ -44,6 +44,7 @@ import { ReactionsRepository } from './reactions.repository';
 import { TagEntityRelationRepository } from './tag-entity-relation.repository';
 import { TagRepository } from './tag.repository';
 import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
+import { SetFilterBuilder } from '../extensions/utils/set-helper';
 
 export class EntityRepository extends DefaultCrudRepository<
   GenericEntity,
@@ -557,6 +558,12 @@ export class EntityRepository extends DefaultCrudRepository<
       filter = new SetFilterBuilder<GenericEntity>(set, {
         filter: filter,
       }).build();
+
+      // Check if the new record would match the set filter
+      if (!this.wouldRecordMatchFilter(newData, filter.where)) {
+        // Record wouldn't be part of the set, no need to check limits
+        return;
+      }
     }
 
     const currentCount = await this.count(filter.where);
@@ -578,6 +585,19 @@ export class EntityRepository extends DefaultCrudRepository<
         ],
       });
     }
+  }
+
+  /**
+   * Evaluates if a record would match a given filter
+   * @param record The record to evaluate
+   * @param whereClause The filter conditions to check
+   * @returns boolean indicating if the record would match the filter
+   */
+  private wouldRecordMatchFilter(
+    record: DataObject<GenericEntity>,
+    whereClause: Where<GenericEntity> | undefined,
+  ): boolean {
+    return FilterMatcher.matches(record, whereClause);
   }
 
   private generateSlug(data: DataObject<GenericEntity>) {
