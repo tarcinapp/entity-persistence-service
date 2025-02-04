@@ -2,7 +2,11 @@ import type { Client } from '@loopback/testlab';
 import { expect } from '@loopback/testlab';
 import type { GenericEntity } from '../../../models';
 import type { AppWithClient } from '../test-helper';
-import { setupApplication, teardownApplication } from '../test-helper';
+import {
+  setupApplication,
+  teardownApplication,
+  expectResponseToMatch,
+} from '../test-helper';
 
 describe('POST /entities', () => {
   let client: Client;
@@ -775,5 +779,442 @@ describe('POST /entities', () => {
         },
       ],
     });
+  });
+
+  it('enforces kind-specific record set limit for active records', async () => {
+    // Set up the environment variables with kind-specific record set limit
+    appWithClient = await setupApplication({
+      entity_kinds: 'book,movie',
+      record_limit_entity_scope_for_book: 'set[actives]',
+      record_limit_entity_count_for_book: '1', // Only 1 active book entity
+    });
+    ({ client } = appWithClient);
+
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 7);
+
+    // First active book entity - should succeed
+    const firstBookEntity = {
+      _name: 'First Active Book Entity',
+      _kind: 'book',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      description: 'First active book entity within limit',
+    };
+    await client.post('/entities').send(firstBookEntity).expect(200);
+
+    // Active movie entity - should succeed (different kind)
+    const movieEntity = {
+      _name: 'Active Movie Entity',
+      _kind: 'movie',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      description: 'Movie entity not affected by book limit',
+    };
+    await client.post('/entities').send(movieEntity).expect(200);
+
+    // Second active book entity - should fail due to kind-specific active limit
+    const secondBookEntity = {
+      _name: 'Second Active Book Entity',
+      _kind: 'book',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      description: 'Second active book entity exceeding limit',
+    };
+    const errorResponse = await client
+      .post('/entities')
+      .send(secondBookEntity)
+      .expect(429);
+
+    expect(errorResponse.body.error).to.containDeep({
+      statusCode: 429,
+      name: 'LimitExceededError',
+      message: 'Entity limit is exceeded.',
+      code: 'ENTITY-LIMIT-EXCEEDED',
+      status: 429,
+      details: [
+        {
+          code: 'ENTITY-LIMIT-EXCEEDED',
+          info: {
+            limit: 1,
+          },
+        },
+      ],
+    });
+  });
+
+  it('enforces record set limit for active and public records', async () => {
+    // Set up the environment variables with record set limit for both active and public records
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      record_limit_entity_count: '2', // Allow 2 records total that are both active and public
+      record_limit_entity_scope: 'set[actives]&set[publics]', // Limit applies to records that are both active and public
+    });
+    ({ client } = appWithClient);
+
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 7);
+
+    // First active and public entity - should succeed
+    const firstEntity = {
+      _name: 'First Active Public Entity',
+      _kind: 'book',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      _visibility: 'public',
+      description: 'First active and public entity within limit',
+    };
+    await client.post('/entities').send(firstEntity).expect(200);
+
+    // Second active and public entity - should succeed
+    const secondEntity = {
+      _name: 'Second Active Public Entity',
+      _kind: 'book',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      _visibility: 'public',
+      description: 'Second active and public entity within limit',
+    };
+    await client.post('/entities').send(secondEntity).expect(200);
+
+    // Active but private entity - should succeed despite limit (not public)
+    const privateEntity = {
+      _name: 'Private Active Entity',
+      _kind: 'book',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      _visibility: 'private',
+      description: 'Private active entity not counted in limit',
+    };
+    await client.post('/entities').send(privateEntity).expect(200);
+
+    // Public but inactive entity - should succeed despite limit (not active)
+    const inactiveEntity = {
+      _name: 'Inactive Public Entity',
+      _kind: 'book',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(), // Already expired
+      _visibility: 'public',
+      description: 'Inactive public entity not counted in limit',
+    };
+    await client.post('/entities').send(inactiveEntity).expect(200);
+
+    // Third active and public entity - should fail due to combined active+public limit
+    const thirdActivePublicEntity = {
+      _name: 'Third Active Public Entity',
+      _kind: 'book',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      _visibility: 'public',
+      description: 'Third active and public entity exceeding limit',
+    };
+    const errorResponse = await client
+      .post('/entities')
+      .send(thirdActivePublicEntity)
+      .expect(429);
+
+    expect(errorResponse.body.error).to.containDeep({
+      statusCode: 429,
+      name: 'LimitExceededError',
+      message: 'Entity limit is exceeded.',
+      code: 'ENTITY-LIMIT-EXCEEDED',
+      status: 429,
+      details: [
+        {
+          code: 'ENTITY-LIMIT-EXCEEDED',
+          info: {
+            limit: 2,
+          },
+        },
+      ],
+    });
+  });
+
+  it('enforces record limit per user using owners set', async () => {
+    // Set up the environment variables with record set limit for owners
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      record_limit_entity_count: '2', // Allow 2 records per user
+      record_limit_entity_scope: 'set[owners]', // Limit applies per owner
+    });
+    ({ client } = appWithClient);
+
+    const userId = 'user-123';
+
+    // First entity for user - should succeed
+    const firstEntity = {
+      _name: 'First User Entity',
+      _kind: 'book',
+      _ownerUsers: [userId],
+      description: 'First entity for the user within limit',
+    };
+    await client.post('/entities').send(firstEntity).expect(200);
+
+    // Second entity for user - should succeed
+    const secondEntity = {
+      _name: 'Second User Entity',
+      _kind: 'book',
+      _ownerUsers: [userId],
+      description: 'Second entity for the user within limit',
+    };
+    await client.post('/entities').send(secondEntity).expect(200);
+
+    // Entity for different user - should succeed despite limit
+    const differentUserEntity = {
+      _name: 'Different User Entity',
+      _kind: 'book',
+      _ownerUsers: ['user-456'],
+      description: 'Entity for different user not counted in limit',
+    };
+    await client.post('/entities').send(differentUserEntity).expect(200);
+
+    // Entity with multiple owners including our user - should fail due to user's limit
+    const multiOwnerEntity = {
+      _name: 'Multi Owner Entity',
+      _kind: 'book',
+      _ownerUsers: [userId, 'user-789'], // Includes the limited user
+      description: 'Entity with multiple owners including limited user',
+    };
+    const errorResponse = await client
+      .post('/entities')
+      .send(multiOwnerEntity)
+      .expect(429);
+
+    expect(errorResponse.body.error).to.containDeep({
+      statusCode: 429,
+      name: 'LimitExceededError',
+      message: 'Entity limit is exceeded.',
+      code: 'ENTITY-LIMIT-EXCEEDED',
+      status: 429,
+      details: [
+        {
+          code: 'ENTITY-LIMIT-EXCEEDED',
+          info: {
+            limit: 2,
+          },
+        },
+      ],
+    });
+  });
+
+  it('enforces idempotency based on configured fields', async () => {
+    // Set up the environment variables with idempotency configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      idempotency_entity: '_kind,_slug,description', // Configure idempotency fields
+    });
+    ({ client } = appWithClient);
+
+    // First entity creation - should succeed
+    const firstEntity = {
+      _name: 'Science Book',
+      _kind: 'book',
+      description: 'A book about science', // This will be part of idempotency check
+      _ownerUsers: ['user-123'], // This field is not part of idempotency
+      _visibility: 'private', // This field is not part of idempotency
+    };
+
+    const firstResponse = await client
+      .post('/entities')
+      .send(firstEntity)
+      .expect(200);
+
+    // Verify the first response
+    expect(firstResponse.body._slug).to.be.equal('science-book');
+    expect(firstResponse.body._kind).to.be.equal('book');
+    expect(firstResponse.body.description).to.be.equal('A book about science');
+    expect(firstResponse.body._ownerUsers).to.containDeep(['user-123']);
+    expect(firstResponse.body._visibility).to.be.equal('private');
+
+    // Second entity with same idempotency fields but different other fields
+    const secondEntity = {
+      _name: 'Science Book', // Same name will generate same slug
+      _kind: 'book', // Same kind
+      description: 'A book about science', // Same description
+      _ownerUsers: ['user-456'], // Different owner
+      _visibility: 'public', // Different visibility
+    };
+
+    const secondResponse = await client
+      .post('/entities')
+      .send(secondEntity)
+      .expect(200);
+
+    // Verify all fields in the second response match the first response
+    expectResponseToMatch(secondResponse.body, firstResponse.body);
+
+    // Verify only one record exists by getting all entities
+    const getAllResponse = await client.get('/entities').expect(200);
+    expect(getAllResponse.body).to.be.Array().lengthOf(1); // Only one record should exist
+  });
+
+  it('enforces kind-specific idempotency configuration', async () => {
+    // Set up the environment variables with kind-specific idempotency
+    appWithClient = await setupApplication({
+      entity_kinds: 'book,movie',
+      idempotency_entity_for_book: '_kind,_slug,_ownerUsers', // Different fields for book
+      idempotency_entity_for_movie: '_kind,description', // Different fields for movie
+    });
+    ({ client } = appWithClient);
+
+    // First book entity - should succeed
+    const firstBookEntity = {
+      _name: 'Science Book',
+      _kind: 'book',
+      description: 'First description', // Not part of idempotency for book
+      _ownerUsers: ['user-123'], // Part of idempotency for book
+    };
+
+    const firstBookResponse = await client
+      .post('/entities')
+      .send(firstBookEntity)
+      .expect(200);
+
+    // Second book entity with same idempotency fields - should return same record
+    const secondBookEntity = {
+      _name: 'Science Book', // Will generate same slug
+      _kind: 'book',
+      description: 'Different description', // Can be different as not part of idempotency
+      _ownerUsers: ['user-123'], // Same owner
+    };
+
+    const secondBookResponse = await client
+      .post('/entities')
+      .send(secondBookEntity)
+      .expect(200);
+
+    // Verify responses match
+    expectResponseToMatch(secondBookResponse.body, firstBookResponse.body);
+
+    // First movie entity - should succeed
+    const firstMovieEntity = {
+      _name: 'Featured Movie',
+      _kind: 'movie',
+      description: 'Movie description', // Part of idempotency for movie
+      _ownerUsers: ['user-456'], // Not part of idempotency for movie
+    };
+
+    const firstMovieResponse = await client
+      .post('/entities')
+      .send(firstMovieEntity)
+      .expect(200);
+
+    // Second movie entity with same idempotency fields - should return same record
+    const secondMovieEntity = {
+      _name: 'Different Name', // Can be different as not part of idempotency
+      _kind: 'movie',
+      description: 'Movie description', // Same description
+      _ownerUsers: ['user-789'], // Can be different as not part of idempotency
+    };
+
+    const secondMovieResponse = await client
+      .post('/entities')
+      .send(secondMovieEntity)
+      .expect(200);
+
+    // Verify responses match
+    expectResponseToMatch(secondMovieResponse.body, firstMovieResponse.body);
+
+    // Verify only two records exist (one for each kind)
+    const getAllResponse = await client.get('/entities').expect(200);
+    expect(getAllResponse.body).to.be.Array().lengthOf(2);
+  });
+
+  it('enforces idempotency with array fields', async () => {
+    // Set up the environment variables with array fields in idempotency
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      idempotency_entity: '_kind,_ownerUsers,_viewerUsers', // Using array fields for idempotency
+    });
+    ({ client } = appWithClient);
+
+    // First entity - should succeed
+    const firstEntity = {
+      _name: 'First Entity',
+      _kind: 'book',
+      _ownerUsers: ['user-123', 'user-456'],
+      _viewerUsers: ['viewer-1', 'viewer-2'],
+      description: 'First description',
+    };
+
+    const firstResponse = await client
+      .post('/entities')
+      .send(firstEntity)
+      .expect(200);
+
+    // Second entity with same array values but different order - should return same record
+    const secondEntity = {
+      _name: 'Different Name',
+      _kind: 'book',
+      _ownerUsers: ['user-456', 'user-123'], // Same values, different order
+      _viewerUsers: ['viewer-2', 'viewer-1'], // Same values, different order
+      description: 'Different description',
+    };
+
+    const secondResponse = await client
+      .post('/entities')
+      .send(secondEntity)
+      .expect(200);
+
+    // Verify responses match
+    expectResponseToMatch(secondResponse.body, firstResponse.body);
+
+    // Verify only one record exists
+    const getAllResponse = await client.get('/entities').expect(200);
+    expect(getAllResponse.body).to.be.Array().lengthOf(1);
+  });
+
+  it('enforces idempotency with date fields', async () => {
+    // Set up the environment variables with date fields in idempotency
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      idempotency_entity: '_kind,_validFromDateTime,_validUntilDateTime', // Using date fields for idempotency
+    });
+    ({ client } = appWithClient);
+
+    const validFrom = new Date();
+    const validUntil = new Date();
+    validUntil.setDate(validUntil.getDate() + 7);
+
+    // First entity - should succeed
+    const firstEntity = {
+      _name: 'First Entity',
+      _kind: 'book',
+      _validFromDateTime: validFrom.toISOString(),
+      _validUntilDateTime: validUntil.toISOString(),
+      description: 'First description',
+    };
+
+    const firstResponse = await client
+      .post('/entities')
+      .send(firstEntity)
+      .expect(200);
+
+    // Second entity with same dates but different other fields - should return same record
+    const secondEntity = {
+      _name: 'Different Name',
+      _kind: 'book',
+      _validFromDateTime: validFrom.toISOString(),
+      _validUntilDateTime: validUntil.toISOString(),
+      description: 'Different description',
+    };
+
+    const secondResponse = await client
+      .post('/entities')
+      .send(secondEntity)
+      .expect(200);
+
+    // Verify responses match
+    expectResponseToMatch(secondResponse.body, firstResponse.body);
+
+    // Verify only one record exists
+    const getAllResponse = await client.get('/entities').expect(200);
+    expect(getAllResponse.body).to.be.Array().lengthOf(1);
   });
 });

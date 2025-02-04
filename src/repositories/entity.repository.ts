@@ -313,6 +313,11 @@ export class EntityRepository extends DefaultCrudRepository<
     const fieldValues = idempotencyFields.map((idempotencyField) => {
       const value = _.get(data, idempotencyField);
 
+      // If value is an array, sort it before stringifying
+      if (Array.isArray(value)) {
+        return JSON.stringify([...value].sort());
+      }
+
       return typeof value === 'object' ? JSON.stringify(value) : value;
     });
 
