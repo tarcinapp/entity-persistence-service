@@ -7,6 +7,7 @@ import {
   expect,
 } from '@loopback/testlab';
 import { MongoMemoryServer } from 'mongodb-memory-server';
+import { parse } from 'qs';
 import { EntityPersistenceApplication } from '../..';
 import { EntityDbDataSource } from '../../datasources/entity-db.datasource';
 import {
@@ -386,6 +387,12 @@ export async function setupApplication(
     rest: {
       ...givenHttpServerConfig(),
       port: 0, // Let the OS pick an available port
+      expressSettings: {
+        'x-powered-by': false,
+        'query parser': (query: any) => {
+          return parse(query, { depth: 10 });
+        },
+      },
     },
   });
 
