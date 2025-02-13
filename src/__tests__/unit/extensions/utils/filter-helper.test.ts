@@ -125,5 +125,103 @@ describe('Utilities: FilterHelper', () => {
         where: {},
       });
     });
+
+    it('should convert string null values to actual null in where clause', () => {
+      const filter = {
+        where: {
+          status: 'null',
+          nested: {
+            field: 'null',
+            deepNested: {
+              value: 'null',
+            },
+          },
+          array: ['null', { prop: 'null' }],
+          notNull: 'active',
+        },
+      };
+
+      sanitizeFilterFields(filter);
+
+      expect(filter).to.deepEqual({
+        where: {
+          status: null,
+          nested: {
+            field: null,
+            deepNested: {
+              value: null,
+            },
+          },
+          array: [null, { prop: null }],
+          notNull: 'active',
+        },
+      });
+    });
+
+    it('should convert string null values in operator objects', () => {
+      const filter = {
+        where: {
+          and: [
+            {
+              or: [
+                {
+                  _validUntilDateTime: {
+                    eq: 'null',
+                  },
+                },
+                {
+                  _validUntilDateTime: {
+                    gt: '2025-02-13T08:16:52.823Z',
+                  },
+                },
+              ],
+            },
+            {
+              _validFromDateTime: {
+                neq: 'null',
+              },
+            },
+            {
+              _validFromDateTime: {
+                lt: '2025-02-13T08:20:52.823Z',
+              },
+            },
+          ],
+        },
+      };
+
+      sanitizeFilterFields(filter);
+
+      expect(filter).to.deepEqual({
+        where: {
+          and: [
+            {
+              or: [
+                {
+                  _validUntilDateTime: {
+                    eq: null,
+                  },
+                },
+                {
+                  _validUntilDateTime: {
+                    gt: '2025-02-13T08:16:52.823Z',
+                  },
+                },
+              ],
+            },
+            {
+              _validFromDateTime: {
+                neq: null,
+              },
+            },
+            {
+              _validFromDateTime: {
+                lt: '2025-02-13T08:20:52.823Z',
+              },
+            },
+          ],
+        },
+      });
+    });
   });
 });
