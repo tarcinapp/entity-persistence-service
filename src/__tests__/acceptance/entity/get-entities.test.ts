@@ -395,4 +395,78 @@ describe('GET /entities', () => {
 
     expect(multiSetResponse.body).to.be.Array();
   });
+
+  it('filters entities by audience using set filter', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+    });
+    ({ client } = appWithClient);
+
+    const owner = 'user-123';
+    const viewer = 'user-456';
+    const otherUser = 'user-789';
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 7);
+
+    // Create entity with owner
+    await createTestEntity({
+      _name: 'Owner Book',
+      _kind: 'book',
+      _ownerUsers: [owner],
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    // Create entity with viewer
+    await createTestEntity({
+      _name: 'Viewer Book',
+      _kind: 'book',
+      _viewerUsers: [viewer],
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    // Create entity with neither owner nor viewer
+    await createTestEntity({
+      _name: 'Other Book',
+      _kind: 'book',
+    });
+
+    // Get entities for owner using set[audience]
+    const ownerFilterStr = `set[audience][userIds]=${owner}`;
+    const ownerResponse = await client
+      .get('/entities')
+      .query(ownerFilterStr)
+      .expect(200);
+
+    expect(ownerResponse.body).to.be.Array().and.have.length(1);
+    expect(ownerResponse.body[0]._name).to.equal('Owner Book');
+    expect(ownerResponse.body[0]._ownerUsers).to.containDeep([owner]);
+
+    // Get entities for viewer using set[audience]
+    const viewerFilterStr = `set[audience][userIds]=${viewer}`;
+    const viewerResponse = await client
+      .get('/entities')
+      .query(viewerFilterStr)
+      .expect(200);
+
+    expect(viewerResponse.body).to.be.Array().and.have.length(1);
+    expect(viewerResponse.body[0]._name).to.equal('Viewer Book');
+    expect(viewerResponse.body[0]._viewerUsers).to.containDeep([viewer]);
+
+    // Get entities for user with no access
+    const otherFilterStr = `set[audience][userIds]=${otherUser}`;
+    const otherResponse = await client
+      .get('/entities')
+      .query(otherFilterStr)
+      .expect(200);
+
+    expect(otherResponse.body).to.be.Array().and.have.length(0);
+  });
 });
