@@ -785,4 +785,19 @@ export class EntityRepository extends DefaultCrudRepository<
       });
     }
   }
+
+  async findById(id: string, options?: Options) {
+    const result = await super.findById(id, options).catch(() => null);
+    if (!result) {
+      throw new HttpErrorResponse({
+        statusCode: 404,
+        name: 'NotFoundError',
+        message: "Entity with id '" + id + "' could not be found.",
+        code: 'ENTITY-NOT-FOUND',
+        status: 404,
+      });
+    }
+
+    return result;
+  }
 }

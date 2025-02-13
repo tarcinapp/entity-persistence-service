@@ -180,6 +180,21 @@ export class ListRepository extends DefaultCrudRepository<
     return super.find(filter, options);
   }
 
+  async findById(id: string, options?: Options) {
+    const result = await super.findById(id, options).catch(() => null);
+    if (!result) {
+      throw new HttpErrorResponse({
+        statusCode: 404,
+        name: 'NotFoundError',
+        message: "List with id '" + id + "' could not be found.",
+        code: 'LIST-NOT-FOUND',
+        status: 404,
+      });
+    }
+
+    return result;
+  }
+
   async create(data: DataObject<List>) {
     const idempotencyKey = this.calculateIdempotencyKey(data);
 
