@@ -192,6 +192,44 @@ The Tags data model offers a structured approach to categorizing and organizing 
 
 **Special gateway application**: Access enhanced features and secure access control through a dedicated gateway: **entity-persistence-gateway**
 
+## Authentication and Authorization
+
+The Entity Persistence Service is designed with a clear separation of concerns regarding authentication and authorization. While the service includes rich data structures and fields to support complex authorization scenarios, it does not enforce any authentication or authorization rules itself. This responsibility is fully delegated to the **entity-persistence-gateway**.
+
+### Authentication
+
+- The service operates in a **stateless** manner and does not perform any user authentication
+- All endpoints are accessible without requiring authentication tokens or credentials
+- User identity information (like user IDs in `_createdBy` or `_ownerUsers`) is accepted as-is without validation
+- The actual authentication process is handled by the entity-persistence-gateway
+
+### Authorization
+
+While the service includes several authorization-related fields, it does not enforce any access control rules:
+
+**Authorization Fields**:
+- `_visibility`: Can be 'private', 'protected', or 'public'
+- `_ownerUsers`: Array of user IDs who own the record
+- `_ownerGroups`: Array of group IDs with ownership rights
+- `_viewerUsers`: Array of user IDs with view access
+- `_viewerGroups`: Array of group IDs with view access
+
+**Behavior**:
+- All records are returned regardless of their visibility settings
+- No validation is performed against the caller's identity
+- Owner and viewer lists are not enforced
+- Records with 'private' visibility are still accessible
+
+### Gateway-Based Security
+
+The actual security implementation is handled by the **entity-persistence-gateway**, which:
+- Authenticates users and validates their identity
+- Enforces visibility rules based on the caller's context
+- Validates ownership and viewing rights
+- Applies role-based access control (RBAC)
+- Controls field-level access based on user roles
+- Enforces security policies for data operations
+
 ## Sample Use Cases
 
 1. **User Configuration Storage**  
