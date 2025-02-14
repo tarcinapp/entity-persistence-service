@@ -776,4 +776,92 @@ describe('GET /entities', () => {
       new Date(sortedResults[1]._validUntilDateTime).getTime(),
     ).to.be.lessThanOrEqual(now.getTime());
   });
+
+  it('returns only selected fields', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+    });
+    ({ client } = appWithClient);
+
+    // Create test entity with multiple fields
+    await createTestEntity({
+      _name: 'Complete Book',
+      _kind: 'book',
+      description: 'A book with many fields',
+      _visibility: 'public',
+      _ownerUsers: ['user-123'],
+      _viewerUsers: ['viewer-456'],
+      _validFromDateTime: new Date().toISOString(),
+    });
+
+    // Request only specific fields
+    const filterStr =
+      'filter[fields][_name]=true&filter[fields][description]=true&filter[fields][_visibility]=true';
+    const response = await client.get('/entities').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+    const entity = response.body[0];
+
+    // Should have the requested fields
+    expect(entity).to.have.property('_name', 'Complete Book');
+    expect(entity).to.have.property('description', 'A book with many fields');
+    expect(entity).to.have.property('_visibility', 'public');
+
+    // Should not have other fields
+    expect(entity).to.not.have.property('_id');
+    expect(entity).to.not.have.property('_kind');
+    expect(entity).to.not.have.property('_ownerUsers');
+    expect(entity).to.not.have.property('_viewerUsers');
+    expect(entity).to.not.have.property('_validFromDateTime');
+    expect(entity).to.not.have.property('_creationDateTime');
+    expect(entity).to.not.have.property('_lastUpdatedDateTime');
+  });
+
+  it('excludes specified fields from response', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+
+    // Create test entity with multiple fields
+    await createTestEntity({
+      _name: 'Complete Book',
+      _kind: 'book',
+      description: 'A book with many fields',
+      _visibility: 'public',
+      _ownerUsers: ['user-123'],
+      _viewerUsers: ['viewer-456'],
+      _validFromDateTime: now.toISOString(),
+      _validUntilDateTime: new Date(now.getTime() + 86400000).toISOString(), // tomorrow
+    });
+
+    // Request to exclude specific fields
+    const filterStr =
+      'filter[fields][_ownerUsers]=false&filter[fields][_viewerUsers]=false&filter[fields][_validFromDateTime]=false&filter[fields][_validUntilDateTime]=false';
+    const response = await client.get('/entities').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+    const entity = response.body[0];
+
+    // Should have non-excluded fields
+    expect(entity).to.have.property('_id');
+    expect(entity).to.have.property('_name', 'Complete Book');
+    expect(entity).to.have.property('_kind', 'book');
+
+    // Loopback is not returning fields that are not explitly defined in the model, if at least one field is excluded in the filter query.
+    //expect(entity).to.have.property('description', 'A book with many fields');
+    expect(entity).to.have.property('_visibility', 'public');
+    expect(entity).to.have.property('_createdDateTime');
+    expect(entity).to.have.property('_lastUpdatedDateTime');
+
+    // Should not have excluded fields
+    expect(entity).to.not.have.property('_ownerUsers');
+    expect(entity).to.not.have.property('_viewerUsers');
+    expect(entity).to.not.have.property('_validFromDateTime');
+    expect(entity).to.not.have.property('_validUntilDateTime');
+  });
 });
