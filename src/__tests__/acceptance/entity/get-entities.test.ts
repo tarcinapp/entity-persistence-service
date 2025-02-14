@@ -126,7 +126,7 @@ describe('GET /entities', () => {
     expect(response.body[0]._kind).to.equal('book');
   });
 
-  it('filters active entities', async () => {
+  it('filters active entities with complex filter', async () => {
     // Set up the application with default configuration
     appWithClient = await setupApplication({
       entity_kinds: 'book',
@@ -468,5 +468,312 @@ describe('GET /entities', () => {
       .expect(200);
 
     expect(otherResponse.body).to.be.Array().and.have.length(0);
+  });
+
+  it('filters active entities using set[actives]', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 7);
+
+    // Create active entity
+    await createTestEntity({
+      _name: 'Active Book',
+      _kind: 'book',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    // Create inactive entity (expired)
+    await createTestEntity({
+      _name: 'Inactive Book',
+      _kind: 'book',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(),
+    });
+
+    // Create inactive entity (not started)
+    await createTestEntity({
+      _name: 'Future Book',
+      _kind: 'book',
+      _validFromDateTime: futureDate.toISOString(),
+      _validUntilDateTime: null,
+    });
+
+    // Get active entities using set[actives]
+    const filterStr = 'set[actives]=true';
+    const response = await client.get('/entities').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+    expect(response.body[0]._name).to.equal('Active Book');
+  });
+
+  it('filters public entities using set[publics]', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+    });
+    ({ client } = appWithClient);
+
+    // Create public entity
+    await createTestEntity({
+      _name: 'Public Book',
+      _kind: 'book',
+      _visibility: 'public',
+    });
+
+    // Create protected entity
+    await createTestEntity({
+      _name: 'Protected Book',
+      _kind: 'book',
+      _visibility: 'protected',
+    });
+
+    // Create private entity
+    await createTestEntity({
+      _name: 'Private Book',
+      _kind: 'book',
+      _visibility: 'private',
+    });
+
+    // Get public entities using set[publics]
+    const filterStr = 'set[publics]=true';
+    const response = await client.get('/entities').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+    expect(response.body[0]._name).to.equal('Public Book');
+    expect(response.body[0]._visibility).to.equal('public');
+  });
+
+  it('combines multiple sets with AND operator', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 7);
+
+    // Create active and public entity
+    await createTestEntity({
+      _name: 'Active Public Book',
+      _kind: 'book',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    // Create active but private entity
+    await createTestEntity({
+      _name: 'Active Private Book',
+      _kind: 'book',
+      _visibility: 'private',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    // Create inactive but public entity
+    await createTestEntity({
+      _name: 'Inactive Public Book',
+      _kind: 'book',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(),
+    });
+
+    // Create inactive and private entity
+    await createTestEntity({
+      _name: 'Inactive Private Book',
+      _kind: 'book',
+      _visibility: 'private',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(),
+    });
+
+    // Get entities that are both active AND public using set[and]
+    const filterStr = 'set[and][0][actives]=true&set[and][1][publics]=true';
+    const response = await client.get('/entities').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+    expect(response.body[0]._name).to.equal('Active Public Book');
+    expect(response.body[0]._visibility).to.equal('public');
+    expect(response.body[0]._validUntilDateTime).to.equal(
+      futureDate.toISOString(),
+    );
+  });
+
+  it('combines set filters with regular filters', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+
+    // Create a date for the first day of current month
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    // Create a date for the second day of current month
+    const secondDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 2);
+
+    // Create a date in previous month
+    const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 15);
+
+    // Create a date 1 hour before now (definitely in the past)
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+
+    // Create an old inactive science book (previous month)
+    await createTestEntity({
+      _name: 'Old Inactive Science Book',
+      _kind: 'book',
+      description: 'science',
+      _creationDateTime: previousMonth.toISOString(),
+      _validFromDateTime: previousMonth.toISOString(),
+      _validUntilDateTime: previousMonth.toISOString(),
+    });
+
+    // Create a recent inactive science book (this month, and expired)
+    await createTestEntity({
+      _name: 'Recent Inactive Science Book',
+      _kind: 'book',
+      description: 'science',
+      _creationDateTime: secondDayOfMonth.toISOString(), // Definitely within current month
+      _validFromDateTime: secondDayOfMonth.toISOString(),
+      _validUntilDateTime: oneHourAgo.toISOString(), // Definitely inactive
+    });
+
+    // Create a recent inactive history book (this month)
+    await createTestEntity({
+      _name: 'Recent Inactive History Book',
+      _kind: 'book',
+      description: 'history',
+      _creationDateTime: firstDayOfMonth.toISOString(),
+      _validFromDateTime: firstDayOfMonth.toISOString(),
+      _validUntilDateTime: oneHourAgo.toISOString(),
+    });
+
+    // Create a recent active science book (this month, but not expired)
+    await createTestEntity({
+      _name: 'Recent Active Science Book',
+      _kind: 'book',
+      description: 'science',
+      _creationDateTime: firstDayOfMonth.toISOString(),
+      _validFromDateTime: firstDayOfMonth.toISOString(),
+      _validUntilDateTime: new Date(now.getTime() + 86400000).toISOString(), // tomorrow
+    });
+
+    // Get inactive entities created within the current month that have 'science' in their description
+    const filterStr =
+      'set[and][0][inactives]=true&set[and][1][month]=true&filter[where][description]=science';
+    const response = await client.get('/entities').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+    expect(response.body[0]._name).to.equal('Recent Inactive Science Book');
+    expect(response.body[0].description).to.equal('science');
+
+    // Verify it was created this month
+    const createdDate = new Date(response.body[0]._creationDateTime);
+    expect(createdDate.getMonth()).to.equal(now.getMonth());
+    expect(createdDate.getFullYear()).to.equal(now.getFullYear());
+
+    // Verify it is inactive (validUntilDateTime is in the past)
+    expect(
+      new Date(response.body[0]._validUntilDateTime).getTime(),
+    ).to.be.lessThan(now.getTime());
+  });
+
+  it('filters inactive entities using set[inactives]', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const olderPastDate = new Date(now);
+    olderPastDate.setDate(olderPastDate.getDate() - 2);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 7);
+
+    // Create an inactive entity (expired yesterday)
+    await createTestEntity({
+      _name: 'Recently Expired Book',
+      _kind: 'book',
+      _validFromDateTime: olderPastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(), // Expired yesterday
+    });
+
+    // Create another inactive entity (expired 2 days ago)
+    await createTestEntity({
+      _name: 'Old Expired Book',
+      _kind: 'book',
+      _validFromDateTime: olderPastDate.toISOString(),
+      _validUntilDateTime: olderPastDate.toISOString(), // Expired 2 days ago
+    });
+
+    // Create an active entity with future expiration
+    await createTestEntity({
+      _name: 'Active Book',
+      _kind: 'book',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(), // Expires in 7 days
+    });
+
+    // Create an active entity with no expiration
+    await createTestEntity({
+      _name: 'Indefinite Book',
+      _kind: 'book',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: null, // Never expires
+    });
+
+    // Create an entity with no start date (should not be counted as inactive)
+    await createTestEntity({
+      _name: 'No Start Date Book',
+      _kind: 'book',
+      _validFromDateTime: undefined,
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    // Get inactive entities using set[inactives]
+    const filterStr = 'set[inactives]=true';
+    const response = await client.get('/entities').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(2);
+
+    // Sort the results by name for consistent testing
+    const sortedResults = response.body.sort((a: any, b: any) =>
+      a._name.localeCompare(b._name),
+    );
+
+    // Check first entity (Old Expired Book)
+    expect(sortedResults[0]._name).to.equal('Old Expired Book');
+    expect(
+      new Date(sortedResults[0]._validUntilDateTime).getTime(),
+    ).to.be.lessThanOrEqual(now.getTime());
+
+    // Check second entity (Recently Expired Book)
+    expect(sortedResults[1]._name).to.equal('Recently Expired Book');
+    expect(
+      new Date(sortedResults[1]._validUntilDateTime).getTime(),
+    ).to.be.lessThanOrEqual(now.getTime());
   });
 });
