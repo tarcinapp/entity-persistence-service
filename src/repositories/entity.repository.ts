@@ -5,6 +5,7 @@ import {
   DefaultCrudRepository,
   Filter,
   FilterBuilder,
+  FilterExcludingWhere,
   HasManyRepositoryFactory,
   HasManyThroughRepositoryFactory,
   Options,
@@ -786,8 +787,8 @@ export class EntityRepository extends DefaultCrudRepository<
     }
   }
 
-  async findById(id: string, options?: Options) {
-    const result = await super.findById(id, options).catch(() => null);
+  async findById(id: string, filter?: FilterExcludingWhere<GenericEntity>) {
+    const result = await super.findById(id, filter).catch(() => null);
     if (!result) {
       throw new HttpErrorResponse({
         statusCode: 404,
