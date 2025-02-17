@@ -25,6 +25,7 @@ import {
   UNMODIFIABLE_COMMON_FIELDS,
   UnmodifiableCommonFields,
 } from '../models/base-types/unmodifiable-common-fields';
+import { getFilterSchemaFor } from '../openapi/filter-schemas';
 import { EntityRepository } from '../repositories';
 
 export class EntityController {
@@ -144,7 +145,8 @@ export class EntityController {
   })
   async find(
     @param.query.object('set') set?: Set,
-    @param.filter(GenericEntity) filter?: Filter<GenericEntity>,
+    @param.query.object('filter', getFilterSchemaFor(GenericEntity))
+    filter?: Filter<GenericEntity>,
   ): Promise<GenericEntity[]> {
     if (set) {
       filter = new SetFilterBuilder<GenericEntity>(set, {

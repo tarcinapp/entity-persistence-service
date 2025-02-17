@@ -26,6 +26,10 @@ import {
   KindBindings,
   KindConfigurationReader,
 } from '../../extensions';
+import {
+  LookupBindings,
+  LookupHelper,
+} from '../../extensions/utils/lookup-helper';
 
 /**
  * Utility function to verify that all fields in two responses match exactly
@@ -461,6 +465,9 @@ export async function setupApplication(
   app
     .bind(ResponseLimitConfigBindings.CONFIG_READER)
     .toClass(ResponseLimitConfigurationReader);
+
+  // Add lookup helper binding for tests
+  app.bind(LookupBindings.HELPER).toClass(LookupHelper);
 
   await app.boot();
   await app.start();
