@@ -5,6 +5,7 @@ import {
   DefaultCrudRepository,
   Filter,
   FilterBuilder,
+  FilterExcludingWhere,
   HasManyRepositoryFactory,
   HasManyThroughRepositoryFactory,
   InclusionResolver,
@@ -180,8 +181,8 @@ export class ListRepository extends DefaultCrudRepository<
     return super.find(filter, options);
   }
 
-  async findById(id: string, options?: Options) {
-    const result = await super.findById(id, options).catch(() => null);
+  async findById(id: string, filter?: FilterExcludingWhere<List>) {
+    const result = await super.findById(id, filter).catch(() => null);
     if (!result) {
       throw new HttpErrorResponse({
         statusCode: 404,
