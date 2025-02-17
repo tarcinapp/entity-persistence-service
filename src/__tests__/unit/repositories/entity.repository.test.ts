@@ -5,6 +5,8 @@ import {
   teardownRepositoryTest,
 } from './test-helper.repository';
 import type { EntityPersistenceApplication } from '../../..';
+import { LookupHelper } from '../../../extensions/utils/lookup-helper';
+import type { GenericEntity, GenericEntityRelations } from '../../../models';
 import { HttpErrorResponse } from '../../../models';
 import {
   ListEntityRelationRepository,
@@ -34,6 +36,18 @@ describe('EntityRepository', () => {
       ListEntityRelationRepository,
     );
     const listRepoStub = sinon.createStubInstance(ListRepository);
+
+    // Create a mock lookup helper
+    const mockLookupHelper = sinon.createStubInstance(LookupHelper);
+    mockLookupHelper.processLookupForArray.callsFake(
+      async (entities: (GenericEntity & GenericEntityRelations)[]) =>
+        Promise.resolve(entities),
+    );
+    mockLookupHelper.processLookupForOne.callsFake(
+      async (entity: GenericEntity & GenericEntityRelations) =>
+        Promise.resolve(entity),
+    );
+
     // Create main repository instance with stubbed dependencies
     repository = new EntityRepository(
       testSetup.dataSource,
@@ -49,6 +63,7 @@ describe('EntityRepository', () => {
       testSetup.configReaders.validfromConfigReader,
       testSetup.configReaders.idempotencyConfigReader,
       testSetup.configReaders.responseLimitConfigReader,
+      mockLookupHelper,
     );
   });
 

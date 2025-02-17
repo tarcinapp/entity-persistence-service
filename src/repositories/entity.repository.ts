@@ -45,6 +45,10 @@ import { ReactionsRepository } from './reactions.repository';
 import { TagEntityRelationRepository } from './tag-entity-relation.repository';
 import { TagRepository } from './tag.repository';
 import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
+import {
+  LookupHelper,
+  LookupBindings,
+} from '../extensions/utils/lookup-helper';
 import { SetFilterBuilder } from '../extensions/utils/set-helper';
 
 export class EntityRepository extends DefaultCrudRepository<
@@ -67,6 +71,7 @@ export class EntityRepository extends DefaultCrudRepository<
     TagEntityRelation,
     typeof GenericEntity.prototype._id
   >;
+
   constructor(
     @inject('datasources.EntityDb')
     dataSource: EntityDbDataSource,
@@ -106,6 +111,9 @@ export class EntityRepository extends DefaultCrudRepository<
 
     @inject('extensions.response-limit.configurationreader')
     private responseLimitConfigReader: ResponseLimitConfigurationReader,
+
+    @inject(LookupBindings.HELPER)
+    private lookupHelper: LookupHelper,
   ) {
     super(GenericEntity, dataSource);
     this.tags = this.createHasManyThroughRepositoryFactoryFor(
@@ -135,14 +143,35 @@ export class EntityRepository extends DefaultCrudRepository<
     };
   }
 
-  async find(filter?: Filter<GenericEntity>, options?: Options) {
-    // Calculate the limit value using optional chaining and nullish coalescing
-    // If filter.limit is defined, use its value; otherwise, use the configured response limit
+  private async processLookups(
+    entities: (GenericEntity & GenericEntityRelations)[],
+    filter?: Filter<GenericEntity>,
+  ): Promise<(GenericEntity & GenericEntityRelations)[]> {
+    if (!filter?.lookup) {
+      return entities;
+    }
+
+    return this.lookupHelper.processLookupForArray(entities, filter);
+  }
+
+  private async processLookup(
+    entity: GenericEntity & GenericEntityRelations,
+    filter?: Filter<GenericEntity>,
+  ): Promise<GenericEntity & GenericEntityRelations> {
+    if (!filter?.lookup) {
+      return entity;
+    }
+
+    return this.lookupHelper.processLookupForOne(entity, filter);
+  }
+
+  async find(
+    filter?: Filter<GenericEntity>,
+    options?: Options,
+  ): Promise<(GenericEntity & GenericEntityRelations)[]> {
     const limit =
       filter?.limit ?? this.responseLimitConfigReader.getEntityResponseLimit();
 
-    // Update the filter object by spreading the existing filter and overwriting the limit property
-    // Ensure that the new limit value does not exceed configured response limit
     filter = {
       ...filter,
       limit: Math.min(
@@ -151,7 +180,9 @@ export class EntityRepository extends DefaultCrudRepository<
       ),
     };
 
-    return super.find(filter, options);
+    return super
+      .find(filter, options)
+      .then((entities) => this.processLookups(entities, filter));
   }
 
   async create(data: DataObject<GenericEntity>, options?: Options) {
@@ -787,18 +818,27 @@ export class EntityRepository extends DefaultCrudRepository<
     }
   }
 
-  async findById(id: string, filter?: FilterExcludingWhere<GenericEntity>) {
-    const result = await super.findById(id, filter).catch(() => null);
-    if (!result) {
-      throw new HttpErrorResponse({
-        statusCode: 404,
-        name: 'NotFoundError',
-        message: "Entity with id '" + id + "' could not be found.",
-        code: 'ENTITY-NOT-FOUND',
-        status: 404,
-      });
-    }
+  async findById(
+    id: string,
+    filter?: FilterExcludingWhere<GenericEntity>,
+    options?: Options,
+  ): Promise<GenericEntity & GenericEntityRelations> {
+    return super
+      .findById(id, filter, options)
+      .catch(() => null)
+      .then((entity) => {
+        if (!entity) {
+          throw new HttpErrorResponse({
+            statusCode: 404,
+            name: 'NotFoundError',
+            message: "Entity with id '" + id + "' could not be found.",
+            code: 'ENTITY-NOT-FOUND',
+            status: 404,
+          });
+        }
 
-    return result;
+        return entity;
+      })
+      .then((entity) => this.processLookup(entity, filter));
   }
 }

@@ -19,6 +19,7 @@ import {
   KindBindings,
   KindConfigurationReader,
 } from './extensions';
+import { LookupBindings, LookupHelper } from './extensions/utils/lookup-helper';
 
 export * from './application';
 
@@ -60,6 +61,9 @@ export async function main(options: ApplicationConfig = {}) {
     .toClass(ResponseLimitConfigurationReader);
 
   app.bind(KindBindings.CONFIG_READER).toClass(KindConfigurationReader);
+
+  // add lookup helper to context
+  app.bind(LookupBindings.HELPER).toClass(LookupHelper);
 
   await app.boot();
   await app.start();
