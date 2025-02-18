@@ -11,7 +11,12 @@ export function getFilterSchemaFor(modelRef: typeof Model): SchemaObject {
       offset: { type: 'integer' as const, minimum: 0 },
       limit: { type: 'integer' as const, minimum: 1 },
       skip: { type: 'integer' as const, minimum: 0 },
-      order: { type: 'array' as const, items: { type: 'string' as const } },
+      order: {
+        oneOf: [
+          { type: 'string' as const },
+          { type: 'array' as const, items: { type: 'string' as const } },
+        ],
+      },
       include: { type: 'array' as const, items: { type: 'object' as const } },
       lookup: {
         type: 'array' as const,
@@ -39,8 +44,13 @@ export function getFilterSchemaFor(modelRef: typeof Model): SchemaObject {
                   minimum: 0,
                 },
                 order: {
-                  type: 'array' as const,
-                  items: { type: 'string' as const },
+                  oneOf: [
+                    { type: 'string' as const },
+                    {
+                      type: 'array' as const,
+                      items: { type: 'string' as const },
+                    },
+                  ],
                 },
               },
             },
