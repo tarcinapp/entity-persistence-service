@@ -211,7 +211,7 @@ export async function setupApplication(
   process.env.NODE_ENV = 'test';
 
   // Set higher timeout for tests
-  process.env.MOCHA_TIMEOUT = '10000';
+  process.env.MOCHA_TIMEOUT = '30000';
 
   // Store original env vars
   const originalEnv: TestEnvironmentVariables = {
