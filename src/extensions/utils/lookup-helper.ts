@@ -99,17 +99,47 @@ export class LookupHelper {
       return entities;
     }
 
-    // Fetch all referenced entities in a single call
     const entityRepository = await this.entityRepositoryGetter();
-    const resolvedEntities = await entityRepository.find({
-      where: {
-        _id: {
-          inq: Array.from(entityIdsToLookup),
-        },
-        ...(scope?.where ?? {}), // Merge any where conditions from scope
+    const entityIds = Array.from(entityIdsToLookup);
+    const baseWhere = {
+      _id: {
+        inq: entityIds,
       },
-      ...scope,
-    });
+      ...(scope?.where ?? {}),
+    };
+
+    // Handle field selection
+    let resolvedEntities;
+    let userFields: { [key: string]: boolean } | undefined;
+    if (scope?.fields) {
+      const fields = scope.fields;
+      const hasTrueFields = Object.values(fields).includes(true);
+
+      if (hasTrueFields) {
+        // Store the user's field selection
+        userFields = { ...fields };
+
+        // Fetch entities with both _id and selected fields
+        resolvedEntities = await entityRepository.find({
+          ...scope,
+          where: baseWhere,
+          fields: {
+            ...fields,
+            _id: true,
+          },
+        });
+      } else {
+        resolvedEntities = await entityRepository.find({
+          where: baseWhere,
+          ...scope,
+        });
+      }
+    } else {
+      resolvedEntities = await entityRepository.find({
+        where: baseWhere,
+        ...scope,
+      });
+    }
 
     // Create a map for quick lookup
     const resolvedEntitiesMap = new Map(
@@ -136,8 +166,29 @@ export class LookupHelper {
         }
 
         const entityId = ref.split('/').pop();
+        if (!entityId) {
+          return ref;
+        }
 
-        return entityId ? (resolvedEntitiesMap.get(entityId) ?? ref) : ref;
+        const resolvedEntity = resolvedEntitiesMap.get(entityId);
+        if (!resolvedEntity) {
+          return ref;
+        }
+
+        // If we have user-specified fields, filter the resolved entity to only include those fields
+        if (userFields) {
+          const filteredEntity: Partial<GenericEntity> = {};
+          for (const [key, include] of Object.entries(userFields)) {
+            if (include) {
+              filteredEntity[key as keyof GenericEntity] =
+                resolvedEntity[key as keyof GenericEntity];
+            }
+          }
+
+          return filteredEntity;
+        }
+
+        return resolvedEntity;
       });
 
       entity[prop] = isArray ? resolvedRefs : resolvedRefs[0];
