@@ -486,6 +486,10 @@ export class EntityRepository extends DefaultCrudRepository<
     data._validFromDateTime =
       data._validFromDateTime ?? (shouldAutoValidate ? now : undefined);
 
+    // we need to explicitly set validUntilDateTime to null if it is not provided
+    // to make filter matcher work correctly while checking record limits
+    data._validUntilDateTime = data._validUntilDateTime ?? null;
+
     // new data is starting from version 1
     data._version = 1;
 

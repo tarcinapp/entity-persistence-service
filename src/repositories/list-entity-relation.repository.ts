@@ -646,6 +646,10 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
         ? now
         : undefined;
 
+    // we need to explicitly set validUntilDateTime to null
+    // to make filter matcher work correctly while checking record limits
+    data._validUntilDateTime = data._validUntilDateTime ?? null;
+
     return Promise.resolve(data);
   }
 
