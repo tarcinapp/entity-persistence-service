@@ -141,6 +141,16 @@ export class LookupHelper {
       });
     }
 
+    // Process nested lookups if they exist
+    if (scope?.lookup && resolvedEntities.length > 0) {
+      for (const nestedLookup of scope.lookup) {
+        resolvedEntities = await this.processLookupBatch(
+          resolvedEntities,
+          nestedLookup,
+        );
+      }
+    }
+
     // Create a map for quick lookup
     const resolvedEntitiesMap = new Map(
       resolvedEntities.map((entity) => [entity._id, entity]),
