@@ -576,43 +576,6 @@ describe('EntityRepository', () => {
         expect(superReplaceByIdStub.called).to.be.false();
       });
 
-      it('should throw error for invalid kind format', async () => {
-        const updateData = { _kind: 'Invalid Kind!', _name: 'test' };
-
-        try {
-          await repository.replaceById(existingId, updateData);
-          throw new Error('Expected error was not thrown');
-        } catch (error) {
-          expect(error).to.be.instanceOf(HttpErrorResponse);
-          expect(error.message).to.match(
-            /Entity kind cannot contain special or uppercase characters/,
-          );
-        }
-
-        expect(superReplaceByIdStub.called).to.be.false();
-      });
-
-      it('should throw error when kind is not in allowed values', async () => {
-        const updateData = { _kind: 'invalid-kind', _name: 'test' };
-
-        kindStub.returns(false);
-        sinon
-          .stub(repository['kindConfigReader'], 'allowedKindsForEntities')
-          .get(() => ['allowed-kind']);
-
-        try {
-          await repository.replaceById(existingId, updateData);
-          throw new Error('Expected error was not thrown');
-        } catch (error) {
-          expect(error).to.be.instanceOf(HttpErrorResponse);
-          expect(error.message).to.match(
-            /Entity kind 'invalid-kind' is not valid/,
-          );
-        }
-
-        expect(superReplaceByIdStub.called).to.be.false();
-      });
-
       it('should throw error when uniqueness is violated', async () => {
         const updateData = { _name: 'existing-name', _kind: 'test-kind' };
         const existingEntity = { _id: 'another-id', _name: 'existing-name' };
@@ -783,6 +746,46 @@ describe('EntityRepository', () => {
         );
         expect(typeof replacedData._idempotencyKey).to.equal('string');
       });
+
+      it('should throw error when trying to change kind field', async () => {
+        const updateData = { _kind: 'different-kind' };
+
+        try {
+          await repository.replaceById(existingId, updateData);
+          throw new Error('Expected error was not thrown');
+        } catch (error) {
+          expect(error).to.be.instanceOf(HttpErrorResponse);
+          expect(error.message).to.match(
+            /Entity kind cannot be changed after creation/,
+          );
+          expect(error.code).to.equal('IMMUTABLE-ENTITY-KIND');
+        }
+
+        expect(superReplaceByIdStub.called).to.be.false();
+      });
+
+      it('should throw error for invalid kind format when kind matches existing', async () => {
+        // Update the existing entity to have an invalid kind format
+        const existingWithInvalidKind = {
+          ...superFindByIdStub.resolves(),
+          _kind: 'invalid-kind!',
+        };
+        superFindByIdStub.resolves(existingWithInvalidKind);
+
+        const updateData = { _kind: 'invalid-kind!' };
+
+        try {
+          await repository.replaceById(existingId, updateData);
+          throw new Error('Expected error was not thrown');
+        } catch (error) {
+          expect(error).to.be.instanceOf(HttpErrorResponse);
+          expect(error.message).to.match(
+            /Entity kind cannot contain special or uppercase characters/,
+          );
+        }
+
+        expect(superReplaceByIdStub.called).to.be.false();
+      });
     });
   });
 
@@ -935,43 +938,6 @@ describe('EntityRepository', () => {
           _viewerUsersCount: 1,
           _viewerGroupsCount: 2,
         });
-      });
-
-      it('should throw error for invalid kind format', async () => {
-        const updateData = { _kind: 'Test Kind!' };
-
-        try {
-          await repository.updateById(existingId, updateData);
-          throw new Error('Expected error was not thrown');
-        } catch (error) {
-          expect(error).to.be.instanceOf(HttpErrorResponse);
-          expect(error.message).to.match(
-            /Entity kind cannot contain special or uppercase characters/,
-          );
-        }
-
-        expect(superUpdateByIdStub.called).to.be.false();
-      });
-
-      it('should throw error when kind is not in allowed values', async () => {
-        const updateData = { _kind: 'invalid-kind' };
-
-        kindStub.returns(false);
-        sinon
-          .stub(repository['kindConfigReader'], 'allowedKindsForEntities')
-          .get(() => ['allowed-kind']);
-
-        try {
-          await repository.updateById(existingId, updateData);
-          throw new Error('Expected error was not thrown');
-        } catch (error) {
-          expect(error).to.be.instanceOf(HttpErrorResponse);
-          expect(error.message).to.match(
-            /Entity kind 'invalid-kind' is not valid/,
-          );
-        }
-
-        expect(superUpdateByIdStub.called).to.be.false();
       });
 
       it('should throw error when uniqueness is violated', async () => {
@@ -1240,47 +1206,6 @@ describe('EntityRepository', () => {
       expect(result.count).to.equal(2);
     });
 
-    it('should throw error for invalid kind format', async () => {
-      const where = { _kind: 'test-kind' };
-      const updateData = { _kind: 'Invalid Kind!' };
-
-      try {
-        await repository.updateAll(updateData, where);
-        throw new Error('Expected error was not thrown');
-      } catch (error) {
-        expect(error).to.be.instanceOf(HttpErrorResponse);
-        expect(error.message).to.match(
-          /Entity kind cannot contain special or uppercase characters/,
-        );
-      }
-
-      expect(superUpdateAllStub.called).to.be.false();
-    });
-
-    it('should throw error when kind is not in allowed values', async () => {
-      const where = { _kind: 'test-kind' };
-      const updateData = { _kind: 'invalid kind' };
-
-      sinon
-        .stub(repository['kindConfigReader'], 'isKindAcceptableForEntity')
-        .returns(false);
-      sinon
-        .stub(repository['kindConfigReader'], 'allowedKindsForEntities')
-        .get(() => ['allowed-kind']);
-
-      try {
-        await repository.updateAll(updateData, where);
-        throw new Error('Expected error was not thrown');
-      } catch (error) {
-        expect(error).to.be.instanceOf(HttpErrorResponse);
-        expect(error.message).to.match(
-          /Entity kind cannot contain special or uppercase characters. Use 'invalid-kind' instead/,
-        );
-      }
-
-      expect(superUpdateAllStub.called).to.be.false();
-    });
-
     it('should pass options to super.updateAll', async () => {
       const where = { _kind: 'test-kind' };
       const updateData = { _name: 'Updated Name' };
@@ -1291,6 +1216,24 @@ describe('EntityRepository', () => {
       expect(superUpdateAllStub.calledOnce).to.be.true();
       const [, , calledOptions] = superUpdateAllStub.firstCall.args;
       expect(calledOptions).to.deepEqual(options);
+    });
+
+    it('should throw error when trying to update kind field', async () => {
+      const where = { _kind: 'test-kind' };
+      const updateData = { _kind: 'new-kind' };
+
+      try {
+        await repository.updateAll(updateData, where);
+        throw new Error('Expected error was not thrown');
+      } catch (error) {
+        expect(error).to.be.instanceOf(HttpErrorResponse);
+        expect(error.message).to.match(
+          /Entity kind cannot be changed after creation/,
+        );
+        expect(error.code).to.equal('IMMUTABLE-ENTITY-KIND');
+      }
+
+      expect(superUpdateAllStub.called).to.be.false();
     });
   });
 
