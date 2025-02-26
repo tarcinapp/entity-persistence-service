@@ -262,6 +262,17 @@ export class EntityRepository extends DefaultCrudRepository<
     where?: Where<GenericEntity>,
     options?: Options,
   ) {
+    // Check if user is trying to change the _kind field
+    if (data._kind !== undefined) {
+      throw new HttpErrorResponse({
+        statusCode: 422,
+        name: 'ImmutableFieldError',
+        message: 'Entity kind cannot be changed after creation.',
+        code: 'IMMUTABLE-ENTITY-KIND',
+        status: 422,
+      });
+    }
+
     const now = new Date().toISOString();
     data._lastUpdatedDateTime = now;
 
@@ -404,6 +415,20 @@ export class EntityRepository extends DefaultCrudRepository<
     id: string,
     data: DataObject<GenericEntity>,
   ) {
+    // Get the existing entity to check if _kind is being changed
+    const existingEntity = await this.findById(id);
+
+    // Check if user is trying to change the _kind field
+    if (data._kind !== undefined && data._kind !== existingEntity._kind) {
+      throw new HttpErrorResponse({
+        statusCode: 422,
+        name: 'ImmutableFieldError',
+        message: `Entity kind cannot be changed after creation. Current kind is '${existingEntity._kind}'.`,
+        code: 'IMMUTABLE-ENTITY-KIND',
+        status: 422,
+      });
+    }
+
     const uniquenessCheck = this.checkUniquenessForUpdate(id, data);
 
     this.checkDataKindValues(data);
@@ -419,6 +444,17 @@ export class EntityRepository extends DefaultCrudRepository<
     existingData: DataObject<GenericEntity>,
     data: DataObject<GenericEntity>,
   ) {
+    // Check if user is trying to change the _kind field
+    if (data._kind !== undefined && data._kind !== existingData._kind) {
+      throw new HttpErrorResponse({
+        statusCode: 422,
+        name: 'ImmutableFieldError',
+        message: `Entity kind cannot be changed after creation. Current kind is '${existingData._kind}'.`,
+        code: 'IMMUTABLE-ENTITY-KIND',
+        status: 422,
+      });
+    }
+
     // we need to merge existing data with incoming data in order to check limits and uniquenesses
     const mergedData = _.assign(
       {},
