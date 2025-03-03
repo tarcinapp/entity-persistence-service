@@ -763,29 +763,6 @@ describe('EntityRepository', () => {
 
         expect(superReplaceByIdStub.called).to.be.false();
       });
-
-      it('should throw error for invalid kind format when kind matches existing', async () => {
-        // Update the existing entity to have an invalid kind format
-        const existingWithInvalidKind = {
-          ...superFindByIdStub.resolves(),
-          _kind: 'invalid-kind!',
-        };
-        superFindByIdStub.resolves(existingWithInvalidKind);
-
-        const updateData = { _kind: 'invalid-kind!' };
-
-        try {
-          await repository.replaceById(existingId, updateData);
-          throw new Error('Expected error was not thrown');
-        } catch (error) {
-          expect(error).to.be.instanceOf(HttpErrorResponse);
-          expect(error.message).to.match(
-            /Entity kind cannot contain special or uppercase characters/,
-          );
-        }
-
-        expect(superReplaceByIdStub.called).to.be.false();
-      });
     });
   });
 

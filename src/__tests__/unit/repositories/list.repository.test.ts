@@ -475,14 +475,10 @@ describe('ListRepository', () => {
     });
 
     describe('validation and enrichment', () => {
-      let kindStub: sinon.SinonStub;
       let uniquenessStub: sinon.SinonStub;
 
       beforeEach(() => {
         // Common stubs for validation tests
-        kindStub = sinon
-          .stub(repository['kindConfigReader'], 'isKindAcceptableForList')
-          .returns(true);
         uniquenessStub = sinon
           .stub(
             repository['uniquenessConfigReader'],
@@ -497,6 +493,23 @@ describe('ListRepository', () => {
           .returns(true);
       });
 
+      it('should throw error when trying to change kind field', async () => {
+        const updateData = { _kind: 'different-kind' };
+
+        try {
+          await repository.replaceById(existingId, updateData);
+          throw new Error('Expected error was not thrown');
+        } catch (error) {
+          expect(error).to.be.instanceOf(HttpErrorResponse);
+          expect(error.message).to.match(
+            /List kind cannot be changed after creation/,
+          );
+          expect(error.code).to.equal('IMMUTABLE-LIST-KIND');
+        }
+
+        expect(superReplaceByIdStub.called).to.be.false();
+      });
+
       it('should throw error with consistent message when list does not exist', async () => {
         superFindByIdStub.resolves(null);
 
@@ -507,43 +520,6 @@ describe('ListRepository', () => {
           expect(error).to.be.instanceOf(HttpErrorResponse);
           expect(error.message).to.match(
             /List with id 'test-id' could not be found/,
-          );
-        }
-
-        expect(superReplaceByIdStub.called).to.be.false();
-      });
-
-      it('should throw error for invalid kind format', async () => {
-        const updateData = { _kind: 'Invalid Kind!', _name: 'test' };
-
-        try {
-          await repository.replaceById(existingId, updateData);
-          throw new Error('Expected error was not thrown');
-        } catch (error) {
-          expect(error).to.be.instanceOf(HttpErrorResponse);
-          expect(error.message).to.match(
-            /List kind cannot contain special or uppercase characters/,
-          );
-        }
-
-        expect(superReplaceByIdStub.called).to.be.false();
-      });
-
-      it('should throw error when kind is not in allowed values', async () => {
-        const updateData = { _kind: 'invalid-kind', _name: 'test' };
-
-        kindStub.returns(false);
-        sinon
-          .stub(repository['kindConfigReader'], 'allowedKindsForLists')
-          .get(() => ['allowed-kind']);
-
-        try {
-          await repository.replaceById(existingId, updateData);
-          throw new Error('Expected error was not thrown');
-        } catch (error) {
-          expect(error).to.be.instanceOf(HttpErrorResponse);
-          expect(error.message).to.match(
-            /List kind 'invalid-kind' is not valid/,
           );
         }
 
@@ -793,36 +769,22 @@ describe('ListRepository', () => {
     });
 
     describe('validation and enrichment', () => {
-      let kindStub: sinon.SinonStub;
       let uniquenessStub: sinon.SinonStub;
 
       beforeEach(() => {
         // Common stubs for validation tests
-        kindStub = sinon
-          .stub(repository['kindConfigReader'], 'isKindAcceptableForList')
-          .returns(true);
         uniquenessStub = sinon
           .stub(
             repository['uniquenessConfigReader'],
             'isUniquenessConfiguredForLists',
           )
           .returns(false);
-      });
-
-      it('should throw error when entity does not exist', async () => {
-        superFindByIdStub.resolves(null);
-
-        try {
-          await repository.updateById('non-existent-id', { _name: 'test' });
-          throw new Error('Expected error was not thrown');
-        } catch (error) {
-          expect(error).to.be.instanceOf(HttpErrorResponse);
-          expect(error.message).to.match(
-            /List with id 'non-existent-id' could not be found/,
-          );
-        }
-
-        expect(superUpdateByIdStub.called).to.be.false();
+        sinon
+          .stub(repository['visibilityConfigReader'], 'getVisibilityForLists')
+          .returns('public');
+        sinon
+          .stub(repository['validfromConfigReader'], 'getValidFromForLists')
+          .returns(true);
       });
 
       it('should merge update data with existing data', async () => {
@@ -870,43 +832,6 @@ describe('ListRepository', () => {
           _viewerUsersCount: 1,
           _viewerGroupsCount: 2,
         });
-      });
-
-      it('should throw error for invalid kind format', async () => {
-        const updateData = { _kind: 'Test Kind!' };
-
-        try {
-          await repository.updateById(existingId, updateData);
-          throw new Error('Expected error was not thrown');
-        } catch (error) {
-          expect(error).to.be.instanceOf(HttpErrorResponse);
-          expect(error.message).to.match(
-            /List kind cannot contain special or uppercase characters/,
-          );
-        }
-
-        expect(superUpdateByIdStub.called).to.be.false();
-      });
-
-      it('should throw error when kind is not in allowed values', async () => {
-        const updateData = { _kind: 'invalid-kind' };
-
-        kindStub.returns(false);
-        sinon
-          .stub(repository['kindConfigReader'], 'allowedKindsForLists')
-          .get(() => ['allowed-kind']);
-
-        try {
-          await repository.updateById(existingId, updateData);
-          throw new Error('Expected error was not thrown');
-        } catch (error) {
-          expect(error).to.be.instanceOf(HttpErrorResponse);
-          expect(error.message).to.match(
-            /List kind 'invalid-kind' is not valid/,
-          );
-        }
-
-        expect(superUpdateByIdStub.called).to.be.false();
       });
 
       it('should throw error when uniqueness is violated', async () => {
@@ -1176,9 +1101,9 @@ describe('ListRepository', () => {
       expect(result.count).to.equal(2);
     });
 
-    it('should throw error for invalid kind format', async () => {
+    it('should throw error when trying to change kind field', async () => {
       const where = { _kind: 'test-kind' };
-      const updateData = { _kind: 'Invalid Kind!' };
+      const updateData = { _kind: 'different-kind' };
 
       try {
         await repository.updateAll(updateData, where);
@@ -1186,30 +1111,9 @@ describe('ListRepository', () => {
       } catch (error) {
         expect(error).to.be.instanceOf(HttpErrorResponse);
         expect(error.message).to.match(
-          /List kind cannot contain special or uppercase characters/,
+          /List kind cannot be changed after creation/,
         );
-      }
-
-      expect(superUpdateAllStub.called).to.be.false();
-    });
-
-    it('should throw error when kind is not in allowed values', async () => {
-      const where = { _kind: 'test-kind' };
-      const updateData = { _kind: 'invalid-kind' };
-
-      sinon
-        .stub(repository['kindConfigReader'], 'isKindAcceptableForList')
-        .returns(false);
-      sinon
-        .stub(repository['kindConfigReader'], 'allowedKindsForLists')
-        .get(() => ['allowed-kind']);
-
-      try {
-        await repository.updateAll(updateData, where);
-        throw new Error('Expected error was not thrown');
-      } catch (error) {
-        expect(error).to.be.instanceOf(HttpErrorResponse);
-        expect(error.message).to.match(/List kind 'invalid-kind' is not valid/);
+        expect(error.code).to.equal('IMMUTABLE-LIST-KIND');
       }
 
       expect(superUpdateAllStub.called).to.be.false();

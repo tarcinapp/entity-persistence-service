@@ -276,10 +276,6 @@ export class EntityRepository extends DefaultCrudRepository<
     const now = new Date().toISOString();
     data._lastUpdatedDateTime = now;
 
-    this.checkDataKindFormat(data);
-
-    this.checkDataKindValues(data);
-
     this.generateSlug(data);
 
     this.setCountFields(data);
@@ -431,9 +427,6 @@ export class EntityRepository extends DefaultCrudRepository<
 
     const uniquenessCheck = this.checkUniquenessForUpdate(id, data);
 
-    this.checkDataKindValues(data);
-    this.checkDataKindFormat(data);
-
     await uniquenessCheck;
 
     return data;
@@ -462,11 +455,6 @@ export class EntityRepository extends DefaultCrudRepository<
       data,
     );
     const uniquenessCheck = this.checkUniquenessForUpdate(id, mergedData);
-
-    if (data._kind) {
-      this.checkDataKindFormat(data);
-      this.checkDataKindValues(data);
-    }
 
     this.generateSlug(data);
     this.setCountFields(data);

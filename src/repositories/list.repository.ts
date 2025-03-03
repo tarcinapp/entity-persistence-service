@@ -281,12 +281,18 @@ export class ListRepository extends DefaultCrudRepository<
     const now = new Date().toISOString();
     data._lastUpdatedDateTime = now;
 
-    this.checkDataKindFormat(data);
-
-    this.checkDataKindValues(data);
+    // Check if trying to change the kind field
+    if (data._kind) {
+      throw new HttpErrorResponse({
+        statusCode: 422,
+        name: 'ImmutableKindError',
+        message: 'List kind cannot be changed after creation.',
+        code: 'IMMUTABLE-LIST-KIND',
+        status: 422,
+      });
+    }
 
     this.generateSlug(data);
-
     this.setCountFields(data);
 
     return super.updateAll(data, where, options);
@@ -476,8 +482,17 @@ export class ListRepository extends DefaultCrudRepository<
   ) {
     const uniquenessCheck = this.checkUniquenessForUpdate(id, data);
 
-    this.checkDataKindValues(data);
-    this.checkDataKindFormat(data);
+    // Check if trying to change the kind field
+    const existingList = await this.findById(id);
+    if (data._kind && data._kind !== existingList._kind) {
+      throw new HttpErrorResponse({
+        statusCode: 422,
+        name: 'ImmutableKindError',
+        message: 'List kind cannot be changed after creation.',
+        code: 'IMMUTABLE-LIST-KIND',
+        status: 422,
+      });
+    }
 
     await uniquenessCheck;
 
@@ -497,9 +512,15 @@ export class ListRepository extends DefaultCrudRepository<
     );
     const uniquenessCheck = this.checkUniquenessForUpdate(id, mergedData);
 
-    if (data._kind) {
-      this.checkDataKindFormat(data);
-      this.checkDataKindValues(data);
+    // Check if trying to change the kind field
+    if (data._kind && data._kind !== existingData._kind) {
+      throw new HttpErrorResponse({
+        statusCode: 422,
+        name: 'ImmutableKindError',
+        message: 'List kind cannot be changed after creation.',
+        code: 'IMMUTABLE-LIST-KIND',
+        status: 422,
+      });
     }
 
     this.generateSlug(data);
