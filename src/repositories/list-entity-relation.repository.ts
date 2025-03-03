@@ -220,10 +220,18 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     where?: Where<ListToEntityRelation>,
     options?: Options,
   ) {
+    if (data._kind) {
+      throw new HttpErrorResponse({
+        statusCode: 422,
+        name: 'ValidationError',
+        message: 'Relation kind cannot be changed after creation.',
+        code: 'IMMUTABLE-RELATION-KIND',
+        status: 422,
+      });
+    }
+
     const now = new Date().toISOString();
     data._lastUpdatedDateTime = now;
-
-    this.checkDataKindFormat(data);
 
     return super.updateAll(data, where, options);
   }
@@ -301,16 +309,22 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     existingData: DataObject<ListToEntityRelation>,
     data: DataObject<ListToEntityRelation>,
   ) {
+    // Check if kind is being changed
+    if (data._kind && data._kind !== existingData._kind) {
+      throw new HttpErrorResponse({
+        statusCode: 422,
+        name: 'ValidationError',
+        message: 'Relation kind cannot be changed after creation.',
+        code: 'IMMUTABLE-RELATION-KIND',
+        status: 422,
+      });
+    }
+
     // we need to merge existing data with incoming data in order to check limits and uniquenesses
     const mergedData = {
       ...data,
       ...(existingData && _.pickBy(existingData, (value) => value !== null)),
     } as DataObject<ListToEntityRelation>;
-
-    if (mergedData._kind) {
-      this.checkDataKindFormat(mergedData);
-      this.checkDataKindValues(mergedData);
-    }
 
     return Promise.all([
       this.checkUniquenessForUpdate(id, mergedData),
@@ -327,8 +341,18 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     id: string,
     data: DataObject<ListToEntityRelation>,
   ) {
-    this.checkDataKindValues(data);
-    this.checkDataKindFormat(data);
+    const existingData = await this.findById(id);
+
+    // Check if kind is being changed
+    if (data._kind && data._kind !== existingData._kind) {
+      throw new HttpErrorResponse({
+        statusCode: 422,
+        name: 'ValidationError',
+        message: 'Relation kind cannot be changed after creation.',
+        code: 'IMMUTABLE-RELATION-KIND',
+        status: 422,
+      });
+    }
 
     return Promise.all([
       this.checkDependantsExistence(
