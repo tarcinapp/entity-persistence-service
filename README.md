@@ -293,6 +293,102 @@ The introduction of sets enhances the application's querying capabilities, allow
 
 ### Lookups
 
+The application provides a powerful lookup mechanism that allows you to resolve entity references in your queries. This feature supports various types of relationships and nested property lookups.
+
+#### Reference Types
+
+The lookup mechanism supports different types of references based on the reference string format:
+
+- Entity References: `tapp://localhost/entities/{entityId}`
+- List References: `tapp://localhost/lists/{listId}`
+
+#### Query Structure
+
+Lookups can be specified in the filter query string using the `lookup` parameter. The structure is similar to Loopback's relation queries:
+
+```typescript
+// Basic lookup
+?filter[lookup][0][prop]=parents
+
+// Lookup with field selection
+?filter[lookup][0][prop]=parents&filter[lookup][0][scope][fields][name]=true
+
+// Lookup with where conditions
+?filter[lookup][0][prop]=parents&filter[lookup][0][scope][where][_kind]=category
+
+// Lookup with sets
+?filter[lookup][0][prop]=parents&filter[lookup][0][scope][set][actives]
+
+// Multiple lookups
+?filter[lookup][0][prop]=parents&filter[lookup][1][prop]=children
+
+// Nested lookups
+?filter[lookup][0][prop]=parents.foo.bar
+```
+
+#### Examples
+
+1. **Basic Entity Lookup**
+```typescript
+// Get entities with their parent entities resolved
+GET /entities?filter[lookup][0][prop]=parents
+```
+
+2. **List-Entity Lookup**
+```typescript
+// Get lists with their entities resolved
+GET /lists?filter[lookup][0][prop]=entities
+```
+
+3. **Nested Property Lookup**
+```typescript
+// Get entities with nested references resolved
+GET /entities?filter[lookup][0][prop]=metadata.references.parent
+```
+
+4. **Lookup with Field Selection**
+```typescript
+// Get entities with specific fields from their parents
+GET /entities?filter[lookup][0][prop]=parents&filter[lookup][0][scope][fields][name]=true
+```
+
+5. **Lookup with Conditions**
+```typescript
+// Get entities with active parents only
+GET /entities?filter[lookup][0][prop]=parents&filter[lookup][0][scope][set][actives]
+```
+
+6. **Multiple Lookups**
+```typescript
+// Get entities with both parents and children resolved
+GET /entities?filter[lookup][0][prop]=parents&filter[lookup][1][prop]=children
+```
+
+7. **List with Entity Lookups**
+```typescript
+// Get lists with their entities and entity parents resolved
+GET /lists?filter[lookup][0][prop]=entities&filter[lookup][0][scope][lookup][0][prop]=parents
+```
+
+#### Lookup Scope Options
+
+The `scope` parameter in lookups supports various options:
+
+- `fields`: Select specific fields to include in the resolved entities
+- `where`: Apply conditions to filter the resolved entities
+- `set`: Apply predefined sets to filter the resolved entities
+- `lookup`: Define nested lookups for the resolved entities
+- `limit`: Limit the number of resolved entities
+- `skip`: Skip a number of resolved entities
+- `order`: Sort the resolved entities
+
+#### Performance Considerations
+
+- Lookups are resolved in batches to minimize database queries
+- Field selection helps reduce data transfer
+- Nested lookups are processed recursively
+- Results are cached when possible
+
 ### Tags
 
 The updateAll operation is not available for tags since their content is unique, and the only property that might need updating is the "content" property itself. Updating the creationDateTime for all tags would not be meaningful in this context.
