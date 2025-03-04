@@ -1205,4 +1205,115 @@ describe('GET /entities', () => {
     const authorNames = book.authors.map((a: any) => a._name);
     expect(authorNames.indexOf('Alice Brown')).to.equal(-1);
   });
+
+  it('handles invalid references and not-found entities with skip and limit', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book,author',
+    });
+    ({ client } = appWithClient);
+
+    // Create multiple author entities
+    const author1Id = await createTestEntity({
+      _name: 'John Doe',
+      _kind: 'author',
+      biography: 'Famous author',
+    });
+
+    const author2Id = await createTestEntity({
+      _name: 'Jane Smith',
+      _kind: 'author',
+      biography: 'Award-winning author',
+    });
+
+    // Create a book entity with array of author references including invalid and not-found references
+    await createTestEntity({
+      _name: 'The Great Book',
+      _kind: 'book',
+      authors: [
+        'invalid-reference', // Invalid reference format
+        `tapp://localhost/entities/${author1Id}`,
+        'tapp://localhost/entities/invalid-guid', // Invalid GUID
+        `tapp://localhost/entities/${author2Id}`,
+        'tapp://localhost/entities/00000000-0000-0000-0000-000000000000', // Not found entity
+      ],
+      description: 'A great book by multiple authors',
+    });
+
+    // Get the book with authors lookup, using skip and limit in scope
+    const filterStr =
+      'filter[lookup][0][prop]=authors&filter[lookup][0][scope][skip]=1&filter[lookup][0][scope][limit]=2';
+    const response = await client.get('/entities').query(filterStr).expect(200);
+
+    // Response should contain all entities (book + all authors)
+    expect(response.body).to.be.Array().and.have.length(3);
+
+    // Find the book in the response
+    const book = response.body.find((e: GenericEntity) => e._kind === 'book');
+    expect(book).to.not.be.undefined();
+    expect(book._name).to.equal('The Great Book');
+
+    // Verify the authors array is resolved with skip and limit applied
+    expect(book.authors).to.be.an.Array().and.have.length(2);
+
+    // Verify first author (should be John Doe, as invalid reference was skipped)
+    const author1 = book.authors[0];
+    expect(author1).to.be.an.Object();
+    expect(author1._id).to.equal(author1Id);
+    expect(author1._name).to.equal('John Doe');
+    expect(author1._kind).to.equal('author');
+    expect(author1.biography).to.equal('Famous author');
+
+    // Verify second author (should be error object for invalid GUID)
+    const author2 = book.authors[1];
+    expect(author2).to.be.an.Object();
+    expect(author2.lookupErrorCode).to.equal('INVALID-GUID');
+    expect(author2.reference).to.equal(
+      'tapp://localhost/entities/invalid-guid',
+    );
+  });
+
+  it('handles not-found entities with skip and limit', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book,author',
+    });
+    ({ client } = appWithClient);
+
+    // Create a book entity with array of author references including not-found entities
+    await createTestEntity({
+      _name: 'The Great Book',
+      _kind: 'book',
+      authors: [
+        'tapp://localhost/entities/00000000-0000-0000-0000-000000000000', // Not found entity 1
+        'tapp://localhost/entities/11111111-1111-1111-1111-111111111111', // Not found entity 2
+        'tapp://localhost/entities/22222222-2222-2222-2222-222222222222', // Not found entity 3
+      ],
+      description: 'A great book with missing authors',
+    });
+
+    // Get the book with authors lookup, using skip and limit in scope
+    const filterStr =
+      'filter[lookup][0][prop]=authors&filter[lookup][0][scope][skip]=1&filter[lookup][0][scope][limit]=1';
+    const response = await client.get('/entities').query(filterStr).expect(200);
+
+    // Response should contain only the book (no authors found)
+    expect(response.body).to.be.Array().and.have.length(1);
+
+    // Find the book in the response
+    const book = response.body.find((e: GenericEntity) => e._kind === 'book');
+    expect(book).to.not.be.undefined();
+    expect(book._name).to.equal('The Great Book');
+
+    // Verify the authors array is resolved with skip and limit applied
+    expect(book.authors).to.be.an.Array().and.have.length(1);
+
+    // Verify the author is marked as not found
+    const author = book.authors[0];
+    expect(author).to.be.an.Object();
+    expect(author.lookupErrorCode).to.equal('ENTITY-NOT-FOUND');
+    expect(author.reference).to.equal(
+      'tapp://localhost/entities/11111111-1111-1111-1111-111111111111',
+    );
+  });
 });
