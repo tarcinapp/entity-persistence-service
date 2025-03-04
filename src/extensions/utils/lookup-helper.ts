@@ -187,14 +187,18 @@ export class LookupHelper {
     }
 
     // Handle nested lookups recursively
-    if (scope?.lookup && resolvedEntities.length > 0) {
-      for (const nestedLookup of scope.lookup) {
-        resolvedEntities = await this.processLookupBatch(
-          resolvedEntities,
-          nestedLookup,
-        );
-      }
-    }
+    // if (scope?.lookup && resolvedEntities.length > 0) {
+    //   for (const nestedLookup of scope.lookup) {
+    //     resolvedEntities = await this.processLookupBatch(
+    //       resolvedEntities,
+    //       nestedLookup,
+    //     );
+    //   }
+    // }
+    //
+    // Nested lookups are actually processed in the entity repository as we are passing
+    // the filter with the lookup definitions to the repository find method.
+    //
 
     // Create an efficient lookup map for resolved entities
     const resolvedEntitiesMap = new Map(

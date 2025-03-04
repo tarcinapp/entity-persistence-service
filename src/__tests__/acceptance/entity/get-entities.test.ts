@@ -864,4 +864,345 @@ describe('GET /entities', () => {
     expect(entity).to.not.have.property('_validFromDateTime');
     expect(entity).to.not.have.property('_validUntilDateTime');
   });
+
+  it('resolves entity references through lookup', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book,author',
+    });
+    ({ client } = appWithClient);
+
+    // Create an author entity
+    const authorId = await createTestEntity({
+      _name: 'John Doe',
+      _kind: 'author',
+      biography: 'Famous author',
+    });
+
+    // Create a book entity that references the author
+    await createTestEntity({
+      _name: 'The Great Book',
+      _kind: 'book',
+      author: `tapp://localhost/entities/${authorId}`,
+      description: 'A great book by John Doe',
+    });
+
+    // Get the book with author lookup
+    const filterStr = 'filter[lookup][0][prop]=author';
+    const response = await client.get('/entities').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(2);
+
+    // Find the book in the response
+    const book = response.body.find((e: GenericEntity) => e._kind === 'book');
+    expect(book).to.not.be.undefined();
+    expect(book._name).to.equal('The Great Book');
+
+    // Verify the author reference is resolved
+    expect(book.author).to.be.an.Object();
+    expect(book.author._id).to.equal(authorId);
+    expect(book.author._name).to.equal('John Doe');
+    expect(book.author._kind).to.equal('author');
+    expect(book.author.biography).to.equal('Famous author');
+  });
+
+  it('resolves multiple lookups including nested property references', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book,author,publisher',
+    });
+    ({ client } = appWithClient);
+
+    // Create a publisher entity
+    const publisherId = await createTestEntity({
+      _name: 'Big Publishing House',
+      _kind: 'publisher',
+      location: 'New York',
+    });
+
+    // Create an author entity that references the publisher
+    const authorId = await createTestEntity({
+      _name: 'John Doe',
+      _kind: 'author',
+      biography: 'Famous author',
+      publisher: `tapp://localhost/entities/${publisherId}`,
+    });
+
+    // Create a book entity that references the author
+    await createTestEntity({
+      _name: 'The Great Book',
+      _kind: 'book',
+      author: `tapp://localhost/entities/${authorId}`,
+      description: 'A great book by John Doe',
+    });
+
+    // Get the book with both author and author's publisher lookups
+    const filterStr =
+      'filter[lookup][0][prop]=author&' +
+      'filter[lookup][0][scope][lookup][0][prop]=publisher';
+    const response = await client.get('/entities').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(3);
+
+    // Find the book in the response
+    const book = response.body.find((e: GenericEntity) => e._kind === 'book');
+    expect(book).to.not.be.undefined();
+    expect(book._name).to.equal('The Great Book');
+
+    // Verify the author reference is resolved
+    expect(book.author).to.be.an.Object();
+    expect(book.author._id).to.equal(authorId);
+    expect(book.author._name).to.equal('John Doe');
+    expect(book.author._kind).to.equal('author');
+    expect(book.author.biography).to.equal('Famous author');
+
+    // Verify the nested publisher reference is resolved
+    expect(book.author.publisher).to.be.an.Object();
+    expect(book.author.publisher._id).to.equal(publisherId);
+    expect(book.author.publisher._name).to.equal('Big Publishing House');
+    expect(book.author.publisher._kind).to.equal('publisher');
+    expect(book.author.publisher.location).to.equal('New York');
+  });
+
+  it('resolves lookups from nested property paths', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book,author',
+    });
+    ({ client } = appWithClient);
+
+    // Create an author entity
+    const authorId = await createTestEntity({
+      _name: 'John Doe',
+      _kind: 'author',
+      biography: 'Famous author',
+    });
+
+    // Create a book entity with nested reference to the author
+    await createTestEntity({
+      _name: 'The Great Book',
+      _kind: 'book',
+      metadata: {
+        references: {
+          author: `tapp://localhost/entities/${authorId}`,
+        },
+      },
+      description: 'A great book by John Doe',
+    });
+
+    // Get the book with nested author lookup
+    const filterStr = 'filter[lookup][0][prop]=metadata.references.author';
+    const response = await client.get('/entities').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(2);
+
+    // Find the book in the response
+    const book = response.body.find((e: GenericEntity) => e._kind === 'book');
+    expect(book).to.not.be.undefined();
+    expect(book._name).to.equal('The Great Book');
+
+    // Verify the nested author reference is resolved
+    expect(book.metadata.references.author).to.be.an.Object();
+    expect(book.metadata.references.author._id).to.equal(authorId);
+    expect(book.metadata.references.author._name).to.equal('John Doe');
+    expect(book.metadata.references.author._kind).to.equal('author');
+    expect(book.metadata.references.author.biography).to.equal('Famous author');
+  });
+
+  it('selects specific fields from looked-up entities using scope', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book,author',
+    });
+    ({ client } = appWithClient);
+
+    // Create an author entity with multiple fields
+    const authorId = await createTestEntity({
+      _name: 'John Doe',
+      _kind: 'author',
+      biography: 'Famous author',
+      email: 'john@example.com',
+      phone: '123-456-7890',
+      address: '123 Main St',
+    });
+
+    // Create a book entity that references the author
+    await createTestEntity({
+      _name: 'The Great Book',
+      _kind: 'book',
+      author: `tapp://localhost/entities/${authorId}`,
+      description: 'A great book by John Doe',
+    });
+
+    // Get the book with author lookup, selecting only name and biography fields
+    const filterStr =
+      'filter[lookup][0][prop]=author&' +
+      'filter[lookup][0][scope][fields][_name]=true&' +
+      'filter[lookup][0][scope][fields][biography]=true';
+    const response = await client.get('/entities').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(2);
+
+    // Find the book in the response
+    const book = response.body.find((e: GenericEntity) => e._kind === 'book');
+    expect(book).to.not.be.undefined();
+    expect(book._name).to.equal('The Great Book');
+
+    // Verify the author reference is resolved with only selected fields
+    expect(book.author).to.be.an.Object();
+    expect(book.author._name).to.equal('John Doe');
+    expect(book.author.biography).to.equal('Famous author');
+
+    // Verify other fields are not included
+    expect(book.author).to.not.have.property('_id');
+    expect(book.author).to.not.have.property('_kind');
+    expect(book.author).to.not.have.property('email');
+    expect(book.author).to.not.have.property('phone');
+    expect(book.author).to.not.have.property('address');
+  });
+
+  it('resolves lookups from array properties containing entity references', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book,author',
+    });
+    ({ client } = appWithClient);
+
+    // Create multiple author entities
+    const author1Id = await createTestEntity({
+      _name: 'John Doe',
+      _kind: 'author',
+      biography: 'Famous author',
+    });
+
+    const author2Id = await createTestEntity({
+      _name: 'Jane Smith',
+      _kind: 'author',
+      biography: 'Award-winning author',
+    });
+
+    // Create a book entity with array of author references
+    await createTestEntity({
+      _name: 'The Great Book',
+      _kind: 'book',
+      authors: [
+        `tapp://localhost/entities/${author1Id}`,
+        `tapp://localhost/entities/${author2Id}`,
+      ],
+      description: 'A great book by multiple authors',
+    });
+
+    // Get the book with authors lookup
+    const filterStr = 'filter[lookup][0][prop]=authors';
+    const response = await client.get('/entities').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(3);
+
+    // Find the book in the response
+    const book = response.body.find((e: GenericEntity) => e._kind === 'book');
+    expect(book).to.not.be.undefined();
+    expect(book._name).to.equal('The Great Book');
+
+    // Verify the authors array is resolved
+    expect(book.authors).to.be.an.Array().and.have.length(2);
+
+    // Verify first author
+    const author1 = book.authors[0];
+    expect(author1).to.be.an.Object();
+    expect(author1._id).to.equal(author1Id);
+    expect(author1._name).to.equal('John Doe');
+    expect(author1._kind).to.equal('author');
+    expect(author1.biography).to.equal('Famous author');
+
+    // Verify second author
+    const author2 = book.authors[1];
+    expect(author2).to.be.an.Object();
+    expect(author2._id).to.equal(author2Id);
+    expect(author2._name).to.equal('Jane Smith');
+    expect(author2._kind).to.equal('author');
+    expect(author2.biography).to.equal('Award-winning author');
+  });
+
+  it('applies skip and limit in scope when looking up array references', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book,author',
+    });
+    ({ client } = appWithClient);
+
+    // Create multiple author entities
+    const author1Id = await createTestEntity({
+      _name: 'John Doe',
+      _kind: 'author',
+      biography: 'Famous author',
+    });
+
+    const author2Id = await createTestEntity({
+      _name: 'Jane Smith',
+      _kind: 'author',
+      biography: 'Award-winning author',
+    });
+
+    const author3Id = await createTestEntity({
+      _name: 'Bob Wilson',
+      _kind: 'author',
+      biography: 'Best-selling author',
+    });
+
+    const author4Id = await createTestEntity({
+      _name: 'Alice Brown',
+      _kind: 'author',
+      biography: 'Critically acclaimed author',
+    });
+
+    // Create a book entity with array of author references
+    await createTestEntity({
+      _name: 'The Great Book',
+      _kind: 'book',
+      authors: [
+        `tapp://localhost/entities/${author1Id}`,
+        `tapp://localhost/entities/${author2Id}`,
+        `tapp://localhost/entities/${author3Id}`,
+        `tapp://localhost/entities/${author4Id}`,
+      ],
+      description: 'A great book by multiple authors',
+    });
+
+    // Get the book with authors lookup, using skip and limit in scope
+    const filterStr =
+      'filter[lookup][0][prop]=authors&filter[lookup][0][scope][skip]=1&filter[lookup][0][scope][limit]=2';
+    const response = await client.get('/entities').query(filterStr).expect(200);
+
+    // Response should contain all entities (book + all authors)
+    expect(response.body).to.be.Array().and.have.length(5);
+
+    // Find the book in the response
+    const book = response.body.find((e: GenericEntity) => e._kind === 'book');
+    expect(book).to.not.be.undefined();
+    expect(book._name).to.equal('The Great Book');
+
+    // Verify the authors array is resolved with skip and limit applied
+    expect(book.authors).to.be.an.Array().and.have.length(2);
+
+    // Verify first author (should be Jane Smith, as John Doe was skipped)
+    const author1 = book.authors[0];
+    expect(author1).to.be.an.Object();
+    expect(author1._id).to.equal(author2Id);
+    expect(author1._name).to.equal('Jane Smith');
+    expect(author1._kind).to.equal('author');
+    expect(author1.biography).to.equal('Award-winning author');
+
+    // Verify second author (should be Bob Wilson)
+    const author2 = book.authors[1];
+    expect(author2).to.be.an.Object();
+    expect(author2._id).to.equal(author3Id);
+    expect(author2._name).to.equal('Bob Wilson');
+    expect(author2._kind).to.equal('author');
+    expect(author2.biography).to.equal('Best-selling author');
+
+    // Verify Alice Brown is not included (was after the limit)
+    expect(book.authors).to.have.length(2);
+    const authorNames = book.authors.map((a: any) => a._name);
+    expect(authorNames.indexOf('Alice Brown')).to.equal(-1);
+  });
 });
