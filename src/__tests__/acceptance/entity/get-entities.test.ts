@@ -239,7 +239,7 @@ describe('GET /entities', () => {
     // Set up the application with response limit configuration
     appWithClient = await setupApplication({
       entity_kinds: 'book',
-      response_limit_entity_count: '2', // Limit response to 2 items
+      response_limit_entity: '2', // Limit response to 2 items
     });
     ({ client } = appWithClient);
 
@@ -260,8 +260,8 @@ describe('GET /entities', () => {
     });
 
     // Get entities with limit
-    const filterStr = 'filter[limit]=2';
-    const response = await client.get('/entities').query(filterStr).expect(200);
+    //const filterStr = 'filter[limit]=2';
+    const response = await client.get('/entities').expect(200);
 
     expect(response.body).to.be.Array().and.have.length(2);
   });
