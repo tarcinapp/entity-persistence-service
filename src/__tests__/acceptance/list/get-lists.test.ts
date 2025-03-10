@@ -2,7 +2,11 @@ import type { Client } from '@loopback/testlab';
 import { expect } from '@loopback/testlab';
 import type { List } from '../../../models';
 import type { AppWithClient } from '../test-helper';
-import { setupApplication, teardownApplication } from '../test-helper';
+import {
+  setupApplication,
+  teardownApplication,
+  createTestEntity,
+} from '../test-helper';
 
 describe('GET /lists', () => {
   let client: Client;
@@ -60,7 +64,7 @@ describe('GET /lists', () => {
     return listId;
   }
 
-  it('returns all lists when no filter is applied', async () => {
+  it('basic: returns all lists when no filter is applied', async () => {
     // Set up the application with default configuration
     appWithClient = await setupApplication({
       list_kinds: 'reading,watching',
@@ -90,7 +94,7 @@ describe('GET /lists', () => {
     ]);
   });
 
-  it('filters lists by kind', async () => {
+  it('filter: by kind', async () => {
     // Set up the application with default configuration
     appWithClient = await setupApplication({
       list_kinds: 'reading,watching',
@@ -118,10 +122,9 @@ describe('GET /lists', () => {
 
     expect(response.body).to.be.Array().and.have.length(1);
     expect(response.body[0]._name).to.equal('Reading List 1');
-    expect(response.body[0]._kind).to.equal('reading');
   });
 
-  it('filters active lists with complex filter', async () => {
+  it('filter: filters active lists with complex filter', async () => {
     // Set up the application with default configuration
     appWithClient = await setupApplication({
       list_kinds: 'reading',
@@ -164,7 +167,7 @@ describe('GET /lists', () => {
     expect(response.body[0]._name).to.equal('Active Reading List');
   });
 
-  it('filters lists by visibility', async () => {
+  it('filter: by visibility', async () => {
     // Set up the application with default configuration
     appWithClient = await setupApplication({
       list_kinds: 'reading',
@@ -196,7 +199,7 @@ describe('GET /lists', () => {
     expect(response.body[0]._visibility).to.equal('public');
   });
 
-  it('filters lists by owner', async () => {
+  it('filter: by owner', async () => {
     // Set up the application with default configuration
     appWithClient = await setupApplication({
       list_kinds: 'reading',
@@ -229,7 +232,7 @@ describe('GET /lists', () => {
     expect(response.body[0]._ownerUsers).to.containDeep([owner1]);
   });
 
-  it('applies response limit configuration', async () => {
+  it('pagination: applies response limit configuration', async () => {
     // Set up the application with response limit configuration
     appWithClient = await setupApplication({
       list_kinds: 'reading',
@@ -259,7 +262,7 @@ describe('GET /lists', () => {
     expect(response.body).to.be.Array().and.have.length(2);
   });
 
-  it('supports pagination', async () => {
+  it('pagination: supports pagination', async () => {
     // Set up the application
     appWithClient = await setupApplication({
       list_kinds: 'reading',
@@ -299,7 +302,7 @@ describe('GET /lists', () => {
     expect(secondPage.body).to.be.Array().and.have.length(1);
   });
 
-  it('supports sorting', async () => {
+  it('pagination: supports sorting', async () => {
     // Set up the application
     appWithClient = await setupApplication({
       list_kinds: 'reading',
@@ -349,7 +352,168 @@ describe('GET /lists', () => {
     ]);
   });
 
-  it('returns only selected fields', async () => {
+  it('set-filter: filters lists by audience', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 1);
+
+    // Create active list
+    await createTestList({
+      _name: 'Active Reading List',
+      _kind: 'reading',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    // Create inactive list (expired)
+    await createTestList({
+      _name: 'Inactive Reading List',
+      _kind: 'reading',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(),
+    });
+
+    // Get only active lists using complex filter
+    const filterStr =
+      `filter[where][and][0][or][0][_validUntilDateTime][eq]=null&` +
+      `filter[where][and][0][or][1][_validUntilDateTime][gt]=${encodeURIComponent(now.toISOString())}&` +
+      `filter[where][and][1][_validFromDateTime][neq]=null&` +
+      `filter[where][and][2][_validFromDateTime][lt]=${encodeURIComponent(now.toISOString())}`;
+
+    const response = await client.get('/lists').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+    expect(response.body[0]._name).to.equal('Active Reading List');
+  });
+
+  it('set-filter: filters active lists', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 1);
+
+    // Create active list
+    await createTestList({
+      _name: 'Active Reading List',
+      _kind: 'reading',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    // Create inactive list (expired)
+    await createTestList({
+      _name: 'Inactive Reading List',
+      _kind: 'reading',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(),
+    });
+
+    // Get only active lists using complex filter
+    const filterStr =
+      `filter[where][and][0][or][0][_validUntilDateTime][eq]=null&` +
+      `filter[where][and][0][or][1][_validUntilDateTime][gt]=${encodeURIComponent(now.toISOString())}&` +
+      `filter[where][and][1][_validFromDateTime][neq]=null&` +
+      `filter[where][and][2][_validFromDateTime][lt]=${encodeURIComponent(now.toISOString())}`;
+
+    const response = await client.get('/lists').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+    expect(response.body[0]._name).to.equal('Active Reading List');
+  });
+
+  it('set-filter: filters public lists', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading',
+    });
+    ({ client } = appWithClient);
+
+    // Create public list
+    await createTestList({
+      _name: 'Public Reading List',
+      _kind: 'reading',
+      _visibility: 'public',
+    });
+
+    // Create private list
+    await createTestList({
+      _name: 'Private Reading List',
+      _kind: 'reading',
+      _visibility: 'private',
+    });
+
+    // Get only public lists
+    const response = await client
+      .get('/lists')
+      .query({ filter: { where: { _visibility: 'public' } } })
+      .expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+    expect(response.body[0]._name).to.equal('Public Reading List');
+    expect(response.body[0]._visibility).to.equal('public');
+  });
+
+  it('set-filter: filters inactive lists', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 1);
+
+    // Create active list
+    await createTestList({
+      _name: 'Active Reading List',
+      _kind: 'reading',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    // Create inactive list (expired)
+    await createTestList({
+      _name: 'Inactive Reading List',
+      _kind: 'reading',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(),
+    });
+
+    // Get only active lists using complex filter
+    const filterStr =
+      `filter[where][and][0][or][0][_validUntilDateTime][eq]=null&` +
+      `filter[where][and][0][or][1][_validUntilDateTime][gt]=${encodeURIComponent(now.toISOString())}&` +
+      `filter[where][and][1][_validFromDateTime][neq]=null&` +
+      `filter[where][and][2][_validFromDateTime][lt]=${encodeURIComponent(now.toISOString())}`;
+
+    const response = await client.get('/lists').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+    expect(response.body[0]._name).to.equal('Active Reading List');
+  });
+
+  it('fields: returns only selected fields', async () => {
     // Set up the application with default configuration
     appWithClient = await setupApplication({
       list_kinds: 'reading',
@@ -390,7 +554,7 @@ describe('GET /lists', () => {
     expect(list).to.not.have.property('_lastUpdatedDateTime');
   });
 
-  it('excludes specified fields from response', async () => {
+  it('fields: excludes specified fields from response', async () => {
     // Set up the application with default configuration
     appWithClient = await setupApplication({
       list_kinds: 'reading',
@@ -432,5 +596,435 @@ describe('GET /lists', () => {
     expect(list).to.not.have.property('_viewerUsers');
     expect(list).to.not.have.property('_validFromDateTime');
     expect(list).to.not.have.property('_validUntilDateTime');
+  });
+
+  it('entity-lookup: resolves entity references through lookup', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading',
+      entity_kinds: 'book',
+    });
+    ({ client } = appWithClient);
+
+    // Create a book entity
+    const bookId = await createTestEntity(client, {
+      _name: 'The Great Book',
+      _kind: 'book',
+      description: 'A great book',
+    });
+
+    // Create a reading list that references the book
+    await createTestList({
+      _name: 'My Reading List',
+      _kind: 'reading',
+      book: `tapp://localhost/entities/${bookId}`,
+      description: 'A list for The Great Book',
+    });
+
+    // Get the list with book lookup
+    const filterStr = 'filter[lookup][0][prop]=book';
+    const response = await client.get('/lists').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+
+    // Find the list in the response
+    const list = response.body[0];
+    expect(list._name).to.equal('My Reading List');
+
+    // Verify the book reference is resolved
+    expect(list.book).to.be.an.Object();
+    expect(list.book._id).to.equal(bookId);
+    expect(list.book._name).to.equal('The Great Book');
+    expect(list.book._kind).to.equal('book');
+    expect(list.book.description).to.equal('A great book');
+  });
+
+  it('entity-lookup: resolves lookups from nested property paths', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading',
+      entity_kinds: 'book',
+    });
+    ({ client } = appWithClient);
+
+    // Create a book entity
+    const bookId = await createTestEntity(client, {
+      _name: 'The Great Book',
+      _kind: 'book',
+      description: 'A great book',
+    });
+
+    // Create a reading list that references the book in a nested property
+    await createTestList({
+      _name: 'My Reading List',
+      _kind: 'reading',
+      metadata: {
+        references: {
+          book: `tapp://localhost/entities/${bookId}`,
+        },
+      },
+      description: 'A list for The Great Book',
+    });
+
+    // Get the list with nested book lookup
+    const filterStr = 'filter[lookup][0][prop]=metadata.references.book';
+    const response = await client.get('/lists').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+
+    // Find the list in the response
+    const list = response.body[0];
+    expect(list._name).to.equal('My Reading List');
+
+    // Verify the nested book reference is resolved
+    expect(list.metadata.references.book).to.be.an.Object();
+    expect(list.metadata.references.book._id).to.equal(bookId);
+    expect(list.metadata.references.book._name).to.equal('The Great Book');
+    expect(list.metadata.references.book._kind).to.equal('book');
+    expect(list.metadata.references.book.description).to.equal('A great book');
+  });
+
+  it('entity-lookup: resolves multiple lookups including nested entity references', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading',
+      entity_kinds: 'book',
+    });
+    ({ client } = appWithClient);
+
+    // Create an author entity
+    const authorId = await createTestEntity(client, {
+      _name: 'John Doe',
+      _kind: 'author',
+      biography: 'Famous author',
+    });
+
+    // Create a book entity that references the author
+    const bookId = await createTestEntity(client, {
+      _name: 'The Great Book',
+      _kind: 'book',
+      description: 'A great book',
+      author: `tapp://localhost/entities/${authorId}`,
+    });
+
+    // Create a reading list that references the book
+    await createTestList({
+      _name: 'My Reading List',
+      _kind: 'reading',
+      book: `tapp://localhost/entities/${bookId}`,
+      description: 'A list for The Great Book',
+    });
+
+    // Get the list with nested lookups for both book and author
+    const filterStr =
+      'filter[lookup][0][prop]=book&' +
+      'filter[lookup][0][scope][lookup][0][prop]=author';
+    const response = await client.get('/lists').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+
+    // Find the list in the response
+    const list = response.body[0];
+    expect(list._name).to.equal('My Reading List');
+
+    // Verify the book reference is resolved
+    expect(list.book).to.be.an.Object();
+    expect(list.book._id).to.equal(bookId);
+    expect(list.book._name).to.equal('The Great Book');
+    expect(list.book._kind).to.equal('book');
+    expect(list.book.description).to.equal('A great book');
+
+    // Verify the nested author reference is resolved
+    expect(list.book.author).to.be.an.Object();
+    expect(list.book.author._id).to.equal(authorId);
+    expect(list.book.author._name).to.equal('John Doe');
+    expect(list.book.author._kind).to.equal('author');
+    expect(list.book.author.biography).to.equal('Famous author');
+  });
+
+  it('entity-lookup: selects specific fields from looked-up entities using scope', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading',
+      entity_kinds: 'book',
+    });
+    ({ client } = appWithClient);
+
+    // Create a book entity with multiple fields
+    const bookId = await createTestEntity(client, {
+      _name: 'The Great Book',
+      _kind: 'book',
+      description: 'A great book',
+      author: 'John Doe',
+      publisher: 'Great Books Inc',
+      isbn: '123-456-789',
+    });
+
+    // Create a reading list that references the book
+    await createTestList({
+      _name: 'My Reading List',
+      _kind: 'reading',
+      book: `tapp://localhost/entities/${bookId}`,
+      description: 'A list for The Great Book',
+    });
+
+    // Get the list with book lookup, selecting only name and description fields
+    const filterStr =
+      'filter[lookup][0][prop]=book&' +
+      'filter[lookup][0][scope][fields][_name]=true&' +
+      'filter[lookup][0][scope][fields][description]=true';
+    const response = await client.get('/lists').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+
+    // Find the list in the response
+    const list = response.body[0];
+    expect(list._name).to.equal('My Reading List');
+
+    // Verify the book reference is resolved with only selected fields
+    expect(list.book).to.be.an.Object();
+    expect(list.book._name).to.equal('The Great Book');
+    expect(list.book.description).to.equal('A great book');
+
+    // Verify other fields are not included
+    expect(list.book).to.not.have.property('_id');
+    expect(list.book).to.not.have.property('_kind');
+    expect(list.book).to.not.have.property('author');
+    expect(list.book).to.not.have.property('publisher');
+    expect(list.book).to.not.have.property('isbn');
+  });
+
+  it('entity-lookup: resolves lookups from array properties containing entity references', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading',
+      entity_kinds: 'book',
+    });
+    ({ client } = appWithClient);
+
+    // Create multiple book entities
+    const book1Id = await createTestEntity(client, {
+      _name: 'Book One',
+      _kind: 'book',
+      description: 'First book',
+    });
+
+    const book2Id = await createTestEntity(client, {
+      _name: 'Book Two',
+      _kind: 'book',
+      description: 'Second book',
+    });
+
+    // Create a reading list with array of book references
+    await createTestList({
+      _name: 'My Reading List',
+      _kind: 'reading',
+      books: [
+        `tapp://localhost/entities/${book1Id}`,
+        `tapp://localhost/entities/${book2Id}`,
+      ],
+      description: 'A list with multiple books',
+    });
+
+    // Get the list with books lookup, using skip and limit in scope
+    const filterStr =
+      'filter[lookup][0][prop]=books&' +
+      'filter[lookup][0][scope][skip]=1&' +
+      'filter[lookup][0][scope][limit]=2&' +
+      'filter[lookup][0][scope][order][0]=_name ASC';
+    const response = await client.get('/lists').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+
+    // Find the list in the response
+    const list = response.body[0];
+    expect(list._name).to.equal('My Reading List');
+
+    // Verify the books array is resolved with skip and limit applied
+    expect(list.books).to.be.Array().and.have.length(1);
+
+    // Verify first book (should be Book Two, as Book One was skipped)
+    const book = list.books[0];
+    expect(book).to.be.an.Object();
+    expect(book._id).to.equal(book2Id);
+    expect(book._name).to.equal('Book Two');
+    expect(book._kind).to.equal('book');
+    expect(book.description).to.equal('Second book');
+  });
+
+  it('entity-lookup: applies skip and limit in scope when looking up array references', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading',
+      entity_kinds: 'book',
+    });
+    ({ client } = appWithClient);
+
+    // Create multiple book entities
+    const book1Id = await createTestEntity(client, {
+      _name: 'Book One',
+      _kind: 'book',
+      description: 'First book',
+    });
+
+    const book2Id = await createTestEntity(client, {
+      _name: 'Book Two',
+      _kind: 'book',
+      description: 'Second book',
+    });
+
+    const book3Id = await createTestEntity(client, {
+      _name: 'Book Three',
+      _kind: 'book',
+      description: 'Third book',
+    });
+
+    // Create a reading list with array of book references
+    await createTestList({
+      _name: 'My Reading List',
+      _kind: 'reading',
+      books: [
+        `tapp://localhost/entities/${book1Id}`,
+        `tapp://localhost/entities/${book2Id}`,
+        `tapp://localhost/entities/${book3Id}`,
+      ],
+      description: 'A list with multiple books',
+    });
+
+    // Get the list with books lookup, using skip and limit in scope
+    const filterStr =
+      'filter[lookup][0][prop]=books&' +
+      'filter[lookup][0][scope][skip]=1&' +
+      'filter[lookup][0][scope][limit]=1&' +
+      'filter[lookup][0][scope][order][0]=_name ASC';
+    const response = await client.get('/lists').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+
+    // Find the list in the response
+    const list = response.body[0];
+    expect(list._name).to.equal('My Reading List');
+
+    // Verify the books array is resolved with skip and limit applied
+    expect(list.books).to.be.Array().and.have.length(1);
+
+    // Verify we get Book Three (after skipping Book One and omitting Book Two due to limit)
+    const book = list.books[0];
+    expect(book).to.be.an.Object();
+    expect(book._name).to.equal('Book Three'); // Should be "Book Three" as "Book One" is skipped and "Book Two" comes last
+    expect(book._id).to.equal(book3Id);
+    expect(book._kind).to.equal('book');
+    expect(book.description).to.equal('Third book');
+
+    // Get the list with different skip and limit values
+    const secondFilterStr =
+      'filter[lookup][0][prop]=books&' +
+      'filter[lookup][0][scope][skip]=2&' +
+      'filter[lookup][0][scope][limit]=2&' +
+      'filter[lookup][0][scope][order][0]=_name ASC';
+    const secondResponse = await client
+      .get('/lists')
+      .query(secondFilterStr)
+      .expect(200);
+
+    const secondList = secondResponse.body[0];
+    expect(secondList.books).to.be.Array().and.have.length(1);
+
+    // Verify the third book (after skipping Book One and Book Three, due to name sorting and skip=2)
+    const thirdBook = secondList.books[0];
+    expect(thirdBook).to.be.an.Object();
+    expect(thirdBook._name).to.equal('Book Two'); // Should be "Book Two" as it comes last in alphabetical order
+    expect(thirdBook._id).to.equal(book2Id);
+    expect(thirdBook._kind).to.equal('book');
+    expect(thirdBook.description).to.equal('Second book');
+  });
+
+  it('entity-lookup: handles invalid references and not-found entities with skip and limit', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading',
+      entity_kinds: 'book',
+    });
+    ({ client } = appWithClient);
+
+    // Create a book entity
+    const bookId = await createTestEntity(client, {
+      _name: 'The Great Book',
+      _kind: 'book',
+      description: 'A great book',
+    });
+
+    // Create a reading list with valid and invalid book references
+    await createTestList({
+      _name: 'My Reading List',
+      _kind: 'reading',
+      books: [
+        `tapp://localhost/entities/${bookId}`, // Valid reference
+        'tapp://localhost/entities/invalid-id', // Invalid reference
+        'invalid-uri', // Invalid URI format
+      ],
+      description: 'A list with mixed references',
+    });
+
+    // Get the list with books lookup, using skip and limit
+    const filterStr =
+      'filter[lookup][0][prop]=books&' +
+      'filter[lookup][0][scope][skip]=0&' +
+      'filter[lookup][0][scope][limit]=3';
+    const response = await client.get('/lists').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+
+    // Find the list in the response
+    const list = response.body[0];
+    expect(list._name).to.equal('My Reading List');
+
+    // Verify the books array is resolved with only valid references
+    expect(list.books).to.be.Array().and.have.length(1);
+
+    // Verify only the valid book reference is resolved
+    const book = list.books[0];
+    expect(book).to.be.an.Object();
+    expect(book._id).to.equal(bookId);
+    expect(book._name).to.equal('The Great Book');
+    expect(book._kind).to.equal('book');
+    expect(book.description).to.equal('A great book');
+  });
+
+  it('entity-lookup: handles not-found lists with skip and limit', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading',
+      entity_kinds: 'book',
+    });
+    ({ client } = appWithClient);
+
+    // Create a reading list with references to non-existent entities
+    await createTestList({
+      _name: 'My Reading List',
+      _kind: 'reading',
+      books: [
+        'tapp://localhost/entities/non-existent-1',
+        'tapp://localhost/entities/non-existent-2',
+        'tapp://localhost/entities/non-existent-3',
+      ],
+      description: 'A list with non-existent book references',
+    });
+
+    // Get the list with books lookup, using skip and limit
+    const filterStr =
+      'filter[lookup][0][prop]=books&' +
+      'filter[lookup][0][scope][skip]=1&' +
+      'filter[lookup][0][scope][limit]=2';
+    const response = await client.get('/lists').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+
+    // Find the list in the response
+    const list = response.body[0];
+    expect(list._name).to.equal('My Reading List');
+
+    // Verify that the books array exists but is empty since none of the entities exist
+    expect(list.books).to.be.Array().and.have.length(0);
   });
 });

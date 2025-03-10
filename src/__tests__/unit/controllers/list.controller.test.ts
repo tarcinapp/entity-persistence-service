@@ -172,7 +172,7 @@ describe('ListController', () => {
       const expectedLists = [new List({ _id: '123', _name: 'testList' })];
       repository.find.resolves(expectedLists);
 
-      const result = await controller.find(filter);
+      const result = await controller.find(undefined, filter);
       expect(result).to.eql(expectedLists);
       sinon.assert.calledWith(repository.find, filter);
     });
@@ -187,7 +187,7 @@ describe('ListController', () => {
       ];
       repository.find.resolves(expectedLists);
 
-      const result = await controller.find(undefined, set);
+      const result = await controller.find(set);
       expect(result).to.eql(expectedLists);
       sinon.assert.calledWithMatch(repository.find, sinon.match.has('where'));
     });
@@ -206,7 +206,7 @@ describe('ListController', () => {
       repository.find.resolves(expectedLists);
 
       // Act
-      const result = await controller.find(filter, set);
+      const result = await controller.find(set, filter);
 
       // Assert
       expect(result).to.eql(expectedLists);
@@ -230,7 +230,7 @@ describe('ListController', () => {
       repository.find.resolves([]);
 
       // Act
-      await controller.find(filter);
+      await controller.find(undefined, filter);
 
       // Assert
       sinon.assert.calledWithMatch(repository.find, filter);

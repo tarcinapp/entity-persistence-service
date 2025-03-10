@@ -26,6 +26,7 @@ import {
   UNMODIFIABLE_COMMON_FIELDS,
   UnmodifiableCommonFields,
 } from '../models/base-types/unmodifiable-common-fields';
+import { getFilterSchemaFor } from '../openapi/filter-schemas';
 import { ListRepository } from '../repositories';
 
 export class ListController {
@@ -142,8 +143,9 @@ export class ListController {
     },
   })
   async find(
-    @param.filter(List) filter?: Filter<List>,
     @param.query.object('set') set?: Set,
+    @param.query.object('filter', getFilterSchemaFor(List))
+    filter?: Filter<List>,
   ): Promise<List[]> {
     if (set) {
       filter = new SetFilterBuilder<List>(set, {
