@@ -999,23 +999,23 @@ describe('GET /lists', () => {
     });
     ({ client } = appWithClient);
 
-    // Create a reading list with references to non-existent entities
+    // Create a reading list that references non-existent books
     await createTestList({
       _name: 'My Reading List',
       _kind: 'reading',
       books: [
-        'tapp://localhost/entities/non-existent-1',
-        'tapp://localhost/entities/non-existent-2',
-        'tapp://localhost/entities/non-existent-3',
+        'tapp://localhost/entities/00000000-0000-0000-0000-000000000000', // Not found book 1
+        'tapp://localhost/entities/11111111-1111-1111-1111-111111111111', // Not found book 2
+        'tapp://localhost/entities/22222222-2222-2222-2222-222222222222', // Not found book 3
       ],
-      description: 'A list with non-existent book references',
+      description: 'A list with missing books',
     });
 
-    // Get the list with books lookup, using skip and limit
+    // Get the list with books lookup, using skip and limit in scope
     const filterStr =
       'filter[lookup][0][prop]=books&' +
       'filter[lookup][0][scope][skip]=1&' +
-      'filter[lookup][0][scope][limit]=2';
+      'filter[lookup][0][scope][limit]=1';
     const response = await client.get('/lists').query(filterStr).expect(200);
 
     expect(response.body).to.be.Array().and.have.length(1);
@@ -1024,7 +1024,7 @@ describe('GET /lists', () => {
     const list = response.body[0];
     expect(list._name).to.equal('My Reading List');
 
-    // Verify that the books array exists but is empty since none of the entities exist
+    // Verify the books array is empty since all references were not found
     expect(list.books).to.be.Array().and.have.length(0);
   });
 });
