@@ -688,7 +688,7 @@ describe('GET /lists', () => {
     // Set up the application with default configuration
     appWithClient = await setupApplication({
       list_kinds: 'reading',
-      entity_kinds: 'book',
+      entity_kinds: 'book, author',
     });
     ({ client } = appWithClient);
 
