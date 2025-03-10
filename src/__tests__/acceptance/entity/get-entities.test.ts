@@ -2,14 +2,17 @@ import type { Client } from '@loopback/testlab';
 import { expect } from '@loopback/testlab';
 import type { GenericEntity } from '../../../models';
 import type { AppWithClient } from '../test-helper';
-import { setupApplication, teardownApplication } from '../test-helper';
+import {
+  setupApplication,
+  teardownApplication,
+  createTestEntity,
+  createTestList,
+  cleanupCreatedEntities,
+} from '../test-helper';
 
 describe('GET /entities', () => {
   let client: Client;
   let appWithClient: AppWithClient | undefined;
-
-  // Store created entity IDs for cleanup
-  let createdEntityIds: string[] = [];
 
   beforeEach(async () => {
     if (appWithClient) {
@@ -22,21 +25,12 @@ describe('GET /entities', () => {
     Object.keys(process.env).forEach((key) => {
       delete process.env[key];
     });
-
-    // Reset created entity IDs
-    createdEntityIds = [];
   });
 
   afterEach(async () => {
     if (appWithClient) {
       // Clean up created entities
-      for (const id of createdEntityIds) {
-        try {
-          await client.delete(`/entities/${id}`);
-        } catch (error) {
-          console.error(`Failed to delete entity ${id}:`, error);
-        }
-      }
+      await cleanupCreatedEntities(client);
 
       await teardownApplication(appWithClient);
     }
@@ -52,19 +46,6 @@ describe('GET /entities', () => {
     appWithClient = undefined;
   });
 
-  async function createTestEntity(
-    entityData: Partial<GenericEntity>,
-  ): Promise<string> {
-    const response = await client
-      .post('/entities')
-      .send(entityData)
-      .expect(200);
-    const entityId = response.body._id;
-    createdEntityIds.push(entityId);
-
-    return entityId;
-  }
-
   it('returns all entities when no filter is applied', async () => {
     // Set up the application with default configuration
     appWithClient = await setupApplication({
@@ -73,13 +54,13 @@ describe('GET /entities', () => {
     ({ client } = appWithClient);
 
     // Create test entities
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Book 1',
       _kind: 'book',
       description: 'First book',
     });
 
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Movie 1',
       _kind: 'movie',
       description: 'First movie',
@@ -103,13 +84,13 @@ describe('GET /entities', () => {
     ({ client } = appWithClient);
 
     // Create test entities
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Book 1',
       _kind: 'book',
       description: 'First book',
     });
 
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Movie 1',
       _kind: 'movie',
       description: 'First movie',
@@ -141,7 +122,7 @@ describe('GET /entities', () => {
     futureDate.setDate(futureDate.getDate() + 1);
 
     // Create active entity
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Active Book',
       _kind: 'book',
       _validFromDateTime: pastDate.toISOString(),
@@ -149,7 +130,7 @@ describe('GET /entities', () => {
     });
 
     // Create inactive entity (expired)
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Inactive Book',
       _kind: 'book',
       _validFromDateTime: pastDate.toISOString(),
@@ -177,14 +158,14 @@ describe('GET /entities', () => {
     ({ client } = appWithClient);
 
     // Create public entity
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Public Book',
       _kind: 'book',
       _visibility: 'public',
     });
 
     // Create private entity
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Private Book',
       _kind: 'book',
       _visibility: 'private',
@@ -212,14 +193,14 @@ describe('GET /entities', () => {
     const owner2 = 'user-456';
 
     // Create entity with owner1
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Owner1 Book',
       _kind: 'book',
       _ownerUsers: [owner1],
     });
 
     // Create entity with owner2
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Owner2 Book',
       _kind: 'book',
       _ownerUsers: [owner2],
@@ -244,17 +225,17 @@ describe('GET /entities', () => {
     ({ client } = appWithClient);
 
     // Create 3 entities
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Book 1',
       _kind: 'book',
     });
 
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Book 2',
       _kind: 'book',
     });
 
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Book 3',
       _kind: 'book',
     });
@@ -274,17 +255,17 @@ describe('GET /entities', () => {
     ({ client } = appWithClient);
 
     // Create test entities
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Book 1',
       _kind: 'book',
     });
 
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Book 2',
       _kind: 'book',
     });
 
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Book 3',
       _kind: 'book',
     });
@@ -314,17 +295,17 @@ describe('GET /entities', () => {
     ({ client } = appWithClient);
 
     // Create test entities
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Book C',
       _kind: 'book',
     });
 
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Book A',
       _kind: 'book',
     });
 
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Book B',
       _kind: 'book',
     });
@@ -358,7 +339,7 @@ describe('GET /entities', () => {
     futureDate.setDate(futureDate.getDate() + 1);
 
     // Create active entity
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Active Book',
       _kind: 'book',
       _validFromDateTime: pastDate.toISOString(),
@@ -366,7 +347,7 @@ describe('GET /entities', () => {
     });
 
     // Create inactive entity
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Inactive Book',
       _kind: 'book',
       _validFromDateTime: pastDate.toISOString(),
@@ -415,7 +396,7 @@ describe('GET /entities', () => {
     futureDate.setDate(futureDate.getDate() + 7);
 
     // Create entity with owner
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Owner Book',
       _kind: 'book',
       _ownerUsers: [owner],
@@ -424,7 +405,7 @@ describe('GET /entities', () => {
     });
 
     // Create entity with viewer
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Viewer Book',
       _kind: 'book',
       _viewerUsers: [viewer],
@@ -433,7 +414,7 @@ describe('GET /entities', () => {
     });
 
     // Create entity with neither owner nor viewer
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Other Book',
       _kind: 'book',
     });
@@ -485,7 +466,7 @@ describe('GET /entities', () => {
     futureDate.setDate(futureDate.getDate() + 7);
 
     // Create active entity
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Active Book',
       _kind: 'book',
       _validFromDateTime: pastDate.toISOString(),
@@ -493,7 +474,7 @@ describe('GET /entities', () => {
     });
 
     // Create inactive entity (expired)
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Inactive Book',
       _kind: 'book',
       _validFromDateTime: pastDate.toISOString(),
@@ -501,7 +482,7 @@ describe('GET /entities', () => {
     });
 
     // Create inactive entity (not started)
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Future Book',
       _kind: 'book',
       _validFromDateTime: futureDate.toISOString(),
@@ -524,21 +505,21 @@ describe('GET /entities', () => {
     ({ client } = appWithClient);
 
     // Create public entity
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Public Book',
       _kind: 'book',
       _visibility: 'public',
     });
 
     // Create protected entity
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Protected Book',
       _kind: 'book',
       _visibility: 'protected',
     });
 
     // Create private entity
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Private Book',
       _kind: 'book',
       _visibility: 'private',
@@ -568,7 +549,7 @@ describe('GET /entities', () => {
     futureDate.setDate(futureDate.getDate() + 7);
 
     // Create active and public entity
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Active Public Book',
       _kind: 'book',
       _visibility: 'public',
@@ -577,7 +558,7 @@ describe('GET /entities', () => {
     });
 
     // Create active but private entity
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Active Private Book',
       _kind: 'book',
       _visibility: 'private',
@@ -586,7 +567,7 @@ describe('GET /entities', () => {
     });
 
     // Create inactive but public entity
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Inactive Public Book',
       _kind: 'book',
       _visibility: 'public',
@@ -595,7 +576,7 @@ describe('GET /entities', () => {
     });
 
     // Create inactive and private entity
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Inactive Private Book',
       _kind: 'book',
       _visibility: 'private',
@@ -637,7 +618,7 @@ describe('GET /entities', () => {
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
 
     // Create an old inactive science book (previous month)
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Old Inactive Science Book',
       _kind: 'book',
       description: 'science',
@@ -647,7 +628,7 @@ describe('GET /entities', () => {
     });
 
     // Create a recent inactive science book (this month, and expired)
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Recent Inactive Science Book',
       _kind: 'book',
       description: 'science',
@@ -657,7 +638,7 @@ describe('GET /entities', () => {
     });
 
     // Create a recent inactive history book (this month)
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Recent Inactive History Book',
       _kind: 'book',
       description: 'history',
@@ -667,7 +648,7 @@ describe('GET /entities', () => {
     });
 
     // Create a recent active science book (this month, but not expired)
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Recent Active Science Book',
       _kind: 'book',
       description: 'science',
@@ -714,7 +695,7 @@ describe('GET /entities', () => {
     futureDate.setDate(futureDate.getDate() + 7);
 
     // Create an inactive entity (expired yesterday)
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Recently Expired Book',
       _kind: 'book',
       _validFromDateTime: olderPastDate.toISOString(),
@@ -722,7 +703,7 @@ describe('GET /entities', () => {
     });
 
     // Create another inactive entity (expired 2 days ago)
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Old Expired Book',
       _kind: 'book',
       _validFromDateTime: olderPastDate.toISOString(),
@@ -730,7 +711,7 @@ describe('GET /entities', () => {
     });
 
     // Create an active entity with future expiration
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Active Book',
       _kind: 'book',
       _validFromDateTime: pastDate.toISOString(),
@@ -738,7 +719,7 @@ describe('GET /entities', () => {
     });
 
     // Create an active entity with no expiration
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Indefinite Book',
       _kind: 'book',
       _validFromDateTime: pastDate.toISOString(),
@@ -746,7 +727,7 @@ describe('GET /entities', () => {
     });
 
     // Create an entity with no start date (should not be counted as inactive)
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'No Start Date Book',
       _kind: 'book',
       _validFromDateTime: undefined,
@@ -785,7 +766,7 @@ describe('GET /entities', () => {
     ({ client } = appWithClient);
 
     // Create test entity with multiple fields
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Complete Book',
       _kind: 'book',
       description: 'A book with many fields',
@@ -828,7 +809,7 @@ describe('GET /entities', () => {
     const now = new Date();
 
     // Create test entity with multiple fields
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'Complete Book',
       _kind: 'book',
       description: 'A book with many fields',
@@ -873,14 +854,14 @@ describe('GET /entities', () => {
     ({ client } = appWithClient);
 
     // Create an author entity
-    const authorId = await createTestEntity({
+    const authorId = await createTestEntity(client, {
       _name: 'John Doe',
       _kind: 'author',
       biography: 'Famous author',
     });
 
     // Create a book entity that references the author
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'The Great Book',
       _kind: 'book',
       author: `tapp://localhost/entities/${authorId}`,
@@ -914,14 +895,14 @@ describe('GET /entities', () => {
     ({ client } = appWithClient);
 
     // Create a publisher entity
-    const publisherId = await createTestEntity({
+    const publisherId = await createTestEntity(client, {
       _name: 'Big Publishing House',
       _kind: 'publisher',
       location: 'New York',
     });
 
     // Create an author entity that references the publisher
-    const authorId = await createTestEntity({
+    const authorId = await createTestEntity(client, {
       _name: 'John Doe',
       _kind: 'author',
       biography: 'Famous author',
@@ -929,7 +910,7 @@ describe('GET /entities', () => {
     });
 
     // Create a book entity that references the author
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'The Great Book',
       _kind: 'book',
       author: `tapp://localhost/entities/${authorId}`,
@@ -972,14 +953,14 @@ describe('GET /entities', () => {
     ({ client } = appWithClient);
 
     // Create an author entity
-    const authorId = await createTestEntity({
+    const authorId = await createTestEntity(client, {
       _name: 'John Doe',
       _kind: 'author',
       biography: 'Famous author',
     });
 
     // Create a book entity with nested reference to the author
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'The Great Book',
       _kind: 'book',
       metadata: {
@@ -1017,7 +998,7 @@ describe('GET /entities', () => {
     ({ client } = appWithClient);
 
     // Create an author entity with multiple fields
-    const authorId = await createTestEntity({
+    const authorId = await createTestEntity(client, {
       _name: 'John Doe',
       _kind: 'author',
       biography: 'Famous author',
@@ -1027,7 +1008,7 @@ describe('GET /entities', () => {
     });
 
     // Create a book entity that references the author
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'The Great Book',
       _kind: 'book',
       author: `tapp://localhost/entities/${authorId}`,
@@ -1069,20 +1050,20 @@ describe('GET /entities', () => {
     ({ client } = appWithClient);
 
     // Create multiple author entities
-    const author1Id = await createTestEntity({
+    const author1Id = await createTestEntity(client, {
       _name: 'John Doe',
       _kind: 'author',
       biography: 'Famous author',
     });
 
-    const author2Id = await createTestEntity({
+    const author2Id = await createTestEntity(client, {
       _name: 'Jane Smith',
       _kind: 'author',
       biography: 'Award-winning author',
     });
 
     // Create a book entity with array of author references
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'The Great Book',
       _kind: 'book',
       authors: [
@@ -1137,32 +1118,32 @@ describe('GET /entities', () => {
     ({ client } = appWithClient);
 
     // Create multiple author entities
-    const author1Id = await createTestEntity({
+    const author1Id = await createTestEntity(client, {
       _name: 'John Doe',
       _kind: 'author',
       biography: 'Famous author',
     });
 
-    const author2Id = await createTestEntity({
+    const author2Id = await createTestEntity(client, {
       _name: 'Jane Smith',
       _kind: 'author',
       biography: 'Award-winning author',
     });
 
-    const author3Id = await createTestEntity({
+    const author3Id = await createTestEntity(client, {
       _name: 'Bob Wilson',
       _kind: 'author',
       biography: 'Best-selling author',
     });
 
-    const author4Id = await createTestEntity({
+    const author4Id = await createTestEntity(client, {
       _name: 'Alice Brown',
       _kind: 'author',
       biography: 'Critically acclaimed author',
     });
 
     // Create a book entity with array of author references
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'The Great Book',
       _kind: 'book',
       authors: [
@@ -1226,20 +1207,20 @@ describe('GET /entities', () => {
     ({ client } = appWithClient);
 
     // Create multiple author entities
-    const author1Id = await createTestEntity({
+    const author1Id = await createTestEntity(client, {
       _name: 'John Doe',
       _kind: 'author',
       biography: 'Famous author',
     });
 
-    const author2Id = await createTestEntity({
+    const author2Id = await createTestEntity(client, {
       _name: 'Jane Smith',
       _kind: 'author',
       biography: 'Award-winning author',
     });
 
     // Create a book entity with array of author references including invalid and not-found references
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'The Great Book',
       _kind: 'book',
       authors: [
@@ -1297,7 +1278,7 @@ describe('GET /entities', () => {
     ({ client } = appWithClient);
 
     // Create a book entity with array of author references including not-found entities
-    await createTestEntity({
+    await createTestEntity(client, {
       _name: 'The Great Book',
       _kind: 'book',
       authors: [
@@ -1323,7 +1304,49 @@ describe('GET /entities', () => {
     expect(book).to.not.be.undefined();
     expect(book._name).to.equal('The Great Book');
 
-    // Verify the authors array is empty since all references are not-found entities
+    // Verify the authors array is empty since all references were not found
     expect(book.authors).to.be.an.Array().and.have.length(0);
+  });
+
+  it('resolves single reference to a list', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      list_kinds: 'reading-list',
+    });
+    ({ client } = appWithClient);
+
+    // Create a reading list
+    const listId = await createTestList(client, {
+      _name: 'My Reading List',
+      _kind: 'reading-list',
+      description: 'Books I want to read',
+    });
+
+    // Create a book entity that references the list
+    await createTestEntity(client, {
+      _name: 'The Great Book',
+      _kind: 'book',
+      readingList: `tapp://localhost/lists/${listId}`,
+      description: 'A great book to read',
+    });
+
+    // Get the book with reading list lookup
+    const filterStr = 'filter[lookup][0][prop]=readingList';
+    const response = await client.get('/entities').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+
+    // Find the book in the response
+    const book = response.body.find((e: GenericEntity) => e._kind === 'book');
+    expect(book).to.not.be.undefined();
+    expect(book._name).to.equal('The Great Book');
+
+    // Verify the list reference is resolved
+    expect(book.readingList).to.be.an.Object();
+    expect(book.readingList._id).to.equal(listId);
+    expect(book.readingList._name).to.equal('My Reading List');
+    expect(book.readingList._kind).to.equal('reading-list');
+    expect(book.readingList.description).to.equal('Books I want to read');
   });
 });

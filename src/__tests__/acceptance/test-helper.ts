@@ -30,6 +30,7 @@ import {
   LookupBindings,
   LookupHelper,
 } from '../../extensions/utils/lookup-helper';
+import type { GenericEntity, List } from '../../models';
 
 /**
  * Utility function to verify that all fields in two responses match exactly
@@ -509,4 +510,48 @@ export async function teardownApplication(appWithClient: AppWithClient) {
     // Ensure MongoDB memory server is properly stopped
     await appWithClient.mongod.stop();
   }
+}
+
+// Store created entity IDs for cleanup
+let createdEntityIds: string[] = [];
+
+/**
+ * Creates a test entity and returns its ID
+ */
+export async function createTestEntity(
+  client: Client,
+  entityData: Partial<GenericEntity>,
+): Promise<string> {
+  const response = await client.post('/entities').send(entityData).expect(200);
+  const entityId = response.body._id;
+  createdEntityIds.push(entityId);
+
+  return entityId;
+}
+
+/**
+ * Creates a test list and returns its ID
+ */
+export async function createTestList(
+  client: Client,
+  listData: Partial<List>,
+): Promise<string> {
+  const response = await client.post('/lists').send(listData).expect(200);
+
+  return response.body._id;
+}
+
+/**
+ * Cleans up all created entities
+ */
+export async function cleanupCreatedEntities(client: Client): Promise<void> {
+  for (const id of createdEntityIds) {
+    try {
+      await client.delete(`/entities/${id}`);
+    } catch (error) {
+      console.error(`Failed to delete entity ${id}:`, error);
+    }
+  }
+
+  createdEntityIds = [];
 }
