@@ -26,7 +26,13 @@ import {
   ValidfromConfigurationReader,
   VisibilityConfigurationReader,
 } from '../extensions';
+import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
 import { FilterMatcher } from '../extensions/utils/filter-matcher';
+import {
+  LookupBindings,
+  LookupHelper,
+} from '../extensions/utils/lookup-helper';
+import { SetFilterBuilder } from '../extensions/utils/set-helper';
 import {
   GenericEntity,
   List,
@@ -45,8 +51,6 @@ import { ListReactionsRepository } from './list-reactions.repository';
 import { ListRelationRepository } from './list-relation.repository';
 import { TagListRelationRepository } from './tag-list-relation.repository';
 import { TagRepository } from './tag.repository';
-import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
-import { SetFilterBuilder } from '../extensions/utils/set-helper';
 
 export class ListRepository extends DefaultCrudRepository<
   List,
@@ -116,6 +120,9 @@ export class ListRepository extends DefaultCrudRepository<
 
     @inject('extensions.response-limit.configurationreader')
     private responseLimitConfigReader: ResponseLimitConfigurationReader,
+
+    @inject(LookupBindings.HELPER)
+    private lookupHelper: LookupHelper,
   ) {
     super(List, dataSource);
 
@@ -162,14 +169,32 @@ export class ListRepository extends DefaultCrudRepository<
     //this.registerInclusionResolver('_genericEntities', genericEntitiesInclusionResolver);
   }
 
+  private async processLookups(
+    lists: (List & ListRelations)[],
+    filter?: Filter<List>,
+  ): Promise<(List & ListRelations)[]> {
+    if (!filter?.lookup) {
+      return lists;
+    }
+
+    return this.lookupHelper.processLookupForArray(lists, filter);
+  }
+
+  private async processLookup(
+    list: List & ListRelations,
+    filter?: Filter<List>,
+  ): Promise<List & ListRelations> {
+    if (!filter?.lookup) {
+      return list;
+    }
+
+    return this.lookupHelper.processLookupForOne(list, filter);
+  }
+
   async find(filter?: Filter<List>, options?: Options) {
-    // Calculate the limit value using optional chaining and nullish coalescing
-    // If filter.limit is defined, use its value; otherwise, use the configured response limit
     const limit =
       filter?.limit ?? this.responseLimitConfigReader.getListResponseLimit();
 
-    // Update the filter object by spreading the existing filter and overwriting the limit property
-    // Ensure that the new limit value does not exceed configured response limit
     filter = {
       ...filter,
       limit: Math.min(
@@ -178,22 +203,29 @@ export class ListRepository extends DefaultCrudRepository<
       ),
     };
 
-    return super.find(filter, options);
+    return super
+      .find(filter, options)
+      .then((lists) => this.processLookups(lists, filter));
   }
 
   async findById(id: string, filter?: FilterExcludingWhere<List>) {
-    const result = await super.findById(id, filter).catch(() => null);
-    if (!result) {
-      throw new HttpErrorResponse({
-        statusCode: 404,
-        name: 'NotFoundError',
-        message: "List with id '" + id + "' could not be found.",
-        code: 'LIST-NOT-FOUND',
-        status: 404,
-      });
-    }
+    return super
+      .findById(id, filter)
+      .catch(() => null)
+      .then((list) => {
+        if (!list) {
+          throw new HttpErrorResponse({
+            statusCode: 404,
+            name: 'NotFoundError',
+            message: "List with id '" + id + "' could not be found.",
+            code: 'LIST-NOT-FOUND',
+            status: 404,
+          });
+        }
 
-    return result;
+        return list;
+      })
+      .then((list) => this.processLookup(list, filter));
   }
 
   async create(data: DataObject<List>) {

@@ -1,11 +1,19 @@
 import { Getter } from '@loopback/core';
+import type { Filter } from '@loopback/repository';
 import { expect, sinon } from '@loopback/testlab';
 import {
   setupRepositoryTest,
   teardownRepositoryTest,
 } from './test-helper.repository';
 import type { EntityPersistenceApplication } from '../../..';
+import { LookupHelper } from '../../../extensions/utils/lookup-helper';
 import { HttpErrorResponse } from '../../../models';
+import type {
+  GenericEntity,
+  GenericEntityRelations,
+  List,
+  ListRelations,
+} from '../../../models';
 import {
   CustomEntityThroughListRepository,
   EntityRepository,
@@ -45,6 +53,22 @@ describe('ListRepository', () => {
       CustomEntityThroughListRepository,
     );
 
+    // Create a mock lookup helper
+    const mockLookupHelper = sinon.createStubInstance(LookupHelper);
+    (mockLookupHelper.processLookupForArray as sinon.SinonStub).callsFake(
+      async (
+        items: ((GenericEntity | List) &
+          (GenericEntityRelations | ListRelations))[],
+        _filter?: Filter<GenericEntity | List>,
+      ) => items,
+    );
+    (mockLookupHelper.processLookupForOne as sinon.SinonStub).callsFake(
+      async (
+        item: (GenericEntity | List) & (GenericEntityRelations | ListRelations),
+        _filter?: Filter<GenericEntity | List>,
+      ) => item,
+    );
+
     // Create main repository instance with stubbed dependencies
     repository = new ListRepository(
       testSetup.dataSource,
@@ -62,6 +86,7 @@ describe('ListRepository', () => {
       testSetup.configReaders.validfromConfigReader,
       testSetup.configReaders.idempotencyConfigReader,
       testSetup.configReaders.responseLimitConfigReader,
+      mockLookupHelper,
     );
   });
 

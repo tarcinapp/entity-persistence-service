@@ -1,8 +1,14 @@
 import { BindingKey, Getter, injectable } from '@loopback/core';
 import { Filter, repository } from '@loopback/repository';
 import { get, set } from 'lodash';
-import { GenericEntity, GenericEntityRelations } from '../../models';
+import {
+  GenericEntity,
+  GenericEntityRelations,
+  List,
+  ListRelations,
+} from '../../models';
 import { EntityRepository } from '../../repositories/entity.repository';
+import { ListRepository } from '../../repositories/list.repository';
 import { LookupScope } from '../types/filter-augmentation';
 
 /**
@@ -17,9 +23,46 @@ const isValidGuid = (id: string): boolean => {
   return guidRegex.test(id);
 };
 
+type ReferenceType = 'entity' | 'list';
+
+interface ReferenceInfo {
+  type: ReferenceType;
+  id: string;
+  uri: string;
+}
+
+type ResolvedReference =
+  | (GenericEntity & GenericEntityRelations)
+  | (List & ListRelations);
+
+/**
+ * Parse a reference URI and return reference type and ID
+ * @param uri - The reference URI to parse
+ * @returns ReferenceInfo containing the type and ID, or null if invalid
+ */
+const parseReferenceUri = (uri: string): ReferenceInfo | null => {
+  if (typeof uri !== 'string') {
+    return null;
+  }
+
+  if (uri.startsWith('tapp://localhost/entities/')) {
+    const id = uri.split('/').pop();
+    if (id && isValidGuid(id)) {
+      return { type: 'entity', id, uri };
+    }
+  } else if (uri.startsWith('tapp://localhost/lists/')) {
+    const id = uri.split('/').pop();
+    if (id && isValidGuid(id)) {
+      return { type: 'list', id, uri };
+    }
+  }
+
+  return null;
+};
+
 /**
  * Binding key for the LookupHelper service.
- * This helper is used to resolve entity references in the system.
+ * This helper is used to resolve entity and list references in the system.
  * Supports nested property lookups using dot notation (e.g., 'foo.bar.baz')
  */
 export const LookupBindings = {
@@ -27,8 +70,8 @@ export const LookupBindings = {
 } as const;
 
 /**
- * Helper class that handles the resolution of entity references.
- * It supports both single entity and array of entities processing,
+ * Helper class that handles the resolution of entity and list references.
+ * It supports both single item and array processing,
  * with the ability to handle nested lookups and field filtering.
  */
 @injectable()
@@ -36,226 +79,331 @@ export class LookupHelper {
   constructor(
     @repository.getter('EntityRepository')
     private entityRepositoryGetter: Getter<EntityRepository>,
+    @repository.getter('ListRepository')
+    private listRepositoryGetter: Getter<ListRepository>,
   ) {}
 
   /**
-   * Process lookups for an array of entities.
-   * This method resolves references for each entity in the array based on the lookup filter.
+   * Process lookups for an array of items.
+   * This method resolves references for each item in the array based on the lookup filter.
    *
-   * @param entities - Array of entities to process
+   * @param items - Array of items to process
    * @param filter - Filter containing lookup definitions
-   * @returns Promise resolving to processed entities with resolved references
+   * @returns Promise resolving to processed items with resolved references
    */
-  async processLookupForArray(
-    entities: (GenericEntity & GenericEntityRelations)[],
-    filter?: Filter<GenericEntity>,
-  ): Promise<(GenericEntity & GenericEntityRelations)[]> {
+  async processLookupForArray<T extends GenericEntity | List>(
+    items: (T & (GenericEntityRelations | ListRelations))[],
+    filter?: Filter<T>,
+  ): Promise<(T & (GenericEntityRelations | ListRelations))[]> {
     const lookup = filter?.lookup;
     if (!lookup) {
-      return entities;
+      return items;
     }
 
-    let processedEntities = entities;
+    let processedItems = items;
     for (const lookupDef of lookup) {
-      processedEntities = await this.processLookupBatch(
-        processedEntities,
-        lookupDef,
-      );
+      processedItems = await this.processLookupBatch(processedItems, lookupDef);
     }
 
-    return processedEntities;
+    return processedItems;
   }
 
   /**
-   * Process lookups for a single entity.
-   * This method resolves references for a single entity based on the lookup filter.
+   * Process lookups for a single item.
+   * This method resolves references for a single item based on the lookup filter.
    *
-   * @param entity - Single entity to process
+   * @param item - Single item to process
    * @param filter - Filter containing lookup definitions
-   * @returns Promise resolving to processed entity with resolved references
+   * @returns Promise resolving to processed item with resolved references
    */
-  async processLookupForOne(
-    entity: GenericEntity & GenericEntityRelations,
-    filter?: Filter<GenericEntity>,
-  ): Promise<GenericEntity & GenericEntityRelations> {
+  async processLookupForOne<T extends GenericEntity | List>(
+    item: T & (GenericEntityRelations | ListRelations),
+    filter?: Filter<T>,
+  ): Promise<T & (GenericEntityRelations | ListRelations)> {
     const lookup = filter?.lookup;
     if (!lookup) {
-      return entity;
+      return item;
     }
 
-    let processedEntity = entity;
+    let processedItem = item;
     for (const lookupDef of lookup) {
-      processedEntity = (
-        await this.processLookupBatch([processedEntity], lookupDef)
+      processedItem = (
+        await this.processLookupBatch([processedItem], lookupDef)
       )[0];
     }
 
-    return processedEntity;
+    return processedItem;
   }
 
   /**
-   * Process a batch of entities for a specific lookup definition.
+   * Process a batch of items for a specific lookup definition.
    * This is the core method that handles the actual reference resolution.
    *
-   * @param entities - Array of entities to process
+   * @param items - Array of items to process
    * @param lookup - Lookup configuration defining what and how to resolve
-   * @returns Promise resolving to processed entities
+   * @returns Promise resolving to processed items
    */
-  private async processLookupBatch(
-    entities: (GenericEntity & GenericEntityRelations)[],
-    lookup: LookupScope<GenericEntity>,
-  ): Promise<(GenericEntity & GenericEntityRelations)[]> {
+  private async processLookupBatch<T extends GenericEntity | List>(
+    items: (T & (GenericEntityRelations | ListRelations))[],
+    lookup: LookupScope<T>,
+  ): Promise<(T & (GenericEntityRelations | ListRelations))[]> {
     const { prop, scope } = lookup;
 
-    // Collect all unique entity IDs that need to be looked up
-    const entityIdsToLookup = new Set<string>();
+    // Group references by type (entity or list)
+    const entityReferences = new Map<string, Set<string>>();
+    const listReferences = new Map<string, Set<string>>();
     const referenceMap = new Map<
       string,
       {
-        entity: GenericEntity & GenericEntityRelations;
+        item: T & (GenericEntityRelations | ListRelations);
         isArray: boolean;
         path: string;
-        references: string[];
+        references: ReferenceInfo[];
       }
     >();
 
-    // First pass: collect all entity IDs that need to be resolved
-    for (const entity of entities) {
-      const references = get(entity, prop);
+    // First pass: collect and categorize all references
+    for (const item of items) {
+      const references = get(item, prop);
       if (!references) {
         continue;
       }
 
       // Handle both array and single reference cases
-      const refArray = Array.isArray(references) ? references : [references];
-      const validRefs = refArray.filter(
-        (ref) =>
-          typeof ref === 'string' &&
-          ref.startsWith('tapp://localhost/entities/'),
-      );
+      const refArray = (
+        Array.isArray(references) ? references : [references]
+      ) as string[];
+      const validRefs = refArray
+        .map((ref: string) => parseReferenceUri(ref))
+        .filter((ref): ref is ReferenceInfo => ref !== null);
 
       if (validRefs.length > 0) {
-        // Store the original entity, whether its reference was an array, the property path, and the references
-        referenceMap.set(entity._id, {
-          entity,
+        // Store reference information
+        referenceMap.set(item._id, {
+          item,
           isArray: Array.isArray(references),
           path: prop,
           references: validRefs,
         });
 
-        // Collect valid entity IDs
+        // Categorize references by type
         for (const ref of validRefs) {
-          const entityId = ref.split('/').pop();
-          if (entityId && isValidGuid(entityId)) {
-            entityIdsToLookup.add(entityId);
+          if (ref.type === 'entity') {
+            if (!entityReferences.has(item._id)) {
+              entityReferences.set(item._id, new Set());
+            }
+
+            entityReferences.get(item._id)!.add(ref.id);
+          } else {
+            if (!listReferences.has(item._id)) {
+              listReferences.set(item._id, new Set());
+            }
+
+            listReferences.get(item._id)!.add(ref.id);
           }
         }
       }
     }
 
-    if (entityIdsToLookup.size === 0) {
-      return entities;
+    if (entityReferences.size === 0 && listReferences.size === 0) {
+      return items;
     }
 
-    // Fetch all referenced entities in a single query
-    const entityRepository = await this.entityRepositoryGetter();
-    const entityIds = Array.from(entityIdsToLookup);
-    const baseWhere = {
-      _id: {
-        inq: entityIds,
-      },
-      ...(scope?.where ?? {}),
-    };
+    // Fetch referenced entities and lists in parallel
+    const [resolvedEntities, resolvedLists] = await Promise.all([
+      this.fetchReferencedEntities(
+        Array.from(
+          new Set(
+            Array.from(entityReferences.values()).flatMap((values) =>
+              Array.from(values),
+            ),
+          ),
+        ),
+        scope,
+      ),
+      this.fetchReferencedLists(
+        Array.from(
+          new Set(
+            Array.from(listReferences.values()).flatMap((values) =>
+              Array.from(values),
+            ),
+          ),
+        ),
+        scope,
+      ),
+    ]);
 
-    // Handle field selection with special consideration for _id field
-    let resolvedEntities;
-    let userFields: { [key: string]: boolean } | undefined;
-    if (scope?.fields) {
-      const fields = scope.fields;
-      const hasTrueFields = Object.values(fields).includes(true);
-
-      if (hasTrueFields) {
-        // Store the user's field selection for later filtering
-        userFields = { ...fields };
-
-        // Always include _id field as it's required for reference resolution
-        resolvedEntities = await entityRepository.find({
-          ...scope,
-          where: baseWhere,
-          fields: {
-            ...fields,
-            _id: true,
-          },
-        });
-      } else {
-        resolvedEntities = await entityRepository.find({
-          where: baseWhere,
-          ...scope,
-        });
-      }
-    } else {
-      resolvedEntities = await entityRepository.find({
-        where: baseWhere,
-        ...scope,
-      });
-    }
-
-    // Create an efficient lookup map for resolved entities while preserving order
-    const resolvedEntitiesArray = resolvedEntities;
+    // Create lookup maps for both entities and lists
     const resolvedEntitiesMap = new Map(
       resolvedEntities.map((entity) => [entity._id, entity]),
     );
+    const resolvedListsMap = new Map(
+      resolvedLists.map((list) => [list._id, list]),
+    );
 
-    // Replace references with resolved entities
-    return entities.map((entity) => {
-      const referenceInfo = referenceMap.get(entity._id);
+    // Replace references with resolved objects
+    return items.map((item) => {
+      const referenceInfo = referenceMap.get(item._id);
       if (!referenceInfo) {
-        return entity;
+        return item;
       }
 
       const { isArray, path, references } = referenceInfo;
 
-      // Process each reference and resolve it to an entity, preserving order
-      const resolvedRefs = references
-        .map((ref) => {
-          const entityId = ref.split('/').pop();
-          if (!entityId || !isValidGuid(entityId)) {
-            return null;
-          }
+      // Get all valid references in the order they appear in resolvedEntities/resolvedLists
+      const validRefs = references.filter((ref) => {
+        if (ref.type === 'entity') {
+          return resolvedEntitiesMap.has(ref.id);
+        } else {
+          return resolvedListsMap.has(ref.id);
+        }
+      });
 
-          const resolvedEntity = resolvedEntitiesMap.get(entityId);
-          if (!resolvedEntity) {
-            return null;
-          }
+      // Create ordered arrays of resolved references by filtering the original arrays
+      const orderedEntityRefs = resolvedEntities.filter((entity) =>
+        validRefs.some((ref) => ref.type === 'entity' && ref.id === entity._id),
+      );
 
-          // Apply field filtering if specified by user
-          if (userFields) {
-            const filteredEntity: Partial<GenericEntity> = {};
-            for (const [key, include] of Object.entries(userFields)) {
-              if (include) {
-                filteredEntity[key as keyof GenericEntity] =
-                  resolvedEntity[key as keyof GenericEntity];
-              }
+      const orderedListRefs = resolvedLists.filter((list) =>
+        validRefs.some((ref) => ref.type === 'list' && ref.id === list._id),
+      );
+
+      // Combine the ordered arrays
+      const orderedRefs = [...orderedEntityRefs, ...orderedListRefs];
+
+      // Apply field filtering to resolved references if fields are specified
+      const filteredRefs = scope?.fields
+        ? orderedRefs.map((ref) => {
+            const result = { ...ref };
+            const fields = scope.fields ?? {};
+
+            // Handle inclusion fields (true)
+            const inclusionFields = Object.entries(fields)
+              .filter(([_, value]) => value === true)
+              .map(([key]) => key);
+
+            if (inclusionFields.length > 0) {
+              // If we have inclusion fields, only keep those fields
+              Object.keys(result).forEach((key) => {
+                if (!inclusionFields.includes(key)) {
+                  delete result[key];
+                }
+              });
+            } else {
+              // If we have exclusion fields, remove those fields
+              Object.entries(fields)
+                .filter(([_, value]) => value === false)
+                .forEach(([key]) => {
+                  delete result[key];
+                });
             }
 
-            return filteredEntity;
-          }
+            return result as ResolvedReference;
+          })
+        : orderedRefs;
 
-          return resolvedEntity;
-        })
-        .filter((ref): ref is GenericEntity => ref !== null);
-
-      // For arrays, sort the resolved references to match the order from the repository
+      // Set the resolved references back on the item
       if (isArray) {
-        const orderedRefs = resolvedEntitiesArray.filter((resolvedEntity) =>
-          resolvedRefs.some((ref) => ref._id === resolvedEntity._id),
-        );
-        set(entity, path, orderedRefs);
+        set(item, path, filteredRefs);
       } else {
-        set(entity, path, resolvedRefs[0] ?? null);
+        set(item, path, filteredRefs[0] ?? null);
       }
 
-      return entity;
+      return item;
+    });
+  }
+
+  /**
+   * Fetch referenced entities from the repository
+   */
+  private async fetchReferencedEntities(
+    entityIds: string[],
+    scope?: any,
+  ): Promise<(GenericEntity & GenericEntityRelations)[]> {
+    if (entityIds.length === 0) {
+      return [];
+    }
+
+    const entityRepository = await this.entityRepositoryGetter();
+
+    // Handle field selection
+    const fields = scope?.fields;
+    let adjustedFields = fields;
+
+    if (fields) {
+      // Check if there are any inclusion fields (true)
+      const hasInclusionFields = Object.values(fields).some(
+        (value) => value === true,
+      );
+
+      if (hasInclusionFields) {
+        // If we have inclusion fields, ensure _id is included for internal use
+        adjustedFields = {
+          ...fields,
+          _id: true,
+        };
+      } else {
+        // If we only have exclusion fields, remove _id from exclusions if present
+        adjustedFields = Object.fromEntries(
+          Object.entries(fields).filter(([key]) => key !== '_id'),
+        );
+      }
+    }
+
+    return entityRepository.find({
+      ...scope,
+      fields: adjustedFields,
+      where: {
+        _id: { inq: entityIds },
+        ...(scope?.where ?? {}),
+      },
+    });
+  }
+
+  /**
+   * Fetch referenced lists from the repository
+   */
+  private async fetchReferencedLists(
+    listIds: string[],
+    scope?: any,
+  ): Promise<(List & ListRelations)[]> {
+    if (listIds.length === 0) {
+      return [];
+    }
+
+    const listRepository = await this.listRepositoryGetter();
+
+    // Handle field selection
+    const fields = scope?.fields;
+    let adjustedFields = fields;
+
+    if (fields) {
+      // Check if there are any inclusion fields (true)
+      const hasInclusionFields = Object.values(fields).some(
+        (value) => value === true,
+      );
+
+      if (hasInclusionFields) {
+        // If we have inclusion fields, ensure _id is included for internal use
+        adjustedFields = {
+          ...fields,
+          _id: true,
+        };
+      } else {
+        // If we only have exclusion fields, remove _id from exclusions if present
+        adjustedFields = Object.fromEntries(
+          Object.entries(fields).filter(([key]) => key !== '_id'),
+        );
+      }
+    }
+
+    return listRepository.find({
+      ...scope,
+      fields: adjustedFields,
+      where: {
+        _id: { inq: listIds },
+        ...(scope?.where ?? {}),
+      },
     });
   }
 }
@@ -264,10 +412,12 @@ export class LookupHelper {
  * Factory function to create a new LookupHelper instance.
  *
  * @param entityRepositoryGetter - Getter function for the EntityRepository
+ * @param listRepositoryGetter - Getter function for the ListRepository
  * @returns A new instance of LookupHelper
  */
 export function createLookupHelper(
   entityRepositoryGetter: Getter<EntityRepository>,
+  listRepositoryGetter: Getter<ListRepository>,
 ): LookupHelper {
-  return new LookupHelper(entityRepositoryGetter);
+  return new LookupHelper(entityRepositoryGetter, listRepositoryGetter);
 }
