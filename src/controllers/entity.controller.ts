@@ -228,9 +228,11 @@ export class EntityController {
   })
   async findById(
     @param.path.string('id') id: string,
-    @param.filter(GenericEntity, { exclude: 'where' })
+    @param.query.object('filter', getFilterSchemaFor(GenericEntity))
     filter?: FilterExcludingWhere<GenericEntity>,
   ): Promise<GenericEntity> {
+    sanitizeFilterFields(filter);
+
     return this.entityRepository.findById(id, filter);
   }
 

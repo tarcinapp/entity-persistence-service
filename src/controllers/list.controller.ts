@@ -227,9 +227,12 @@ export class ListController {
   })
   async findById(
     @param.path.string('id') id: string,
-    @param.filter(List, { exclude: 'where' })
+    @param.query.object('filter', getFilterSchemaFor(List))
     filter?: FilterExcludingWhere<List>,
   ): Promise<List> {
+    processIncludes<List>(filter);
+    sanitizeFilterFields(filter);
+
     return this.listRepository.findById(id, filter);
   }
 
