@@ -348,4 +348,89 @@ describe('GET /lists', () => {
       'Reading List A',
     ]);
   });
+
+  it('returns only selected fields', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading',
+    });
+    ({ client } = appWithClient);
+
+    // Create test list with multiple fields
+    await createTestList({
+      _name: 'Complete Reading List',
+      _kind: 'reading',
+      description: 'A list with many fields',
+      _visibility: 'public',
+      _ownerUsers: ['user-123'],
+      _viewerUsers: ['viewer-456'],
+      _validFromDateTime: new Date().toISOString(),
+    });
+
+    // Request only specific fields
+    const filterStr =
+      'filter[fields][_name]=true&filter[fields][description]=true&filter[fields][_visibility]=true';
+    const response = await client.get('/lists').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+    const list = response.body[0];
+
+    // Should have the requested fields
+    expect(list).to.have.property('_name', 'Complete Reading List');
+    expect(list).to.have.property('description', 'A list with many fields');
+    expect(list).to.have.property('_visibility', 'public');
+
+    // Should not have other fields
+    expect(list).to.not.have.property('_id');
+    expect(list).to.not.have.property('_kind');
+    expect(list).to.not.have.property('_ownerUsers');
+    expect(list).to.not.have.property('_viewerUsers');
+    expect(list).to.not.have.property('_validFromDateTime');
+    expect(list).to.not.have.property('_creationDateTime');
+    expect(list).to.not.have.property('_lastUpdatedDateTime');
+  });
+
+  it('excludes specified fields from response', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+
+    // Create test list with multiple fields
+    await createTestList({
+      _name: 'Complete Reading List',
+      _kind: 'reading',
+      description: 'A list with many fields',
+      _visibility: 'public',
+      _ownerUsers: ['user-123'],
+      _viewerUsers: ['viewer-456'],
+      _validFromDateTime: now.toISOString(),
+      _validUntilDateTime: new Date(now.getTime() + 86400000).toISOString(), // tomorrow
+    });
+
+    // Request to exclude specific fields
+    const filterStr =
+      'filter[fields][_ownerUsers]=false&filter[fields][_viewerUsers]=false&filter[fields][_validFromDateTime]=false&filter[fields][_validUntilDateTime]=false';
+    const response = await client.get('/lists').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+    const list = response.body[0];
+
+    // Should have non-excluded fields
+    expect(list).to.have.property('_id');
+    expect(list).to.have.property('_name', 'Complete Reading List');
+    expect(list).to.have.property('_kind', 'reading');
+    expect(list).to.have.property('_visibility', 'public');
+    expect(list).to.have.property('_createdDateTime');
+    expect(list).to.have.property('_lastUpdatedDateTime');
+
+    // Should not have excluded fields
+    expect(list).to.not.have.property('_ownerUsers');
+    expect(list).to.not.have.property('_viewerUsers');
+    expect(list).to.not.have.property('_validFromDateTime');
+    expect(list).to.not.have.property('_validUntilDateTime');
+  });
 });
