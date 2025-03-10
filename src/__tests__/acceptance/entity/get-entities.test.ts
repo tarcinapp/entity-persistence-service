@@ -1092,10 +1092,15 @@ describe('GET /entities', () => {
       description: 'A great book by multiple authors',
     });
 
-    // Get the book with authors lookup
-    const filterStr = 'filter[lookup][0][prop]=authors';
+    // Get the book with authors lookup, using skip and limit in scope
+    const filterStr =
+      'filter[lookup][0][prop]=authors&' +
+      'filter[lookup][0][scope][skip]=1&' +
+      'filter[lookup][0][scope][limit]=2&' +
+      'filter[lookup][0][scope][order][0]=_name ASC';
     const response = await client.get('/entities').query(filterStr).expect(200);
 
+    // Response should contain all entities (book + all authors)
     expect(response.body).to.be.Array().and.have.length(3);
 
     // Find the book in the response
@@ -1103,10 +1108,12 @@ describe('GET /entities', () => {
     expect(book).to.not.be.undefined();
     expect(book._name).to.equal('The Great Book');
 
-    // Verify the authors array is resolved
-    expect(book.authors).to.be.an.Array().and.have.length(2);
+    // Verify the authors array is resolved with skip and limit applied
+    // After ordering by name ASC: Jane Smith, John Doe
+    // After skip=1: Only John Doe should remain
+    expect(book.authors).to.be.an.Array().and.have.length(1);
 
-    // Verify first author
+    // Verify first author (should be John Doe, as Jane Smith was skipped)
     const author1 = book.authors[0];
     expect(author1).to.be.an.Object();
     expect(author1._id).to.equal(author1Id);
@@ -1114,13 +1121,12 @@ describe('GET /entities', () => {
     expect(author1._kind).to.equal('author');
     expect(author1.biography).to.equal('Famous author');
 
-    // Verify second author
-    const author2 = book.authors[1];
-    expect(author2).to.be.an.Object();
-    expect(author2._id).to.equal(author2Id);
-    expect(author2._name).to.equal('Jane Smith');
-    expect(author2._kind).to.equal('author');
-    expect(author2.biography).to.equal('Award-winning author');
+    // Verify invalid and not-found references are not included
+    const authorIds = book.authors.map((a: any) => a._id);
+    expect(authorIds.indexOf('invalid-guid')).to.equal(-1);
+    expect(authorIds.indexOf('00000000-0000-0000-0000-000000000000')).to.equal(
+      -1,
+    );
   });
 
   it('applies skip and limit in scope when looking up array references', async () => {
@@ -1170,7 +1176,10 @@ describe('GET /entities', () => {
 
     // Get the book with authors lookup, using skip and limit in scope
     const filterStr =
-      'filter[lookup][0][prop]=authors&filter[lookup][0][scope][skip]=1&filter[lookup][0][scope][limit]=2';
+      'filter[lookup][0][prop]=authors&' +
+      'filter[lookup][0][scope][skip]=1&' +
+      'filter[lookup][0][scope][limit]=2&' +
+      'filter[lookup][0][scope][order][0]=_name ASC';
     const response = await client.get('/entities').query(filterStr).expect(200);
 
     // Response should contain all entities (book + all authors)
@@ -1184,26 +1193,29 @@ describe('GET /entities', () => {
     // Verify the authors array is resolved with skip and limit applied
     expect(book.authors).to.be.an.Array().and.have.length(2);
 
-    // Verify first author (should be Jane Smith, as John Doe was skipped)
+    // Verify first author (should be Bob Wilson, as Alice Brown was skipped)
     const author1 = book.authors[0];
     expect(author1).to.be.an.Object();
-    expect(author1._id).to.equal(author2Id);
-    expect(author1._name).to.equal('Jane Smith');
+    expect(author1._id).to.equal(author3Id);
+    expect(author1._name).to.equal('Bob Wilson');
     expect(author1._kind).to.equal('author');
-    expect(author1.biography).to.equal('Award-winning author');
+    expect(author1.biography).to.equal('Best-selling author');
 
-    // Verify second author (should be Bob Wilson)
+    // Verify second author (should be Jane Smith)
     const author2 = book.authors[1];
     expect(author2).to.be.an.Object();
-    expect(author2._id).to.equal(author3Id);
-    expect(author2._name).to.equal('Bob Wilson');
+    expect(author2._id).to.equal(author2Id);
+    expect(author2._name).to.equal('Jane Smith');
     expect(author2._kind).to.equal('author');
-    expect(author2.biography).to.equal('Best-selling author');
+    expect(author2.biography).to.equal('Award-winning author');
 
-    // Verify Alice Brown is not included (was after the limit)
+    // Verify invalid and not-found references are not included
     expect(book.authors).to.have.length(2);
-    const authorNames = book.authors.map((a: any) => a._name);
-    expect(authorNames.indexOf('Alice Brown')).to.equal(-1);
+    const authorIds = book.authors.map((a: any) => a._id);
+    expect(authorIds.indexOf('invalid-guid')).to.equal(-1);
+    expect(authorIds.indexOf('00000000-0000-0000-0000-000000000000')).to.equal(
+      -1,
+    );
   });
 
   it('handles invalid references and not-found entities with skip and limit', async () => {
@@ -1242,7 +1254,10 @@ describe('GET /entities', () => {
 
     // Get the book with authors lookup, using skip and limit in scope
     const filterStr =
-      'filter[lookup][0][prop]=authors&filter[lookup][0][scope][skip]=1&filter[lookup][0][scope][limit]=2';
+      'filter[lookup][0][prop]=authors&' +
+      'filter[lookup][0][scope][skip]=1&' +
+      'filter[lookup][0][scope][limit]=2&' +
+      'filter[lookup][0][scope][order][0]=_name ASC';
     const response = await client.get('/entities').query(filterStr).expect(200);
 
     // Response should contain all entities (book + all authors)
@@ -1254,9 +1269,11 @@ describe('GET /entities', () => {
     expect(book._name).to.equal('The Great Book');
 
     // Verify the authors array is resolved with skip and limit applied
-    expect(book.authors).to.be.an.Array().and.have.length(2);
+    // After ordering by name ASC: Jane Smith, John Doe
+    // After skip=1: Only John Doe should remain
+    expect(book.authors).to.be.an.Array().and.have.length(1);
 
-    // Verify first author (should be John Doe, as invalid reference was skipped)
+    // Verify first author (should be John Doe, as Jane Smith was skipped)
     const author1 = book.authors[0];
     expect(author1).to.be.an.Object();
     expect(author1._id).to.equal(author1Id);
@@ -1264,12 +1281,11 @@ describe('GET /entities', () => {
     expect(author1._kind).to.equal('author');
     expect(author1.biography).to.equal('Famous author');
 
-    // Verify second author (should be error object for invalid GUID)
-    const author2 = book.authors[1];
-    expect(author2).to.be.an.Object();
-    expect(author2.lookupErrorCode).to.equal('INVALID-GUID');
-    expect(author2.reference).to.equal(
-      'tapp://localhost/entities/invalid-guid',
+    // Verify invalid and not-found references are not included
+    const authorIds = book.authors.map((a: any) => a._id);
+    expect(authorIds.indexOf('invalid-guid')).to.equal(-1);
+    expect(authorIds.indexOf('00000000-0000-0000-0000-000000000000')).to.equal(
+      -1,
     );
   });
 
@@ -1294,7 +1310,9 @@ describe('GET /entities', () => {
 
     // Get the book with authors lookup, using skip and limit in scope
     const filterStr =
-      'filter[lookup][0][prop]=authors&filter[lookup][0][scope][skip]=1&filter[lookup][0][scope][limit]=1';
+      'filter[lookup][0][prop]=authors&' +
+      'filter[lookup][0][scope][skip]=1&' +
+      'filter[lookup][0][scope][limit]=1';
     const response = await client.get('/entities').query(filterStr).expect(200);
 
     // Response should contain only the book (no authors found)
@@ -1305,15 +1323,7 @@ describe('GET /entities', () => {
     expect(book).to.not.be.undefined();
     expect(book._name).to.equal('The Great Book');
 
-    // Verify the authors array is resolved with skip and limit applied
-    expect(book.authors).to.be.an.Array().and.have.length(1);
-
-    // Verify the author is marked as not found
-    const author = book.authors[0];
-    expect(author).to.be.an.Object();
-    expect(author.lookupErrorCode).to.equal('ENTITY-NOT-FOUND');
-    expect(author.reference).to.equal(
-      'tapp://localhost/entities/11111111-1111-1111-1111-111111111111',
-    );
+    // Verify the authors array is empty since all references are not-found entities
+    expect(book.authors).to.be.an.Array().and.have.length(0);
   });
 });

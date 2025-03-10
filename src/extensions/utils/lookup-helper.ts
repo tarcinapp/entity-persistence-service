@@ -5,12 +5,6 @@ import { GenericEntity, GenericEntityRelations } from '../../models';
 import { EntityRepository } from '../../repositories/entity.repository';
 import { LookupScope } from '../types/filter-augmentation';
 
-const LOOKUP_ERROR_CODES = {
-  INVALID_ENTITY_REFERENCE: 'INVALID-ENTITY-REFERENCE',
-  ENTITY_NOT_FOUND: 'ENTITY-NOT-FOUND',
-  INVALID_GUID: 'INVALID-GUID',
-} as const;
-
 /**
  * Validates if a string is a valid GUID format
  * @param id - The string to validate
@@ -141,27 +135,16 @@ export class LookupHelper {
       );
 
       if (validRefs.length > 0) {
-        // Apply skip/limit to the references if specified
-        let processedRefs = validRefs;
-        if (scope?.skip !== undefined || scope?.limit !== undefined) {
-          const skip = scope.skip ?? 0;
-          const limit = scope.limit;
-          processedRefs = validRefs.slice(
-            skip,
-            limit ? skip + limit : undefined,
-          );
-        }
-
-        // Store the original entity, whether its reference was an array, the property path, and the processed references
+        // Store the original entity, whether its reference was an array, the property path, and the references
         referenceMap.set(entity._id, {
           entity,
           isArray: Array.isArray(references),
           path: prop,
-          references: processedRefs,
+          references: validRefs,
         });
 
-        // Validate references and collect valid entity IDs
-        for (const ref of processedRefs) {
+        // Collect valid entity IDs
+        for (const ref of validRefs) {
           const entityId = ref.split('/').pop();
           if (entityId && isValidGuid(entityId)) {
             entityIdsToLookup.add(entityId);
@@ -184,15 +167,11 @@ export class LookupHelper {
       ...(scope?.where ?? {}),
     };
 
-    // Remove skip/limit from scope before passing to repository
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { skip, limit, ...repositoryScope } = scope ?? {};
-
     // Handle field selection with special consideration for _id field
     let resolvedEntities;
     let userFields: { [key: string]: boolean } | undefined;
-    if (repositoryScope?.fields) {
-      const fields = repositoryScope.fields;
+    if (scope?.fields) {
+      const fields = scope.fields;
       const hasTrueFields = Object.values(fields).includes(true);
 
       if (hasTrueFields) {
@@ -201,7 +180,7 @@ export class LookupHelper {
 
         // Always include _id field as it's required for reference resolution
         resolvedEntities = await entityRepository.find({
-          ...repositoryScope,
+          ...scope,
           where: baseWhere,
           fields: {
             ...fields,
@@ -211,17 +190,18 @@ export class LookupHelper {
       } else {
         resolvedEntities = await entityRepository.find({
           where: baseWhere,
-          ...repositoryScope,
+          ...scope,
         });
       }
     } else {
       resolvedEntities = await entityRepository.find({
         where: baseWhere,
-        ...repositoryScope,
+        ...scope,
       });
     }
 
-    // Create an efficient lookup map for resolved entities
+    // Create an efficient lookup map for resolved entities while preserving order
+    const resolvedEntitiesArray = resolvedEntities;
     const resolvedEntitiesMap = new Map(
       resolvedEntities.map((entity) => [entity._id, entity]),
     );
@@ -235,53 +215,45 @@ export class LookupHelper {
 
       const { isArray, path, references } = referenceInfo;
 
-      // Process each reference and resolve it to an entity
-      const resolvedRefs = references.map((ref) => {
-        // Validate reference format
-        if (
-          typeof ref !== 'string' ||
-          !ref.startsWith('tapp://localhost/entities/')
-        ) {
-          return {
-            lookupErrorCode: LOOKUP_ERROR_CODES.INVALID_ENTITY_REFERENCE,
-            reference: ref,
-          };
-        }
-
-        const entityId = ref.split('/').pop();
-        if (!entityId || !isValidGuid(entityId)) {
-          return {
-            lookupErrorCode: LOOKUP_ERROR_CODES.INVALID_GUID,
-            reference: ref,
-          };
-        }
-
-        const resolvedEntity = resolvedEntitiesMap.get(entityId);
-        if (!resolvedEntity) {
-          return {
-            lookupErrorCode: LOOKUP_ERROR_CODES.ENTITY_NOT_FOUND,
-            reference: ref,
-          };
-        }
-
-        // Apply field filtering if specified by user
-        if (userFields) {
-          const filteredEntity: Partial<GenericEntity> = {};
-          for (const [key, include] of Object.entries(userFields)) {
-            if (include) {
-              filteredEntity[key as keyof GenericEntity] =
-                resolvedEntity[key as keyof GenericEntity];
-            }
+      // Process each reference and resolve it to an entity, preserving order
+      const resolvedRefs = references
+        .map((ref) => {
+          const entityId = ref.split('/').pop();
+          if (!entityId || !isValidGuid(entityId)) {
+            return null;
           }
 
-          return filteredEntity;
-        }
+          const resolvedEntity = resolvedEntitiesMap.get(entityId);
+          if (!resolvedEntity) {
+            return null;
+          }
 
-        return resolvedEntity;
-      });
+          // Apply field filtering if specified by user
+          if (userFields) {
+            const filteredEntity: Partial<GenericEntity> = {};
+            for (const [key, include] of Object.entries(userFields)) {
+              if (include) {
+                filteredEntity[key as keyof GenericEntity] =
+                  resolvedEntity[key as keyof GenericEntity];
+              }
+            }
 
-      // Restore the original format (array or single value) using lodash set
-      set(entity, path, isArray ? resolvedRefs : resolvedRefs[0]);
+            return filteredEntity;
+          }
+
+          return resolvedEntity;
+        })
+        .filter((ref): ref is GenericEntity => ref !== null);
+
+      // For arrays, sort the resolved references to match the order from the repository
+      if (isArray) {
+        const orderedRefs = resolvedEntitiesArray.filter((resolvedEntity) =>
+          resolvedRefs.some((ref) => ref._id === resolvedEntity._id),
+        );
+        set(entity, path, orderedRefs);
+      } else {
+        set(entity, path, resolvedRefs[0] ?? null);
+      }
 
       return entity;
     });
