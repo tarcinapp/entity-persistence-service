@@ -598,6 +598,452 @@ describe('GET /lists', () => {
     expect(list).to.not.have.property('_validUntilDateTime');
   });
 
+  it('lookup: resolves entity references through lookup', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading,collection',
+    });
+    ({ client } = appWithClient);
+
+    // Create a reading list
+    const readingListId = await createTestList({
+      _name: 'My Reading List',
+      _kind: 'reading',
+      description: 'A list of books to read',
+    });
+
+    // Create a collection list that references the reading list
+    await createTestList({
+      _name: 'My Collections',
+      _kind: 'collection',
+      description: 'A collection of lists',
+      readingList: `tapp://localhost/lists/${readingListId}`,
+    });
+
+    // Get the collection list with reading list lookup
+    const filterStr = 'filter[lookup][0][prop]=readingList';
+    const response = await client.get('/lists').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(2);
+
+    // Find the collection list in the response
+    const list = response.body.find((l: List) => l._name === 'My Collections');
+    expect(list).to.not.be.undefined();
+    expect(list._kind).to.equal('collection');
+
+    // Verify the reading list reference is resolved
+    expect(list.readingList).to.be.an.Object();
+    expect(list.readingList._id).to.equal(readingListId);
+    expect(list.readingList._name).to.equal('My Reading List');
+    expect(list.readingList._kind).to.equal('reading');
+    expect(list.readingList.description).to.equal('A list of books to read');
+  });
+
+  it('lookup: resolves multiple lookups including nested property references', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading,collection,category',
+    });
+    ({ client } = appWithClient);
+
+    // Create a reading list
+    const readingListId = await createTestList({
+      _name: 'My Reading List',
+      _kind: 'reading',
+      description: 'A list of books to read',
+    });
+
+    // Create a category list that will be referenced in metadata
+    const categoryListId = await createTestList({
+      _name: 'Fiction Category',
+      _kind: 'category',
+      description: 'Fiction books category',
+    });
+
+    // Create a collection list that references both the reading list and category list
+    await createTestList({
+      _name: 'My Collections',
+      _kind: 'collection',
+      description: 'A collection of lists',
+      readingList: `tapp://localhost/lists/${readingListId}`,
+      metadata: {
+        references: {
+          category: `tapp://localhost/lists/${categoryListId}`,
+        },
+      },
+    });
+
+    // Get the collection list with nested lookups for both reading list and category
+    const filterStr =
+      'filter[lookup][0][prop]=readingList&' +
+      'filter[lookup][1][prop]=metadata.references.category';
+    const response = await client.get('/lists').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(3);
+
+    // Find the collection list in the response
+    const list = response.body.find((l: List) => l._name === 'My Collections');
+    expect(list).to.not.be.undefined();
+    expect(list._kind).to.equal('collection');
+
+    // Verify the reading list reference is resolved
+    expect(list.readingList).to.be.an.Object();
+    expect(list.readingList._id).to.equal(readingListId);
+    expect(list.readingList._name).to.equal('My Reading List');
+    expect(list.readingList._kind).to.equal('reading');
+    expect(list.readingList.description).to.equal('A list of books to read');
+
+    // Verify the nested category reference is resolved
+    expect(list.metadata.references.category).to.be.an.Object();
+    expect(list.metadata.references.category._id).to.equal(categoryListId);
+    expect(list.metadata.references.category._name).to.equal(
+      'Fiction Category',
+    );
+    expect(list.metadata.references.category._kind).to.equal('category');
+    expect(list.metadata.references.category.description).to.equal(
+      'Fiction books category',
+    );
+  });
+
+  it('lookup: resolves lookups from nested property paths', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading,collection',
+    });
+    ({ client } = appWithClient);
+
+    // Create a reading list
+    const readingListId = await createTestList({
+      _name: 'My Reading List',
+      _kind: 'reading',
+      description: 'A list of books to read',
+    });
+
+    // Create a collection list that references the reading list in a nested property
+    await createTestList({
+      _name: 'My Collections',
+      _kind: 'collection',
+      description: 'A collection of lists',
+      metadata: {
+        references: {
+          readingList: `tapp://localhost/lists/${readingListId}`,
+        },
+      },
+    });
+
+    // Get the collection list with nested reading list lookup
+    const filterStr = 'filter[lookup][0][prop]=metadata.references.readingList';
+    const response = await client.get('/lists').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(2);
+
+    // Find the collection list in the response
+    const list = response.body.find((l: List) => l._name === 'My Collections');
+    expect(list).to.not.be.undefined();
+    expect(list._kind).to.equal('collection');
+
+    // Verify the nested reading list reference is resolved
+    expect(list.metadata.references.readingList).to.be.an.Object();
+    expect(list.metadata.references.readingList._id).to.equal(readingListId);
+    expect(list.metadata.references.readingList._name).to.equal(
+      'My Reading List',
+    );
+    expect(list.metadata.references.readingList._kind).to.equal('reading');
+    expect(list.metadata.references.readingList.description).to.equal(
+      'A list of books to read',
+    );
+  });
+
+  it('lookup: selects specific fields from looked-up entities using scope', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading,collection',
+    });
+    ({ client } = appWithClient);
+
+    // Create a reading list with multiple fields
+    const readingListId = await createTestList({
+      _name: 'My Reading List',
+      _kind: 'reading',
+      description: 'A list of books to read',
+      _visibility: 'public',
+      _ownerUsers: ['user-123'],
+      _viewerUsers: ['viewer-456'],
+      _validFromDateTime: new Date().toISOString(),
+    });
+
+    // Create a collection list that references the reading list
+    await createTestList({
+      _name: 'My Collections',
+      _kind: 'collection',
+      description: 'A collection of lists',
+      readingList: `tapp://localhost/lists/${readingListId}`,
+    });
+
+    // Get the collection list with reading list lookup, selecting only name and description fields
+    const filterStr =
+      'filter[lookup][0][prop]=readingList&' +
+      'filter[lookup][0][scope][fields][_name]=true&' +
+      'filter[lookup][0][scope][fields][description]=true';
+    const response = await client.get('/lists').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(2);
+
+    // Find the collection list in the response
+    const list = response.body.find((l: List) => l._name === 'My Collections');
+    expect(list).to.not.be.undefined();
+    expect(list._kind).to.equal('collection');
+
+    // Verify the reading list reference is resolved with only selected fields
+    expect(list.readingList).to.be.an.Object();
+    expect(list.readingList._name).to.equal('My Reading List');
+    expect(list.readingList.description).to.equal('A list of books to read');
+
+    // Verify other fields are not included
+    expect(list.readingList).to.not.have.property('_id');
+    expect(list.readingList).to.not.have.property('_kind');
+    expect(list.readingList).to.not.have.property('_visibility');
+    expect(list.readingList).to.not.have.property('_ownerUsers');
+    expect(list.readingList).to.not.have.property('_viewerUsers');
+    expect(list.readingList).to.not.have.property('_validFromDateTime');
+  });
+
+  it('lookup: resolves lookups from array properties containing list references', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading,collection',
+    });
+    ({ client } = appWithClient);
+
+    // Create multiple reading lists
+    const readingList1Id = await createTestList({
+      _name: 'Reading List One',
+      _kind: 'reading',
+      description: 'First reading list',
+    });
+
+    const readingList2Id = await createTestList({
+      _name: 'Reading List Two',
+      _kind: 'reading',
+      description: 'Second reading list',
+    });
+
+    // Create a collection list that references multiple reading lists
+    await createTestList({
+      _name: 'My Collections',
+      _kind: 'collection',
+      description: 'A collection with multiple lists',
+      readingLists: [
+        `tapp://localhost/lists/${readingList1Id}`,
+        `tapp://localhost/lists/${readingList2Id}`,
+      ],
+    });
+
+    // Get the collection list with reading lists lookup, using skip and limit in scope
+    const filterStr =
+      'filter[lookup][0][prop]=readingLists&' +
+      'filter[lookup][0][scope][skip]=1&' +
+      'filter[lookup][0][scope][limit]=2&' +
+      'filter[lookup][0][scope][order][0]=_name ASC';
+    const response = await client.get('/lists').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(3);
+
+    // Find the collection list in the response
+    const list = response.body.find((l: List) => l._name === 'My Collections');
+    expect(list).to.not.be.undefined();
+    expect(list._kind).to.equal('collection');
+
+    // Verify the reading lists array is resolved with skip and limit applied
+    expect(list.readingLists).to.be.Array().and.have.length(1);
+
+    // Verify first reading list (should be Reading List Two, as Reading List One was skipped)
+    const readingList = list.readingLists[0];
+    expect(readingList).to.be.an.Object();
+    expect(readingList._id).to.equal(readingList2Id);
+    expect(readingList._name).to.equal('Reading List Two');
+    expect(readingList._kind).to.equal('reading');
+    expect(readingList.description).to.equal('Second reading list');
+  });
+
+  it('lookup: handles not-found lists with skip and limit', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading,collection',
+    });
+    ({ client } = appWithClient);
+
+    // Create a collection list that references non-existent reading lists
+    await createTestList({
+      _name: 'My Collections',
+      _kind: 'collection',
+      description: 'A collection with missing lists',
+      readingLists: [
+        'tapp://localhost/lists/00000000-0000-0000-0000-000000000000', // Not found list 1
+        'tapp://localhost/lists/11111111-1111-1111-1111-111111111111', // Not found list 2
+        'tapp://localhost/lists/22222222-2222-2222-2222-222222222222', // Not found list 3
+      ],
+    });
+
+    // Get the collection list with reading lists lookup, using skip and limit in scope
+    const filterStr =
+      'filter[lookup][0][prop]=readingLists&' +
+      'filter[lookup][0][scope][skip]=1&' +
+      'filter[lookup][0][scope][limit]=1';
+    const response = await client.get('/lists').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+
+    // Find the collection list in the response
+    const list = response.body.find((l: List) => l._name === 'My Collections');
+    expect(list).to.not.be.undefined();
+    expect(list._kind).to.equal('collection');
+
+    // Verify the reading lists array is empty since all references were not found
+    expect(list.readingLists).to.be.Array().and.have.length(0);
+  });
+
+  it('lookup: applies skip and limit in scope when looking up array references', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading,collection',
+    });
+    ({ client } = appWithClient);
+
+    // Create multiple reading lists
+    const readingList1Id = await createTestList({
+      _name: 'Reading List One',
+      _kind: 'reading',
+      description: 'First reading list',
+    });
+
+    const readingList2Id = await createTestList({
+      _name: 'Reading List Two',
+      _kind: 'reading',
+      description: 'Second reading list',
+    });
+
+    const readingList3Id = await createTestList({
+      _name: 'Reading List Three',
+      _kind: 'reading',
+      description: 'Third reading list',
+    });
+
+    // Create a collection list that references multiple reading lists
+    await createTestList({
+      _name: 'My Collections',
+      _kind: 'collection',
+      description: 'A collection with multiple lists',
+      readingLists: [
+        `tapp://localhost/lists/${readingList1Id}`,
+        `tapp://localhost/lists/${readingList2Id}`,
+        `tapp://localhost/lists/${readingList3Id}`,
+      ],
+    });
+
+    // Get the collection list with reading lists lookup, using skip and limit in scope
+    const filterStr =
+      'filter[lookup][0][prop]=readingLists&' +
+      'filter[lookup][0][scope][skip]=1&' +
+      'filter[lookup][0][scope][limit]=1&' +
+      'filter[lookup][0][scope][order][0]=_name ASC';
+    const response = await client.get('/lists').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(4);
+
+    // Find the collection list in the response
+    const list = response.body.find((l: List) => l._name === 'My Collections');
+    expect(list).to.not.be.undefined();
+    expect(list._kind).to.equal('collection');
+
+    // Verify the reading lists array is resolved with skip and limit applied
+    expect(list.readingLists).to.be.Array().and.have.length(1);
+
+    // Verify we get Reading List Three (after skipping Reading List One and omitting Reading List Two due to limit)
+    const readingList = list.readingLists[0];
+    expect(readingList).to.be.an.Object();
+    expect(readingList._name).to.equal('Reading List Three');
+    expect(readingList._id).to.equal(readingList3Id);
+    expect(readingList._kind).to.equal('reading');
+    expect(readingList.description).to.equal('Third reading list');
+
+    // Get the collection list with different skip and limit values
+    const secondFilterStr =
+      'filter[lookup][0][prop]=readingLists&' +
+      'filter[lookup][0][scope][skip]=2&' +
+      'filter[lookup][0][scope][limit]=2&' +
+      'filter[lookup][0][scope][order][0]=_name ASC';
+    const secondResponse = await client
+      .get('/lists')
+      .query(secondFilterStr)
+      .expect(200);
+
+    const secondList = secondResponse.body.find(
+      (l: List) => l._name === 'My Collections',
+    );
+    expect(secondList.readingLists).to.be.Array().and.have.length(1);
+
+    // Verify the third reading list (after skipping Reading List One and Reading List Three, due to name sorting and skip=2)
+    const thirdList = secondList.readingLists[0];
+    expect(thirdList).to.be.an.Object();
+    expect(thirdList._name).to.equal('Reading List Two');
+    expect(thirdList._id).to.equal(readingList2Id);
+    expect(thirdList._kind).to.equal('reading');
+    expect(thirdList.description).to.equal('Second reading list');
+  });
+
+  it('lookup: handles invalid references and not-found lists with skip and limit', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading,collection',
+    });
+    ({ client } = appWithClient);
+
+    // Create a reading list
+    const readingListId = await createTestList({
+      _name: 'Valid Reading List',
+      _kind: 'reading',
+      description: 'A valid reading list',
+    });
+
+    // Create a collection list with valid and invalid list references
+    await createTestList({
+      _name: 'My Collections',
+      _kind: 'collection',
+      description: 'A collection with mixed references',
+      readingLists: [
+        `tapp://localhost/lists/${readingListId}`, // Valid reference
+        'tapp://localhost/lists/invalid-id', // Invalid reference
+        'invalid-uri', // Invalid URI format
+      ],
+    });
+
+    // Get the collection list with reading lists lookup, using skip and limit
+    const filterStr =
+      'filter[lookup][0][prop]=readingLists&' +
+      'filter[lookup][0][scope][skip]=0&' +
+      'filter[lookup][0][scope][limit]=3';
+    const response = await client.get('/lists').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(2);
+
+    // Find the collection list in the response
+    const list = response.body.find((l: List) => l._name === 'My Collections');
+    expect(list).to.not.be.undefined();
+    expect(list._kind).to.equal('collection');
+
+    // Verify the reading lists array is resolved with only valid references
+    expect(list.readingLists).to.be.Array().and.have.length(1);
+
+    // Verify only the valid reading list reference is resolved
+    const readingList = list.readingLists[0];
+    expect(readingList).to.be.an.Object();
+    expect(readingList._id).to.equal(readingListId);
+    expect(readingList._name).to.equal('Valid Reading List');
+    expect(readingList._kind).to.equal('reading');
+    expect(readingList.description).to.equal('A valid reading list');
+  });
+
   it('entity-lookup: resolves entity references through lookup', async () => {
     // Set up the application with default configuration
     appWithClient = await setupApplication({
