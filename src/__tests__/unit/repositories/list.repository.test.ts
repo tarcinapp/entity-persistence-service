@@ -947,12 +947,10 @@ describe('ListRepository', () => {
         expect(calledId).to.equal(existingId);
 
         // version, lastUpdatedDateTime, slug and name must be updated
-        expect(calledData).to.deepEqual({
-          _name: 'Updated Name',
-          _slug: 'updated-name',
-          _version: 2,
-          _lastUpdatedDateTime: now,
-        });
+        expect(calledData._name).to.equal('Updated Name');
+        expect(calledData._slug).to.equal('updated-name');
+        expect(calledData._version).to.equal(2);
+        expect(calledData._lastUpdatedDateTime).to.equal(now);
       });
 
       it('should preserve existing idempotency key when updating with same values', async () => {

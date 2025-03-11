@@ -750,21 +750,20 @@ export class ListRepository extends DefaultCrudRepository<
   }
 
   private setCountFields(data: DataObject<List>) {
-    if (_.isArray(data._ownerUsers)) {
-      data._ownerUsersCount = data._ownerUsers?.length;
-    }
-
-    if (_.isArray(data._ownerGroups)) {
-      data._ownerGroupsCount = data._ownerGroups?.length;
-    }
-
-    if (_.isArray(data._viewerUsers)) {
-      data._viewerUsersCount = data._viewerUsers?.length;
-    }
-
-    if (_.isArray(data._viewerGroups)) {
-      data._viewerGroupsCount = data._viewerGroups?.length;
-    }
+    // Always set count fields based on their corresponding arrays
+    data._ownerUsersCount = _.isArray(data._ownerUsers)
+      ? data._ownerUsers.length
+      : 0;
+    data._ownerGroupsCount = _.isArray(data._ownerGroups)
+      ? data._ownerGroups.length
+      : 0;
+    data._viewerUsersCount = _.isArray(data._viewerUsers)
+      ? data._viewerUsers.length
+      : 0;
+    data._viewerGroupsCount = _.isArray(data._viewerGroups)
+      ? data._viewerGroups.length
+      : 0;
+    data._parentsCount = _.isArray(data._parents) ? data._parents.length : 0;
   }
 
   private checkDataKindFormat(data: DataObject<List>) {
