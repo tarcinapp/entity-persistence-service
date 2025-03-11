@@ -915,4 +915,78 @@ export class ListRepository extends DefaultCrudRepository<
       });
     }
   }
+
+  async findParents(
+    listId: string,
+    filter?: Filter<List>,
+    options?: Options,
+  ): Promise<(List & ListRelations)[]> {
+    // First, get the list's parent references
+    const list = await this.findById(listId, {
+      fields: { _parents: true },
+    });
+
+    if (!list) {
+      throw new HttpErrorResponse({
+        statusCode: 404,
+        name: 'NotFoundError',
+        message: "List with id '" + listId + "' could not be found.",
+        code: 'LIST-NOT-FOUND',
+        status: 404,
+      });
+    }
+
+    if (!list._parents || list._parents.length === 0) {
+      return [];
+    }
+
+    // Extract parent IDs from the URIs
+    const parentIds = list._parents.map((uri: string) => uri.split('/').pop());
+
+    // Create a new filter that includes the parent IDs
+    const parentFilter: Filter<List> = {
+      ...filter,
+      where: {
+        and: [
+          { _id: { inq: parentIds } },
+          ...(filter?.where ? [filter.where] : []),
+        ],
+      },
+    };
+
+    return this.find(parentFilter, options);
+  }
+
+  async findChildren(
+    listId: string,
+    filter?: Filter<List>,
+    options?: Options,
+  ): Promise<(List & ListRelations)[]> {
+    // First verify that the list exists
+    const list = await this.findById(listId, {
+      fields: { _id: true },
+    });
+
+    if (!list) {
+      throw new HttpErrorResponse({
+        statusCode: 404,
+        name: 'NotFoundError',
+        message: "List with id '" + listId + "' could not be found.",
+        code: 'LIST-NOT-FOUND',
+        status: 404,
+      });
+    }
+
+    const uri = `tapp://localhost/lists/${listId}`;
+
+    // Create a filter to find lists where _parents contains the given listId
+    const childFilter: Filter<List> = {
+      ...filter,
+      where: {
+        and: [{ _parents: uri }, ...(filter?.where ? [filter.where] : [])],
+      },
+    };
+
+    return this.find(childFilter, options);
+  }
 }

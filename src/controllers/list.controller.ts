@@ -356,4 +356,96 @@ export class ListController {
   async deleteById(@param.path.string('id') id: string): Promise<void> {
     await this.listRepository.deleteById(id);
   }
+
+  @get('/lists/{id}/parents', {
+    responses: {
+      '200': {
+        description: 'Array of parent List model instances',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'array',
+              items: getModelSchemaRef(List, {
+                includeRelations: true,
+              }),
+            },
+          },
+        },
+      },
+      '404': {
+        description: 'List not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+  async findParents(
+    @param.path.string('id') id: string,
+    @param.query.object('set') set?: Set,
+    @param.query.object('filter', getFilterSchemaFor(List))
+    filter?: Filter<List>,
+  ): Promise<List[]> {
+    if (set) {
+      filter = new SetFilterBuilder<List>(set, {
+        filter: filter,
+      }).build();
+    }
+
+    sanitizeFilterFields(filter);
+
+    return this.listRepository.findParents(id, filter);
+  }
+
+  @get('/lists/{id}/children', {
+    responses: {
+      '200': {
+        description: 'Array of child List model instances',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'array',
+              items: getModelSchemaRef(List, {
+                includeRelations: true,
+              }),
+            },
+          },
+        },
+      },
+      '404': {
+        description: 'List not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+  async findChildren(
+    @param.path.string('id') id: string,
+    @param.query.object('set') set?: Set,
+    @param.query.object('filter', getFilterSchemaFor(List))
+    filter?: Filter<List>,
+  ): Promise<List[]> {
+    if (set) {
+      filter = new SetFilterBuilder<List>(set, {
+        filter: filter,
+      }).build();
+    }
+
+    sanitizeFilterFields(filter);
+
+    return this.listRepository.findChildren(id, filter);
+  }
 }

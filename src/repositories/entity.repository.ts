@@ -884,6 +884,16 @@ export class EntityRepository extends DefaultCrudRepository<
       fields: { _parents: true },
     });
 
+    if (!entity) {
+      throw new HttpErrorResponse({
+        statusCode: 404,
+        name: 'NotFoundError',
+        message: "Entity with id '" + entityId + "' could not be found.",
+        code: 'ENTITY-NOT-FOUND',
+        status: 404,
+      });
+    }
+
     if (!entity._parents || entity._parents.length === 0) {
       return [];
     }
@@ -912,6 +922,21 @@ export class EntityRepository extends DefaultCrudRepository<
     filter?: Filter<GenericEntity>,
     options?: Options,
   ): Promise<(GenericEntity & GenericEntityRelations)[]> {
+    // First verify that the entity exists
+    const entity = await this.findById(entityId, {
+      fields: { _id: true },
+    });
+
+    if (!entity) {
+      throw new HttpErrorResponse({
+        statusCode: 404,
+        name: 'NotFoundError',
+        message: "Entity with id '" + entityId + "' could not be found.",
+        code: 'ENTITY-NOT-FOUND',
+        status: 404,
+      });
+    }
+
     const uri = `tapp://localhost/entities/${entityId}`;
 
     // Create a filter to find entities where _parents contains the given entityId
