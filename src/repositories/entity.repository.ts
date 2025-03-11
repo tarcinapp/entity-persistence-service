@@ -687,6 +687,10 @@ export class EntityRepository extends DefaultCrudRepository<
     if (_.isArray(data._viewerGroups)) {
       data._viewerGroupsCount = data._viewerGroups?.length;
     }
+
+    if (_.isArray(data._parents)) {
+      data._parentsCount = data._parents?.length;
+    }
   }
 
   private checkDataKindFormat(data: DataObject<GenericEntity>) {
@@ -868,5 +872,56 @@ export class EntityRepository extends DefaultCrudRepository<
         return entity;
       })
       .then((entity) => this.processLookup(entity, filter));
+  }
+
+  async findParents(
+    entityId: string,
+    filter?: Filter<GenericEntity>,
+    options?: Options,
+  ): Promise<(GenericEntity & GenericEntityRelations)[]> {
+    // First, get the entity's parent references
+    const entity = await this.findById(entityId, {
+      fields: { _parents: true },
+    });
+
+    if (!entity._parents || entity._parents.length === 0) {
+      return [];
+    }
+
+    // Extract parent IDs from the URIs
+    const parentIds = entity._parents.map((uri: string) =>
+      uri.split('/').pop(),
+    );
+
+    // Create a new filter that includes the parent IDs
+    const parentFilter: Filter<GenericEntity> = {
+      ...filter,
+      where: {
+        and: [
+          { _id: { inq: parentIds } },
+          ...(filter?.where ? [filter.where] : []),
+        ],
+      },
+    };
+
+    return this.find(parentFilter, options);
+  }
+
+  async findChildren(
+    entityId: string,
+    filter?: Filter<GenericEntity>,
+    options?: Options,
+  ): Promise<(GenericEntity & GenericEntityRelations)[]> {
+    const uri = `tapp://localhost/entities/${entityId}`;
+
+    // Create a filter to find entities where _parents contains the given entityId
+    const childFilter: Filter<GenericEntity> = {
+      ...filter,
+      where: {
+        and: [{ _parents: uri }, ...(filter?.where ? [filter.where] : [])],
+      },
+    };
+
+    return this.find(childFilter, options);
   }
 }

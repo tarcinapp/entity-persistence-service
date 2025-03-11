@@ -357,4 +357,96 @@ export class EntityController {
   async deleteById(@param.path.string('id') id: string): Promise<void> {
     await this.entityRepository.deleteById(id);
   }
+
+  @get('/entities/{id}/parents', {
+    responses: {
+      '200': {
+        description: 'Array of parent Entity model instances',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'array',
+              items: getModelSchemaRef(GenericEntity, {
+                includeRelations: true,
+              }),
+            },
+          },
+        },
+      },
+      '404': {
+        description: 'Entity not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+  async findParents(
+    @param.path.string('id') id: string,
+    @param.query.object('set') set?: Set,
+    @param.query.object('filter', getFilterSchemaFor(GenericEntity))
+    filter?: Filter<GenericEntity>,
+  ): Promise<GenericEntity[]> {
+    if (set) {
+      filter = new SetFilterBuilder<GenericEntity>(set, {
+        filter: filter,
+      }).build();
+    }
+
+    sanitizeFilterFields(filter);
+
+    return this.entityRepository.findParents(id, filter);
+  }
+
+  @get('/entities/{id}/children', {
+    responses: {
+      '200': {
+        description: 'Array of child Entity model instances',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'array',
+              items: getModelSchemaRef(GenericEntity, {
+                includeRelations: true,
+              }),
+            },
+          },
+        },
+      },
+      '404': {
+        description: 'Entity not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+  async findChildren(
+    @param.path.string('id') id: string,
+    @param.query.object('set') set?: Set,
+    @param.query.object('filter', getFilterSchemaFor(GenericEntity))
+    filter?: Filter<GenericEntity>,
+  ): Promise<GenericEntity[]> {
+    if (set) {
+      filter = new SetFilterBuilder<GenericEntity>(set, {
+        filter: filter,
+      }).build();
+    }
+
+    sanitizeFilterFields(filter);
+
+    return this.entityRepository.findChildren(id, filter);
+  }
 }

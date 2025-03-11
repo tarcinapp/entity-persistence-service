@@ -1,4 +1,4 @@
-import { hasMany, model } from '@loopback/repository';
+import { hasMany, model, property } from '@loopback/repository';
 import { ListEntityCommonBase } from './base-models/list-entity-common-base.model';
 import { EntityReactions } from './reactions.model';
 import { TagEntityRelation } from './tag-entity-relation.model';
@@ -20,6 +20,22 @@ export class GenericEntity extends ListEntityCommonBase {
     through: { model: () => TagEntityRelation, keyFrom: 'entityId' },
   })
   tags?: Tag[];
+
+  @property({
+    type: 'array',
+    itemType: 'string',
+    jsonSchema: {
+      type: 'array',
+      items: {
+        type: 'string',
+        pattern:
+          '^tapp://localhost/entities/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+      },
+      uniqueItems: true,
+    },
+  })
+  _parents?: string[];
+
   // Define well-known properties here
 
   // Indexer property to allow additional data
