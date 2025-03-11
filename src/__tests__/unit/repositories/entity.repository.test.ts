@@ -257,6 +257,7 @@ describe('EntityRepository', () => {
     });
 
     describe('validation and enrichment', () => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       let kindStub: sinon.SinonStub;
       let uniquenessStub: sinon.SinonStub;
       let recordLimitStub: sinon.SinonStub;
@@ -535,6 +536,7 @@ describe('EntityRepository', () => {
     });
 
     describe('validation and enrichment', () => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       let kindStub: sinon.SinonStub;
       let uniquenessStub: sinon.SinonStub;
 
@@ -838,6 +840,7 @@ describe('EntityRepository', () => {
     });
 
     describe('validation and enrichment', () => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       let kindStub: sinon.SinonStub;
       let uniquenessStub: sinon.SinonStub;
 
