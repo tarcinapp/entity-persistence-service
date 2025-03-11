@@ -25,12 +25,8 @@ export class GenericEntity extends ListEntityCommonBase {
     type: 'array',
     itemType: 'string',
     jsonSchema: {
-      type: 'array',
-      items: {
-        type: 'string',
-        pattern:
-          '^tapp://localhost/entities/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
-      },
+      pattern:
+        '^tapp://localhost/entities/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
       uniqueItems: true,
     },
   })
