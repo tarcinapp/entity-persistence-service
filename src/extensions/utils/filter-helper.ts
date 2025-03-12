@@ -43,11 +43,11 @@ function processWhereClause(where: any): void {
     return;
   }
 
-  Object.keys(where).forEach((key) => {
-    const value = where[key];
+  Object.keys(where).forEach((fieldName) => {
+    const value = where[fieldName];
 
     if (typeof value === 'string' && value === 'null') {
-      where[key] = null;
+      where[fieldName] = null;
     } else if (Array.isArray(value)) {
       value.forEach((item, index) => {
         if (typeof item === 'string' && item === 'null') {
@@ -57,6 +57,38 @@ function processWhereClause(where: any): void {
         }
       });
     } else if (isPlainObject(value)) {
+      // Check if this object contains operators (like gt, lt, eq) and a type hint
+      if (value.type) {
+        const type = value.type;
+        const operators = { ...value };
+        delete operators.type;
+
+        // Convert values based on type
+        Object.keys(operators).forEach((operator) => {
+          const operatorValue = operators[operator];
+          if (type === 'number') {
+            if (Array.isArray(operatorValue)) {
+              // Handle array values (e.g., for between, inq operators)
+              operators[operator] = operatorValue.map((item) => {
+                const parsed = Number(item);
+
+                return !isNaN(parsed) ? parsed : item;
+              });
+            } else {
+              const parsed = Number(operatorValue);
+              if (!isNaN(parsed)) {
+                operators[operator] = parsed;
+              }
+            }
+          }
+          // Add more type conversions here if needed
+        });
+
+        // Replace the original object with the processed operators
+        where[fieldName] = operators;
+      }
+
+      // Continue processing nested objects
       processWhereClause(value);
     }
   });
