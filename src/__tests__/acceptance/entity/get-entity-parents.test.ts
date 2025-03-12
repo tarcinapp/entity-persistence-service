@@ -1229,4 +1229,284 @@ describe('GET /entities/{entityId}/parents', () => {
     expect(response.body[0]._name).to.equal('Parent Entity');
     expect(response.body[0]._visibility).to.equal('public');
   });
+
+  it('lookup: resolves references with complex filters, sets, and pagination', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book,author,review',
+      visibility_entity: 'public',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 7);
+
+    // Create multiple parent entities with different properties
+    const activePublicAuthor = await client
+      .post('/entities')
+      .send({
+        _name: 'Active Public Author',
+        _kind: 'author',
+        _visibility: 'public',
+        _validFromDateTime: pastDate.toISOString(),
+        _validUntilDateTime: futureDate.toISOString(),
+        nationality: 'British',
+        birthYear: 1960,
+        relatedReviews: [
+          'tapp://localhost/entities/review1',
+          'tapp://localhost/entities/review2',
+        ],
+      })
+      .expect(200);
+
+    const inactivePublicAuthor = await client
+      .post('/entities')
+      .send({
+        _name: 'Inactive Public Author',
+        _kind: 'author',
+        _visibility: 'public',
+        _validFromDateTime: pastDate.toISOString(),
+        _validUntilDateTime: pastDate.toISOString(),
+        nationality: 'American',
+        birthYear: 1970,
+        relatedReviews: [],
+      })
+      .expect(200);
+
+    const activePrivateAuthor = await client
+      .post('/entities')
+      .send({
+        _name: 'Active Private Author',
+        _kind: 'author',
+        _visibility: 'private',
+        _validFromDateTime: pastDate.toISOString(),
+        _validUntilDateTime: futureDate.toISOString(),
+        nationality: 'French',
+        birthYear: 1980,
+        relatedReviews: ['tapp://localhost/entities/review3'],
+      })
+      .expect(200);
+
+    // Create review entities that will be referenced
+    const review1 = await client
+      .post('/entities')
+      .send({
+        _name: 'Review 1',
+        _kind: 'review',
+        _visibility: 'public',
+        rating: 5, // Store as string to match query parameter type
+        content: 'Excellent author',
+      })
+      .expect(200);
+
+    const review2 = await client
+      .post('/entities')
+      .send({
+        _name: 'Review 2',
+        _kind: 'review',
+        _visibility: 'public',
+        rating: 4, // Store as string to match query parameter type
+        content: 'Very good author',
+      })
+      .expect(200);
+
+    const review3 = await client
+      .post('/entities')
+      .send({
+        _name: 'Review 3',
+        _kind: 'review',
+        _visibility: 'private',
+        rating: 3, // Store as string to match query parameter type
+        content: 'Good author',
+      })
+      .expect(200);
+
+    // Update authors with actual review references
+    await client
+      .patch(`/entities/${activePublicAuthor.body._id}`)
+      .send({
+        relatedReviews: [
+          `tapp://localhost/entities/${review1.body._id}`,
+          `tapp://localhost/entities/${review2.body._id}`,
+        ],
+      })
+      .expect(204);
+
+    await client
+      .patch(`/entities/${activePrivateAuthor.body._id}`)
+      .send({
+        relatedReviews: [`tapp://localhost/entities/${review3.body._id}`],
+      })
+      .expect(204);
+
+    // Create a book with parent references
+    const bookWithAuthors = await client
+      .post('/entities')
+      .send({
+        _name: 'Book with Authors',
+        _kind: 'book',
+        _parents: [
+          `tapp://localhost/entities/${activePublicAuthor.body._id}`,
+          `tapp://localhost/entities/${inactivePublicAuthor.body._id}`,
+          `tapp://localhost/entities/${activePrivateAuthor.body._id}`,
+        ],
+      })
+      .expect(200);
+
+    // Test lookup with complex filter, set filter, and pagination
+    const queryStr =
+      'filter[where][nationality]=British&' +
+      'filter[lookup][0][prop]=relatedReviews&' +
+      'filter[lookup][0][scope][where][rating][gt]=3&' +
+      'filter[lookup][0][scope][where][rating][type]=number&' +
+      'filter[order][0]=birthYear DESC&' +
+      'filter[skip]=0&' +
+      'filter[limit]=2&' +
+      'set[actives]=true&' +
+      'set[publics]=true';
+
+    const response = await client
+      .get(`/entities/${bookWithAuthors.body._id}/parents?${queryStr}`)
+      .expect(200);
+
+    // Verify response
+    expect(response.body).to.be.Array();
+    expect(response.body).to.have.length(1);
+    expect(response.body[0]).to.containDeep({
+      _id: activePublicAuthor.body._id,
+      _name: 'Active Public Author',
+      _kind: 'author',
+      _visibility: 'public',
+      nationality: 'British',
+      birthYear: 1960,
+    });
+
+    // Verify that inactive and private authors are filtered out
+    expect(
+      response.body.some(
+        (author: any) =>
+          author._id === inactivePublicAuthor.body._id ||
+          author._id === activePrivateAuthor.body._id,
+      ),
+    ).to.be.false();
+
+    // Verify relatedReviews is included and properly filtered
+    expect(response.body[0]).to.have.property('relatedReviews');
+    expect(response.body[0].relatedReviews).to.be.Array();
+    expect(response.body[0].relatedReviews).to.have.length(2);
+    expect(
+      response.body[0].relatedReviews.every(
+        (review: any) => review.rating > '3',
+      ),
+    ).to.be.true();
+  });
+
+  it('lookup: resolves references in arbitrary fields with complex filters', async () => {
+    // Set up the application
+    appWithClient = await setupApplication({
+      entity_kinds: 'book,author',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 7);
+
+    // Create referenced entities (authors) with different properties
+    const activeAuthor = await client
+      .post('/entities')
+      .send({
+        _name: 'Active Author',
+        _kind: 'author',
+        _visibility: 'public',
+        _validFromDateTime: pastDate.toISOString(),
+        _validUntilDateTime: futureDate.toISOString(),
+        nationality: 'British',
+        rating: 4.5,
+      })
+      .expect(200);
+
+    const inactiveAuthor = await client
+      .post('/entities')
+      .send({
+        _name: 'Inactive Author',
+        _kind: 'author',
+        _visibility: 'public',
+        _validFromDateTime: pastDate.toISOString(),
+        _validUntilDateTime: pastDate.toISOString(),
+        nationality: 'American',
+        rating: 3.8,
+      })
+      .expect(200);
+
+    // Create parent entity (book) with references in an arbitrary field
+    const parentBook = await client
+      .post('/entities')
+      .send({
+        _name: 'Book with Authors',
+        _kind: 'book',
+        relatedAuthors: [
+          `tapp://localhost/entities/${activeAuthor.body._id}`,
+          `tapp://localhost/entities/${inactiveAuthor.body._id}`,
+          'tapp://localhost/entities/non-existent-id',
+          'invalid-uri-format',
+        ],
+      })
+      .expect(200);
+
+    // Create child entity referencing the parent book
+    const childBook = await client
+      .post('/entities')
+      .send({
+        _name: 'Sequel Book',
+        _kind: 'book',
+        _parents: [`tapp://localhost/entities/${parentBook.body._id}`],
+      })
+      .expect(200);
+
+    // Get parent with lookup on arbitrary field, using complex filter
+    const queryStr =
+      'filter[lookup][0][prop]=relatedAuthors&' +
+      'filter[lookup][0][scope][where][and][0][rating][gt]=4&' +
+      'filter[lookup][0][scope][where][and][0][rating][type]=number&' +
+      `filter[lookup][0][scope][where][and][1][or][0][_validUntilDateTime][gt]=${encodeURIComponent(now.toISOString())}&` +
+      'filter[lookup][0][scope][where][and][1][or][1][_validUntilDateTime][eq]=null&' +
+      'filter[lookup][0][scope][order][0]=rating DESC';
+
+    const response = await client
+      .get(`/entities/${childBook.body._id}/parents?${queryStr}`)
+      .expect(200);
+
+    // Verify response
+    expect(response.body).to.be.Array();
+    expect(response.body).to.have.length(1);
+    expect(response.body[0]).to.containDeep({
+      _id: parentBook.body._id,
+      _name: 'Book with Authors',
+      _kind: 'book',
+    });
+
+    // Verify lookup results
+    expect(response.body[0]).to.have.property('relatedAuthors');
+    expect(response.body[0].relatedAuthors).to.be.Array();
+    expect(response.body[0].relatedAuthors).to.have.length(1);
+    expect(response.body[0].relatedAuthors[0]).to.containDeep({
+      _id: activeAuthor.body._id,
+      _name: 'Active Author',
+      rating: 4.5,
+      nationality: 'British',
+    });
+
+    // Verify that inactive author and invalid references are not included
+    expect(
+      response.body[0].relatedAuthors.some(
+        (author: any) => author._id === inactiveAuthor.body._id,
+      ),
+    ).to.be.false();
+  });
 });
