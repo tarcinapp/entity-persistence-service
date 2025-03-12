@@ -596,12 +596,38 @@ db.createUser({
 
 For VSCode, create a dev.env file at the root of your workspace folder. Add local database configuration as environment variables to this file. This file will be read once you start the application in debug mode. Sample .env files can be found under /doc/env folder.
 
-# Known Issues
+# Known Issues and Limitations
 
-## 1. Idempotency and Visibility
+### 1. Idempotency and Visibility
 
-   If a user creates a record idempotently, they may receive a success response, even if the previously created idempotent record is set as private. However, due to the visibility settings, the user who attempted to create idempotent record won't be able to view private records created by someone else. This can create a situation where it appears as if the data was created successfully, but it may not be visible to whom created it because of the privacy settings. It's essential to be aware of this behavior when working with idempotent data creation and privacy settings.
-   This issue is going to be addressed with making `set`s can contribute to the idempotency calculation.
+If a user creates a record idempotently, they may receive a success response, even if the previously created idempotent record is set as private. However, due to the visibility settings, the user who attempted to create idempotent record won't be able to view private records created by someone else. This can create a situation where it appears as if the data was created successfully, but it may not be visible to whom created it because of the privacy settings. It's essential to be aware of this behavior when working with idempotent data creation and privacy settings.
+This issue is going to be addressed with making `set`s can contribute to the idempotency calculation.
+
+### 2. Field Selection with Arbitrary Fields
+
+All models in the application (entities, lists, relations, and reactions) allow arbitrary fields through `additionalProperties: true` in their model definitions. When using field selection with these models, there is a limitation in Loopback's behavior:
+
+- If you explicitly set any arbitrary field to `false` in the field selection filter, all other arbitrary fields will also be excluded from the response, even if they weren't explicitly mentioned in the filter.
+- This behavior affects all arbitrary fields (fields not defined in the model schema) in all models (entities, lists, relations, and reactions).
+- Built-in fields (those defined in the model schema, like `_id`, `_name`, `_kind`, etc.) are not affected by this behavior.
+
+Example:
+```typescript
+// All models allow arbitrary fields
+const response = await client.get('/entities').query({
+  filter: {
+    fields: {
+      customField: false    // Setting any arbitrary field to false...
+    }
+  }
+});
+
+// Result: All arbitrary fields (customField, description, and any other custom fields)
+// will be excluded from the response, even if not explicitly mentioned in the filter.
+// All built-in fields defined in the model schema will be returned by default
+```
+
+This is a known limitation in Loopback's implementation of field selection when dealing with models that allow arbitrary fields.
 
 # Development Status
 

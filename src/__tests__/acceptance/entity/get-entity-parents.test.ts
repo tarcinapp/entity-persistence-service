@@ -1099,4 +1099,134 @@ describe('GET /entities/{entityId}/parents', () => {
     expect(combinedResponse.body).to.be.Array().and.have.length(1);
     expect(combinedResponse.body[0]._name).to.equal('Viewer Group Parent');
   });
+
+  it('field-selection: includes only specified fields', async () => {
+    // Set up the application
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+    });
+    ({ client } = appWithClient);
+
+    // Create parent entity with multiple fields
+    const parentEntity = await client
+      .post('/entities')
+      .send({
+        _name: 'Parent Entity',
+        _kind: 'book',
+        description: 'This is a detailed description',
+        _visibility: 'public',
+        _ownerUsers: ['user-123'],
+        customField: 'custom value',
+      })
+      .expect(200);
+
+    // Create child entity with parent reference
+    const childEntity: Partial<GenericEntity> = {
+      _name: 'Child Entity',
+      _kind: 'book',
+      _parents: [`tapp://localhost/entities/${parentEntity.body._id}`],
+    };
+
+    const childResponse = await client
+      .post('/entities')
+      .send(childEntity)
+      .expect(200);
+
+    // Get parents with only specific fields
+    const response = await client
+      .get(`/entities/${childResponse.body._id}/parents`)
+      .query({
+        filter: {
+          fields: {
+            _id: true,
+            _name: true,
+            _kind: true,
+            description: true,
+          },
+        },
+      })
+      .expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+    expect(response.body[0]).to.have.properties([
+      '_id',
+      '_name',
+      '_kind',
+      'description',
+    ]);
+    expect(response.body[0]).to.not.have.properties([
+      '_visibility',
+      '_ownerUsers',
+      'customField',
+    ]);
+    expect(response.body[0]._name).to.equal('Parent Entity');
+    expect(response.body[0]._kind).to.equal('book');
+    expect(response.body[0].description).to.equal(
+      'This is a detailed description',
+    );
+  });
+
+  it('field-selection: excludes specified fields', async () => {
+    // Set up the application
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+    });
+    ({ client } = appWithClient);
+
+    // Create parent entity with multiple fields
+    const parentEntity = await client
+      .post('/entities')
+      .send({
+        _name: 'Parent Entity',
+        _kind: 'book',
+        description: 'This is a detailed description',
+        _visibility: 'public',
+        _ownerUsers: ['user-123'],
+        _viewerUsers: ['user-456'],
+        customField: 'custom value',
+      })
+      .expect(200);
+
+    // Create child entity with parent reference
+    const childEntity: Partial<GenericEntity> = {
+      _name: 'Child Entity',
+      _kind: 'book',
+      _parents: [`tapp://localhost/entities/${parentEntity.body._id}`],
+    };
+
+    const childResponse = await client
+      .post('/entities')
+      .send(childEntity)
+      .expect(200);
+
+    // Get parents excluding specific fields
+    const response = await client
+      .get(`/entities/${childResponse.body._id}/parents`)
+      .query({
+        filter: {
+          fields: {
+            _ownerUsers: false,
+            _viewerUsers: false,
+            customField: false,
+          },
+        },
+      })
+      .expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+    expect(response.body[0]).to.have.properties([
+      '_id',
+      '_name',
+      '_kind',
+      '_visibility',
+    ]);
+    expect(response.body[0]).to.not.have.properties([
+      '_ownerUsers',
+      '_viewerUsers',
+      'customField',
+      'description', // Due to Loopback's behavior with arbitrary fields, description will also be excluded
+    ]);
+    expect(response.body[0]._name).to.equal('Parent Entity');
+    expect(response.body[0]._visibility).to.equal('public');
+  });
 });
