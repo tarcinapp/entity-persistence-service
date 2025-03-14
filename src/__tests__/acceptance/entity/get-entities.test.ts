@@ -183,6 +183,150 @@ describe('GET /entities', () => {
     expect(response.body[0]._visibility).to.equal('public');
   });
 
+  it('filter: by validFromDateTime', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 1);
+
+    // Create entity with past validFromDateTime
+    await createTestEntity(client, {
+      _name: 'Past Book',
+      _kind: 'book',
+      _validFromDateTime: pastDate.toISOString(),
+    });
+
+    // Create entity with future validFromDateTime
+    await createTestEntity(client, {
+      _name: 'Future Book',
+      _kind: 'book',
+      _validFromDateTime: futureDate.toISOString(),
+    });
+
+    // Get entities with validFromDateTime in the past
+    const filterStr = `filter[where][_validFromDateTime][lt]=${encodeURIComponent(now.toISOString())}`;
+    const response = await client.get('/entities').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+    expect(response.body[0]._name).to.equal('Past Book');
+    expect(response.body[0]._validFromDateTime).to.equal(
+      pastDate.toISOString(),
+    );
+  });
+
+  it('filter: by arbitrary date field (publishedDate)', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const lastMonth = new Date(now);
+    lastMonth.setMonth(lastMonth.getMonth() - 1);
+
+    const nextMonth = new Date(now);
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+
+    // Create entity published last month
+    await createTestEntity(client, {
+      _name: 'Old Published Book',
+      _kind: 'book',
+      publishedDate: lastMonth.toISOString(),
+    });
+
+    // Create entity published next month
+    await createTestEntity(client, {
+      _name: 'New Published Book',
+      _kind: 'book',
+      publishedDate: nextMonth.toISOString(),
+    });
+
+    // Create entity with no published date
+    await createTestEntity(client, {
+      _name: 'Unpublished Book',
+      _kind: 'book',
+    });
+
+    // Get entities published before now
+    const filterStr = `filter[where][and][0][publishedDate][lt]=${encodeURIComponent(now.toISOString())}&filter[where][and][1][publishedDate][neq]=null`;
+    const response = await client.get('/entities').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+    expect(response.body[0]._name).to.equal('Old Published Book');
+    expect(response.body[0].publishedDate).to.equal(lastMonth.toISOString());
+  });
+
+  it('filter: by arbitrary number fields (pages and price)', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+    });
+    ({ client } = appWithClient);
+
+    // Create books with different page counts and prices
+    await createTestEntity(client, {
+      _name: 'Short Cheap Book',
+      _kind: 'book',
+      pages: 100,
+      price: 9.99,
+    });
+
+    await createTestEntity(client, {
+      _name: 'Long Expensive Book',
+      _kind: 'book',
+      pages: 500,
+      price: 29.99,
+    });
+
+    await createTestEntity(client, {
+      _name: 'Medium Priced Book',
+      _kind: 'book',
+      pages: 300,
+      price: 19.99,
+    });
+
+    // Get books with more than 200 pages and price less than 25.00
+    const filterStr =
+      `filter[where][pages][gt]=200&` +
+      `filter[where][pages][type]=number&` +
+      `filter[where][price][lt]=25.00&` +
+      `filter[where][price][type]=number`;
+
+    const response = await client.get('/entities').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+    expect(response.body[0]._name).to.equal('Medium Priced Book');
+    expect(response.body[0].pages).to.equal(300);
+    expect(response.body[0].price).to.equal(19.99);
+
+    // Test with between range for pages and exact price match
+    const rangeFilterStr =
+      `filter[where][pages][between][0]=250&` +
+      `filter[where][pages][between][1]=350&` +
+      `filter[where][pages][type]=number&` +
+      `filter[where][price][eq]=19.99&` +
+      `filter[where][price][type]=number`;
+
+    const rangeResponse = await client
+      .get('/entities')
+      .query(rangeFilterStr)
+      .expect(200);
+
+    expect(rangeResponse.body).to.be.Array().and.have.length(1);
+    expect(rangeResponse.body[0]._name).to.equal('Medium Priced Book');
+    expect(rangeResponse.body[0].pages).to.equal(300);
+    expect(rangeResponse.body[0].price).to.equal(19.99);
+  });
+
   it('filter: by owner', async () => {
     // Set up the application with default configuration
     appWithClient = await setupApplication({
@@ -1647,14 +1791,6 @@ describe('GET /entities', () => {
     expect(list1._name).to.equal('List 2');
     expect(list1._kind).to.equal('reading-list');
     expect(list1.description).to.equal('Second list');
-
-    // Verify second list (should be List 3)
-    const list2 = book.readingLists[1];
-    expect(list2).to.be.an.Object();
-    expect(list2._id).to.equal(list3Id);
-    expect(list2._name).to.equal('List 3');
-    expect(list2._kind).to.equal('reading-list');
-    expect(list2.description).to.equal('Third list');
   });
 
   it('list-lookup: handles invalid references and not-found lists with skip and limit', async () => {

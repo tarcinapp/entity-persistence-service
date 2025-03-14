@@ -330,6 +330,182 @@ describe('GET /entities/{entityId}/parents', () => {
     expect(parentsResponse.body[0]._ownerUsers).to.containDeep([owner1]);
   });
 
+  it('field-selection: excludes specified fields', async () => {
+    // Set up the application
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+    });
+    ({ client } = appWithClient);
+
+    // Create parent entity with multiple fields
+    const parentEntity = await client
+      .post('/entities')
+      .send({
+        _name: 'Parent Entity',
+        _kind: 'book',
+        description: 'This is a detailed description',
+        _visibility: 'public',
+        _ownerUsers: ['user-123'],
+        _viewerUsers: ['user-456'],
+        customField: 'custom value',
+      })
+      .expect(200);
+
+    // Create child entity with parent reference
+    const childEntity: Partial<GenericEntity> = {
+      _name: 'Child Entity',
+      _kind: 'book',
+      _parents: [`tapp://localhost/entities/${parentEntity.body._id}`],
+    };
+
+    const childResponse = await client
+      .post('/entities')
+      .send(childEntity)
+      .expect(200);
+
+    // Get parents excluding specific fields
+    const response = await client
+      .get(`/entities/${childResponse.body._id}/parents`)
+      .query({
+        filter: {
+          fields: {
+            _ownerUsers: false,
+            _viewerUsers: false,
+            customField: false,
+          },
+        },
+      })
+      .expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+    expect(response.body[0]).to.have.properties([
+      '_id',
+      '_name',
+      '_kind',
+      '_visibility',
+    ]);
+    expect(response.body[0]).to.not.have.properties([
+      '_ownerUsers',
+      '_viewerUsers',
+      'customField',
+      'description', // Due to Loopback's behavior with arbitrary fields, description will also be excluded
+    ]);
+    expect(response.body[0]._name).to.equal('Parent Entity');
+    expect(response.body[0]._visibility).to.equal('public');
+  });
+
+  it('filter: by nationality', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+    });
+    ({ client } = appWithClient);
+
+    // Create parent entities with different nationalities
+    const germanParent: Partial<GenericEntity> = {
+      _name: 'German Parent',
+      _kind: 'book',
+      nationality: 'DE',
+    };
+
+    const frenchParent: Partial<GenericEntity> = {
+      _name: 'French Parent',
+      _kind: 'book',
+      nationality: 'FR',
+    };
+
+    const germanParentResponse = await client
+      .post('/entities')
+      .send(germanParent)
+      .expect(200);
+    const frenchParentResponse = await client
+      .post('/entities')
+      .send(frenchParent)
+      .expect(200);
+
+    // Create child entity with both parents
+    const childEntity: Partial<GenericEntity> = {
+      _name: 'Child Entity',
+      _kind: 'book',
+      _parents: [
+        `tapp://localhost/entities/${germanParentResponse.body._id}`,
+        `tapp://localhost/entities/${frenchParentResponse.body._id}`,
+      ],
+    };
+
+    const childResponse = await client
+      .post('/entities')
+      .send(childEntity)
+      .expect(200);
+
+    // Get only German parents
+    const parentsResponse = await client
+      .get(`/entities/${childResponse.body._id}/parents`)
+      .query({ filter: { where: { nationality: 'DE' } } })
+      .expect(200);
+
+    expect(parentsResponse.body).to.be.Array().and.have.length(1);
+    expect(parentsResponse.body[0]._name).to.equal('German Parent');
+    expect(parentsResponse.body[0].nationality).to.equal('DE');
+  });
+
+  it('filter: by rating with type hint', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+    });
+    ({ client } = appWithClient);
+
+    // Create parent entities with different ratings
+    const highRatedParent: Partial<GenericEntity> = {
+      _name: 'High Rated Parent',
+      _kind: 'book',
+      rating: 4,
+    };
+
+    const lowRatedParent: Partial<GenericEntity> = {
+      _name: 'Low Rated Parent',
+      _kind: 'book',
+      rating: 2,
+    };
+
+    const highRatedParentResponse = await client
+      .post('/entities')
+      .send(highRatedParent)
+      .expect(200);
+    const lowRatedParentResponse = await client
+      .post('/entities')
+      .send(lowRatedParent)
+      .expect(200);
+
+    // Create child entity with both parents
+    const childEntity: Partial<GenericEntity> = {
+      _name: 'Child Entity',
+      _kind: 'book',
+      _parents: [
+        `tapp://localhost/entities/${highRatedParentResponse.body._id}`,
+        `tapp://localhost/entities/${lowRatedParentResponse.body._id}`,
+      ],
+    };
+
+    const childResponse = await client
+      .post('/entities')
+      .send(childEntity)
+      .expect(200);
+
+    // Get only high rated parents using type hint
+    const filterStr = `filter[where][rating][gt]=3&filter[where][rating][type]=number`;
+
+    const parentsResponse = await client
+      .get(`/entities/${childResponse.body._id}/parents`)
+      .query(filterStr)
+      .expect(200);
+
+    expect(parentsResponse.body).to.be.Array().and.have.length(1);
+    expect(parentsResponse.body[0]._name).to.equal('High Rated Parent');
+    expect(parentsResponse.body[0].rating).to.equal(4);
+  });
+
   it('pagination: applies response limit configuration', async () => {
     // Set up the application with response limit configuration
     appWithClient = await setupApplication({
@@ -1164,70 +1340,6 @@ describe('GET /entities/{entityId}/parents', () => {
     expect(response.body[0].description).to.equal(
       'This is a detailed description',
     );
-  });
-
-  it('field-selection: excludes specified fields', async () => {
-    // Set up the application
-    appWithClient = await setupApplication({
-      entity_kinds: 'book',
-    });
-    ({ client } = appWithClient);
-
-    // Create parent entity with multiple fields
-    const parentEntity = await client
-      .post('/entities')
-      .send({
-        _name: 'Parent Entity',
-        _kind: 'book',
-        description: 'This is a detailed description',
-        _visibility: 'public',
-        _ownerUsers: ['user-123'],
-        _viewerUsers: ['user-456'],
-        customField: 'custom value',
-      })
-      .expect(200);
-
-    // Create child entity with parent reference
-    const childEntity: Partial<GenericEntity> = {
-      _name: 'Child Entity',
-      _kind: 'book',
-      _parents: [`tapp://localhost/entities/${parentEntity.body._id}`],
-    };
-
-    const childResponse = await client
-      .post('/entities')
-      .send(childEntity)
-      .expect(200);
-
-    // Get parents excluding specific fields
-    const response = await client
-      .get(`/entities/${childResponse.body._id}/parents`)
-      .query({
-        filter: {
-          fields: {
-            _ownerUsers: false,
-            _viewerUsers: false,
-            customField: false,
-          },
-        },
-      })
-      .expect(200);
-
-    expect(response.body).to.be.Array().and.have.length(1);
-    expect(response.body[0]).to.have.properties([
-      '_id',
-      '_name',
-      '_kind',
-      '_visibility',
-    ]);
-    expect(response.body[0]).to.not.have.properties([
-      '_ownerUsers',
-      '_viewerUsers',
-      'customField',
-      'description', // Due to Loopback's behavior with arbitrary fields, description will also be excluded
-    ]);
-    expect(response.body[0]._name).to.equal('Parent Entity');
-    expect(response.body[0]._visibility).to.equal('public');
   });
 
   it('lookup: resolves references with complex filters, sets, and pagination', async () => {
