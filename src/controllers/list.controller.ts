@@ -357,6 +357,85 @@ export class ListController {
     await this.listRepository.deleteById(id);
   }
 
+  @post('/lists/{id}/children', {
+    responses: {
+      '200': {
+        description: 'Child List model instance',
+        content: {
+          'application/json': { schema: getModelSchemaRef(List) },
+        },
+      },
+      '429': {
+        description: 'List limit is exceeded',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '409': {
+        description: 'List name already exists.',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '422': {
+        description: 'Unprocessable list',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '404': {
+        description: 'Parent list not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+  async createChild(
+    @param.path.string('id') id: string,
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(List, {
+            title: 'NewChildList',
+            exclude: [
+              ...UNMODIFIABLE_COMMON_FIELDS,
+              '_parents',
+            ] as (keyof List)[],
+            includeRelations: false,
+          }),
+        },
+      },
+    })
+    list: Omit<List, UnmodifiableCommonFields | '_parents'>,
+  ): Promise<List> {
+    return this.listRepository.createChild(id, list);
+  }
+
   @get('/lists/{id}/parents', {
     responses: {
       '200': {

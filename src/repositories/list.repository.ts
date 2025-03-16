@@ -26,13 +26,6 @@ import {
   ValidfromConfigurationReader,
   VisibilityConfigurationReader,
 } from '../extensions';
-import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
-import { FilterMatcher } from '../extensions/utils/filter-matcher';
-import {
-  LookupBindings,
-  LookupHelper,
-} from '../extensions/utils/lookup-helper';
-import { SetFilterBuilder } from '../extensions/utils/set-helper';
 import {
   GenericEntity,
   List,
@@ -51,6 +44,14 @@ import { ListReactionsRepository } from './list-reactions.repository';
 import { ListRelationRepository } from './list-relation.repository';
 import { TagListRelationRepository } from './tag-list-relation.repository';
 import { TagRepository } from './tag.repository';
+import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
+import { FilterMatcher } from '../extensions/utils/filter-matcher';
+import {
+  LookupBindings,
+  LookupHelper,
+} from '../extensions/utils/lookup-helper';
+import { SetFilterBuilder } from '../extensions/utils/set-helper';
+import { UnmodifiableCommonFields } from '../models/base-types/unmodifiable-common-fields';
 
 export class ListRepository extends DefaultCrudRepository<
   List,
@@ -987,5 +988,22 @@ export class ListRepository extends DefaultCrudRepository<
     };
 
     return this.find(childFilter, options);
+  }
+
+  async createChild(
+    parentId: string,
+    list: Omit<List, UnmodifiableCommonFields | '_parents'>,
+  ): Promise<List> {
+    // First verify that the parent exists
+    await this.findById(parentId);
+
+    // Add the parent reference to the list
+    const childList = {
+      ...list,
+      _parents: [`tapp://localhost/lists/${parentId}`],
+    };
+
+    // Create the child list
+    return this.create(childList);
   }
 }
