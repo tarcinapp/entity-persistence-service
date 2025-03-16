@@ -80,6 +80,21 @@ function processWhereClause(where: any): void {
                 operators[operator] = parsed;
               }
             }
+          } else if (type === 'boolean') {
+            if (Array.isArray(operatorValue)) {
+              // Handle array values for boolean type
+              operators[operator] = operatorValue.map((item) => {
+                if (typeof item === 'string') {
+                  return item.toLowerCase() === 'true';
+                }
+
+                return Boolean(item);
+              });
+            } else if (typeof operatorValue === 'string') {
+              operators[operator] = operatorValue.toLowerCase() === 'true';
+            } else {
+              operators[operator] = Boolean(operatorValue);
+            }
           }
           // Add more type conversions here if needed
         });

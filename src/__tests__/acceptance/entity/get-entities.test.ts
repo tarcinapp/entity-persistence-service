@@ -361,6 +361,146 @@ describe('GET /entities', () => {
     expect(response.body[0]._ownerUsers).to.containDeep([owner1]);
   });
 
+  it('filter: by nested fields using dot notation', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setMonth(pastDate.getMonth() - 1);
+
+    // Create test entities with nested fields
+    await createTestEntity(client, {
+      _name: 'Book One',
+      _kind: 'book',
+      metadata: {
+        publication: {
+          year: 2024,
+          edition: '1st',
+          price: 29.99,
+          releaseDate: now.toISOString(),
+          details: {
+            format: 'hardcover',
+            pages: 300,
+            stock: {
+              quantity: 150,
+              location: 'WAREHOUSE-A',
+            },
+          },
+        },
+        reviews: {
+          rating: 4.5,
+          verified: true,
+          lastUpdated: pastDate.toISOString(),
+        },
+      },
+    });
+
+    await createTestEntity(client, {
+      _name: 'Book Two',
+      _kind: 'book',
+      metadata: {
+        publication: {
+          year: 2023,
+          edition: '2nd',
+          price: 19.99,
+          releaseDate: pastDate.toISOString(),
+          details: {
+            format: 'paperback',
+            pages: 250,
+            stock: {
+              quantity: 50,
+              location: 'WAREHOUSE-B',
+            },
+          },
+        },
+        reviews: {
+          rating: 3.8,
+          verified: false,
+          lastUpdated: pastDate.toISOString(),
+        },
+      },
+    });
+
+    // Test filter by nested number field with type hint
+    const numberFilterStr =
+      `filter[where][metadata.publication.year][gt]=2023&` +
+      `filter[where][metadata.publication.year][type]=number`;
+
+    const numberResponse = await client
+      .get('/entities')
+      .query(numberFilterStr)
+      .expect(200);
+
+    expect(numberResponse.body).to.be.Array().and.have.length(1);
+    expect(numberResponse.body[0]._name).to.equal('Book One');
+    expect(numberResponse.body[0].metadata.publication.year).to.equal(2024);
+
+    // Test filter by nested double field with type hint
+    const doubleFilterStr =
+      `filter[where][metadata.reviews.rating][gt]=4.0&` +
+      `filter[where][metadata.reviews.rating][type]=number`;
+
+    const doubleResponse = await client
+      .get('/entities')
+      .query(doubleFilterStr)
+      .expect(200);
+
+    expect(doubleResponse.body).to.be.Array().and.have.length(1);
+    expect(doubleResponse.body[0]._name).to.equal('Book One');
+    expect(doubleResponse.body[0].metadata.reviews.rating).to.equal(4.5);
+
+    // Test filter by nested string field
+    const stringFilterStr = `filter[where][metadata.publication.details.format]=hardcover`;
+
+    const stringResponse = await client
+      .get('/entities')
+      .query(stringFilterStr)
+      .expect(200);
+
+    expect(stringResponse.body).to.be.Array().and.have.length(1);
+    expect(stringResponse.body[0]._name).to.equal('Book One');
+    expect(stringResponse.body[0].metadata.publication.details.format).to.equal(
+      'hardcover',
+    );
+
+    // Test filter by nested date field
+    const dateFilterStr = `filter[where][metadata.publication.releaseDate][gt]=${encodeURIComponent(pastDate.toISOString())}`;
+
+    const dateResponse = await client
+      .get('/entities')
+      .query(dateFilterStr)
+      .expect(200);
+
+    expect(dateResponse.body).to.be.Array().and.have.length(1);
+    expect(dateResponse.body[0]._name).to.equal('Book One');
+
+    // Test filter by multiple nested fields with AND condition
+    const complexFilterStr =
+      `filter[where][and][0][metadata.publication.details.stock.quantity][gt]=100&` +
+      `filter[where][and][0][metadata.publication.details.stock.quantity][type]=number&` +
+      `filter[where][and][1][metadata.reviews.verified][eq]=true&` +
+      `filter[where][and][1][metadata.reviews.verified][type]=boolean&` +
+      `filter[where][and][2][metadata.publication.price][lt]=30.00&` +
+      `filter[where][and][2][metadata.publication.price][type]=number`;
+
+    const complexResponse = await client
+      .get('/entities')
+      .query(complexFilterStr)
+      .expect(200);
+
+    expect(complexResponse.body).to.be.Array().and.have.length(1);
+    expect(complexResponse.body[0]._name).to.equal('Book One');
+    expect(
+      complexResponse.body[0].metadata.publication.details.stock.quantity,
+    ).to.equal(150);
+    expect(complexResponse.body[0].metadata.reviews.verified).to.be.true();
+    expect(complexResponse.body[0].metadata.publication.price).to.equal(29.99);
+  });
+
   // Pagination and Sorting Tests
   it('pagination: applies response limit configuration', async () => {
     // Set up the application with response limit configuration
