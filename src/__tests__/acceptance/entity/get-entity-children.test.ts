@@ -1428,12 +1428,12 @@ describe('GET /entities/{entityId}/children', () => {
 
     // Get children with field selection and lookup
     const queryStr =
-      `fields[]=_name&` +
-      `fields[]=pages&` +
-      `fields[]=relatedAuthors&` +
+      `filter[fields][_name]=true&` +
+      `filter[fields][pages]=true&` +
+      `filter[fields][relatedAuthors]=true&` +
       `filter[lookup][0][prop]=relatedAuthors&` +
-      `filter[lookup][0][scope][fields][]=_name&` +
-      `filter[lookup][0][scope][fields][]=rating`;
+      `filter[lookup][0][scope][fields][_name]=true&` +
+      `filter[lookup][0][scope][fields][rating]=true`;
 
     const childrenResponse = await client
       .get(`/entities/${parentResponse.body._id}/children`)
@@ -1521,14 +1521,14 @@ describe('GET /entities/{entityId}/children', () => {
 
     // Get children with nested field selection and lookups
     const queryStr =
-      `fields[]=_name&` +
-      `fields[]=relatedAuthors&` +
+      `filter[fields][_name]=true&` +
+      `filter[fields][relatedAuthors]=true&` +
       `filter[lookup][0][prop]=relatedAuthors&` +
-      `filter[lookup][0][scope][fields][]=_name&` +
-      `filter[lookup][0][scope][fields][]=publisher&` +
+      `filter[lookup][0][scope][fields][_name]=true&` +
+      `filter[lookup][0][scope][fields][publisher]=true&` +
       `filter[lookup][0][scope][lookup][0][prop]=publisher&` +
-      `filter[lookup][0][scope][lookup][0][scope][fields][]=_name&` +
-      `filter[lookup][0][scope][lookup][0][scope][fields][]=country`;
+      `filter[lookup][0][scope][lookup][0][scope][fields][_name]=true&` +
+      `filter[lookup][0][scope][lookup][0][scope][fields][country]=true`;
 
     const childrenResponse = await client
       .get(`/entities/${parentResponse.body._id}/children`)
