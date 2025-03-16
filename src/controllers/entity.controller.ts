@@ -449,4 +449,83 @@ export class EntityController {
 
     return this.entityRepository.findChildren(id, filter);
   }
+
+  @post('/entities/{id}/children', {
+    responses: {
+      '200': {
+        description: 'Child Entity model instance',
+        content: {
+          'application/json': { schema: getModelSchemaRef(GenericEntity) },
+        },
+      },
+      '429': {
+        description: 'Entity limit is exceeded',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '409': {
+        description: 'Entity name already exists.',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '422': {
+        description: 'Unprocessable entity',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '404': {
+        description: 'Parent entity not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+  async createChild(
+    @param.path.string('id') id: string,
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(GenericEntity, {
+            title: 'NewChildEntity',
+            exclude: [
+              ...UNMODIFIABLE_COMMON_FIELDS,
+              '_parents',
+            ] as (keyof GenericEntity)[],
+            includeRelations: false,
+          }),
+        },
+      },
+    })
+    genericEntity: Omit<GenericEntity, UnmodifiableCommonFields | '_parents'>,
+  ): Promise<GenericEntity> {
+    return this.entityRepository.createChild(id, genericEntity);
+  }
 }

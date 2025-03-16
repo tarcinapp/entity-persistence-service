@@ -50,6 +50,7 @@ import {
   LookupBindings,
 } from '../extensions/utils/lookup-helper';
 import { SetFilterBuilder } from '../extensions/utils/set-helper';
+import { UnmodifiableCommonFields } from '../models/base-types/unmodifiable-common-fields';
 
 export class EntityRepository extends DefaultCrudRepository<
   GenericEntity,
@@ -943,5 +944,22 @@ export class EntityRepository extends DefaultCrudRepository<
     };
 
     return this.find(childFilter, options);
+  }
+
+  async createChild(
+    parentId: string,
+    entity: Omit<GenericEntity, UnmodifiableCommonFields | '_parents'>,
+  ): Promise<GenericEntity> {
+    // First verify that the parent exists
+    await this.findById(parentId);
+
+    // Add the parent reference to the entity
+    const childEntity = {
+      ...entity,
+      _parents: [`tapp://localhost/entities/${parentId}`],
+    };
+
+    // Create the child entity
+    return this.create(childEntity);
   }
 }

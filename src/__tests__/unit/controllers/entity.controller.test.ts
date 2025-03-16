@@ -468,4 +468,224 @@ describe('EntityController', () => {
       }
     });
   });
+
+  describe('findChildren()', () => {
+    it('should retrieve children of an entity with no filter or set', async () => {
+      // Arrange
+      const parentId = '123';
+      const expectedChildren = [
+        new GenericEntity({
+          _id: '456',
+          _name: 'child1',
+          _parents: [`tapp://localhost/entities/${parentId}`],
+        }),
+      ];
+      repository.findChildren.resolves(expectedChildren);
+
+      // Act
+      const result = await controller.findChildren(parentId);
+
+      // Assert
+      expect(result).to.eql(expectedChildren);
+      sinon.assert.calledWith(repository.findChildren, parentId, undefined);
+    });
+
+    it('should retrieve children with filter and set', async () => {
+      // Arrange
+      const parentId = '123';
+      const set = { actives: 'true' };
+      const filter = { where: { _kind: 'book' } };
+      const expectedChildren = [
+        new GenericEntity({
+          _id: '456',
+          _kind: 'book',
+          _parents: [`tapp://localhost/entities/${parentId}`],
+          _validFromDateTime: new Date().toISOString(),
+        }),
+      ];
+      repository.findChildren.resolves(expectedChildren);
+
+      // Act
+      const result = await controller.findChildren(parentId, set, filter);
+
+      // Assert
+      expect(result).to.eql(expectedChildren);
+      sinon.assert.calledWithMatch(
+        repository.findChildren,
+        parentId,
+        sinon.match.has('where'),
+      );
+    });
+
+    it('should throw 404 when parent entity not found', async () => {
+      // Arrange
+      const parentId = 'nonexistent';
+      repository.findChildren.rejects({ statusCode: 404 });
+
+      // Act & Assert
+      try {
+        await controller.findChildren(parentId);
+        throw new Error('Expected error was not thrown');
+      } catch (error) {
+        expect(error).to.have.property('statusCode', 404);
+      }
+    });
+  });
+
+  describe('findParents()', () => {
+    it('should retrieve parents of an entity with no filter or set', async () => {
+      // Arrange
+      const childId = '456';
+      const expectedParents = [
+        new GenericEntity({ _id: '123', _name: 'parent1' }),
+      ];
+      repository.findParents.resolves(expectedParents);
+
+      // Act
+      const result = await controller.findParents(childId);
+
+      // Assert
+      expect(result).to.eql(expectedParents);
+      sinon.assert.calledWith(repository.findParents, childId, undefined);
+    });
+
+    it('should retrieve parents with filter and set', async () => {
+      // Arrange
+      const childId = '456';
+      const set = { actives: 'true' };
+      const filter = { where: { _kind: 'book' } };
+      const expectedParents = [
+        new GenericEntity({
+          _id: '123',
+          _kind: 'book',
+          _validFromDateTime: new Date().toISOString(),
+        }),
+      ];
+      repository.findParents.resolves(expectedParents);
+
+      // Act
+      const result = await controller.findParents(childId, set, filter);
+
+      // Assert
+      expect(result).to.eql(expectedParents);
+      sinon.assert.calledWithMatch(
+        repository.findParents,
+        childId,
+        sinon.match.has('where'),
+      );
+    });
+
+    it('should throw 404 when child entity not found', async () => {
+      // Arrange
+      const childId = 'nonexistent';
+      repository.findParents.rejects({ statusCode: 404 });
+
+      // Act & Assert
+      try {
+        await controller.findParents(childId);
+        throw new Error('Expected error was not thrown');
+      } catch (error) {
+        expect(error).to.have.property('statusCode', 404);
+      }
+    });
+
+    it('should return empty array when entity has no parents', async () => {
+      // Arrange
+      const childId = '456';
+      repository.findParents.resolves([]);
+
+      // Act
+      const result = await controller.findParents(childId);
+
+      // Assert
+      expect(result).to.be.instanceOf(Array);
+      expect(result).to.have.length(0);
+      sinon.assert.calledWith(repository.findParents, childId, undefined);
+    });
+  });
+
+  describe('createChild()', () => {
+    it('should create a child entity under a parent', async () => {
+      // Arrange
+      const parentId = '123';
+      const childData = {
+        _name: 'Child Entity',
+        _kind: 'book',
+        description: 'A child entity',
+      };
+      const expectedChild = new GenericEntity({
+        _id: '456',
+        ...childData,
+        _parents: [`tapp://localhost/entities/${parentId}`],
+      });
+      repository.createChild.resolves(expectedChild);
+
+      // Act
+      const result = await controller.createChild(parentId, childData);
+
+      // Assert
+      expect(result).to.eql(expectedChild);
+      sinon.assert.calledOnce(repository.createChild);
+      sinon.assert.calledWithExactly(
+        repository.createChild,
+        parentId,
+        childData,
+      );
+    });
+
+    it('should throw 404 when parent entity not found', async () => {
+      // Arrange
+      const parentId = 'nonexistent';
+      const childData = {
+        _name: 'Child Entity',
+        _kind: 'book',
+      };
+      repository.createChild.rejects({ statusCode: 404 });
+
+      // Act & Assert
+      try {
+        await controller.createChild(parentId, childData);
+        throw new Error('Expected error was not thrown');
+      } catch (error) {
+        expect(error).to.have.property('statusCode', 404);
+      }
+    });
+
+    it('should throw 422 when trying to include _parents in child data', async () => {
+      // Arrange
+      const parentId = '123';
+      const childData = {
+        _name: 'Child Entity',
+        _kind: 'book',
+        _parents: ['some-parent'], // This should not be allowed
+      } as DataObject<GenericEntity>;
+      repository.createChild.rejects({ statusCode: 422 });
+
+      // Act & Assert
+      try {
+        await controller.createChild(parentId, childData);
+        throw new Error('Expected error was not thrown');
+      } catch (error) {
+        expect(error).to.have.property('statusCode', 422);
+      }
+    });
+
+    it('should throw 429 when entity limit is exceeded', async () => {
+      // Arrange
+      const parentId = '123';
+      const childData = {
+        _name: 'Child Entity',
+        _kind: 'book',
+      };
+      repository.createChild.rejects({ statusCode: 429 });
+
+      // Act & Assert
+      try {
+        await controller.createChild(parentId, childData);
+        throw new Error('Expected error was not thrown');
+      } catch (error) {
+        expect(error).to.have.property('statusCode', 429);
+      }
+    });
+  });
 });
