@@ -488,7 +488,7 @@ export class ListRepository extends DefaultCrudRepository<
     const trx = await trxRepo.beginTransaction(IsolationLevel.READ_COMMITTED);
     */
 
-    return this.enrichIncomingListForCreation(data)
+    return this.modifyIncomingListForCreation(data)
       .then((enrichedData) =>
         this.validateIncomingListForCreation(enrichedData),
       )
@@ -569,10 +569,13 @@ export class ListRepository extends DefaultCrudRepository<
    * @param data Data that is intended to be created
    * @returns New version of the data which have managed fields are added
    */
-  private async enrichIncomingListForCreation(
+  private async modifyIncomingListForCreation(
     data: DataObject<List>,
   ): Promise<DataObject<List>> {
-    data._kind = data._kind ?? this.kindConfigReader.defaultListKind;
+    data._kind =
+      data._kind ??
+      process.env.default_list_kind ??
+      this.kindConfigReader.defaultListKind;
 
     // take the date of now to make sure we have exactly the same date in all date fields
     const now = new Date().toISOString();
@@ -770,7 +773,10 @@ export class ListRepository extends DefaultCrudRepository<
   private checkDataKindFormat(data: DataObject<List>) {
     // make sure data kind is slug format
     if (data._kind) {
-      const slugKind: string = slugify(data._kind, { lower: true });
+      const slugKind: string = slugify(data._kind, {
+        lower: true,
+        strict: true,
+      });
 
       if (slugKind !== data._kind) {
         throw new HttpErrorResponse({

@@ -529,7 +529,7 @@ export class EntityRepository extends DefaultCrudRepository<
     // set owners count to make searching easier
     this.setCountFields(data);
 
-    _.unset(data, 'relationMetadata');
+    _.unset(data, '_relationMetadata');
 
     return data;
   }
