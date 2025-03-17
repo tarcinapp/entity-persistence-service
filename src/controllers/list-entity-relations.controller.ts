@@ -1,3 +1,4 @@
+import { inject } from '@loopback/context';
 import {
   Count,
   CountSchema,
@@ -16,16 +17,23 @@ import {
   post,
   put,
   requestBody,
+  Request,
+  RestBindings,
 } from '@loopback/rest';
 import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
 import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
 import { ListToEntityRelation } from '../models';
 import { ListEntityRelationRepository } from '../repositories';
+import { LoggingService } from '../services/logging.service';
 
 export class GenericListEntityRelController {
   constructor(
     @repository(ListEntityRelationRepository)
     public listEntityRelationRepository: ListEntityRelationRepository,
+    @inject('services.LoggingService')
+    private loggingService: LoggingService,
+    @inject(RestBindings.Http.REQUEST)
+    private request: Request,
   ) {}
 
   @post('/list-entity-relations', {
@@ -59,7 +67,16 @@ export class GenericListEntityRelController {
     })
     listEntityRelation: Omit<ListToEntityRelation, 'id'>,
   ): Promise<ListToEntityRelation> {
-    return this.listEntityRelationRepository.create(listEntityRelation);
+    this.loggingService.debug('Creating new list-entity relation', {
+      listEntityRelation,
+    });
+    const result =
+      await this.listEntityRelationRepository.create(listEntityRelation);
+    this.loggingService.info('List-entity relation created successfully', {
+      relationId: result._id,
+    });
+
+    return result;
   }
 
   @get('/list-entity-relations/count', {
@@ -75,6 +92,7 @@ export class GenericListEntityRelController {
     where?: Where<ListToEntityRelation>,
     @param.query.object('set') set?: Set,
   ): Promise<Count> {
+    this.loggingService.debug('Counting list-entity relations', { set, where });
     const filterBuilder = new FilterBuilder<ListToEntityRelation>();
 
     if (where) {
@@ -89,7 +107,12 @@ export class GenericListEntityRelController {
       }).build();
     }
 
-    return this.listEntityRelationRepository.count(filter.where);
+    const result = await this.listEntityRelationRepository.count(filter.where);
+    this.loggingService.info('List-entity relations counted successfully', {
+      count: result.count,
+    });
+
+    return result;
   }
 
   @get('/list-entity-relations', {
@@ -114,6 +137,7 @@ export class GenericListEntityRelController {
     @param.filter(ListToEntityRelation)
     filter?: Filter<ListToEntityRelation>,
   ): Promise<ListToEntityRelation[]> {
+    this.loggingService.debug('Finding list-entity relations', { set, filter });
     if (set) {
       filter = new SetFilterBuilder<ListToEntityRelation>(set, {
         filter: filter,
@@ -122,7 +146,12 @@ export class GenericListEntityRelController {
 
     sanitizeFilterFields(filter);
 
-    return this.listEntityRelationRepository.find(filter);
+    const result = await this.listEntityRelationRepository.find(filter);
+    this.loggingService.info('List-entity relations found successfully', {
+      count: result.length,
+    });
+
+    return result;
   }
 
   @patch('/list-entity-relations', {
@@ -209,10 +238,7 @@ export class GenericListEntityRelController {
     })
     listEntityRelation: ListToEntityRelation,
   ): Promise<void> {
-    await this.listEntityRelationRepository.updateById(
-      id,
-      listEntityRelation,
-    );
+    await this.listEntityRelationRepository.updateById(id, listEntityRelation);
   }
 
   @put('/list-entity-relations/{id}', {
@@ -237,10 +263,7 @@ export class GenericListEntityRelController {
     })
     listEntityRelation: ListToEntityRelation,
   ): Promise<void> {
-    await this.listEntityRelationRepository.replaceById(
-      id,
-      listEntityRelation,
-    );
+    await this.listEntityRelationRepository.replaceById(id, listEntityRelation);
   }
 
   @del('/list-entity-relations/{id}', {

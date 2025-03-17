@@ -1,4 +1,5 @@
 import type { DataObject } from '@loopback/repository';
+import type { Request } from '@loopback/rest';
 import { expect, sinon } from '@loopback/testlab';
 import { setupApplication, teardownApplication } from './test-helper';
 import type { EntityPersistenceApplication } from '../../..';
@@ -6,6 +7,7 @@ import { ListController } from '../../../controllers';
 import type { Set } from '../../../extensions/utils/set-helper';
 import { List } from '../../../models';
 import { ListRepository } from '../../../repositories';
+import { LoggingService } from '../../../services/logging.service';
 
 /**
  * Test suite for GenericListController
@@ -16,6 +18,8 @@ describe('ListController', () => {
   let app: EntityPersistenceApplication;
   let controller: ListController;
   let repository: sinon.SinonStubbedInstance<ListRepository>;
+  let mockLogger: sinon.SinonStubbedInstance<LoggingService>;
+  let mockRequest: Partial<Request> & { requestId?: string };
 
   before(async () => {
     ({ app } = await setupApplication());
@@ -28,7 +32,16 @@ describe('ListController', () => {
   beforeEach(() => {
     // Create a fresh stub for each test to avoid interference
     repository = sinon.createStubInstance(ListRepository);
-    controller = new ListController(repository);
+    mockLogger = sinon.createStubInstance(LoggingService);
+    mockRequest = {
+      headers: {},
+      requestId: 'test-request-id',
+    };
+    controller = new ListController(
+      repository,
+      mockLogger,
+      mockRequest as Request,
+    );
   });
 
   /**

@@ -1,3 +1,4 @@
+import { inject } from '@loopback/context';
 import {
   Count,
   CountSchema,
@@ -17,6 +18,8 @@ import {
   post,
   put,
   requestBody,
+  Request,
+  RestBindings,
 } from '@loopback/rest';
 import { Set, SetFilterBuilder } from '../extensions';
 import { processIncludes } from '../extensions/types/sets-in-inclusions';
@@ -28,11 +31,16 @@ import {
 } from '../models/base-types/unmodifiable-common-fields';
 import { getFilterSchemaFor } from '../openapi/filter-schemas';
 import { ListRepository } from '../repositories';
+import { LoggingService } from '../services/logging.service';
 
 export class ListController {
   constructor(
     @repository(ListRepository)
     public listRepository: ListRepository,
+    @inject('services.LoggingService')
+    private loggingService: LoggingService,
+    @inject(RestBindings.Http.REQUEST)
+    private request: Request,
   ) {}
 
   @post('/lists', {
@@ -95,7 +103,13 @@ export class ListController {
     })
     list: Omit<List, UnmodifiableCommonFields>,
   ): Promise<List> {
-    return this.listRepository.create(list);
+    this.loggingService.debug('Creating new list', { list });
+    const result = await this.listRepository.create(list);
+    this.loggingService.info('List created successfully', {
+      listId: result.id,
+    });
+
+    return result;
   }
 
   @get('/lists/count', {
@@ -110,6 +124,7 @@ export class ListController {
     @param.query.object('set') set?: Set,
     @param.where(List) where?: Where<List>,
   ): Promise<Count> {
+    this.loggingService.debug('Counting lists', { set, where });
     const filterBuilder = new FilterBuilder<List>();
 
     if (where) {
@@ -124,7 +139,12 @@ export class ListController {
       }).build();
     }
 
-    return this.listRepository.count(filter.where);
+    const result = await this.listRepository.count(filter.where);
+    this.loggingService.info('Lists counted successfully', {
+      count: result.count,
+    });
+
+    return result;
   }
 
   @get('/lists', {
@@ -147,25 +167,22 @@ export class ListController {
     @param.query.object('filter', getFilterSchemaFor(List))
     filter?: Filter<List>,
   ): Promise<List[]> {
+    this.loggingService.debug('Finding lists', { set, filter });
     if (set) {
-      // Apply set to filter the lists themselves
       filter = new SetFilterBuilder<List>(set, {
         filter: filter,
       }).build();
     }
 
-    // Process includes to handle relation-specific filtering:
-    // 1. setThrough - Apply sets to filter the relation records themselves
-    //    e.g., ?filter[include][0][relation]=_entities&filter[include][0][setThrough][actives]
-    //    This will return only relations that are active, not the entities or lists
-    // 2. whereThrough - Apply where conditions to filter the relation records
-    //    e.g., ?filter[include][0][relation]=_entities&filter[include][0][whereThrough][foo]=bar
-    //    This filters the relations themselves, not the entities or lists
     processIncludes<List>(filter);
-
     sanitizeFilterFields(filter);
 
-    return this.listRepository.find(filter);
+    const result = await this.listRepository.find(filter);
+    this.loggingService.info('Lists found successfully', {
+      count: result.length,
+    });
+
+    return result;
   }
 
   @patch('/lists', {

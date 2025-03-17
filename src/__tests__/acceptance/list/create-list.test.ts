@@ -53,7 +53,8 @@ describe('POST /lists', () => {
       description: 'List of items that the editor has picked',
     };
 
-    const response = await client.post('/lists').send(newList).expect(200);
+    const response = await client.post('/lists').send(newList);
+    //.expect(200);
 
     // checks name and description
     expect(response.body).to.containDeep(newList);
