@@ -15,21 +15,21 @@ import _ from 'lodash';
  * Key Features:
  * 1. Sets - Filter the main records (lists/entities) using predefined conditions
  *    Example: ?set[actives] - Returns only active lists/entities
- * 
+ *
  * 2. Combining Sets - Use logical operators (AND, OR) to combine multiple conditions
  *    Example: ?set[and][0][actives]&set[and][1][publics]
- * 
+ *
  * 3. Sets with Filters - Combine sets with standard filters
  *    Example: ?set[actives]&filter[where][_kind]=config
- * 
+ *
  * 4. SetThrough - Filter the relation records themselves (not the related entities/lists)
  *    Example: /lists/{listId}/entities?setThrough[actives]
  *    This filters the relation records between lists and entities
- * 
+ *
  * 5. WhereThrough - Apply where conditions to filter relation records
  *    Example: /lists/{listId}/entities?whereThrough[foo]=bar
  *    This filters the relation records, not the entities or lists
- * 
+ *
  * 6. Sets with Include - Apply sets/where conditions to included relations
  *    Example: ?filter[include][0][relation]=_entities
  *             &filter[include][0][setThrough][actives]
