@@ -11,6 +11,8 @@ import {
   SequenceHandler,
 } from '@loopback/rest';
 import { RequestIdMiddleware } from './middleware/request-id.middleware';
+import { requestLoggingMiddleware } from './middleware/request-logging.middleware';
+import { LoggingService } from './services/logging.service';
 
 const SequenceActions = RestBindings.SequenceActions;
 
@@ -23,6 +25,7 @@ export class MySequence implements SequenceHandler {
   protected invokeMiddleware: InvokeMiddleware = () => false;
 
   private requestIdMiddleware: RequestIdMiddleware;
+  private requestLoggingMiddleware: ReturnType<typeof requestLoggingMiddleware>;
 
   constructor(
     @inject(SequenceActions.FIND_ROUTE) protected findRoute: FindRoute,
@@ -30,27 +33,52 @@ export class MySequence implements SequenceHandler {
     @inject(SequenceActions.INVOKE_METHOD) protected invoke: InvokeMethod,
     @inject(SequenceActions.SEND) public send: Send,
     @inject(SequenceActions.REJECT) public reject: Reject,
+    @inject('services.LoggingService') logger: LoggingService,
   ) {
     this.requestIdMiddleware = new RequestIdMiddleware();
+    this.requestLoggingMiddleware = requestLoggingMiddleware(logger);
   }
 
   async handle(context: RequestContext) {
     try {
       const { request, response } = context;
 
-      // Apply request ID middleware
+      // Apply request ID middleware first
       await this.requestIdMiddleware.handle(context, async () => {
-        const finished = await this.invokeMiddleware(context);
-        if (finished) {
-          return;
-        }
+        // Then apply request logging middleware
+        await this.requestLoggingMiddleware(context, async () => {
+          const finished = await this.invokeMiddleware(context);
+          if (finished) {
+            return;
+          }
 
-        const route = this.findRoute(request);
-        const args = await this.parseParams(request, route);
-        const result = await this.invoke(route, args);
-        this.send(response, result);
+          const route = this.findRoute(request);
+          const args = await this.parseParams(request, route);
+          const result = await this.invoke(route, args);
+          this.send(response, result);
+        });
       });
     } catch (err) {
+      // Ensure error is logged with request ID
+      const { request, response } = context;
+      const logger = await context.get<LoggingService>(
+        'services.LoggingService',
+      );
+      logger.error(
+        `Request failed ${request.method} ${request.url} ${response.statusCode}`,
+        {
+          method: request.method,
+          url: request.url,
+          statusCode: response.statusCode,
+          error: {
+            name: err.name,
+            message: err.message,
+            stack: err.stack,
+          },
+        },
+        request,
+      );
+
       this.reject(context, err);
     }
   }

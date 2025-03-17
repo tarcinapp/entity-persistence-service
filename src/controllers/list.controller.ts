@@ -167,7 +167,6 @@ export class ListController {
     @param.query.object('filter', getFilterSchemaFor(List))
     filter?: Filter<List>,
   ): Promise<List[]> {
-    this.loggingService.debug('Finding lists', { set, filter });
     if (set) {
       filter = new SetFilterBuilder<List>(set, {
         filter: filter,
@@ -178,9 +177,6 @@ export class ListController {
     sanitizeFilterFields(filter);
 
     const result = await this.listRepository.find(filter);
-    this.loggingService.info('Lists found successfully', {
-      count: result.length,
-    });
 
     return result;
   }
