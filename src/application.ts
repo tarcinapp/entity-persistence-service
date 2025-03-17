@@ -8,7 +8,13 @@ import {
 } from '@loopback/rest-explorer';
 import { ServiceMixin } from '@loopback/service-proxy';
 import path from 'path';
+import {
+  createLoggerInstance,
+  LoggingBindings,
+  getLoggingConfig,
+} from './config/logging.config';
 import { MySequence } from './sequence';
+import { LoggingService } from './services/logging.service';
 
 export { ApplicationConfig };
 
@@ -29,6 +35,17 @@ export class EntityPersistenceApplication extends BootMixin(
       path: '/explorer',
     });
     this.component(RestExplorerComponent);
+
+    // Configure logging
+    const config = getLoggingConfig();
+    config.level =
+      process.env.LOG_LEVEL ??
+      (process.env.NODE_ENV === 'production' ? 'info' : 'debug');
+    const logger = createLoggerInstance(config);
+    this.bind(LoggingBindings.LOGGER).to(logger);
+
+    // Bind LoggingService
+    this.service(LoggingService);
 
     this.projectRoot = __dirname;
     // Customize @loopback/boot Booter Conventions here

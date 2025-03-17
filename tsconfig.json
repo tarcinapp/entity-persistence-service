@@ -13,7 +13,15 @@
     ],
     "module": "CommonJS",
     "strict": true,
-    "typeRoots": ["./src/extensions/types", "./node_modules/@types"]
+    "typeRoots": ["./src/extensions/types", "./node_modules/@types"],
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "*": ["node_modules/*"]
+    },
+    "types": ["node", "mocha"]
   },
   "include": [
     "src/**/*.ts",
