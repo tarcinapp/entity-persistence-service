@@ -1,18 +1,23 @@
 import type { Fields } from '@loopback/repository';
 import { isPlainObject, mapValues } from 'lodash';
 
-// Helper function to ensure boolean values in 'fields' and convert 'null' strings to null in where clauses
+/**
+ * Sanitizes filter fields by:
+ * 1. Converting string 'true'/'false' to boolean in fields
+ * 2. Converting string 'null' to null in where clauses
+ * 3. Converting types based on type hints in where/whereThrough clauses
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function sanitizeFilterFields(filter?: any): void {
   if (!filter || typeof filter !== 'object') {
     return;
   }
 
-  // Process each property in the object
+  // Process each property in the filter object
   Object.keys(filter).forEach((key) => {
     const value = filter[key];
 
-    // Handle fields property - convert 'true'/'false' strings to booleans
+    // Convert string 'true'/'false' to actual booleans in fields property
     if (key === 'fields' && isPlainObject(value)) {
       filter[key] = mapValues(value, (fieldValue) =>
         typeof fieldValue === 'string' && fieldValue === 'true'
@@ -22,21 +27,43 @@ export function sanitizeFilterFields(filter?: any): void {
             : fieldValue,
       ) as Fields;
     }
-    // Process all objects (including 'where') recursively
+    // Handle nested objects including where and whereThrough clauses
     else if (isPlainObject(value)) {
+      // Recursively process nested objects
       sanitizeFilterFields(value);
-      if (key === 'where') {
+
+      // Process type conversions in where and whereThrough clauses
+      if (key === 'where' || key === 'whereThrough') {
         processWhereClause(value);
       }
+
+      // Special handling for whereThrough inside include arrays
+      // Example: filter[include][0][whereThrough][count][type]=number
+      if (key === 'include' && Array.isArray(value)) {
+        value.forEach((inclusion) => {
+          if (
+            inclusion &&
+            typeof inclusion === 'object' &&
+            inclusion.whereThrough
+          ) {
+            processWhereClause(inclusion.whereThrough);
+          }
+        });
+      }
     }
-    // Process arrays
+    // Recursively process arrays
     else if (Array.isArray(value)) {
       value.forEach((item) => sanitizeFilterFields(item));
     }
   });
 }
 
-// Helper function to recursively process where clauses
+/**
+ * Processes where clauses by converting values based on type hints.
+ * Examples:
+ * - ?filter[where][age][type]=number&filter[where][age][gt]="18"
+ * - ?filter[where][isActive][type]=boolean&filter[where][isActive][eq]="true"
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function processWhereClause(where: any): void {
   if (!where || typeof where !== 'object') {
@@ -46,9 +73,12 @@ function processWhereClause(where: any): void {
   Object.keys(where).forEach((fieldName) => {
     const value = where[fieldName];
 
+    // Convert string 'null' to actual null
     if (typeof value === 'string' && value === 'null') {
       where[fieldName] = null;
-    } else if (Array.isArray(value)) {
+    }
+    // Process arrays (for operators like inq, between)
+    else if (Array.isArray(value)) {
       value.forEach((item, index) => {
         if (typeof item === 'string' && item === 'null') {
           value[index] = null;
@@ -56,33 +86,40 @@ function processWhereClause(where: any): void {
           processWhereClause(item);
         }
       });
-    } else if (isPlainObject(value)) {
-      // Check if this object contains operators (like gt, lt, eq) and a type hint
+    }
+    // Process objects that might contain operators and type hints
+    else if (isPlainObject(value)) {
+      // If object has a type property, convert values based on that type
       if (value.type) {
         const type = value.type;
         const operators = { ...value };
         delete operators.type;
 
-        // Convert values based on type
+        // Process each operator's value based on the specified type
         Object.keys(operators).forEach((operator) => {
           const operatorValue = operators[operator];
+
+          // Handle number type conversions
           if (type === 'number') {
             if (Array.isArray(operatorValue)) {
-              // Handle array values (e.g., for between, inq operators)
+              // Convert array values to numbers (for between, inq operators)
               operators[operator] = operatorValue.map((item) => {
                 const parsed = Number(item);
 
                 return !isNaN(parsed) ? parsed : item;
               });
             } else {
+              // Convert single value to number
               const parsed = Number(operatorValue);
               if (!isNaN(parsed)) {
                 operators[operator] = parsed;
               }
             }
-          } else if (type === 'boolean') {
+          }
+          // Handle boolean type conversions
+          else if (type === 'boolean') {
             if (Array.isArray(operatorValue)) {
-              // Handle array values for boolean type
+              // Convert array values to booleans
               operators[operator] = operatorValue.map((item) => {
                 if (typeof item === 'string') {
                   return item.toLowerCase() === 'true';
@@ -91,15 +128,17 @@ function processWhereClause(where: any): void {
                 return Boolean(item);
               });
             } else if (typeof operatorValue === 'string') {
+              // Convert string to boolean
               operators[operator] = operatorValue.toLowerCase() === 'true';
             } else {
+              // Convert other types to boolean
               operators[operator] = Boolean(operatorValue);
             }
           }
-          // Add more type conversions here if needed
+          // Additional type conversions can be added here
         });
 
-        // Replace the original object with the processed operators
+        // Replace original object with processed values
         where[fieldName] = operators;
       }
 

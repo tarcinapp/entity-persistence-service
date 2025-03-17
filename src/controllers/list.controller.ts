@@ -148,11 +148,19 @@ export class ListController {
     filter?: Filter<List>,
   ): Promise<List[]> {
     if (set) {
+      // Apply set to filter the lists themselves
       filter = new SetFilterBuilder<List>(set, {
         filter: filter,
       }).build();
     }
 
+    // Process includes to handle relation-specific filtering:
+    // 1. setThrough - Apply sets to filter the relation records themselves
+    //    e.g., ?filter[include][0][relation]=_entities&filter[include][0][setThrough][actives]
+    //    This will return only relations that are active, not the entities or lists
+    // 2. whereThrough - Apply where conditions to filter the relation records
+    //    e.g., ?filter[include][0][relation]=_entities&filter[include][0][whereThrough][foo]=bar
+    //    This filters the relations themselves, not the entities or lists
     processIncludes<List>(filter);
 
     sanitizeFilterFields(filter);
@@ -231,6 +239,13 @@ export class ListController {
     @param.query.object('filter', getFilterSchemaFor(List))
     filter?: FilterExcludingWhere<List>,
   ): Promise<List> {
+    // Process includes to handle relation-specific filtering:
+    // 1. setThrough - Apply sets to filter the relation records themselves
+    //    e.g., ?filter[include][0][relation]=_entities&filter[include][0][setThrough][actives]
+    //    This will return only relations that are active, not the entities or lists
+    // 2. whereThrough - Apply where conditions to filter the relation records
+    //    e.g., ?filter[include][0][relation]=_entities&filter[include][0][whereThrough][foo]=bar
+    //    This filters the relations themselves, not the entities or lists
     processIncludes<List>(filter);
     sanitizeFilterFields(filter);
 
