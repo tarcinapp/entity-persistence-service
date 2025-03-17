@@ -64,7 +64,7 @@ export class ListController {
         },
       },
       '409': {
-        description: 'List name already exists.',
+        description: 'List already exists.',
         content: {
           'application/json': {
             schema: {
