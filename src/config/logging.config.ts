@@ -19,13 +19,20 @@ export const createFormat = (config: LoggingConfig) => {
   } else {
     formats.push(
       format.printf(
-        (info: { timestamp?: string; level: string; message: unknown }) => {
+        (info: {
+          timestamp?: string;
+          level: string;
+          message: unknown;
+          requestId?: string;
+        }) => {
           const message =
             info.message instanceof Error
               ? info.message.message
               : String(info.message);
 
-          return `${info.timestamp} ${info.level}: ${message}`;
+          const requestId = info.requestId ? ` [${info.requestId}]` : '';
+
+          return `${info.timestamp} ${info.level}:${requestId} ${message}`;
         },
       ),
     );

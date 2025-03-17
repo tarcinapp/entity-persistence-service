@@ -1,4 +1,5 @@
 import { inject, injectable } from '@loopback/core';
+import { Request } from '@loopback/rest';
 import winston from 'winston';
 import { LoggingBindings } from '../config/logging.config';
 
@@ -19,25 +20,39 @@ export class LoggingService {
     private logger: winston.Logger,
   ) {}
 
-  error(message: string, meta?: Record<string, unknown>) {
+  private getRequestId(request?: Request): string | undefined {
+    return (request as any)?.requestId;
+  }
+
+  error(message: string, meta?: Record<string, unknown>, request?: Request) {
     this.logger.error(message, {
       ...meta,
       timestamp: new Date().toISOString(),
+      requestId: this.getRequestId(request),
     });
   }
 
-  warn(message: string, meta?: Record<string, unknown>) {
-    this.logger.warn(message, { ...meta, timestamp: new Date().toISOString() });
+  warn(message: string, meta?: Record<string, unknown>, request?: Request) {
+    this.logger.warn(message, {
+      ...meta,
+      timestamp: new Date().toISOString(),
+      requestId: this.getRequestId(request),
+    });
   }
 
-  info(message: string, meta?: Record<string, unknown>) {
-    this.logger.info(message, { ...meta, timestamp: new Date().toISOString() });
+  info(message: string, meta?: Record<string, unknown>, request?: Request) {
+    this.logger.info(message, {
+      ...meta,
+      timestamp: new Date().toISOString(),
+      requestId: this.getRequestId(request),
+    });
   }
 
-  debug(message: string, meta?: Record<string, unknown>) {
+  debug(message: string, meta?: Record<string, unknown>, request?: Request) {
     this.logger.debug(message, {
       ...meta,
       timestamp: new Date().toISOString(),
+      requestId: this.getRequestId(request),
     });
   }
 

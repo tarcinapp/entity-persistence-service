@@ -1,4 +1,5 @@
 import type { DataObject } from '@loopback/repository';
+import type { Request } from '@loopback/rest';
 import { expect, sinon } from '@loopback/testlab';
 import { setupApplication, teardownApplication } from './test-helper';
 import type { EntityPersistenceApplication } from '../../..';
@@ -6,6 +7,7 @@ import { EntityController } from '../../../controllers';
 import type { Set } from '../../../extensions/utils/set-helper';
 import { GenericEntity } from '../../../models';
 import { EntityRepository } from '../../../repositories';
+import { LoggingService } from '../../../services/logging.service';
 
 /**
  * Test suite for GenericEntityController
@@ -16,6 +18,8 @@ describe('EntityController', () => {
   let app: EntityPersistenceApplication;
   let controller: EntityController;
   let repository: sinon.SinonStubbedInstance<EntityRepository>;
+  let mockRequest: Partial<Request> & { requestId?: string };
+  let mockLogger: sinon.SinonStubbedInstance<LoggingService>;
   let originalEntityKinds: string | undefined;
 
   before(async () => {
@@ -31,9 +35,19 @@ describe('EntityController', () => {
     originalEntityKinds = process.env.entity_kinds;
     process.env.entity_kinds = 'book';
 
-    // Create a fresh stub for each test to avoid interference
+    // Create fresh stubs for each test to avoid interference
     repository = sinon.createStubInstance(EntityRepository);
-    controller = new EntityController(repository);
+    mockRequest = {
+      headers: {},
+      requestId: 'test-request-id',
+    };
+    mockLogger = sinon.createStubInstance(LoggingService);
+
+    controller = new EntityController(
+      repository,
+      mockRequest as Request,
+      mockLogger,
+    );
   });
 
   afterEach(() => {

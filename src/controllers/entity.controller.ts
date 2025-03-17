@@ -1,3 +1,4 @@
+import { inject } from '@loopback/context';
 import {
   Count,
   CountSchema,
@@ -17,6 +18,8 @@ import {
   post,
   put,
   requestBody,
+  RestBindings,
+  Request,
 } from '@loopback/rest';
 import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
 import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
@@ -27,11 +30,14 @@ import {
 } from '../models/base-types/unmodifiable-common-fields';
 import { getFilterSchemaFor } from '../openapi/filter-schemas';
 import { EntityRepository } from '../repositories';
+import { LoggingService } from '../services/logging.service';
 
 export class EntityController {
   constructor(
     @repository(EntityRepository)
     public entityRepository: EntityRepository,
+    @inject(RestBindings.Http.REQUEST) private req: Request,
+    @inject('services.LoggingService') private logger: LoggingService,
   ) {}
 
   @post('/entities', {
@@ -148,6 +154,8 @@ export class EntityController {
     @param.query.object('filter', getFilterSchemaFor(GenericEntity))
     filter?: Filter<GenericEntity>,
   ): Promise<GenericEntity[]> {
+    this.logger.debug('Finding entities', { set, filter }, this.req);
+
     if (set) {
       filter = new SetFilterBuilder<GenericEntity>(set, {
         filter: filter,
@@ -156,7 +164,19 @@ export class EntityController {
 
     sanitizeFilterFields(filter);
 
-    return this.entityRepository.find(filter);
+    const entities = await this.entityRepository.find(filter);
+
+    this.logger.info(
+      'Found entities',
+      {
+        count: entities.length,
+        set,
+        filter: filter?.where,
+      },
+      this.req,
+    );
+
+    return entities;
   }
 
   @patch('/entities', {
