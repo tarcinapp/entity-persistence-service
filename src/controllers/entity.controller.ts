@@ -173,6 +173,7 @@ export class EntityController {
         'application/json': {
           schema: getModelSchemaRef(GenericEntity, {
             title: 'NewEntity',
+            partial: true,
             exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof GenericEntity)[],
             includeRelations: false,
           }),

@@ -174,6 +174,7 @@ export class ListController {
         'application/json': {
           schema: getModelSchemaRef(List, {
             title: 'NewList',
+            partial: true,
             exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof List)[],
             includeRelations: false,
           }),
@@ -274,6 +275,7 @@ export class ListController {
         'application/json': {
           schema: getModelSchemaRef(List, {
             title: 'NewList',
+            partial: true,
             exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof List)[],
             includeRelations: false,
           }),
