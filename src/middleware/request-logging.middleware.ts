@@ -10,7 +10,7 @@ export function requestLoggingMiddleware(logger: LoggingService): Middleware {
     const { request, response } = context;
     const startTime = Date.now();
 
-    // Log request details
+    // Log request details at debug level
     logger.debug(
       `Incoming request ${request.method} ${request.url}`,
       {

@@ -62,7 +62,7 @@ export const getLoggingConfig = (): LoggingConfig => {
 
   return {
     level: process.env.LOG_LEVEL ?? (isTest ? 'error' : 'info'),
-    format: process.env.LOG_FORMAT === 'json' ? 'json' : 'text',
+    format: process.env.LOG_FORMAT === 'text' ? 'text' : 'json',
     timestamp: process.env.LOG_TIMESTAMP === 'true',
     service: process.env.LOG_SERVICE ?? 'entity-persistence-service',
     environment: process.env.NODE_ENV ?? 'development',
