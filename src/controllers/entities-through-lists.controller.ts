@@ -221,14 +221,50 @@ export class EntitiesThroughListController {
       },
     })
     entity: Partial<GenericEntity>,
+    @param.query.object('set')
+    set?: Set,
+
     @param.query.object('where', getWhereSchemaFor(GenericEntity))
     where?: Where<GenericEntity>,
+
+    @param.query.object('setThrough')
+    setThrough?: Set,
+
     @param.query.object('whereThrough')
     whereThrough?: Where<ListToEntityRelation>,
   ): Promise<Count> {
+    const filterBuilder = new FilterBuilder<GenericEntity>();
+    const filterThroughBuilder = new FilterBuilder<ListToEntityRelation>();
+    if (where) {
+      filterBuilder.where(where);
+    }
+
+    let filter = filterBuilder.build();
+
+    if (set) {
+      filter = new SetFilterBuilder<GenericEntity>(set, {
+        filter: filter,
+      }).build();
+    }
+
+    if (whereThrough) {
+      filterThroughBuilder.where(whereThrough);
+    }
+
+    let filterThrough = filterThroughBuilder.build();
+
+    if (setThrough) {
+      filterThrough = new SetFilterBuilder<ListToEntityRelation>(setThrough, {
+        filter: filterThrough,
+      }).build();
+    }
+
+    sanitizeFilterFields(filter);
+    sanitizeFilterFields(filterThrough);
+
     return this.listRepository
       .entities(id)
-      .updateAll(entity, where, whereThrough);
+      .updateAll(entity, filter.where, filterThrough.where);
   }
 
   @del('/lists/{id}/entities', {
