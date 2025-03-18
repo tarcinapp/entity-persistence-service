@@ -1,3 +1,4 @@
+import { inject } from '@loopback/context';
 import {
   Count,
   CountSchema,
@@ -9,32 +10,63 @@ import {
 import {
   del,
   get,
+  getJsonSchema,
   getModelSchemaRef,
   getWhereSchemaFor,
   param,
   patch,
   post,
   requestBody,
+  RestBindings,
+  Request,
 } from '@loopback/rest';
 import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
 import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
-import { GenericEntity, List, ListToEntityRelation } from '../models';
+import {
+  GenericEntity,
+  List,
+  ListToEntityRelation,
+  HttpErrorResponse,
+} from '../models';
+import {
+  UNMODIFIABLE_COMMON_FIELDS,
+  UnmodifiableCommonFields,
+} from '../models/base-types/unmodifiable-common-fields';
 import { ListRepository } from '../repositories';
+import { LoggingService } from '../services/logging.service';
 
 export class EntitiesThroughListController {
   constructor(
     @repository(ListRepository)
     protected listRepository: ListRepository,
+    @inject(RestBindings.Http.REQUEST) private req: Request,
+    @inject('services.LoggingService') private logger: LoggingService,
   ) {}
 
   @get('/lists/{id}/entities', {
     responses: {
       '200': {
-        description:
-          'Array of GenericList has many GenericEntity through ListEntityRelation',
+        description: 'Array of Entity model instances through List',
         content: {
           'application/json': {
-            schema: { type: 'array', items: getModelSchemaRef(GenericEntity) },
+            schema: {
+              type: 'array',
+              items: getModelSchemaRef(GenericEntity, {
+                includeRelations: true,
+              }),
+            },
+          },
+        },
+      },
+      '404': {
+        description: 'List not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -69,9 +101,57 @@ export class EntitiesThroughListController {
   @post('/lists/{id}/entities', {
     responses: {
       '200': {
-        description: 'create a GenericEntity model instance',
+        description: 'Entity model instance',
         content: {
           'application/json': { schema: getModelSchemaRef(GenericEntity) },
+        },
+      },
+      '429': {
+        description: 'Entity limit is exceeded',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '409': {
+        description: 'Entity name already exists.',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '422': {
+        description: 'Unprocessable entity',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '404': {
+        description: 'List not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
         },
       },
     },
@@ -82,22 +162,14 @@ export class EntitiesThroughListController {
       content: {
         'application/json': {
           schema: getModelSchemaRef(GenericEntity, {
-            title: 'NewGenericEntityInList',
-            exclude: [
-              '_id',
-              '_slug',
-              '_ownerUsersCount',
-              '_ownerGroupsCount',
-              '_viewerUsersCount',
-              '_viewerGroupsCount',
-              '_version',
-              '_idempotencyKey',
-            ],
+            title: 'NewEntityInList',
+            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof GenericEntity)[],
+            includeRelations: false,
           }),
         },
       },
     })
-    genericEntity: Omit<GenericEntity, 'id'>,
+    genericEntity: Omit<GenericEntity, UnmodifiableCommonFields>,
   ): Promise<GenericEntity> {
     return this.listRepository.entities(id).create(genericEntity);
   }
@@ -105,8 +177,32 @@ export class EntitiesThroughListController {
   @patch('/lists/{id}/entities', {
     responses: {
       '200': {
-        description: 'GenericList.GenericEntity PATCH success count',
+        description: 'List.Entity PATCH success count',
         content: { 'application/json': { schema: CountSchema } },
+      },
+      '404': {
+        description: 'List not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '422': {
+        description: 'Unprocessable entity',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
       },
     },
   })
@@ -115,7 +211,12 @@ export class EntitiesThroughListController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(GenericEntity, { partial: true }),
+          schema: getModelSchemaRef(GenericEntity, {
+            title: 'PatchEntityInList',
+            partial: true,
+            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof GenericEntity)[],
+            includeRelations: false,
+          }),
         },
       },
     })
@@ -133,8 +234,20 @@ export class EntitiesThroughListController {
   @del('/lists/{id}/entities', {
     responses: {
       '200': {
-        description: 'GenericList.GenericEntity DELETE success count',
+        description: 'List.Entity DELETE success count',
         content: { 'application/json': { schema: CountSchema } },
+      },
+      '404': {
+        description: 'List not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
       },
     },
   })

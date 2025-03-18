@@ -6,7 +6,7 @@ export const UNMODIFIABLE_COMMON_FIELDS = Object.freeze([
   '_ownerGroupsCount',
   '_viewerUsersCount',
   '_viewerGroupsCount',
-  '_parentCount',
+  '_parentsCount',
   '_relationMetadata',
   '_version',
   '_idempotencyKey',
