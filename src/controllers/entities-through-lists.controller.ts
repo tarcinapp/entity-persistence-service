@@ -169,9 +169,9 @@ export class EntitiesThroughListController {
         },
       },
     })
-    genericEntity: Omit<GenericEntity, UnmodifiableCommonFields>,
+    entity: Omit<GenericEntity, UnmodifiableCommonFields>,
   ): Promise<GenericEntity> {
-    return this.listRepository.entities(id).create(genericEntity);
+    return this.listRepository.entities(id).create(entity);
   }
 
   @patch('/lists/{id}/entities', {
@@ -220,7 +220,7 @@ export class EntitiesThroughListController {
         },
       },
     })
-    genericEntity: Partial<GenericEntity>,
+    entity: Partial<GenericEntity>,
     @param.query.object('where', getWhereSchemaFor(GenericEntity))
     where?: Where<GenericEntity>,
     @param.query.object('whereThrough')
@@ -228,7 +228,7 @@ export class EntitiesThroughListController {
   ): Promise<Count> {
     return this.listRepository
       .entities(id)
-      .updateAll(genericEntity, where, whereThrough);
+      .updateAll(entity, where, whereThrough);
   }
 
   @del('/lists/{id}/entities', {

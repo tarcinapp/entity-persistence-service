@@ -98,9 +98,9 @@ export class EntityController {
         },
       },
     })
-    genericEntity: Omit<GenericEntity, UnmodifiableCommonFields>,
+    entity: Omit<GenericEntity, UnmodifiableCommonFields>,
   ): Promise<GenericEntity> {
-    return this.entityRepository.create(genericEntity);
+    return this.entityRepository.create(entity);
   }
 
   @get('/entities/count', {
@@ -128,6 +128,8 @@ export class EntityController {
         filter: filter,
       }).build();
     }
+
+    sanitizeFilterFields(filter);
 
     return this.entityRepository.count(filter.where);
   }
@@ -186,7 +188,7 @@ export class EntityController {
         },
       },
     })
-    genericEntity: Omit<GenericEntity, UnmodifiableCommonFields>,
+    entity: Omit<GenericEntity, UnmodifiableCommonFields>,
     @param.query.object('set') set?: Set,
     @param.where(GenericEntity) where?: Where<GenericEntity>,
   ): Promise<Count> {
@@ -204,7 +206,9 @@ export class EntityController {
       }).build();
     }
 
-    return this.entityRepository.updateAll(genericEntity, filter.where);
+    sanitizeFilterFields(filter);
+
+    return this.entityRepository.updateAll(entity, filter.where);
   }
 
   @get('/entities/{id}', {
@@ -288,9 +292,9 @@ export class EntityController {
         },
       },
     })
-    genericEntity: Omit<GenericEntity, UnmodifiableCommonFields>,
+    entity: Omit<GenericEntity, UnmodifiableCommonFields>,
   ): Promise<void> {
-    await this.entityRepository.updateById(id, genericEntity);
+    await this.entityRepository.updateById(id, entity);
   }
 
   @put('/entities/{id}', {
@@ -337,9 +341,9 @@ export class EntityController {
         },
       },
     })
-    genericEntity: Omit<GenericEntity, UnmodifiableCommonFields>,
+    entity: Omit<GenericEntity, UnmodifiableCommonFields>,
   ): Promise<void> {
-    await this.entityRepository.replaceById(id, genericEntity);
+    await this.entityRepository.replaceById(id, entity);
   }
 
   @del('/entities/{id}', {
@@ -531,8 +535,8 @@ export class EntityController {
         },
       },
     })
-    genericEntity: Omit<GenericEntity, UnmodifiableCommonFields | '_parents'>,
+    entity: Omit<GenericEntity, UnmodifiableCommonFields | '_parents'>,
   ): Promise<GenericEntity> {
-    return this.entityRepository.createChild(id, genericEntity);
+    return this.entityRepository.createChild(id, entity);
   }
 }

@@ -38,7 +38,7 @@ describe('ListRepository', () => {
     const listEntityRelationRepoStub = sinon.createStubInstance(
       ListEntityRelationRepository,
     );
-    const genericEntityRepoStub = sinon.createStubInstance(EntityRepository);
+    const entityRepoStub = sinon.createStubInstance(EntityRepository);
     const listRelationRepoStub = sinon.createStubInstance(
       ListRelationRepository,
     );
@@ -73,7 +73,7 @@ describe('ListRepository', () => {
     repository = new ListRepository(
       testSetup.dataSource,
       Getter.fromValue(listEntityRelationRepoStub),
-      Getter.fromValue(genericEntityRepoStub),
+      Getter.fromValue(entityRepoStub),
       Getter.fromValue(listRelationRepoStub),
       Getter.fromValue(listReactionsRepoStub),
       Getter.fromValue(tagListRelationRepoStub),

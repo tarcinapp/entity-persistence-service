@@ -34,7 +34,7 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
     protected entityRepositoryGetter: Getter<EntityRepository>,
 
     @repository.getter('ListEntityRelationRepository')
-    protected genericListEntityRepositoryGetter: Getter<ListEntityRelationRepository>,
+    protected listEntityRepoGetter: Getter<ListEntityRelationRepository>,
   ) {
     super(GenericEntity, dataSource);
   }
@@ -45,8 +45,7 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
     options?: Options,
   ): Promise<GenericEntity[]> {
     // Get the through repository
-    const genericListEntityRelationRepo =
-      await this.genericListEntityRepositoryGetter();
+    const listEntityRelationRepo = await this.listEntityRepoGetter();
 
     // Calculate fields logic
     let fields: Fields<ListToEntityRelation> | undefined;
@@ -89,10 +88,7 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
       include: filterThrough?.include,
     };
 
-    const relations = await genericListEntityRelationRepo.find(
-      throughFilter,
-      options,
-    );
+    const relations = await listEntityRelationRepo.find(throughFilter, options);
 
     // Extract target entity IDs from relations
     const entityIds = relations.map((rel) => rel._entityId);
@@ -134,14 +130,13 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
     data: DataObject<GenericEntity>,
     options?: Options,
   ): Promise<GenericEntity> {
-    const genericEntitiesRepo = await this.entityRepositoryGetter();
-    const genericListEntityRelationRepo =
-      await this.genericListEntityRepositoryGetter();
+    const entitiesRepo = await this.entityRepositoryGetter();
+    const listEntityRelationRepo = await this.listEntityRepoGetter();
 
-    const entity = await genericEntitiesRepo.create(data, options);
+    const entity = await entitiesRepo.create(data, options);
 
     try {
-      await genericListEntityRelationRepo.create(
+      await listEntityRelationRepo.create(
         {
           _entityId: entity._id,
           _listId: this.sourceListId,
@@ -149,7 +144,7 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
         options,
       );
     } catch (err) {
-      await genericEntitiesRepo.deleteById(entity._id, options);
+      await entitiesRepo.deleteById(entity._id, options);
       throw err;
     }
 
@@ -171,11 +166,10 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
     whereThrough?: Where<ListToEntityRelation>,
     options?: Options,
   ) {
-    const genericEntitiesRepo = await this.entityRepositoryGetter();
-    const genericListEntityRelationRepo =
-      await this.genericListEntityRepositoryGetter();
+    const entitiesRepo = await this.entityRepositoryGetter();
+    const listEntityRelationRepo = await this.listEntityRepoGetter();
 
-    const relations = await genericListEntityRelationRepo.find({
+    const relations = await listEntityRelationRepo.find({
       where: {
         _listId: this.sourceListId,
         ...whereThrough,
@@ -185,7 +179,7 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
 
     where = { _id: { inq: entityIds }, ...where };
 
-    return genericEntitiesRepo.updateAll(data, where, options);
+    return entitiesRepo.updateAll(data, where, options);
   }
 
   async deleteAll(
@@ -193,11 +187,10 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
     whereThrough?: Where<ListToEntityRelation>,
     options?: Options,
   ) {
-    const genericEntitiesRepo = await this.entityRepositoryGetter();
-    const genericListEntityRelationRepo =
-      await this.genericListEntityRepositoryGetter();
+    const entitiesRepo = await this.entityRepositoryGetter();
+    const listEntityRelationRepo = await this.listEntityRepoGetter();
 
-    const relations = await genericListEntityRelationRepo.find({
+    const relations = await listEntityRelationRepo.find({
       where: {
         _listId: this.sourceListId,
         ...whereThrough,
@@ -207,6 +200,6 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
 
     where = { _id: { inq: entityIds }, ...where };
 
-    return genericEntitiesRepo.deleteAll(where, options);
+    return entitiesRepo.deleteAll(where, options);
   }
 }

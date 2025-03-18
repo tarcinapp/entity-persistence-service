@@ -609,7 +609,7 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
       _listId: string;
     },
   ) {
-    const [genericEntityRepo, genericListRepo] = await Promise.all([
+    const [entityRepo, listRepo] = await Promise.all([
       this.entityRepositoryGetter(),
       this.listRepositoryGetter(),
     ]);
@@ -626,7 +626,7 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
 
     // Check if related entity and list exist
     await Promise.all([
-      genericEntityRepo.findById(data._entityId).catch(() => {
+      entityRepo.findById(data._entityId).catch(() => {
         throw new HttpErrorResponse({
           statusCode: 404,
           name: 'NotFoundError',
@@ -636,7 +636,7 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
           status: 404,
         });
       }),
-      genericListRepo.findById(data._listId).catch(() => {
+      listRepo.findById(data._listId).catch(() => {
         throw new HttpErrorResponse({
           statusCode: 404,
           name: 'NotFoundError',

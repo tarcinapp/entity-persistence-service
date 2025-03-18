@@ -30,7 +30,7 @@ export class CustomListThroughEntityRepository extends DefaultCrudRepository<
     @repository.getter('ListRepository')
     protected listRepositoryGetter: Getter<ListRepository>,
     @repository.getter('ListEntityRelationRepository')
-    protected genericListEntityRepositoryGetter: Getter<ListEntityRelationRepository>,
+    protected listEntityRepositoryGetter: Getter<ListEntityRelationRepository>,
   ) {
     super(List, dataSource);
   }
@@ -41,8 +41,7 @@ export class CustomListThroughEntityRepository extends DefaultCrudRepository<
     options?: Options,
   ): Promise<List[]> {
     // Get the through repository
-    const genericListEntityRelationRepo =
-      await this.genericListEntityRepositoryGetter();
+    const listEntityRelationRepo = await this.listEntityRepositoryGetter();
 
     // Calculate fields logic
     let fields: Fields<ListToEntityRelation> | undefined;
@@ -85,10 +84,7 @@ export class CustomListThroughEntityRepository extends DefaultCrudRepository<
       include: filterThrough?.include,
     };
 
-    const relations = await genericListEntityRelationRepo.find(
-      throughFilter,
-      options,
-    );
+    const relations = await listEntityRelationRepo.find(throughFilter, options);
 
     // Extract target list IDs from relations
     const listIds = relations.map((rel) => rel._listId);
