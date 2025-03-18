@@ -26,6 +26,7 @@ import {
 } from '../extensions';
 
 import { CustomListThroughEntityRepository } from './custom-list-through-entity.repository';
+import { EntityReactionsRepository } from './entity-reactions.repository';
 import { FilterMatcher } from '../extensions/utils/filter-matcher';
 
 import {
@@ -37,7 +38,6 @@ import {
 } from '../models';
 import { ListEntityRelationRepository } from './list-entity-relation.repository';
 import { ListRepository } from './list.repository';
-import { ReactionsRepository } from './reactions.repository';
 
 import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
 import {
@@ -68,8 +68,8 @@ export class EntityRepository extends DefaultCrudRepository<
     @repository.getter('ListRepository')
     protected listRepositoryGetter: Getter<ListRepository>,
 
-    @repository.getter('ReactionsRepository')
-    protected reactionsRepositoryGetter: Getter<ReactionsRepository>,
+    @repository.getter('EntityReactionsRepository')
+    protected reactionsRepositoryGetter: Getter<EntityReactionsRepository>,
 
     @repository.getter('ListEntityRelationRepository')
     protected listEntityRelationRepositoryGetter: Getter<ListEntityRelationRepository>,

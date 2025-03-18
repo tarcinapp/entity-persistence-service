@@ -3,7 +3,7 @@ import { DefaultCrudRepository, Filter, Options } from '@loopback/repository';
 import { EntityDbDataSource } from '../datasources';
 import { EntityReactions } from '../models';
 
-export class ReactionsRepository extends DefaultCrudRepository<
+export class EntityReactionsRepository extends DefaultCrudRepository<
   EntityReactions,
   typeof EntityReactions.prototype.id
 > {

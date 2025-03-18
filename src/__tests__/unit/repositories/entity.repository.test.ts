@@ -16,7 +16,7 @@ import { HttpErrorResponse } from '../../../models';
 import {
   ListEntityRelationRepository,
   ListRepository,
-  ReactionsRepository,
+  EntityReactionsRepository,
 } from '../../../repositories';
 import { EntityRepository } from '../../../repositories/entity.repository';
 
@@ -30,7 +30,9 @@ describe('EntityRepository', () => {
     app = testSetup.app;
 
     // Create stubs for related repositories
-    const reactionsRepoStub = sinon.createStubInstance(ReactionsRepository);
+    const reactionsRepoStub = sinon.createStubInstance(
+      EntityReactionsRepository,
+    );
     const listEntityRelationRepoStub = sinon.createStubInstance(
       ListEntityRelationRepository,
     );
@@ -1067,12 +1069,12 @@ describe('EntityRepository', () => {
 
   describe('deleteById', () => {
     let superDeleteByIdStub: sinon.SinonStub;
-    let reactionsRepoStub: sinon.SinonStubbedInstance<ReactionsRepository>;
+    let reactionsRepoStub: sinon.SinonStubbedInstance<EntityReactionsRepository>;
     let listEntityRelationRepoStub: sinon.SinonStubbedInstance<ListEntityRelationRepository>;
 
     beforeEach(() => {
       // Create stubs for all related repositories
-      reactionsRepoStub = sinon.createStubInstance(ReactionsRepository);
+      reactionsRepoStub = sinon.createStubInstance(EntityReactionsRepository);
       listEntityRelationRepoStub = sinon.createStubInstance(
         ListEntityRelationRepository,
       );
@@ -1206,12 +1208,12 @@ describe('EntityRepository', () => {
 
   describe('deleteAll', () => {
     let superDeleteAllStub: sinon.SinonStub;
-    let reactionsRepoStub: sinon.SinonStubbedInstance<ReactionsRepository>;
+    let reactionsRepoStub: sinon.SinonStubbedInstance<EntityReactionsRepository>;
     let listEntityRelationRepoStub: sinon.SinonStubbedInstance<ListEntityRelationRepository>;
 
     beforeEach(() => {
       // Create stubs for all related repositories
-      reactionsRepoStub = sinon.createStubInstance(ReactionsRepository);
+      reactionsRepoStub = sinon.createStubInstance(EntityReactionsRepository);
       listEntityRelationRepoStub = sinon.createStubInstance(
         ListEntityRelationRepository,
       );
