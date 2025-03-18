@@ -103,13 +103,7 @@ export class ListController {
     })
     list: Omit<List, UnmodifiableCommonFields>,
   ): Promise<List> {
-    this.loggingService.debug('Creating new list', { list });
-    const result = await this.listRepository.create(list);
-    this.loggingService.info('List created successfully', {
-      listId: result.id,
-    });
-
-    return result;
+    return this.listRepository.create(list);
   }
 
   @get('/lists/count', {
@@ -124,7 +118,6 @@ export class ListController {
     @param.query.object('set') set?: Set,
     @param.where(List) where?: Where<List>,
   ): Promise<Count> {
-    this.loggingService.debug('Counting lists', { set, where });
     const filterBuilder = new FilterBuilder<List>();
 
     if (where) {
@@ -139,12 +132,7 @@ export class ListController {
       }).build();
     }
 
-    const result = await this.listRepository.count(filter.where);
-    this.loggingService.info('Lists counted successfully', {
-      count: result.count,
-    });
-
-    return result;
+    return this.listRepository.count(filter.where);
   }
 
   @get('/lists', {
@@ -176,9 +164,7 @@ export class ListController {
     processIncludes<List>(filter);
     sanitizeFilterFields(filter);
 
-    const result = await this.listRepository.find(filter);
-
-    return result;
+    return this.listRepository.find(filter);
   }
 
   @patch('/lists', {
