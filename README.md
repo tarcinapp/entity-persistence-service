@@ -462,8 +462,8 @@ We can divide configurations into 9 categories:
 | **mongodb_database**                | Name of the database                                                             | tappdb          |
 | **mongodb_url**                     | Connection URL can be used instead of host, port and user                        | localhost       |
 | **collection_entity**               | Name of the collection which generic entities are persisted                      | GenericEntities |
-| **collection_list**                 | Name of the collection which generic lists are persisted                         | GenericLists    |
-| **collection_list_list_entity_rel** | Name of the collection which relationships between list and entity are persisted | GenericLists    |
+| **collection_list**                 | Name of the collection which generic lists are persisted                         | Lists    |
+| **collection_list_list_entity_rel** | Name of the collection which relationships between list and entity are persisted | ListEntityRelations    |
 
 ### Allowed Kinds
 

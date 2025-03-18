@@ -27,7 +27,7 @@ export class ReactionsThroughEntitiesController {
   @get('/entities/{id}/reactions', {
     responses: {
       '200': {
-        description: 'Array of GenericEntity has many Reactions',
+        description: 'Array of Entity has many Reactions',
         content: {
           'application/json': {
             schema: {
@@ -62,7 +62,7 @@ export class ReactionsThroughEntitiesController {
       content: {
         'application/json': {
           schema: getModelSchemaRef(EntityReactions, {
-            title: 'NewReactionsInGenericEntity',
+            title: 'NewReactionsInEntity',
             exclude: ['_id'],
             optional: ['entityId'],
           }),

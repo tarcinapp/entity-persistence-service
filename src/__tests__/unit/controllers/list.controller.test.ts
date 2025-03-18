@@ -10,7 +10,7 @@ import { ListRepository } from '../../../repositories';
 import { LoggingService } from '../../../services/logging.service';
 
 /**
- * Test suite for GenericListController
+ * Test suite for ListController
  * Tests all CRUD operations and their error cases.
  * Uses sinon stubs to isolate the controller from the repository layer.
  */
