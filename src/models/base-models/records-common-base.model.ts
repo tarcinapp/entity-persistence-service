@@ -2,10 +2,10 @@ import { Entity, model, property } from '@loopback/repository';
 
 /**
  * Inherits:
- * _id, _kind, _validFromDateTime, _validUntilDateTime
+ * -
  *
  *  Adds:
- * _version, _createdDateTime, _createdBy, _lastUpdatedDateTime, _lastUpdatedBy, _idempotencyKey
+ * _id, _kind, _validFromDateTime, _validUntilDateTime, _version, _createdDateTime, _createdBy, _lastUpdatedDateTime, _lastUpdatedBy, _idempotencyKey
  */
 @model({
   settings: {
