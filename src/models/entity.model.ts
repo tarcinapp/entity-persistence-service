@@ -1,6 +1,6 @@
 import { hasMany, model, property } from '@loopback/repository';
 import { ListEntityCommonBase } from './base-models/list-entity-common-base.model';
-import { EntityReactions } from './reactions.model';
+import { EntityReactions } from './entity-reactions.model';
 import { TagEntityRelation } from './tag-entity-relation.model';
 import { Tag } from './tag.model';
 

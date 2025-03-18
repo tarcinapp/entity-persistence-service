@@ -19,9 +19,6 @@ import {
   EntityRepository,
   ListEntityRelationRepository,
   ListReactionsRepository,
-  ListRelationRepository,
-  TagListRelationRepository,
-  TagRepository,
 } from '../../../repositories';
 import { ListRepository } from '../../../repositories/list.repository';
 
@@ -39,16 +36,9 @@ describe('ListRepository', () => {
       ListEntityRelationRepository,
     );
     const entityRepoStub = sinon.createStubInstance(EntityRepository);
-    const listRelationRepoStub = sinon.createStubInstance(
-      ListRelationRepository,
-    );
     const listReactionsRepoStub = sinon.createStubInstance(
       ListReactionsRepository,
     );
-    const tagListRelationRepoStub = sinon.createStubInstance(
-      TagListRelationRepository,
-    );
-    const tagRepoStub = sinon.createStubInstance(TagRepository);
     const customListEntityRelRepoStub = sinon.createStubInstance(
       CustomEntityThroughListRepository,
     );
@@ -74,10 +64,7 @@ describe('ListRepository', () => {
       testSetup.dataSource,
       Getter.fromValue(listEntityRelationRepoStub),
       Getter.fromValue(entityRepoStub),
-      Getter.fromValue(listRelationRepoStub),
       Getter.fromValue(listReactionsRepoStub),
-      Getter.fromValue(tagListRelationRepoStub),
-      Getter.fromValue(tagRepoStub),
       Getter.fromValue(customListEntityRelRepoStub),
       testSetup.configReaders.uniquenessConfigReader,
       testSetup.configReaders.recordLimitConfigReader,
@@ -100,7 +87,6 @@ describe('ListRepository', () => {
 
   it('should have all required relations configured', () => {
     expect(repository.reactions).to.not.be.undefined();
-    expect(repository.tags).to.not.be.undefined();
     expect(repository.entities).to.not.be.undefined();
   });
 
@@ -1000,9 +986,6 @@ describe('ListRepository', () => {
     let superDeleteByIdStub: sinon.SinonStub;
     let listEntityRelationRepoStub: sinon.SinonStubbedInstance<ListEntityRelationRepository>;
     let listReactionsRepoStub: sinon.SinonStubbedInstance<ListReactionsRepository>;
-    let listRelationRepoStub: sinon.SinonStubbedInstance<ListRelationRepository>;
-    let tagListRelationRepoStub: sinon.SinonStubbedInstance<TagListRelationRepository>;
-    let tagRepoStub: sinon.SinonStubbedInstance<TagRepository>;
     let customListEntityRelRepoStub: sinon.SinonStubbedInstance<CustomEntityThroughListRepository>;
 
     beforeEach(() => {
@@ -1011,11 +994,6 @@ describe('ListRepository', () => {
         ListEntityRelationRepository,
       );
       listReactionsRepoStub = sinon.createStubInstance(ListReactionsRepository);
-      listRelationRepoStub = sinon.createStubInstance(ListRelationRepository);
-      tagListRelationRepoStub = sinon.createStubInstance(
-        TagListRelationRepository,
-      );
-      tagRepoStub = sinon.createStubInstance(TagRepository);
       customListEntityRelRepoStub = sinon.createStubInstance(
         CustomEntityThroughListRepository,
       );
@@ -1025,12 +1003,6 @@ describe('ListRepository', () => {
         Promise.resolve(listEntityRelationRepoStub);
       (repository as any).listReactionsRepositoryGetter = () =>
         Promise.resolve(listReactionsRepoStub);
-      (repository as any).listRelationRepositoryGetter = () =>
-        Promise.resolve(listRelationRepoStub);
-      (repository as any).tagListRelationRepositoryGetter = () =>
-        Promise.resolve(tagListRelationRepoStub);
-      (repository as any).tagRepositoryGetter = () =>
-        Promise.resolve(tagRepoStub);
       (repository as any).customEntityThroughListRepositoryGetter = () =>
         Promise.resolve(customListEntityRelRepoStub);
 
@@ -1159,9 +1131,6 @@ describe('ListRepository', () => {
     let superDeleteAllStub: sinon.SinonStub;
     let listEntityRelationRepoStub: sinon.SinonStubbedInstance<ListEntityRelationRepository>;
     let listReactionsRepoStub: sinon.SinonStubbedInstance<ListReactionsRepository>;
-    let listRelationRepoStub: sinon.SinonStubbedInstance<ListRelationRepository>;
-    let tagListRelationRepoStub: sinon.SinonStubbedInstance<TagListRelationRepository>;
-    let tagRepoStub: sinon.SinonStubbedInstance<TagRepository>;
     let customListEntityRelRepoStub: sinon.SinonStubbedInstance<CustomEntityThroughListRepository>;
 
     beforeEach(() => {
@@ -1170,11 +1139,6 @@ describe('ListRepository', () => {
         ListEntityRelationRepository,
       );
       listReactionsRepoStub = sinon.createStubInstance(ListReactionsRepository);
-      listRelationRepoStub = sinon.createStubInstance(ListRelationRepository);
-      tagListRelationRepoStub = sinon.createStubInstance(
-        TagListRelationRepository,
-      );
-      tagRepoStub = sinon.createStubInstance(TagRepository);
       customListEntityRelRepoStub = sinon.createStubInstance(
         CustomEntityThroughListRepository,
       );
@@ -1184,12 +1148,6 @@ describe('ListRepository', () => {
         Promise.resolve(listEntityRelationRepoStub);
       (repository as any).listReactionsRepositoryGetter = () =>
         Promise.resolve(listReactionsRepoStub);
-      (repository as any).listRelationRepositoryGetter = () =>
-        Promise.resolve(listRelationRepoStub);
-      (repository as any).tagListRelationRepositoryGetter = () =>
-        Promise.resolve(tagListRelationRepoStub);
-      (repository as any).tagRepositoryGetter = () =>
-        Promise.resolve(tagRepoStub);
       (repository as any).customEntityThroughListRepositoryGetter = () =>
         Promise.resolve(customListEntityRelRepoStub);
 

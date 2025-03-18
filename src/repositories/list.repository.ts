@@ -7,7 +7,6 @@ import {
   FilterBuilder,
   FilterExcludingWhere,
   HasManyRepositoryFactory,
-  HasManyThroughRepositoryFactory,
   InclusionResolver,
   Options,
   Where,
@@ -34,16 +33,11 @@ import {
   ListReactions,
   ListRelations,
   SingleError,
-  Tag,
-  TagListRelation,
 } from '../models';
 import { CustomEntityThroughListRepository } from './custom-entity-through-list.repository';
 import { EntityRepository } from './entity.repository';
 import { ListEntityRelationRepository } from './list-entity-relation.repository';
 import { ListReactionsRepository } from './list-reactions.repository';
-import { ListRelationRepository } from './list-relation.repository';
-import { TagListRelationRepository } from './tag-list-relation.repository';
-import { TagRepository } from './tag.repository';
 import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
 import { FilterMatcher } from '../extensions/utils/filter-matcher';
 import {
@@ -67,13 +61,6 @@ export class ListRepository extends DefaultCrudRepository<
     typeof List.prototype._id
   >;
 
-  public readonly tags: HasManyThroughRepositoryFactory<
-    Tag,
-    typeof Tag.prototype.id,
-    TagListRelation,
-    typeof List.prototype._id
-  >;
-
   private static responseLimit = _.parseInt(
     process.env.response_limit_list ?? '50',
   );
@@ -86,17 +73,8 @@ export class ListRepository extends DefaultCrudRepository<
     @repository.getter('EntityRepository')
     protected entityRepositoryGetter: Getter<EntityRepository>,
 
-    @repository.getter('ListRelationRepository')
-    protected listRelationRepositoryGetter: Getter<ListRelationRepository>,
-
     @repository.getter('ListReactionsRepository')
     protected listReactionsRepositoryGetter: Getter<ListReactionsRepository>,
-
-    @repository.getter('TagListRelationRepository')
-    protected tagListRelationRepositoryGetter: Getter<TagListRelationRepository>,
-
-    @repository.getter('TagRepository')
-    protected tagRepositoryGetter: Getter<TagRepository>,
 
     @repository.getter('CustomListEntityRelRepository')
     protected customListEntityRelRepositoryGetter: Getter<CustomEntityThroughListRepository>,
@@ -127,11 +105,6 @@ export class ListRepository extends DefaultCrudRepository<
   ) {
     super(List, dataSource);
 
-    this.tags = this.createHasManyThroughRepositoryFactoryFor(
-      'tags',
-      tagRepositoryGetter,
-      tagListRelationRepositoryGetter,
-    );
     this.reactions = this.createHasManyRepositoryFactoryFor(
       'reactions',
       listReactionsRepositoryGetter,

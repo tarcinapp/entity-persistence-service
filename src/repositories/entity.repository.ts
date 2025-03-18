@@ -7,7 +7,6 @@ import {
   FilterBuilder,
   FilterExcludingWhere,
   HasManyRepositoryFactory,
-  HasManyThroughRepositoryFactory,
   Options,
   Where,
   WhereBuilder,
@@ -35,15 +34,11 @@ import {
   HttpErrorResponse,
   EntityReactions,
   SingleError,
-  Tag,
-  TagEntityRelation,
 } from '../models';
 import { ListEntityRelationRepository } from './list-entity-relation.repository';
 import { ListRepository } from './list.repository';
 import { ReactionsRepository } from './reactions.repository';
 
-import { TagEntityRelationRepository } from './tag-entity-relation.repository';
-import { TagRepository } from './tag.repository';
 import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
 import {
   LookupHelper,
@@ -66,13 +61,6 @@ export class EntityRepository extends DefaultCrudRepository<
     typeof GenericEntity.prototype._id
   >;
 
-  public readonly tags: HasManyThroughRepositoryFactory<
-    Tag,
-    typeof Tag.prototype.id,
-    TagEntityRelation,
-    typeof GenericEntity.prototype._id
-  >;
-
   constructor(
     @inject('datasources.EntityDb')
     dataSource: EntityDbDataSource,
@@ -82,12 +70,6 @@ export class EntityRepository extends DefaultCrudRepository<
 
     @repository.getter('ReactionsRepository')
     protected reactionsRepositoryGetter: Getter<ReactionsRepository>,
-
-    @repository.getter('TagEntityRelationRepository')
-    protected tagEntityRelationRepositoryGetter: Getter<TagEntityRelationRepository>,
-
-    @repository.getter('TagRepository')
-    protected tagRepositoryGetter: Getter<TagRepository>,
 
     @repository.getter('ListEntityRelationRepository')
     protected listEntityRelationRepositoryGetter: Getter<ListEntityRelationRepository>,
@@ -117,11 +99,7 @@ export class EntityRepository extends DefaultCrudRepository<
     private lookupHelper: LookupHelper,
   ) {
     super(GenericEntity, dataSource);
-    this.tags = this.createHasManyThroughRepositoryFactoryFor(
-      'tags',
-      tagRepositoryGetter,
-      tagEntityRelationRepositoryGetter,
-    );
+
     this.reactions = this.createHasManyRepositoryFactoryFor(
       '_reactions',
       reactionsRepositoryGetter,
