@@ -117,26 +117,7 @@ export class ListEntityRelController {
     })
     listEntityRelation: Omit<ListToEntityRelation, UnmodifiableCommonFields>,
   ): Promise<ListToEntityRelation> {
-    this.logger.debug(
-      'Creating new list-entity relation',
-      {
-        listEntityRelation,
-      },
-      this.req,
-    );
-
-    const result =
-      await this.listEntityRelationRepository.create(listEntityRelation);
-
-    this.logger.info(
-      'List-entity relation created successfully',
-      {
-        relationId: result._id,
-      },
-      this.req,
-    );
-
-    return result;
+    return this.listEntityRelationRepository.create(listEntityRelation);
   }
 
   @get('/list-entity-relations/count', {
@@ -152,12 +133,6 @@ export class ListEntityRelController {
     where?: Where<ListToEntityRelation>,
     @param.query.object('set') set?: Set,
   ): Promise<Count> {
-    this.logger.debug(
-      'Counting list-entity relations',
-      { set, where },
-      this.req,
-    );
-
     const filterBuilder = new FilterBuilder<ListToEntityRelation>();
 
     if (where) {
@@ -172,17 +147,7 @@ export class ListEntityRelController {
       }).build();
     }
 
-    const result = await this.listEntityRelationRepository.count(filter.where);
-
-    this.logger.info(
-      'List-entity relations counted successfully',
-      {
-        count: result.count,
-      },
-      this.req,
-    );
-
-    return result;
+    return this.listEntityRelationRepository.count(filter.where);
   }
 
   @get('/list-entity-relations', {
@@ -207,12 +172,6 @@ export class ListEntityRelController {
     @param.query.object('filter', getFilterSchemaFor(ListToEntityRelation))
     filter?: Filter<ListToEntityRelation>,
   ): Promise<ListToEntityRelation[]> {
-    this.logger.debug(
-      'Finding list-entity relations',
-      { set, filter },
-      this.req,
-    );
-
     if (set) {
       filter = new SetFilterBuilder<ListToEntityRelation>(set, {
         filter: filter,
@@ -221,17 +180,7 @@ export class ListEntityRelController {
 
     sanitizeFilterFields(filter);
 
-    const result = await this.listEntityRelationRepository.find(filter);
-
-    this.logger.info(
-      'List-entity relations found successfully',
-      {
-        count: result.length,
-      },
-      this.req,
-    );
-
-    return result;
+    return this.listEntityRelationRepository.find(filter);
   }
 
   @patch('/list-entity-relations', {

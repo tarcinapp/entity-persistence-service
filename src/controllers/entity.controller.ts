@@ -154,8 +154,6 @@ export class EntityController {
     @param.query.object('filter', getFilterSchemaFor(GenericEntity))
     filter?: Filter<GenericEntity>,
   ): Promise<GenericEntity[]> {
-    this.logger.debug('Finding entities', { set, filter }, this.req);
-
     if (set) {
       filter = new SetFilterBuilder<GenericEntity>(set, {
         filter: filter,
@@ -164,19 +162,7 @@ export class EntityController {
 
     sanitizeFilterFields(filter);
 
-    const entities = await this.entityRepository.find(filter);
-
-    this.logger.info(
-      'Found entities',
-      {
-        count: entities.length,
-        set,
-        filter: filter?.where,
-      },
-      this.req,
-    );
-
-    return entities;
+    return this.entityRepository.find(filter);
   }
 
   @patch('/entities', {
