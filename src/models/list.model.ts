@@ -3,8 +3,6 @@ import { ListEntityCommonBase } from './base-models/list-entity-common-base.mode
 import { GenericEntity, GenericEntityWithRelations } from './entity.model';
 import { ListToEntityRelation } from './list-entity-relation.model';
 import { ListReactions } from './list-reactions.model';
-import { TagListRelation } from './tag-list-relation.model';
-import { Tag } from './tag.model';
 
 @model({
   settings: {
@@ -24,13 +22,8 @@ export class List extends ListEntityCommonBase {
   })
   _entities: GenericEntity[];
 
-  @hasMany(() => ListReactions, { keyTo: 'listId' })
-  reactions: ListReactions[];
-
-  @hasMany(() => Tag, {
-    through: { model: () => TagListRelation, keyFrom: 'listId' },
-  })
-  tags: Tag[];
+  @hasMany(() => ListReactions, { keyTo: '_listId' })
+  _reactions?: ListReactions[];
 
   @property({
     type: 'array',

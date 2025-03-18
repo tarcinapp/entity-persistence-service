@@ -1,51 +1,32 @@
-import { Entity, model, property } from '@loopback/repository';
+import { model, property } from '@loopback/repository';
+import { ReactionsCommonBase } from './base-models/reactions-common-base.model';
+import { GenericEntityWithRelations } from './entity.model';
 
-@model({ settings: { strict: false } })
-export class EntityReactions extends Entity {
-  @property({
-    type: 'string',
-    id: true,
-    generated: false,
-    defaultFn: 'uuidv4',
-  })
-  id?: string;
-
+@model({
+  settings: {
+    strict: false,
+    mongodb: {
+      collection: process.env.collection_entity_reactions ?? 'EntityReactions',
+    },
+  },
+})
+export class EntityReactions extends ReactionsCommonBase {
   @property({
     type: 'string',
     required: true,
   })
-  kind: string;
-
-  @property({
-    type: 'date',
-    defaultFn: 'now',
-  })
-  creationDateTime?: string;
-
-  @property({
-    type: 'date',
-    defaultFn: process.env.autoapprove_entity_reaction ? 'now' : undefined,
-  })
-  validFromDateTime?: string;
-
-  @property({
-    type: 'date',
-    default: null,
-    jsonSchema: { nullable: true },
-  })
-  validUntilDateTime?: string | null;
+  _entityId: string;
 
   @property({
     type: 'array',
     itemType: 'string',
-    default: [],
+    jsonSchema: {
+      pattern:
+        '^tapp://localhost/entity-reactions/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+      uniqueItems: true,
+    },
   })
-  ownerUsers?: string[];
-
-  @property({
-    type: 'string',
-  })
-  entityId?: string;
+  _parents?: string[];
 
   // Define well-known properties here
 
@@ -58,8 +39,9 @@ export class EntityReactions extends Entity {
   }
 }
 
-export interface ReactionsRelations {
-  // describe navigational properties here
+export interface EntityReactionsRelations {
+  entity?: GenericEntityWithRelations;
 }
 
-export type ReactionsWithRelations = EntityReactions & ReactionsRelations;
+export type EntityReactionsWithRelations = EntityReactions &
+  EntityReactionsRelations;

@@ -6,7 +6,12 @@ import {
 } from './test-helper.repository';
 import type { EntityPersistenceApplication } from '../../..';
 import { LookupHelper } from '../../../extensions/utils/lookup-helper';
-import type { GenericEntity, GenericEntityRelations } from '../../../models';
+import type {
+  GenericEntity,
+  GenericEntityRelations,
+  List,
+  ListRelations,
+} from '../../../models';
 import { HttpErrorResponse } from '../../../models';
 import {
   ListEntityRelationRepository,
@@ -34,12 +39,15 @@ describe('EntityRepository', () => {
     // Create a mock lookup helper
     const mockLookupHelper = sinon.createStubInstance(LookupHelper);
     mockLookupHelper.processLookupForArray.callsFake(
-      async (entities: (GenericEntity & GenericEntityRelations)[]) =>
-        Promise.resolve(entities),
+      async (
+        items: ((List | GenericEntity) &
+          (ListRelations | GenericEntityRelations))[],
+      ) => Promise.resolve(items),
     );
     mockLookupHelper.processLookupForOne.callsFake(
-      async (entity: GenericEntity & GenericEntityRelations) =>
-        Promise.resolve(entity),
+      async (
+        item: (List | GenericEntity) & (ListRelations | GenericEntityRelations),
+      ) => Promise.resolve(item),
     );
 
     // Create main repository instance with stubbed dependencies

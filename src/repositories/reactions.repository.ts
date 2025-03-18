@@ -1,12 +1,11 @@
 import { inject } from '@loopback/core';
 import { DefaultCrudRepository, Filter, Options } from '@loopback/repository';
 import { EntityDbDataSource } from '../datasources';
-import { EntityReactions, ReactionsRelations } from '../models';
+import { EntityReactions } from '../models';
 
 export class ReactionsRepository extends DefaultCrudRepository<
   EntityReactions,
-  typeof EntityReactions.prototype.id,
-  ReactionsRelations
+  typeof EntityReactions.prototype.id
 > {
   constructor(@inject('datasources.EntityDb') dataSource: EntityDbDataSource) {
     super(EntityReactions, dataSource);

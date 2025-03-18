@@ -61,10 +61,6 @@ export class ListRepository extends DefaultCrudRepository<
     typeof List.prototype._id
   >;
 
-  private static responseLimit = _.parseInt(
-    process.env.response_limit_list ?? '50',
-  );
-
   constructor(
     @inject('datasources.EntityDb') dataSource: EntityDbDataSource,
     @repository.getter('ListEntityRelationRepository')
@@ -106,11 +102,11 @@ export class ListRepository extends DefaultCrudRepository<
     super(List, dataSource);
 
     this.reactions = this.createHasManyRepositoryFactoryFor(
-      'reactions',
+      '_reactions',
       listReactionsRepositoryGetter,
     );
     this.registerInclusionResolver(
-      'reactions',
+      '_reactions',
       this.reactions.inclusionResolver,
     );
 
