@@ -1,52 +1,18 @@
-import { Getter, inject } from '@loopback/core';
-import {
-  DefaultCrudRepository,
-  Filter,
-  HasManyRepositoryFactory,
-  Options,
-  repository,
-} from '@loopback/repository';
-import _ from 'lodash';
+import { inject } from '@loopback/core';
+import { DefaultCrudRepository, Filter, Options } from '@loopback/repository';
 import { EntityDbDataSource } from '../datasources';
-import { EntityReactions, ReactionsRelations, SubReactions } from '../models';
-import { SubReactionsRepository } from './sub-reactions.repository';
+import { EntityReactions, ReactionsRelations } from '../models';
 
 export class ReactionsRepository extends DefaultCrudRepository<
   EntityReactions,
   typeof EntityReactions.prototype.id,
   ReactionsRelations
 > {
-  public readonly subReactions: HasManyRepositoryFactory<
-    SubReactions,
-    typeof EntityReactions.prototype.id
-  >;
-
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  private static response_limit = _.parseInt(
-    process.env.response_limit_entity_reaction ?? '50',
-  );
-
-  constructor(
-    @inject('datasources.EntityDb') dataSource: EntityDbDataSource,
-    @repository.getter('SubReactionsRepository')
-    protected subReactionsRepositoryGetter: Getter<SubReactionsRepository>,
-  ) {
+  constructor(@inject('datasources.EntityDb') dataSource: EntityDbDataSource) {
     super(EntityReactions, dataSource);
-    this.subReactions = this.createHasManyRepositoryFactoryFor(
-      'subReactions',
-      subReactionsRepositoryGetter,
-    );
-    this.registerInclusionResolver(
-      'subReactions',
-      this.subReactions.inclusionResolver,
-    );
   }
 
   async find(filter?: Filter<EntityReactions>, options?: Options) {
-    if (filter?.limit && filter.limit > ReactionsRepository.response_limit) {
-      filter.limit = ReactionsRepository.response_limit;
-    }
-
     return super.find(filter, options);
   }
 }

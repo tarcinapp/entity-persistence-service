@@ -1,6 +1,4 @@
-import { Entity, hasMany, model, property } from '@loopback/repository';
-
-import { SubReactions } from './sub-reactions.model';
+import { Entity, model, property } from '@loopback/repository';
 
 @model({ settings: { strict: false } })
 export class ListReactions extends Entity {
@@ -49,8 +47,6 @@ export class ListReactions extends Entity {
   })
   listId?: string;
 
-  @hasMany(() => SubReactions, { keyTo: 'listReactionId' })
-  subReactions: SubReactions[];
   // Define well-known properties here
 
   // Indexer property to allow additional data
