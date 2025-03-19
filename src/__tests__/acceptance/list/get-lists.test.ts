@@ -1437,7 +1437,7 @@ describe('GET /lists', () => {
     expect(book.description).to.equal('A great book');
   });
 
-  it('entity-lookup: handles not-found lists with skip and limit', async () => {
+  it('entity-lookup: handles not-found entities with skip and limit', async () => {
     // Set up the application with default configuration
     appWithClient = await setupApplication({
       list_kinds: 'reading',
