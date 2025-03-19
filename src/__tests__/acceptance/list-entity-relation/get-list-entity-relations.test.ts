@@ -561,4 +561,597 @@ describe('GET /list-entity-relations', () => {
     );
     expect(progressResponse.body[0].metadata.status.progress).to.equal(100);
   });
+
+  it('pagination: applies response limit configuration', async () => {
+    // Set up the application with response limit configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      list_kinds: 'reading-list',
+      response_limit_list_entity_rel: '2', // Limit response to 2 items
+    });
+    ({ client } = appWithClient);
+
+    // Create test entity and list
+    const bookId = await createTestEntity(client, {
+      _name: 'Test Book',
+      _kind: 'book',
+    });
+
+    const listId = await createTestList(client, {
+      _name: 'Reading List',
+      _kind: 'reading-list',
+    });
+
+    // Create 3 relations
+    await createTestRelation({
+      _listId: listId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      order: 1,
+    });
+
+    await createTestRelation({
+      _listId: listId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      order: 2,
+    });
+
+    await createTestRelation({
+      _listId: listId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      order: 3,
+    });
+
+    // Get relations with limit
+    const response = await client.get('/list-entity-relations').expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(2);
+  });
+
+  it('pagination: supports pagination', async () => {
+    // Set up the application
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      list_kinds: 'reading-list',
+    });
+    ({ client } = appWithClient);
+
+    // Create test entity and list
+    const bookId = await createTestEntity(client, {
+      _name: 'Test Book',
+      _kind: 'book',
+    });
+
+    const listId = await createTestList(client, {
+      _name: 'Reading List',
+      _kind: 'reading-list',
+    });
+
+    // Create test relations
+    await createTestRelation({
+      _listId: listId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      order: 1,
+    });
+
+    await createTestRelation({
+      _listId: listId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      order: 2,
+    });
+
+    await createTestRelation({
+      _listId: listId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      order: 3,
+    });
+
+    // Get first page with order
+    const firstPage = await client
+      .get('/list-entity-relations')
+      .query({
+        filter: {
+          limit: 2,
+          skip: 0,
+          order: ['order ASC'],
+        },
+      })
+      .expect(200);
+
+    expect(firstPage.body).to.be.Array().and.have.length(2);
+    expect(firstPage.body[0].order).to.equal(1);
+    expect(firstPage.body[1].order).to.equal(2);
+
+    // Get second page with same order
+    const secondPage = await client
+      .get('/list-entity-relations')
+      .query({
+        filter: {
+          limit: 2,
+          skip: 2,
+          order: ['order ASC'],
+        },
+      })
+      .expect(200);
+
+    expect(secondPage.body).to.be.Array().and.have.length(1);
+    expect(secondPage.body[0].order).to.equal(3);
+
+    // Test pagination without order - should just verify counts
+    const unorderedFirstPage = await client
+      .get('/list-entity-relations')
+      .query({ filter: { limit: 2, skip: 0 } })
+      .expect(200);
+
+    expect(unorderedFirstPage.body).to.be.Array().and.have.length(2);
+
+    const unorderedSecondPage = await client
+      .get('/list-entity-relations')
+      .query({ filter: { limit: 2, skip: 2 } })
+      .expect(200);
+
+    expect(unorderedSecondPage.body).to.be.Array().and.have.length(1);
+
+    // Verify all orders are present across both pages
+    const allOrders = [...unorderedFirstPage.body, ...unorderedSecondPage.body]
+      .map((r) => r.order)
+      .sort();
+    expect(allOrders).to.eql([1, 2, 3]);
+  });
+
+  it('pagination: supports sorting', async () => {
+    // Set up the application
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      list_kinds: 'reading-list',
+    });
+    ({ client } = appWithClient);
+
+    // Create test entity and list
+    const bookId = await createTestEntity(client, {
+      _name: 'Test Book',
+      _kind: 'book',
+    });
+
+    const listId = await createTestList(client, {
+      _name: 'Reading List',
+      _kind: 'reading-list',
+    });
+
+    // Create test relations with different orders
+    await createTestRelation({
+      _listId: listId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      order: 3,
+    });
+
+    await createTestRelation({
+      _listId: listId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      order: 1,
+    });
+
+    await createTestRelation({
+      _listId: listId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      order: 2,
+    });
+
+    // Get relations sorted by order ascending
+    const ascResponse = await client
+      .get('/list-entity-relations')
+      .query({ filter: { order: ['order ASC'] } })
+      .expect(200);
+
+    expect(ascResponse.body).to.be.Array().and.have.length(3);
+    expect(ascResponse.body.map((r: ListToEntityRelation) => r.order)).to.eql([
+      1, 2, 3,
+    ]);
+
+    // Get relations sorted by order descending
+    const descResponse = await client
+      .get('/list-entity-relations')
+      .query({ filter: { order: ['order DESC'] } })
+      .expect(200);
+
+    expect(descResponse.body).to.be.Array().and.have.length(3);
+    expect(descResponse.body.map((r: ListToEntityRelation) => r.order)).to.eql([
+      3, 2, 1,
+    ]);
+
+    // Test sorting by multiple fields
+    const multiSortResponse = await client
+      .get('/list-entity-relations')
+      .query({
+        filter: {
+          order: ['_kind ASC', 'order DESC'],
+        },
+      })
+      .expect(200);
+
+    expect(multiSortResponse.body).to.be.Array().and.have.length(3);
+    expect(
+      multiSortResponse.body.map((r: ListToEntityRelation) => r.order),
+    ).to.eql([3, 2, 1]);
+  });
+
+  it('set-filter: supports set filters via query parameters', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      list_kinds: 'reading-list',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 1);
+
+    // Create test entity and list
+    const bookId = await createTestEntity(client, {
+      _name: 'Test Book',
+      _kind: 'book',
+    });
+
+    const listId = await createTestList(client, {
+      _name: 'Reading List',
+      _kind: 'reading-list',
+    });
+
+    // Create active relation
+    await createTestRelation({
+      _listId: listId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    // Create inactive relation
+    await createTestRelation({
+      _listId: listId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(),
+    });
+
+    // Get only active relations using set filter
+    const response = await client
+      .get('/list-entity-relations')
+      .query({ set: { actives: true } })
+      .expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+    expect(response.body[0]._validUntilDateTime).to.equal(
+      futureDate.toISOString(),
+    );
+  });
+
+  it('set-filter: filters active relations', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      list_kinds: 'reading-list',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 1);
+
+    // Create test entity and list
+    const bookId = await createTestEntity(client, {
+      _name: 'Test Book',
+      _kind: 'book',
+    });
+
+    const listId = await createTestList(client, {
+      _name: 'Reading List',
+      _kind: 'reading-list',
+    });
+
+    // Create active relation
+    await createTestRelation({
+      _listId: listId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    // Create inactive relation (expired)
+    await createTestRelation({
+      _listId: listId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(),
+    });
+
+    // Create inactive relation (not started)
+    await createTestRelation({
+      _listId: listId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      _validFromDateTime: futureDate.toISOString(),
+      _validUntilDateTime: null,
+    });
+
+    // Get active relations using set[actives]
+    const response = await client
+      .get('/list-entity-relations')
+      .query({ set: { actives: true } })
+      .expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+    expect(response.body[0]._validUntilDateTime).to.equal(
+      futureDate.toISOString(),
+    );
+  });
+
+  it('set-filter: filters public relations', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      list_kinds: 'reading-list',
+    });
+    ({ client } = appWithClient);
+
+    // Create test entity and list
+    const bookId = await createTestEntity(client, {
+      _name: 'Test Book',
+      _kind: 'book',
+    });
+
+    const listId = await createTestList(client, {
+      _name: 'Reading List',
+      _kind: 'reading-list',
+    });
+
+    // Create public relation
+    await createTestRelation({
+      _listId: listId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      _visibility: 'public',
+    });
+
+    // Create private relation
+    await createTestRelation({
+      _listId: listId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      _visibility: 'private',
+    });
+
+    // Get public relations using set[publics]
+    const response = await client
+      .get('/list-entity-relations')
+      .query({ set: { publics: true } })
+      .expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+    expect(response.body[0]._visibility).to.equal('public');
+  });
+
+  it('set-filter: combines multiple sets with AND operator', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      list_kinds: 'reading-list',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 1);
+
+    // Create test entity and list
+    const bookId = await createTestEntity(client, {
+      _name: 'Test Book',
+      _kind: 'book',
+    });
+
+    const listId = await createTestList(client, {
+      _name: 'Reading List',
+      _kind: 'reading-list',
+    });
+
+    // Create active and public relation
+    await createTestRelation({
+      _listId: listId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    // Create active but private relation
+    await createTestRelation({
+      _listId: listId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      _visibility: 'private',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    // Create inactive but public relation
+    await createTestRelation({
+      _listId: listId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(),
+    });
+
+    // Get relations that are both active AND public using set[and]
+    const filterStr = 'set[and][0][actives]=true&set[and][1][publics]=true';
+    const response = await client
+      .get('/list-entity-relations')
+      .query(filterStr)
+      .expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+    expect(response.body[0]._visibility).to.equal('public');
+    expect(response.body[0]._validUntilDateTime).to.equal(
+      futureDate.toISOString(),
+    );
+  });
+
+  it('set-filter: combines set filters with regular filters', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      list_kinds: 'reading-list',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 1);
+
+    // Create test entity and list
+    const bookId = await createTestEntity(client, {
+      _name: 'Test Book',
+      _kind: 'book',
+    });
+
+    const listId = await createTestList(client, {
+      _name: 'Reading List',
+      _kind: 'reading-list',
+    });
+
+    // Create active relation with priority 1
+    await createTestRelation({
+      _listId: listId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      priority: 1,
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    // Create active relation with priority 2
+    await createTestRelation({
+      _listId: listId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      priority: 2,
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    // Create inactive relation with priority 1
+    await createTestRelation({
+      _listId: listId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      priority: 1,
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(),
+    });
+
+    // Get active relations with priority 1 using both set and regular filter
+    const filterStr =
+      'set[actives]=true&filter[where][priority][eq]=1&filter[where][priority][type]=number';
+    const response = await client
+      .get('/list-entity-relations')
+      .query(filterStr)
+      .expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+    expect(response.body[0].priority).to.equal(1);
+    expect(response.body[0]._validUntilDateTime).to.equal(
+      futureDate.toISOString(),
+    );
+  });
+
+  it('set-filter: filters inactive relations', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      list_kinds: 'reading-list',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 1);
+
+    // Create test entity and list
+    const bookId = await createTestEntity(client, {
+      _name: 'Test Book',
+      _kind: 'book',
+    });
+
+    const listId = await createTestList(client, {
+      _name: 'Reading List',
+      _kind: 'reading-list',
+    });
+
+    // Create active relation
+    await createTestRelation({
+      _listId: listId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    // Create inactive relation (expired)
+    await createTestRelation({
+      _listId: listId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(),
+    });
+
+    // Create inactive relation (not started)
+    await createTestRelation({
+      _listId: listId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      _validFromDateTime: futureDate.toISOString(),
+      _validUntilDateTime: null,
+    });
+
+    // Get inactive relations using set[inactives]
+    const response = await client
+      .get('/list-entity-relations')
+      .query({ set: { inactives: true } })
+      .expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+    expect(response.body[0]._validUntilDateTime).to.equal(
+      pastDate.toISOString(),
+    );
+  });
 });
