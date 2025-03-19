@@ -558,11 +558,11 @@ export class ListRepository extends DefaultCrudRepository<
     // If validFromDateTime is already set, use that value
     // Otherwise, check if auto-validation is enabled for this kind
     // If enabled, set to current time, if not, leave undefined
-    const shouldAutoValidate = this.validfromConfigReader.getValidFromForLists(
+    const shouldAutoApprove = this.validfromConfigReader.getValidFromForLists(
       data._kind,
     );
     data._validFromDateTime =
-      data._validFromDateTime ?? (shouldAutoValidate ? now : undefined);
+      data._validFromDateTime ?? (shouldAutoApprove ? now : undefined);
 
     // we need to explicitly set validUntilDateTime to null if it is not provided
     // to make filter matcher work correctly while checking record limits

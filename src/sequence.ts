@@ -56,6 +56,8 @@ export class MySequence implements SequenceHandler {
           const args = await this.parseParams(request, route);
           const result = await this.invoke(route, args);
           this.send(response, result);
+
+          return result;
         });
       });
     } catch (err) {

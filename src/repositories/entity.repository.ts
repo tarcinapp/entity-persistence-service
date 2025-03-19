@@ -484,10 +484,10 @@ export class EntityRepository extends DefaultCrudRepository<
       : now;
 
     // autoapprove the record if it is configured
-    const shouldAutoValidate =
+    const shouldAutoApprove =
       this.validfromConfigReader.getValidFromForEntities(data._kind);
     data._validFromDateTime =
-      data._validFromDateTime ?? (shouldAutoValidate ? now : undefined);
+      data._validFromDateTime ?? (shouldAutoApprove ? now : undefined);
 
     // we need to explicitly set validUntilDateTime to null if it is not provided
     // to make filter matcher work correctly while checking record limits

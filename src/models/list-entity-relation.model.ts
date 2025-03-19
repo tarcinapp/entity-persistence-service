@@ -39,8 +39,7 @@ export class ListToEntityRelation extends RecordsCommonBase {
   _toMetadata: SourceAndTargetMetadata;
 
   // Indexer property to allow additional data
-
-  //[prop: string]: any;
+  [prop: string]: any;
 
   constructor(data?: Partial<ListToEntityRelation>) {
     super(data);

@@ -42,7 +42,7 @@ export function requestLoggingMiddleware(logger: LoggingService): Middleware {
 
       // If response is an array, include the count
       if (Array.isArray(result)) {
-        logData.itemCount = result.length;
+        logData.recordCount = result.length;
       }
 
       logger.debug(

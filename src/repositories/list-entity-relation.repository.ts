@@ -87,7 +87,76 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
       ),
     };
 
-    return super.find(filter, options);
+    // First get all raw relations
+    const rawRelations = await super.find(filter, options);
+
+    if (rawRelations.length === 0) {
+      return rawRelations;
+    }
+
+    // Extract unique list and entity IDs
+    const listIds = [...new Set(rawRelations.map((rel) => rel._listId))];
+    const entityIds = [...new Set(rawRelations.map((rel) => rel._entityId))];
+
+    // Fetch all referenced lists and entities in parallel
+    const [lists, entities] = await Promise.all([
+      this.listRepositoryGetter().then((repo) =>
+        repo.find({
+          where: {
+            _id: { inq: listIds },
+          },
+        }),
+      ),
+      this.entityRepositoryGetter().then((repo) =>
+        repo.find({
+          where: {
+            _id: { inq: entityIds },
+          },
+        }),
+      ),
+    ]);
+
+    // Create lookup maps for quick access
+    const listMap = new Map(lists.map((list) => [list._id, list]));
+    const entityMap = new Map(entities.map((entity) => [entity._id, entity]));
+
+    // Enrich each relation with metadata
+    return rawRelations.map((relation) => {
+      const list = listMap.get(relation._listId);
+      const entity = entityMap.get(relation._entityId);
+
+      if (list) {
+        relation._fromMetadata = {
+          _kind: list._kind,
+          _name: list._name,
+          _slug: list._slug,
+          _validFromDateTime: list._validFromDateTime,
+          _validUntilDateTime: list._validUntilDateTime,
+          _visibility: list._visibility,
+          _ownerUsers: list._ownerUsers,
+          _ownerGroups: list._ownerGroups,
+          _viewerUsers: list._viewerUsers,
+          _viewerGroups: list._viewerGroups,
+        };
+      }
+
+      if (entity) {
+        relation._toMetadata = {
+          _kind: entity._kind,
+          _name: entity._name,
+          _slug: entity._slug,
+          _validFromDateTime: entity._validFromDateTime,
+          _validUntilDateTime: entity._validUntilDateTime,
+          _visibility: entity._visibility,
+          _ownerUsers: entity._ownerUsers,
+          _ownerGroups: entity._ownerGroups,
+          _viewerUsers: entity._viewerUsers,
+          _viewerGroups: entity._viewerGroups,
+        };
+      }
+
+      return relation;
+    });
   }
 
   async findById(
@@ -665,10 +734,10 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     data._version = 1;
 
     // auto approve
+    const shouldAutoApprove =
+      this.validfromConfigReader.getValidFromForListEntityRelations(data._kind);
     data._validFromDateTime =
-      this.validfromConfigReader.getValidFromForListEntityRelations(data._kind)
-        ? now
-        : undefined;
+      data._validFromDateTime ?? (shouldAutoApprove ? now : undefined);
 
     // we need to explicitly set validUntilDateTime to null
     // to make filter matcher work correctly while checking record limits
