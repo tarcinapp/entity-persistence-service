@@ -33,6 +33,7 @@ import {
 import { EntityRepository } from './entity.repository';
 import { ListRepository } from './list.repository';
 import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
+import { LoggingService } from '../services/logging.service';
 
 // Define types for MongoDB aggregation pipeline stages
 type LookupStage = {
@@ -117,6 +118,9 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
 
     @inject('extensions.response-limit.configurationreader')
     private responseLimitConfigReader: ResponseLimitConfigurationReader,
+
+    @inject('services.logging')
+    private loggingService: LoggingService,
   ) {
     super(ListToEntityRelation, dataSource);
   }
@@ -141,9 +145,15 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     // Add where conditions if they exist
     if (filter?.where) {
       // Convert LoopBack where filter to MongoDB query
-      console.log('Original filter:', JSON.stringify(filter.where, null, 2));
+      this.loggingService.debug(
+        'Original filter:',
+        JSON.stringify(filter.where, null, 2),
+      );
       const mongoQuery = this.buildMongoQuery(filter.where);
-      console.log('MongoDB Query:', JSON.stringify(mongoQuery, null, 2));
+      this.loggingService.debug(
+        'MongoDB Query:',
+        JSON.stringify(mongoQuery, null, 2),
+      );
       pipeline.push({
         $match: mongoQuery,
       });
