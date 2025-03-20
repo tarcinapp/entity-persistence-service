@@ -219,16 +219,33 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     // Add order if specified
     if (filter?.order) {
       const sort: Record<string, 1 | -1> = {};
-      for (const orderItem of filter.order) {
+      const orderItems = Array.isArray(filter.order)
+        ? filter.order
+        : [filter.order];
+
+      for (const orderItem of orderItems) {
         if (typeof orderItem === 'string') {
-          sort[orderItem] = 1; // ASC
-        } else {
+          // Handle format like "field ASC" or "field DESC"
+          const [field, direction] = orderItem.split(' ');
+          if (!field) {
+            continue;
+          } // Skip if field is empty
+
+          sort[field] = direction === 'DESC' ? -1 : 1;
+        } else if (typeof orderItem === 'object' && orderItem !== null) {
+          // Handle format like { field: "ASC" } or { field: "DESC" }
           const [field, direction] = Object.entries(orderItem)[0];
+          if (!field) {
+            continue;
+          } // Skip if field is empty
+
           sort[field] = direction === 'DESC' ? -1 : 1;
         }
       }
 
-      pipeline.push({ $sort: sort });
+      if (Object.keys(sort).length > 0) {
+        pipeline.push({ $sort: sort });
+      }
     }
 
     // Add skip if specified
