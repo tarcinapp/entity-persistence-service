@@ -328,6 +328,67 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
       },
     );
 
+    // Handle field selection
+    if (filter?.fields) {
+      const fields = filter.fields;
+      const trueFields = Object.entries(fields)
+        .filter(([, value]) => value === true)
+        .map(([key]) => key);
+
+      const falseFields = Object.entries(fields)
+        .filter(([, value]) => value === false)
+        .map(([key]) => key);
+
+      // Create projection object
+      const projection: Record<string, 1 | 0> = {};
+
+      if (trueFields.length > 0) {
+        // If there are true fields, only include those fields
+        // First set _id to 0 to exclude it by default
+        projection['_id'] = 0;
+
+        // Then include only the specified fields
+        trueFields.forEach((field) => {
+          projection[field] = 1;
+        });
+
+        // Handle metadata field selection if _fromMetadata or _toMetadata is included
+        if (trueFields.includes('_fromMetadata')) {
+          projection['_fromMetadata'] = 1;
+        }
+
+        if (trueFields.includes('_toMetadata')) {
+          projection['_toMetadata'] = 1;
+        }
+
+        // If _id is explicitly requested, include it
+        if (trueFields.includes('_id')) {
+          projection['_id'] = 1;
+        }
+      } else if (falseFields.length > 0) {
+        // If only false fields, exclude those fields
+        falseFields.forEach((field) => {
+          projection[field] = 0;
+        });
+
+        // Handle metadata field exclusion
+        if (falseFields.includes('_fromMetadata')) {
+          projection['_fromMetadata'] = 0;
+        }
+
+        if (falseFields.includes('_toMetadata')) {
+          projection['_toMetadata'] = 0;
+        }
+      }
+
+      // Add projection stage if there are fields to project
+      if (Object.keys(projection).length > 0) {
+        pipeline.push({
+          $project: projection,
+        });
+      }
+    }
+
     // Add order if specified
     if (filter?.order) {
       const sort: Record<string, 1 | -1> = {};

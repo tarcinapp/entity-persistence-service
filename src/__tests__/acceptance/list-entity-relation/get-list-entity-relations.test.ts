@@ -1364,4 +1364,138 @@ describe('GET /list-entity-relations', () => {
       'reading-list',
     );
   });
+
+  it('field-selection: returns only selected fields', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      list_kinds: 'reading-list',
+    });
+    ({ client } = appWithClient);
+
+    // Create test entity and list
+    const bookId = await createTestEntity(client, {
+      _name: 'Test Book',
+      _kind: 'book',
+    });
+
+    const listId = await createTestList(client, {
+      _name: 'Reading List',
+      _kind: 'reading-list',
+    });
+
+    // Create test relation with multiple fields
+    await createTestRelation({
+      _listId: listId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      _visibility: 'public',
+      _ownerUsers: ['user-123'],
+      _viewerUsers: ['viewer-456'],
+      _validFromDateTime: new Date().toISOString(),
+      order: 1,
+      priority: 'high',
+      notes: 'Important book to read',
+    });
+
+    // Request only specific fields
+    const filterStr =
+      'filter[fields][_kind]=true&' +
+      'filter[fields][_visibility]=true&' +
+      'filter[fields][order]=true&' +
+      'filter[fields][notes]=true';
+
+    const response = await client
+      .get('/list-entity-relations')
+      .query(filterStr)
+      .expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+    const relation = response.body[0];
+
+    // Should have the requested fields
+    expect(relation).to.have.property('_kind', 'reading-list-book');
+    expect(relation).to.have.property('_visibility', 'public');
+    expect(relation).to.have.property('order', 1);
+    expect(relation).to.have.property('notes', 'Important book to read');
+
+    // Should not have other fields
+    expect(relation).to.not.have.property('_id');
+    expect(relation).to.not.have.property('_listId');
+    expect(relation).to.not.have.property('_entityId');
+    expect(relation).to.not.have.property('_ownerUsers');
+    expect(relation).to.not.have.property('_viewerUsers');
+    expect(relation).to.not.have.property('_validFromDateTime');
+    expect(relation).to.not.have.property('priority');
+  });
+
+  it('field-selection: excludes specified fields from response', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      list_kinds: 'reading-list',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+
+    // Create test entity and list
+    const bookId = await createTestEntity(client, {
+      _name: 'Test Book',
+      _kind: 'book',
+    });
+
+    const listId = await createTestList(client, {
+      _name: 'Reading List',
+      _kind: 'reading-list',
+    });
+
+    // Create test relation with multiple fields
+    await createTestRelation({
+      _listId: listId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      _visibility: 'public',
+      _ownerUsers: ['user-123'],
+      _viewerUsers: ['viewer-456'],
+      _validFromDateTime: now.toISOString(),
+      _validUntilDateTime: new Date(now.getTime() + 86400000).toISOString(), // tomorrow
+      order: 1,
+      priority: 'high',
+      notes: 'Important book to read',
+    });
+
+    // Request to exclude specific fields
+    const filterStr =
+      'filter[fields][_ownerUsers]=false&' +
+      'filter[fields][_viewerUsers]=false&' +
+      'filter[fields][_validFromDateTime]=false&' +
+      'filter[fields][_validUntilDateTime]=false';
+
+    const response = await client
+      .get('/list-entity-relations')
+      .query(filterStr)
+      .expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+    const relation = response.body[0];
+
+    // Should have non-excluded fields
+    expect(relation).to.have.property('_id');
+    expect(relation).to.have.property('_kind', 'reading-list-book');
+    expect(relation).to.have.property('_listId', listId);
+    expect(relation).to.have.property('_entityId', bookId);
+    expect(relation).to.have.property('_visibility', 'public');
+    expect(relation).to.have.property('order', 1);
+    expect(relation).to.have.property('priority', 'high');
+    expect(relation).to.have.property('notes', 'Important book to read');
+    expect(relation).to.have.property('_createdDateTime');
+    expect(relation).to.have.property('_lastUpdatedDateTime');
+
+    // Should not have excluded fields
+    expect(relation).to.not.have.property('_ownerUsers');
+    expect(relation).to.not.have.property('_viewerUsers');
+    expect(relation).to.not.have.property('_validFromDateTime');
+    expect(relation).to.not.have.property('_validUntilDateTime');
+  });
 });
