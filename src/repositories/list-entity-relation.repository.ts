@@ -10,6 +10,7 @@ import {
   Where,
   WhereBuilder,
 } from '@loopback/repository';
+import { Request, RestBindings } from '@loopback/rest';
 import * as crypto from 'crypto';
 import _ from 'lodash';
 import { parse } from 'qs';
@@ -119,8 +120,11 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     @inject('extensions.response-limit.configurationreader')
     private responseLimitConfigReader: ResponseLimitConfigurationReader,
 
-    @inject('services.logging')
+    @inject('services.LoggingService')
     private loggingService: LoggingService,
+
+    @inject(RestBindings.Http.REQUEST)
+    private request: Request,
   ) {
     super(ListToEntityRelation, dataSource);
   }
@@ -146,13 +150,15 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     if (filter?.where) {
       // Convert LoopBack where filter to MongoDB query
       this.loggingService.debug(
-        'Original filter:',
-        JSON.stringify(filter.where, null, 2),
+        `Original filter: ${JSON.stringify(filter.where, null, 2)}`,
+        {},
+        this.request,
       );
       const mongoQuery = this.buildMongoQuery(filter.where);
       this.loggingService.debug(
-        'MongoDB Query:',
-        JSON.stringify(mongoQuery, null, 2),
+        `MongoDB Query: ${JSON.stringify(mongoQuery, null, 2)}`,
+        {},
+        this.request,
       );
       pipeline.push({
         $match: mongoQuery,
