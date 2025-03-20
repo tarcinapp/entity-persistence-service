@@ -71,6 +71,10 @@ type SkipStage = {
   $skip: number;
 };
 
+type AddFieldsStage = {
+  $addFields: Record<string, any>;
+};
+
 type PipelineStage =
   | LookupStage
   | UnwindStage
@@ -78,7 +82,8 @@ type PipelineStage =
   | LimitStage
   | MatchStage
   | SortStage
-  | SkipStage;
+  | SkipStage
+  | AddFieldsStage;
 
 export class ListEntityRelationRepository extends DefaultCrudRepository<
   ListToEntityRelation,
@@ -178,11 +183,9 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
           preserveNullAndEmptyArrays: true,
         },
       },
-      // Project the final shape of documents
+      // Add metadata fields while preserving all existing fields
       {
-        $project: {
-          // Include all fields from the original document
-          '*': 1,
+        $addFields: {
           // Create _fromMetadata from list fields
           _fromMetadata: {
             _kind: '$list._kind',
