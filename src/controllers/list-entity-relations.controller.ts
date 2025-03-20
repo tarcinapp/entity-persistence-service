@@ -171,6 +171,17 @@ export class ListEntityRelController {
     @param.query.object('set') set?: Set,
     @param.query.object('filter', getFilterSchemaFor(ListToEntityRelation))
     filter?: Filter<ListToEntityRelation>,
+    @param.query.object('listFilter', getFilterSchemaFor(ListToEntityRelation))
+    listFilter?: Filter<ListToEntityRelation>,
+    @param.query.object('listSet')
+    listSet?: Set,
+    @param.query.object(
+      'entityFilter',
+      getFilterSchemaFor(ListToEntityRelation),
+    )
+    entityFilter?: Filter<ListToEntityRelation>,
+    @param.query.object('entitySet')
+    entitySet?: Set,
   ): Promise<ListToEntityRelation[]> {
     if (set) {
       filter = new SetFilterBuilder<ListToEntityRelation>(set, {
@@ -178,9 +189,27 @@ export class ListEntityRelController {
       }).build();
     }
 
-    sanitizeFilterFields(filter);
+    if (entitySet) {
+      entityFilter = new SetFilterBuilder<ListToEntityRelation>(entitySet, {
+        filter: entityFilter,
+      }).build();
+    }
 
-    return this.listEntityRelationRepository.find(filter);
+    if (listSet) {
+      listFilter = new SetFilterBuilder<ListToEntityRelation>(listSet, {
+        filter: listFilter,
+      }).build();
+    }
+
+    sanitizeFilterFields(filter);
+    sanitizeFilterFields(entityFilter);
+    sanitizeFilterFields(listFilter);
+
+    return this.listEntityRelationRepository.find(
+      filter,
+      entityFilter,
+      listFilter,
+    );
   }
 
   @patch('/list-entity-relations', {

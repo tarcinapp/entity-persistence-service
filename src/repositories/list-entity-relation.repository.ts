@@ -131,7 +131,8 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
 
   async find(
     filter?: Filter<ListToEntityRelation>,
-    _options?: Options,
+    entityFilter?: Filter<any>,
+    listFilter?: Filter<any>,
   ): Promise<(ListToEntityRelation & ListEntityRelationRelations)[]> {
     // Get collection names from repositories
     const [listRepo, entityRepo] = await Promise.all([
@@ -209,6 +210,37 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
           as: 'list',
         },
       },
+    );
+
+    // Add list filter if specified
+    if (listFilter?.where) {
+      this.loggingService.debug(
+        `List filter: ${JSON.stringify(listFilter.where, null, 2)}`,
+        {},
+        this.request,
+      );
+      const listMongoQuery = this.buildMongoQuery(listFilter.where);
+      this.loggingService.debug(
+        `List MongoDB Query: ${JSON.stringify(listMongoQuery, null, 2)}`,
+        {},
+        this.request,
+      );
+      pipeline.push({
+        $match: {
+          'list.0': { $exists: true }, // Ensure list exists
+          ...Object.entries(listMongoQuery).reduce(
+            (acc, [key, value]) => {
+              acc[`list.0.${key}`] = value;
+
+              return acc;
+            },
+            {} as Record<string, unknown>,
+          ),
+        },
+      });
+    }
+
+    pipeline.push(
       // Unwind the list array
       {
         $unwind: {
@@ -225,6 +257,37 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
           as: 'entity',
         },
       },
+    );
+
+    // Add entity filter if specified
+    if (entityFilter?.where) {
+      this.loggingService.debug(
+        `Entity filter: ${JSON.stringify(entityFilter.where, null, 2)}`,
+        {},
+        this.request,
+      );
+      const entityMongoQuery = this.buildMongoQuery(entityFilter.where);
+      this.loggingService.debug(
+        `Entity MongoDB Query: ${JSON.stringify(entityMongoQuery, null, 2)}`,
+        {},
+        this.request,
+      );
+      pipeline.push({
+        $match: {
+          'entity.0': { $exists: true }, // Ensure entity exists
+          ...Object.entries(entityMongoQuery).reduce(
+            (acc, [key, value]) => {
+              acc[`entity.0.${key}`] = value;
+
+              return acc;
+            },
+            {} as Record<string, unknown>,
+          ),
+        },
+      });
+    }
+
+    pipeline.push(
       // Unwind the entity array
       {
         $unwind: {

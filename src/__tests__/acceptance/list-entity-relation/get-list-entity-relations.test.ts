@@ -627,6 +627,7 @@ describe('GET /list-entity-relations', () => {
     const listId = await createTestList(client, {
       _name: 'Reading List',
       _kind: 'reading-list',
+      _visibility: 'public',
     });
 
     // Create test relations
@@ -651,57 +652,81 @@ describe('GET /list-entity-relations', () => {
       order: 3,
     });
 
-    // Get first page with order
+    // Get first page of reading list relations
     const firstPage = await client
       .get('/list-entity-relations')
-      .query({
-        filter: {
-          limit: 2,
-          skip: 0,
-          order: ['order ASC'],
-        },
-      })
+      .query(
+        'filter[limit]=2&' +
+          'filter[skip]=0&' +
+          'filter[order][0]=order ASC&' +
+          'listFilter[where][_kind]=reading-list&' +
+          'listFilter[where][_visibility]=public',
+      )
       .expect(200);
 
+    // Verify first page results
     expect(firstPage.body).to.be.Array().and.have.length(2);
     expect(firstPage.body[0].order).to.equal(1);
     expect(firstPage.body[1].order).to.equal(2);
+    expect(firstPage.body[0]._fromMetadata._kind).to.equal('reading-list');
+    expect(firstPage.body[1]._fromMetadata._kind).to.equal('reading-list');
 
-    // Get second page with same order
+    // Get second page of reading list relations
     const secondPage = await client
       .get('/list-entity-relations')
-      .query({
-        filter: {
-          limit: 2,
-          skip: 2,
-          order: ['order ASC'],
-        },
-      })
+      .query(
+        'filter[limit]=2&' +
+          'filter[skip]=2&' +
+          'filter[order][0]=order ASC&' +
+          'listFilter[where][_kind]=reading-list&' +
+          'listFilter[where][_visibility]=public',
+      )
       .expect(200);
 
+    // Verify second page results
     expect(secondPage.body).to.be.Array().and.have.length(1);
     expect(secondPage.body[0].order).to.equal(3);
+    expect(secondPage.body[0]._fromMetadata._kind).to.equal('reading-list');
 
-    // Test pagination without order - should just verify counts
-    const unorderedFirstPage = await client
+    // Test with different list filter to verify filtering is working
+    const watchListPage = await client
       .get('/list-entity-relations')
-      .query({ filter: { limit: 2, skip: 0 } })
+      .query(
+        'filter[limit]=2&' +
+          'filter[skip]=0&' +
+          'filter[order][0]=order ASC&' +
+          'listFilter[where][_kind]=watch-list&' +
+          'listFilter[where][_visibility]=public',
+      )
       .expect(200);
 
-    expect(unorderedFirstPage.body).to.be.Array().and.have.length(2);
+    // Verify watch list results
+    expect(watchListPage.body).to.be.Array().and.have.length(0);
 
-    const unorderedSecondPage = await client
+    // Test combining list filter with relation filter
+    const combinedFilterPage = await client
       .get('/list-entity-relations')
-      .query({ filter: { limit: 2, skip: 2 } })
+      .query(
+        'filter[where][order][lt]=3&' +
+          'filter[where][order][type]=number&' +
+          'filter[limit]=2&' +
+          'filter[skip]=0&' +
+          'filter[order][0]=order ASC&' +
+          'listFilter[where][_kind]=reading-list&' +
+          'listFilter[where][_visibility]=public',
+      )
       .expect(200);
 
-    expect(unorderedSecondPage.body).to.be.Array().and.have.length(1);
-
-    // Verify all orders are present across both pages
-    const allOrders = [...unorderedFirstPage.body, ...unorderedSecondPage.body]
-      .map((r) => r.order)
-      .sort();
-    expect(allOrders).to.eql([1, 2, 3]);
+    // Verify combined filter results
+    expect(combinedFilterPage.body).to.be.Array().and.have.length(2);
+    expect(combinedFilterPage.body[0].order).to.equal(1);
+    expect(combinedFilterPage.body[1].order).to.equal(2);
+    expect(combinedFilterPage.body[0]._fromMetadata._kind).to.equal(
+      'reading-list',
+    );
+    expect(combinedFilterPage.body[1]._fromMetadata._kind).to.equal(
+      'reading-list',
+    );
   });
 
   it('pagination: supports sorting', async () => {
@@ -1087,6 +1112,256 @@ describe('GET /list-entity-relations', () => {
     expect(response.body[0].priority).to.equal(1);
     expect(response.body[0]._validUntilDateTime).to.equal(
       futureDate.toISOString(),
+    );
+  });
+
+  it('filter: by list properties', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      list_kinds: 'reading-list,watch-list',
+    });
+    ({ client } = appWithClient);
+
+    // Create test entities
+    const bookId = await createTestEntity(client, {
+      _name: 'Test Book',
+      _kind: 'book',
+    });
+
+    // Create test lists with different properties
+    const readingListId = await createTestList(client, {
+      _name: 'Reading List',
+      _kind: 'reading-list',
+      _visibility: 'public',
+    });
+
+    const watchListId = await createTestList(client, {
+      _name: 'Watch List',
+      _kind: 'watch-list',
+      _visibility: 'private',
+    });
+
+    // Create relations for both lists
+    await createTestRelation({
+      _listId: readingListId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+    });
+
+    await createTestRelation({
+      _listId: watchListId,
+      _entityId: bookId,
+      _kind: 'watch-list-book',
+    });
+
+    // Test filtering by list visibility
+    const response = await client
+      .get('/list-entity-relations')
+      .query({
+        filter: {
+          where: {
+            _kind: { inq: ['reading-list-book', 'watch-list-book'] },
+          },
+        },
+        listFilter: {
+          where: {
+            _visibility: 'public',
+          },
+        },
+      })
+      .expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(1);
+    expect(response.body[0]._fromMetadata._visibility).to.equal('public');
+    expect(response.body[0]._fromMetadata._name).to.equal('Reading List');
+
+    // Test filtering by list kind
+    const kindResponse = await client
+      .get('/list-entity-relations')
+      .query({
+        listFilter: {
+          where: {
+            _kind: 'watch-list',
+          },
+        },
+      })
+      .expect(200);
+
+    expect(kindResponse.body).to.be.Array().and.have.length(1);
+    expect(kindResponse.body[0]._fromMetadata._kind).to.equal('watch-list');
+    expect(kindResponse.body[0]._fromMetadata._name).to.equal('Watch List');
+
+    // Test combining relation and list filters
+    const combinedResponse = await client
+      .get('/list-entity-relations')
+      .query({
+        filter: {
+          where: {
+            _kind: 'reading-list-book',
+          },
+        },
+        listFilter: {
+          where: {
+            _visibility: 'public',
+            _kind: 'reading-list',
+          },
+        },
+      })
+      .expect(200);
+
+    expect(combinedResponse.body).to.be.Array().and.have.length(1);
+    expect(combinedResponse.body[0]._kind).to.equal('reading-list-book');
+    expect(combinedResponse.body[0]._fromMetadata._visibility).to.equal(
+      'public',
+    );
+    expect(combinedResponse.body[0]._fromMetadata._kind).to.equal(
+      'reading-list',
+    );
+  });
+
+  it('pagination: with list property filtering', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      list_kinds: 'reading-list,watch-list',
+    });
+    ({ client } = appWithClient);
+
+    // Create test entities
+    const bookId = await createTestEntity(client, {
+      _name: 'Test Book',
+      _kind: 'book',
+    });
+
+    // Create test lists with different properties
+    const readingListId = await createTestList(client, {
+      _name: 'Reading List',
+      _kind: 'reading-list',
+      _visibility: 'public',
+    });
+
+    const watchListId = await createTestList(client, {
+      _name: 'Watch List',
+      _kind: 'watch-list',
+      _visibility: 'public',
+    });
+
+    // Create multiple relations with different orders
+    await createTestRelation({
+      _listId: readingListId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      order: 1,
+    });
+
+    await createTestRelation({
+      _listId: readingListId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      order: 2,
+    });
+
+    await createTestRelation({
+      _listId: readingListId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      order: 3,
+    });
+
+    // Create relations for watch list (should be filtered out)
+    await createTestRelation({
+      _listId: watchListId,
+      _entityId: bookId,
+      _kind: 'watch-list-book',
+      order: 1,
+    });
+
+    await createTestRelation({
+      _listId: watchListId,
+      _entityId: bookId,
+      _kind: 'watch-list-book',
+      order: 2,
+    });
+
+    // Get first page of reading list relations
+    const firstPage = await client
+      .get('/list-entity-relations')
+      .query(
+        'filter[limit]=2&' +
+          'filter[skip]=0&' +
+          'filter[order][0]=order ASC&' +
+          'listFilter[where][_kind]=reading-list&' +
+          'listFilter[where][_visibility]=public',
+      )
+      .expect(200);
+
+    // Verify first page results
+    expect(firstPage.body).to.be.Array().and.have.length(2);
+    expect(firstPage.body[0].order).to.equal(1);
+    expect(firstPage.body[1].order).to.equal(2);
+    expect(firstPage.body[0]._fromMetadata._kind).to.equal('reading-list');
+    expect(firstPage.body[1]._fromMetadata._kind).to.equal('reading-list');
+
+    // Get second page of reading list relations
+    const secondPage = await client
+      .get('/list-entity-relations')
+      .query(
+        'filter[limit]=2&' +
+          'filter[skip]=2&' +
+          'filter[order][0]=order ASC&' +
+          'listFilter[where][_kind]=reading-list&' +
+          'listFilter[where][_visibility]=public',
+      )
+      .expect(200);
+
+    // Verify second page results
+    expect(secondPage.body).to.be.Array().and.have.length(1);
+    expect(secondPage.body[0].order).to.equal(3);
+    expect(secondPage.body[0]._fromMetadata._kind).to.equal('reading-list');
+
+    // Test with different list filter to verify filtering is working
+    const watchListPage = await client
+      .get('/list-entity-relations')
+      .query(
+        'filter[limit]=2&' +
+          'filter[skip]=0&' +
+          'filter[order][0]=order ASC&' +
+          'listFilter[where][_kind]=watch-list&' +
+          'listFilter[where][_visibility]=public',
+      )
+      .expect(200);
+
+    // Verify watch list results
+    expect(watchListPage.body).to.be.Array().and.have.length(2);
+    expect(watchListPage.body[0].order).to.equal(1);
+    expect(watchListPage.body[1].order).to.equal(2);
+    expect(watchListPage.body[0]._fromMetadata._kind).to.equal('watch-list');
+    expect(watchListPage.body[1]._fromMetadata._kind).to.equal('watch-list');
+
+    // Test combining list filter with relation filter
+    const combinedFilterPage = await client
+      .get('/list-entity-relations')
+      .query(
+        'filter[where][order][lt]=3&' +
+          'filter[where][order][type]=number&' +
+          'filter[limit]=2&' +
+          'filter[skip]=0&' +
+          'filter[order][0]=order ASC&' +
+          'listFilter[where][_kind]=reading-list&' +
+          'listFilter[where][_visibility]=public',
+      )
+      .expect(200);
+
+    // Verify combined filter results
+    expect(combinedFilterPage.body).to.be.Array().and.have.length(2);
+    expect(combinedFilterPage.body[0].order).to.equal(1);
+    expect(combinedFilterPage.body[1].order).to.equal(2);
+    expect(combinedFilterPage.body[0]._fromMetadata._kind).to.equal(
+      'reading-list',
+    );
+    expect(combinedFilterPage.body[1]._fromMetadata._kind).to.equal(
+      'reading-list',
     );
   });
 });
