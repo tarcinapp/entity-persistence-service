@@ -84,10 +84,10 @@ export class CustomListThroughEntityRepository extends DefaultCrudRepository<
       include: filterThrough?.include,
     };
 
-    const relations = await listEntityRelationRepo.find(throughFilter, options);
+    const relations = await listEntityRelationRepo.find(throughFilter);
 
     // Extract target list IDs from relations
-    const listIds = relations.map((rel) => rel._listId);
+    const listIds = relations.map((rel: ListToEntityRelation) => rel._listId);
 
     // Update the filter to only include lists matching the IDs
     const updatedFilter = {
@@ -100,7 +100,9 @@ export class CustomListThroughEntityRepository extends DefaultCrudRepository<
 
     // Map relation metadata to lists
     return lists.map((list) => {
-      const relation = relations.find((rel) => rel._listId === list._id);
+      const relation = relations.find(
+        (rel: ListToEntityRelation) => rel._listId === list._id,
+      );
       if (relation) {
         list._relationMetadata = {
           _id: relation._id,

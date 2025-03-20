@@ -361,7 +361,9 @@ export class ListRepository extends DefaultCrudRepository<
         },
       });
 
-      const entityIds = listEntityRelations.map((rel) => rel._entityId);
+      const entityIds = listEntityRelations.map(
+        (rel: ListToEntityRelation) => rel._entityId,
+      );
 
       // Find entities matching the related IDs and any additional filters
       const entities = await entityRepo.find({
@@ -375,7 +377,7 @@ export class ListRepository extends DefaultCrudRepository<
       // Map entities back to their respective lists
       const entitiesByListId = new Map<string | undefined, GenericEntity[]>();
 
-      listEntityRelations.forEach((rel) => {
+      listEntityRelations.forEach((rel: ListToEntityRelation) => {
         if (!entitiesByListId.has(rel._listId)) {
           entitiesByListId.set(rel._listId, []);
         }

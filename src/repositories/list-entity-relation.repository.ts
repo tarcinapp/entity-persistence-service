@@ -34,6 +34,52 @@ import { EntityRepository } from './entity.repository';
 import { ListRepository } from './list.repository';
 import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
 
+// Define types for MongoDB aggregation pipeline stages
+type LookupStage = {
+  $lookup: {
+    from: string;
+    localField: string;
+    foreignField: string;
+    as: string;
+  };
+};
+
+type UnwindStage = {
+  $unwind: {
+    path: string;
+    preserveNullAndEmptyArrays: boolean;
+  };
+};
+
+type ProjectStage = {
+  $project: Record<string, any>;
+};
+
+type LimitStage = {
+  $limit: number;
+};
+
+type MatchStage = {
+  $match: Record<string, any>;
+};
+
+type SortStage = {
+  $sort: Record<string, 1 | -1>;
+};
+
+type SkipStage = {
+  $skip: number;
+};
+
+type PipelineStage =
+  | LookupStage
+  | UnwindStage
+  | ProjectStage
+  | LimitStage
+  | MatchStage
+  | SortStage
+  | SkipStage;
+
 export class ListEntityRelationRepository extends DefaultCrudRepository<
   ListToEntityRelation,
   typeof ListToEntityRelation.prototype._id,
@@ -70,93 +116,145 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     super(ListToEntityRelation, dataSource);
   }
 
-  async find(filter?: Filter<ListToEntityRelation>, options?: Options) {
+  async find(
+    filter?: Filter<ListToEntityRelation>,
+    _options?: Options,
+  ): Promise<(ListToEntityRelation & ListEntityRelationRelations)[]> {
     // Calculate the limit value using optional chaining and nullish coalescing
-    // If filter.limit is defined, use its value; otherwise, use the configured response limit
     const limit =
       filter?.limit ??
       this.responseLimitConfigReader.getListEntityRelResponseLimit();
 
-    // Update the filter object by spreading the existing filter and overwriting the limit property
-    // Ensure that the new limit value does not exceed configured response limit
-    filter = {
-      ...filter,
-      limit: Math.min(
-        limit,
-        this.responseLimitConfigReader.getListEntityRelResponseLimit(),
-      ),
-    };
+    // Ensure the limit doesn't exceed configured response limit
+    const finalLimit = Math.min(
+      limit,
+      this.responseLimitConfigReader.getListEntityRelResponseLimit(),
+    );
 
-    // First get all raw relations
-    const rawRelations = await super.find(filter, options);
+    const pipeline: PipelineStage[] = [];
 
-    if (rawRelations.length === 0) {
-      return rawRelations;
+    // Add where conditions if they exist
+    if (filter?.where) {
+      // Convert LoopBack where filter to MongoDB query
+      console.log('Original filter:', JSON.stringify(filter.where, null, 2));
+      const mongoQuery = this.buildMongoQuery(filter.where);
+      console.log('MongoDB Query:', JSON.stringify(mongoQuery, null, 2));
+      pipeline.push({
+        $match: mongoQuery,
+      });
     }
 
-    // Extract unique list and entity IDs
-    const listIds = [...new Set(rawRelations.map((rel) => rel._listId))];
-    const entityIds = [...new Set(rawRelations.map((rel) => rel._entityId))];
-
-    // Fetch all referenced lists and entities in parallel
-    const [lists, entities] = await Promise.all([
-      this.listRepositoryGetter().then((repo) =>
-        repo.find({
-          where: {
-            _id: { inq: listIds },
+    // Add lookups and metadata enrichment
+    pipeline.push(
+      // Lookup the list
+      {
+        $lookup: {
+          from: 'List',
+          localField: '_listId',
+          foreignField: '_id',
+          as: 'list',
+        },
+      },
+      // Unwind the list array
+      {
+        $unwind: {
+          path: '$list',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      // Lookup the entity
+      {
+        $lookup: {
+          from: 'Entity',
+          localField: '_entityId',
+          foreignField: '_id',
+          as: 'entity',
+        },
+      },
+      // Unwind the entity array
+      {
+        $unwind: {
+          path: '$entity',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      // Project the final shape of documents
+      {
+        $project: {
+          // Include all fields from the original document
+          '*': 1,
+          // Create _fromMetadata from list fields
+          _fromMetadata: {
+            _kind: '$list._kind',
+            _name: '$list._name',
+            _slug: '$list._slug',
+            _validFromDateTime: '$list._validFromDateTime',
+            _validUntilDateTime: '$list._validUntilDateTime',
+            _visibility: '$list._visibility',
+            _ownerUsers: '$list._ownerUsers',
+            _ownerGroups: '$list._ownerGroups',
+            _viewerUsers: '$list._viewerUsers',
+            _viewerGroups: '$list._viewerGroups',
           },
-        }),
-      ),
-      this.entityRepositoryGetter().then((repo) =>
-        repo.find({
-          where: {
-            _id: { inq: entityIds },
+          // Create _toMetadata from entity fields
+          _toMetadata: {
+            _kind: '$entity._kind',
+            _name: '$entity._name',
+            _slug: '$entity._slug',
+            _validFromDateTime: '$entity._validFromDateTime',
+            _validUntilDateTime: '$entity._validUntilDateTime',
+            _visibility: '$entity._visibility',
+            _ownerUsers: '$entity._ownerUsers',
+            _ownerGroups: '$entity._ownerGroups',
+            _viewerUsers: '$entity._viewerUsers',
+            _viewerGroups: '$entity._viewerGroups',
           },
-        }),
-      ),
-    ]);
+        },
+      },
+    );
 
-    // Create lookup maps for quick access
-    const listMap = new Map(lists.map((list) => [list._id, list]));
-    const entityMap = new Map(entities.map((entity) => [entity._id, entity]));
-
-    // Enrich each relation with metadata
-    return rawRelations.map((relation) => {
-      const list = listMap.get(relation._listId);
-      const entity = entityMap.get(relation._entityId);
-
-      if (list) {
-        relation._fromMetadata = {
-          _kind: list._kind,
-          _name: list._name,
-          _slug: list._slug,
-          _validFromDateTime: list._validFromDateTime,
-          _validUntilDateTime: list._validUntilDateTime,
-          _visibility: list._visibility,
-          _ownerUsers: list._ownerUsers,
-          _ownerGroups: list._ownerGroups,
-          _viewerUsers: list._viewerUsers,
-          _viewerGroups: list._viewerGroups,
-        };
+    // Add order if specified
+    if (filter?.order) {
+      const sort: Record<string, 1 | -1> = {};
+      for (const orderItem of filter.order) {
+        if (typeof orderItem === 'string') {
+          sort[orderItem] = 1; // ASC
+        } else {
+          const [field, direction] = Object.entries(orderItem)[0];
+          sort[field] = direction === 'DESC' ? -1 : 1;
+        }
       }
 
-      if (entity) {
-        relation._toMetadata = {
-          _kind: entity._kind,
-          _name: entity._name,
-          _slug: entity._slug,
-          _validFromDateTime: entity._validFromDateTime,
-          _validUntilDateTime: entity._validUntilDateTime,
-          _visibility: entity._visibility,
-          _ownerUsers: entity._ownerUsers,
-          _ownerGroups: entity._ownerGroups,
-          _viewerUsers: entity._viewerUsers,
-          _viewerGroups: entity._viewerGroups,
-        };
-      }
+      pipeline.push({ $sort: sort });
+    }
 
-      return relation;
-    });
+    // Add skip if specified
+    if (filter?.skip) {
+      pipeline.push({ $skip: filter.skip });
+    }
+
+    // Add limit stage if needed
+    if (finalLimit > 0) {
+      pipeline.push({ $limit: finalLimit });
+    }
+
+    // Get the MongoDB native collection
+    const collection = this.dataSource.connector?.collection(
+      this.modelClass.name,
+    );
+    if (!collection) {
+      throw new Error('MongoDB collection not found');
+    }
+
+    try {
+      // Use the native MongoDB driver's aggregate method
+      const cursor = collection.aggregate(pipeline);
+      const result = await cursor.toArray();
+
+      return result as (ListToEntityRelation & ListEntityRelationRelations)[];
+    } catch (error) {
+      throw new Error(`Failed to execute aggregation: ${error}`);
+    }
   }
 
   async findById(
@@ -875,5 +973,110 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
         status: 409,
       });
     }
+  }
+
+  /**
+   * Convert LoopBack where filter to MongoDB query format
+   */
+  private buildMongoQuery(
+    where: Where<ListToEntityRelation>,
+  ): Record<string, unknown> {
+    const query: Record<string, unknown> = {};
+
+    // Handle $and and $or at the top level
+    if ('and' in where) {
+      query.$and = where.and.map((condition: Where<ListToEntityRelation>) =>
+        this.buildMongoQuery(condition),
+      );
+
+      return query;
+    }
+
+    if ('or' in where) {
+      query.$or = where.or.map((condition: Where<ListToEntityRelation>) =>
+        this.buildMongoQuery(condition),
+      );
+
+      return query;
+    }
+
+    for (const [key, value] of Object.entries(where)) {
+      if (typeof value === 'object' && value !== null) {
+        // Handle comparison operators
+        const operator = Object.keys(value)[0];
+        const operatorValue = value[operator];
+
+        // Convert date strings to Date objects for date fields
+        const processedValue =
+          this.isDateField(key) && operatorValue !== null
+            ? new Date(operatorValue)
+            : operatorValue;
+
+        switch (operator) {
+          case 'eq':
+            query[key] = processedValue;
+            break;
+          case 'neq':
+            query[key] = { $ne: processedValue };
+            break;
+          case 'gt':
+            query[key] = { $gt: processedValue };
+            break;
+          case 'gte':
+            query[key] = { $gte: processedValue };
+            break;
+          case 'lt':
+            query[key] = { $lt: processedValue };
+            break;
+          case 'lte':
+            query[key] = { $lte: processedValue };
+            break;
+          case 'inq':
+            query[key] = { $in: processedValue };
+            break;
+          case 'nin':
+            query[key] = { $nin: processedValue };
+            break;
+          case 'between':
+            query[key] = {
+              $gte: this.isDateField(key)
+                ? new Date(operatorValue[0])
+                : operatorValue[0],
+              $lte: this.isDateField(key)
+                ? new Date(operatorValue[1])
+                : operatorValue[1],
+            };
+            break;
+          case 'exists':
+            query[key] = { $exists: processedValue };
+            break;
+          case 'like':
+            query[key] = { $regex: processedValue.replace(/%/g, '.*') };
+            break;
+          case 'ilike':
+            query[key] = {
+              $regex: processedValue.replace(/%/g, '.*'),
+              $options: 'i',
+            };
+            break;
+          default:
+            // If it's a nested object but not a recognized operator, treat it as a nested condition
+            query[key] = this.buildMongoQuery(value);
+        }
+      } else {
+        // Handle direct value assignments
+        query[key] =
+          this.isDateField(key) && value !== null ? new Date(value) : value;
+      }
+    }
+
+    return query;
+  }
+
+  /**
+   * Check if a field is a date field
+   */
+  private isDateField(field: string): boolean {
+    return field === '_validFromDateTime' || field === '_validUntilDateTime';
   }
 }

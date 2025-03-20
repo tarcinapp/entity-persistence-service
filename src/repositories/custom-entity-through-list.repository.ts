@@ -88,10 +88,12 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
       include: filterThrough?.include,
     };
 
-    const relations = await listEntityRelationRepo.find(throughFilter, options);
+    const relations = await listEntityRelationRepo.find(throughFilter);
 
     // Extract target entity IDs from relations
-    const entityIds = relations.map((rel) => rel._entityId);
+    const entityIds = relations.map(
+      (rel: ListToEntityRelation) => rel._entityId,
+    );
 
     // Update the filter to only include entities matching the IDs
     const updatedFilter = {
@@ -104,7 +106,9 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
 
     // Map relation metadata to entities, excluding `toMetadata`
     return entities.map((entity) => {
-      const relation = relations.find((rel) => rel._entityId === entity._id);
+      const relation = relations.find(
+        (rel: ListToEntityRelation) => rel._entityId === entity._id,
+      );
       if (relation) {
         // Exclude `toMetadata` while retaining other properties
 
@@ -175,7 +179,9 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
         ...whereThrough,
       },
     });
-    const entityIds = relations.map((rel) => rel._entityId);
+    const entityIds = relations.map(
+      (rel: ListToEntityRelation) => rel._entityId,
+    );
 
     where = { _id: { inq: entityIds }, ...where };
 
@@ -196,7 +202,9 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
         ...whereThrough,
       },
     });
-    const entityIds = relations.map((rel) => rel._entityId);
+    const entityIds = relations.map(
+      (rel: ListToEntityRelation) => rel._entityId,
+    );
 
     where = { _id: { inq: entityIds }, ...where };
 
