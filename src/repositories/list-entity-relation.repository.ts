@@ -133,6 +133,39 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     filter?: Filter<ListToEntityRelation>,
     _options?: Options,
   ): Promise<(ListToEntityRelation & ListEntityRelationRelations)[]> {
+    // Get collection names from repositories
+    const [listRepo, entityRepo] = await Promise.all([
+      this.listRepositoryGetter(),
+      this.entityRepositoryGetter(),
+    ]);
+
+    // Get collection names from mongodb settings
+    const listCollectionName =
+      listRepo.modelClass.definition.settings?.mongodb?.collection;
+    const entityCollectionName =
+      entityRepo.modelClass.definition.settings?.mongodb?.collection;
+    const relationCollectionName =
+      this.modelClass.definition.settings?.mongodb?.collection;
+
+    if (
+      !listCollectionName ||
+      !entityCollectionName ||
+      !relationCollectionName
+    ) {
+      throw new Error(
+        'Required MongoDB collection names not configured in model settings',
+      );
+    }
+
+    // Get the MongoDB collection for executing the aggregation
+    const relationCollection = this.dataSource.connector?.collection(
+      relationCollectionName,
+    );
+
+    if (!relationCollection) {
+      throw new Error('Required MongoDB collection not found');
+    }
+
     // Calculate the limit value using optional chaining and nullish coalescing
     const limit =
       filter?.limit ??
@@ -170,7 +203,7 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
       // Lookup the list
       {
         $lookup: {
-          from: 'List',
+          from: listCollectionName,
           localField: '_listId',
           foreignField: '_id',
           as: 'list',
@@ -186,7 +219,7 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
       // Lookup the entity
       {
         $lookup: {
-          from: 'Entity',
+          from: entityCollectionName,
           localField: '_entityId',
           foreignField: '_id',
           as: 'entity',
@@ -274,17 +307,9 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
       pipeline.push({ $limit: finalLimit });
     }
 
-    // Get the MongoDB native collection
-    const collection = this.dataSource.connector?.collection(
-      this.modelClass.name,
-    );
-    if (!collection) {
-      throw new Error('MongoDB collection not found');
-    }
-
     try {
       // Use the native MongoDB driver's aggregate method
-      const cursor = collection.aggregate(pipeline);
+      const cursor = relationCollection.aggregate(pipeline);
       const result = await cursor.toArray();
 
       return result as (ListToEntityRelation & ListEntityRelationRelations)[];
