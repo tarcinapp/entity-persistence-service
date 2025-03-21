@@ -1498,4 +1498,96 @@ describe('GET /list-entity-relations', () => {
     expect(relation).to.not.have.property('_validFromDateTime');
     expect(relation).to.not.have.property('_validUntilDateTime');
   });
+
+  it('filter: by list date access rules - validFrom and validUntil combinations', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      list_kinds: 'reading-list',
+      autoapprove_list_entity_relations: 'true',
+      debug: 'true', // Enable debug logging
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 1);
+
+    // Create test entity
+    const bookId = await createTestEntity(client, {
+      _name: 'Test Book',
+      _kind: 'book',
+    });
+
+    // Create lists with different date combinations
+    const list1Id = await createTestList(client, {
+      _name: 'List 1',
+      _kind: 'reading-list',
+      _validFromDateTime: pastDate.toISOString(), // Past date
+    });
+
+    const list2Id = await createTestList(client, {
+      _name: 'List 2',
+      _kind: 'reading-list',
+      _validFromDateTime: futureDate.toISOString(), // Future date
+    });
+
+    const list3Id = await createTestList(client, {
+      _name: 'List 3',
+      _kind: 'reading-list',
+      _validFromDateTime: pastDate.toISOString(), // Past date
+      _validUntilDateTime: pastDate.toISOString(), // Past date
+    });
+
+    const list4Id = await createTestList(client, {
+      _name: 'List 4',
+      _kind: 'reading-list',
+      _validFromDateTime: pastDate.toISOString(), // Past date
+      _validUntilDateTime: futureDate.toISOString(), // Future date
+    });
+
+    // Create relations for all lists
+    await createTestRelation({
+      _listId: list1Id,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+    });
+
+    await createTestRelation({
+      _listId: list2Id,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+    });
+
+    await createTestRelation({
+      _listId: list3Id,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+    });
+
+    await createTestRelation({
+      _listId: list4Id,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+    });
+
+    // Test filtering by validUntilDateTime
+    const filterStr =
+      'listFilter[where][and][0][_validFromDateTime][lt]=' +
+      encodeURIComponent(now.toISOString()) +
+      '&listFilter[where][and][1][_validUntilDateTime][gt]=' +
+      encodeURIComponent(now.toISOString());
+
+    const response = await client
+      .get('/list-entity-relations')
+      .query(filterStr)
+      .expect(200);
+
+    // Should return only the relation from List 4 (past validFrom, future validUntil)
+    expect(response.body).to.be.Array().and.have.length(1);
+    expect(response.body[0]._fromMetadata._name).to.equal('List 4');
+  });
 });

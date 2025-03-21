@@ -225,18 +225,35 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
         {},
         this.request,
       );
-      pipeline.push({
-        $match: {
-          'list.0': { $exists: true }, // Ensure list exists
-          ...Object.entries(listMongoQuery).reduce(
-            (acc, [key, value]) => {
-              acc[`list.0.${key}`] = value;
 
-              return acc;
-            },
-            {} as Record<string, unknown>,
-          ),
-        },
+      // Handle $and conditions properly
+      const matchConditions: Record<string, any> = {
+        'list.0': { $exists: true },
+      };
+
+      if (listMongoQuery.$and && Array.isArray(listMongoQuery.$and)) {
+        // If there's an $and condition, apply each condition to list.0
+        matchConditions.$and = listMongoQuery.$and.map(
+          (condition: Record<string, any>) => ({
+            ...Object.entries(condition).reduce(
+              (acc, [key, value]) => {
+                acc[`list.0.${key}`] = value;
+
+                return acc;
+              },
+              {} as Record<string, unknown>,
+            ),
+          }),
+        );
+      } else {
+        // If no $and condition, apply conditions directly
+        Object.entries(listMongoQuery).forEach(([key, value]) => {
+          matchConditions[`list.0.${key}`] = value;
+        });
+      }
+
+      pipeline.push({
+        $match: matchConditions,
       });
     }
 
@@ -440,6 +457,11 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
 
     try {
       // Use the native MongoDB driver's aggregate method
+      this.loggingService.debug(
+        `Pipeline: ${JSON.stringify(pipeline, null, 2)}`,
+        {},
+        this.request,
+      );
       const cursor = relationCollection.aggregate(pipeline);
       const result = await cursor.toArray();
 
