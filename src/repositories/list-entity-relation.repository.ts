@@ -326,6 +326,13 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
           },
         },
       },
+      // Project stage to exclude list and entity fields
+      {
+        $project: {
+          list: 0,
+          entity: 0,
+        },
+      },
     );
 
     // Handle field selection
