@@ -1527,12 +1527,14 @@ describe('GET /list-entity-relations', () => {
       _name: 'List 1',
       _kind: 'reading-list',
       _validFromDateTime: pastDate.toISOString(), // Past date
+      _visibility: 'public',
     });
 
     const list2Id = await createTestList(client, {
       _name: 'List 2',
       _kind: 'reading-list',
       _validFromDateTime: futureDate.toISOString(), // Future date
+      _visibility: 'private',
     });
 
     const list3Id = await createTestList(client, {
@@ -1540,6 +1542,7 @@ describe('GET /list-entity-relations', () => {
       _kind: 'reading-list',
       _validFromDateTime: pastDate.toISOString(), // Past date
       _validUntilDateTime: pastDate.toISOString(), // Past date
+      _visibility: 'private',
     });
 
     const list4Id = await createTestList(client, {
@@ -1547,6 +1550,7 @@ describe('GET /list-entity-relations', () => {
       _kind: 'reading-list',
       _validFromDateTime: pastDate.toISOString(), // Past date
       _validUntilDateTime: futureDate.toISOString(), // Future date
+      _visibility: 'public',
     });
 
     // Create relations for all lists
@@ -1574,11 +1578,222 @@ describe('GET /list-entity-relations', () => {
       _kind: 'reading-list-book',
     });
 
-    // Test filtering by validUntilDateTime
+    // Test filtering with AND and OR conditions
+    // Find lists that are either:
+    // 1. Currently active (past validFrom and future validUntil) OR
+    // 2. Have public visibility
     const filterStr =
-      'listFilter[where][and][0][_validFromDateTime][lt]=' +
+      'listFilter[where][or][0][and][0][_validFromDateTime][lt]=' +
       encodeURIComponent(now.toISOString()) +
-      '&listFilter[where][and][1][_validUntilDateTime][gt]=' +
+      '&listFilter[where][or][0][and][1][_validUntilDateTime][gt]=' +
+      encodeURIComponent(now.toISOString()) +
+      '&listFilter[where][or][1][_visibility][eq]=public';
+
+    const response = await client
+      .get('/list-entity-relations')
+      .query(filterStr)
+      .expect(200);
+
+    // Should return relations from List 1 (public) and List 4 (currently active)
+    expect(response.body).to.be.Array().and.have.length(2);
+    const listNames = response.body
+      .map((r: any) => r._fromMetadata._name)
+      .sort();
+    expect(listNames).to.eql(['List 1', 'List 4']);
+  });
+
+  it('filter: by list date access rules - combining AND and OR conditions', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      list_kinds: 'reading-list',
+      autoapprove_list_entity_relations: 'true',
+      debug: 'true', // Enable debug logging
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 1);
+
+    // Create test entity
+    const bookId = await createTestEntity(client, {
+      _name: 'Test Book',
+      _kind: 'book',
+    });
+
+    // Create lists with different date combinations
+    const list1Id = await createTestList(client, {
+      _name: 'List 1',
+      _kind: 'reading-list',
+      _validFromDateTime: pastDate.toISOString(), // Past date
+      _visibility: 'public',
+    });
+
+    const list2Id = await createTestList(client, {
+      _name: 'List 2',
+      _kind: 'reading-list',
+      _validFromDateTime: futureDate.toISOString(), // Future date
+      _visibility: 'private',
+    });
+
+    const list3Id = await createTestList(client, {
+      _name: 'List 3',
+      _kind: 'reading-list',
+      _validFromDateTime: pastDate.toISOString(), // Past date
+      _validUntilDateTime: pastDate.toISOString(), // Past date
+      _visibility: 'private',
+    });
+
+    const list4Id = await createTestList(client, {
+      _name: 'List 4',
+      _kind: 'reading-list',
+      _validFromDateTime: pastDate.toISOString(), // Past date
+      _validUntilDateTime: futureDate.toISOString(), // Future date
+      _visibility: 'public',
+    });
+
+    // Create relations for all lists
+    await createTestRelation({
+      _listId: list1Id,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+    });
+
+    await createTestRelation({
+      _listId: list2Id,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+    });
+
+    await createTestRelation({
+      _listId: list3Id,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+    });
+
+    await createTestRelation({
+      _listId: list4Id,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+    });
+
+    // Test filtering with AND and OR conditions
+    // Find lists that are either:
+    // 1. Currently active (past validFrom and future validUntil) OR
+    // 2. Have public visibility
+    const filterStr =
+      'listFilter[where][or][0][and][0][_validFromDateTime][lt]=' +
+      encodeURIComponent(now.toISOString()) +
+      '&listFilter[where][or][0][and][1][_validUntilDateTime][gt]=' +
+      encodeURIComponent(now.toISOString()) +
+      '&listFilter[where][or][1][_visibility][eq]=public';
+
+    const response = await client
+      .get('/list-entity-relations')
+      .query(filterStr)
+      .expect(200);
+
+    // Should return relations from List 1 (public) and List 4 (currently active)
+    expect(response.body).to.be.Array().and.have.length(2);
+    const listNames = response.body
+      .map((r: any) => r._fromMetadata._name)
+      .sort();
+    expect(listNames).to.eql(['List 1', 'List 4']);
+  });
+
+  it('filter: by list date access rules - combining AND and OR conditions with different date fields', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      list_kinds: 'reading-list',
+      autoapprove_list_entity_relations: 'true',
+      debug: 'true', // Enable debug logging
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 1);
+
+    // Create test entity
+    const bookId = await createTestEntity(client, {
+      _name: 'Test Book',
+      _kind: 'book',
+    });
+
+    // Create lists with different date combinations
+    const list1Id = await createTestList(client, {
+      _name: 'List 1',
+      _kind: 'reading-list',
+      _validFromDateTime: pastDate.toISOString(), // Past date
+      _createdDateTime: pastDate.toISOString(), // Created in past
+    });
+
+    const list2Id = await createTestList(client, {
+      _name: 'List 2',
+      _kind: 'reading-list',
+      _validFromDateTime: futureDate.toISOString(), // Future date
+      _createdDateTime: futureDate.toISOString(), // Created in future
+    });
+
+    const list3Id = await createTestList(client, {
+      _name: 'List 3',
+      _kind: 'reading-list',
+      _validFromDateTime: pastDate.toISOString(), // Past date
+      _validUntilDateTime: pastDate.toISOString(), // Past date
+      _createdDateTime: pastDate.toISOString(), // Created in past
+    });
+
+    const list4Id = await createTestList(client, {
+      _name: 'List 4',
+      _kind: 'reading-list',
+      _validFromDateTime: pastDate.toISOString(), // Past date
+      _validUntilDateTime: futureDate.toISOString(), // Future date
+      _createdDateTime: futureDate.toISOString(), // Created in future
+    });
+
+    // Create relations for all lists
+    await createTestRelation({
+      _listId: list1Id,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+    });
+
+    await createTestRelation({
+      _listId: list2Id,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+    });
+
+    await createTestRelation({
+      _listId: list3Id,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+    });
+
+    await createTestRelation({
+      _listId: list4Id,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+    });
+
+    // Test filtering with AND and OR conditions
+    // Find lists that are either:
+    // 1. Currently active (past validFrom and future validUntil) OR
+    // 2. Created in the past
+    const filterStr =
+      'listFilter[where][or][0][and][0][_validFromDateTime][lt]=' +
+      encodeURIComponent(now.toISOString()) +
+      '&listFilter[where][or][0][and][1][_validUntilDateTime][gt]=' +
+      encodeURIComponent(now.toISOString()) +
+      '&listFilter[where][or][1][_createdDateTime][lt]=' +
       encodeURIComponent(now.toISOString());
 
     const response = await client
@@ -1586,8 +1801,11 @@ describe('GET /list-entity-relations', () => {
       .query(filterStr)
       .expect(200);
 
-    // Should return only the relation from List 4 (past validFrom, future validUntil)
-    expect(response.body).to.be.Array().and.have.length(1);
-    expect(response.body[0]._fromMetadata._name).to.equal('List 4');
+    // Should return relations from List 1 (created in past) and List 4 (currently active)
+    expect(response.body).to.be.Array().and.have.length(2);
+    const listNames = response.body
+      .map((r: any) => r._fromMetadata._name)
+      .sort();
+    expect(listNames).to.eql(['List 1', 'List 4']);
   });
 });
