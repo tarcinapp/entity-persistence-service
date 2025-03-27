@@ -551,7 +551,7 @@ export class ListRepository extends DefaultCrudRepository<
     // take the date of now to make sure we have exactly the same date in all date fields
     const now = new Date().toISOString();
 
-    // use incoming creationDateTime and lastUpdateDateTime if given. Override with default if it does not exist.
+    // use incoming createdDateTime and lastUpdatedDateTime if given. Override with default if it does not exist.
     data._createdDateTime = data._createdDateTime ? data._createdDateTime : now;
     data._lastUpdatedDateTime = data._lastUpdatedDateTime
       ? data._lastUpdatedDateTime
