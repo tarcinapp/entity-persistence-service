@@ -226,27 +226,54 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
         this.request,
       );
 
-      // Handle $and conditions properly
+      // Handle $and and $or conditions properly
       const matchConditions: Record<string, any> = {
         'list.0': { $exists: true },
       };
 
-      if (listMongoQuery.$and && Array.isArray(listMongoQuery.$and)) {
-        // If there's an $and condition, apply each condition to list.0
-        matchConditions.$and = listMongoQuery.$and.map(
-          (condition: Record<string, any>) => ({
-            ...Object.entries(condition).reduce(
-              (acc, [key, value]) => {
-                acc[`list.0.${key}`] = value;
+      if (listMongoQuery.$or && Array.isArray(listMongoQuery.$or)) {
+        // Handle OR conditions
+        matchConditions.$or = listMongoQuery.$or.map(
+          (condition: Record<string, any>) => {
+            if (condition.$and && Array.isArray(condition.$and)) {
+              // If there's an AND condition inside OR, apply each condition to list.0
+              return {
+                $and: condition.$and.map(
+                  (andCondition: Record<string, any>) => {
+                    const prefixedCondition: Record<string, any> = {};
+                    Object.entries(andCondition).forEach(([key, value]) => {
+                      prefixedCondition[`list.0.${key}`] = value;
+                    });
 
-                return acc;
-              },
-              {} as Record<string, unknown>,
-            ),
-          }),
+                    return prefixedCondition;
+                  },
+                ),
+              };
+            } else {
+              // If it's a simple condition, apply it directly to list.0
+              const prefixedCondition: Record<string, any> = {};
+              Object.entries(condition).forEach(([key, value]) => {
+                prefixedCondition[`list.0.${key}`] = value;
+              });
+
+              return prefixedCondition;
+            }
+          },
+        );
+      } else if (listMongoQuery.$and && Array.isArray(listMongoQuery.$and)) {
+        // Handle AND conditions
+        matchConditions.$and = listMongoQuery.$and.map(
+          (condition: Record<string, any>) => {
+            const prefixedCondition: Record<string, any> = {};
+            Object.entries(condition).forEach(([key, value]) => {
+              prefixedCondition[`list.0.${key}`] = value;
+            });
+
+            return prefixedCondition;
+          },
         );
       } else {
-        // If no $and condition, apply conditions directly
+        // Handle simple conditions
         Object.entries(listMongoQuery).forEach(([key, value]) => {
           matchConditions[`list.0.${key}`] = value;
         });
@@ -1214,6 +1241,7 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
       return query;
     }
 
+    // Handle nested conditions
     for (const [key, value] of Object.entries(where)) {
       if (typeof value === 'object' && value !== null) {
         // Handle comparison operators
@@ -1271,6 +1299,21 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
             query[key] = {
               $regex: processedValue.replace(/%/g, '.*'),
               $options: 'i',
+            };
+            break;
+          case 'and':
+            query[key] = {
+              $and: operatorValue.map(
+                (condition: Where<ListToEntityRelation>) =>
+                  this.buildMongoQuery(condition),
+              ),
+            };
+            break;
+          case 'or':
+            query[key] = {
+              $or: operatorValue.map((condition: Where<ListToEntityRelation>) =>
+                this.buildMongoQuery(condition),
+              ),
             };
             break;
           default:
