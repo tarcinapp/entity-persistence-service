@@ -1585,111 +1585,13 @@ describe('GET /list-entity-relations', () => {
     const filterStr =
       'listFilter[where][or][0][and][0][_validFromDateTime][lt]=' +
       encodeURIComponent(now.toISOString()) +
+      '&listFilter[where][or][0][and][0][_validFromDateTime][type]=date&' +
       '&listFilter[where][or][0][and][1][_validUntilDateTime][gt]=' +
       encodeURIComponent(now.toISOString()) +
-      '&listFilter[where][or][1][_visibility][eq]=public';
-
-    const response = await client
-      .get('/list-entity-relations')
-      .query(filterStr)
-      .expect(200);
-
-    // Should return relations from List 1 (public) and List 4 (currently active)
-    expect(response.body).to.be.Array().and.have.length(2);
-    const listNames = response.body
-      .map((r: any) => r._fromMetadata._name)
-      .sort();
-    expect(listNames).to.eql(['List 1', 'List 4']);
-  });
-
-  it('filter: by list date access rules - combining AND and OR conditions', async () => {
-    // Set up the application with default configuration
-    appWithClient = await setupApplication({
-      entity_kinds: 'book',
-      list_kinds: 'reading-list',
-      autoapprove_list_entity_relations: 'true',
-    });
-    ({ client } = appWithClient);
-
-    const now = new Date();
-    const pastDate = new Date(now);
-    pastDate.setDate(pastDate.getDate() - 1);
-
-    const futureDate = new Date(now);
-    futureDate.setDate(futureDate.getDate() + 1);
-
-    // Create test entity
-    const bookId = await createTestEntity(client, {
-      _name: 'Test Book',
-      _kind: 'book',
-    });
-
-    // Create lists with different date combinations
-    const list1Id = await createTestList(client, {
-      _name: 'List 1',
-      _kind: 'reading-list',
-      _validFromDateTime: pastDate.toISOString(), // Past date
-      _visibility: 'public',
-    });
-
-    const list2Id = await createTestList(client, {
-      _name: 'List 2',
-      _kind: 'reading-list',
-      _validFromDateTime: futureDate.toISOString(), // Future date
-      _visibility: 'private',
-    });
-
-    const list3Id = await createTestList(client, {
-      _name: 'List 3',
-      _kind: 'reading-list',
-      _validFromDateTime: pastDate.toISOString(), // Past date
-      _validUntilDateTime: pastDate.toISOString(), // Past date
-      _visibility: 'private',
-    });
-
-    const list4Id = await createTestList(client, {
-      _name: 'List 4',
-      _kind: 'reading-list',
-      _validFromDateTime: pastDate.toISOString(), // Past date
-      _validUntilDateTime: futureDate.toISOString(), // Future date
-      _visibility: 'private',
-    });
-
-    // Create relations for all lists
-    await createTestRelation({
-      _listId: list1Id,
-      _entityId: bookId,
-      _kind: 'reading-list-book',
-    });
-
-    await createTestRelation({
-      _listId: list2Id,
-      _entityId: bookId,
-      _kind: 'reading-list-book',
-    });
-
-    await createTestRelation({
-      _listId: list3Id,
-      _entityId: bookId,
-      _kind: 'reading-list-book',
-    });
-
-    await createTestRelation({
-      _listId: list4Id,
-      _entityId: bookId,
-      _kind: 'reading-list-book',
-    });
-
-    // Test filtering with AND and OR conditions
-    // Find lists that are either:
-    // 1. Currently active (past validFrom and future validUntil) OR
-    // 2. Have public visibility
-    const filterStr =
-      'listFilter[where][or][0][and][0][_validFromDateTime][lt]=' +
+      '&listFilter[where][or][0][and][1][_validUntilDateTime][type]=date&' +
+      '&listFilter[where][or][1][_createdDateTime][lt]=' +
       encodeURIComponent(now.toISOString()) +
-      '&listFilter[where][or][0][and][1][_validUntilDateTime][gt]=' +
-      encodeURIComponent(now.toISOString()) +
-      '&listFilter[where][or][1][_visibility][eq]=public';
+      '&listFilter[where][or][1][_createdDateTime][type]=date';
 
     const response = await client
       .get('/list-entity-relations')
@@ -1731,14 +1633,14 @@ describe('GET /list-entity-relations', () => {
       _name: 'List 1',
       _kind: 'reading-list',
       _validFromDateTime: pastDate.toISOString(), // Past date
-      publishedDate: pastDate.toISOString(),
+      _createdDateTime: pastDate.toISOString(),
     });
 
     const list2Id = await createTestList(client, {
       _name: 'List 2',
       _kind: 'reading-list',
       _validFromDateTime: futureDate.toISOString(), // Future date
-      publishedDate: futureDate.toISOString(),
+      _createdDateTime: futureDate.toISOString(),
     });
 
     const list3Id = await createTestList(client, {
@@ -1746,7 +1648,7 @@ describe('GET /list-entity-relations', () => {
       _kind: 'reading-list',
       _validFromDateTime: pastDate.toISOString(), // Past date
       _validUntilDateTime: pastDate.toISOString(), // Past date
-      publishedDate: futureDate.toISOString(),
+      _createdDateTime: futureDate.toISOString(),
     });
 
     const list4Id = await createTestList(client, {
@@ -1754,7 +1656,7 @@ describe('GET /list-entity-relations', () => {
       _kind: 'reading-list',
       _validFromDateTime: pastDate.toISOString(), // Past date
       _validUntilDateTime: futureDate.toISOString(), // Past date
-      publishedDate: futureDate.toISOString(),
+      _createdDateTime: futureDate.toISOString(),
     });
 
     // Create relations for all lists
@@ -1789,10 +1691,13 @@ describe('GET /list-entity-relations', () => {
     const filterStr =
       'listFilter[where][or][0][and][0][_validFromDateTime][lt]=' +
       encodeURIComponent(now.toISOString()) +
+      '&listFilter[where][or][0][and][0][_validFromDateTime][type]=date&' +
       '&listFilter[where][or][0][and][1][_validUntilDateTime][gt]=' +
       encodeURIComponent(now.toISOString()) +
-      '&listFilter[where][or][1][publishedDate][lt]=' +
-      encodeURIComponent(now.toISOString());
+      '&listFilter[where][or][0][and][1][_validUntilDateTime][type]=date&' +
+      '&listFilter[where][or][1][_createdDateTime][lt]=' +
+      encodeURIComponent(now.toISOString()) +
+      '&listFilter[where][or][1][_createdDateTime][type]=date';
 
     const response = await client
       .get('/list-entity-relations')
@@ -1817,7 +1722,7 @@ describe('GET /list-entity-relations', () => {
       console.log('Name:', list._name);
       console.log('validFrom:', list._validFromDateTime);
       console.log('validUntil:', list._validUntilDateTime);
-      console.log('publishedDate:', list.publishedDate);
+      console.log('createdDateTime:', list._createdDateTime);
     });
     console.log('now:', now.toISOString());
 

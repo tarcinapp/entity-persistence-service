@@ -102,14 +102,12 @@ function processWhereClause(where: any): void {
           // Handle number type conversions
           if (type === 'number') {
             if (Array.isArray(operatorValue)) {
-              // Convert array values to numbers (for between, inq operators)
               operators[operator] = operatorValue.map((item) => {
                 const parsed = Number(item);
 
                 return !isNaN(parsed) ? parsed : item;
               });
             } else {
-              // Convert single value to number
               const parsed = Number(operatorValue);
               if (!isNaN(parsed)) {
                 operators[operator] = parsed;
@@ -119,7 +117,6 @@ function processWhereClause(where: any): void {
           // Handle boolean type conversions
           else if (type === 'boolean') {
             if (Array.isArray(operatorValue)) {
-              // Convert array values to booleans
               operators[operator] = operatorValue.map((item) => {
                 if (typeof item === 'string') {
                   return item.toLowerCase() === 'true';
@@ -128,11 +125,28 @@ function processWhereClause(where: any): void {
                 return Boolean(item);
               });
             } else if (typeof operatorValue === 'string') {
-              // Convert string to boolean
               operators[operator] = operatorValue.toLowerCase() === 'true';
             } else {
-              // Convert other types to boolean
               operators[operator] = Boolean(operatorValue);
+            }
+          }
+          // Handle date type conversions
+          else if (type === 'date') {
+            if (Array.isArray(operatorValue)) {
+              operators[operator] = operatorValue.map((item) => {
+                if (typeof item === 'string') {
+                  const date = new Date(item);
+
+                  return !isNaN(date.getTime()) ? date : item;
+                }
+
+                return item;
+              });
+            } else if (typeof operatorValue === 'string') {
+              const date = new Date(operatorValue);
+              if (!isNaN(date.getTime())) {
+                operators[operator] = date;
+              }
             }
           }
           // Additional type conversions can be added here
