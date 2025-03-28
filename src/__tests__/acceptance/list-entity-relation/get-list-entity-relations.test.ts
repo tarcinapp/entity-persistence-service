@@ -1499,13 +1499,12 @@ describe('GET /list-entity-relations', () => {
     expect(relation).to.not.have.property('_validUntilDateTime');
   });
 
-  it('filter: by list date access rules - validFrom and validUntil combinations', async () => {
+  it('filter: by list date access rules - combining AND and OR conditions', async () => {
     // Set up the application with default configuration
     appWithClient = await setupApplication({
       entity_kinds: 'book',
       list_kinds: 'reading-list',
       autoapprove_list_entity_relations: 'true',
-      debug: 'true', // Enable debug logging
     });
     ({ client } = appWithClient);
 
@@ -1550,7 +1549,7 @@ describe('GET /list-entity-relations', () => {
       _kind: 'reading-list',
       _validFromDateTime: pastDate.toISOString(), // Past date
       _validUntilDateTime: futureDate.toISOString(), // Future date
-      _visibility: 'public',
+      _visibility: 'private',
     });
 
     // Create relations for all lists
@@ -1585,13 +1584,9 @@ describe('GET /list-entity-relations', () => {
     const filterStr =
       'listFilter[where][or][0][and][0][_validFromDateTime][lt]=' +
       encodeURIComponent(now.toISOString()) +
-      '&listFilter[where][or][0][and][0][_validFromDateTime][type]=date&' +
       '&listFilter[where][or][0][and][1][_validUntilDateTime][gt]=' +
       encodeURIComponent(now.toISOString()) +
-      '&listFilter[where][or][0][and][1][_validUntilDateTime][type]=date&' +
-      '&listFilter[where][or][1][_createdDateTime][lt]=' +
-      encodeURIComponent(now.toISOString()) +
-      '&listFilter[where][or][1][_createdDateTime][type]=date';
+      '&listFilter[where][or][1][_visibility][eq]=public';
 
     const response = await client
       .get('/list-entity-relations')
