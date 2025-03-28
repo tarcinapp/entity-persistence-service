@@ -1753,8 +1753,8 @@ describe('GET /list-entity-relations', () => {
       _name: 'List 4',
       _kind: 'reading-list',
       _validFromDateTime: pastDate.toISOString(), // Past date
-      _validUntilDateTime: pastDate.toISOString(), // Past date
-      publishedDate: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(), // Past date
+      publishedDate: futureDate.toISOString(),
     });
 
     // Create relations for all lists
