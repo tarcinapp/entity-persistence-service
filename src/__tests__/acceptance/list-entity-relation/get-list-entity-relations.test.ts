@@ -1608,7 +1608,6 @@ describe('GET /list-entity-relations', () => {
       entity_kinds: 'book',
       list_kinds: 'reading-list',
       autoapprove_list_entity_relations: 'true',
-      debug: 'true', // Enable debug logging
     });
     ({ client } = appWithClient);
 
@@ -1653,7 +1652,7 @@ describe('GET /list-entity-relations', () => {
       _kind: 'reading-list',
       _validFromDateTime: pastDate.toISOString(), // Past date
       _validUntilDateTime: futureDate.toISOString(), // Future date
-      _visibility: 'public',
+      _visibility: 'private',
     });
 
     // Create relations for all lists
@@ -1711,7 +1710,6 @@ describe('GET /list-entity-relations', () => {
       entity_kinds: 'book',
       list_kinds: 'reading-list',
       autoapprove_list_entity_relations: 'true',
-      debug: 'true', // Enable debug logging
     });
     ({ client } = appWithClient);
 
@@ -1733,14 +1731,14 @@ describe('GET /list-entity-relations', () => {
       _name: 'List 1',
       _kind: 'reading-list',
       _validFromDateTime: pastDate.toISOString(), // Past date
-      _createdDateTime: pastDate.toISOString(), // Created in past
+      publishedDate: pastDate.toISOString(),
     });
 
     const list2Id = await createTestList(client, {
       _name: 'List 2',
       _kind: 'reading-list',
       _validFromDateTime: futureDate.toISOString(), // Future date
-      _createdDateTime: futureDate.toISOString(), // Created in future
+      publishedDate: futureDate.toISOString(),
     });
 
     const list3Id = await createTestList(client, {
@@ -1748,15 +1746,15 @@ describe('GET /list-entity-relations', () => {
       _kind: 'reading-list',
       _validFromDateTime: pastDate.toISOString(), // Past date
       _validUntilDateTime: pastDate.toISOString(), // Past date
-      _createdDateTime: pastDate.toISOString(), // Created in past
+      publishedDate: futureDate.toISOString(),
     });
 
     const list4Id = await createTestList(client, {
       _name: 'List 4',
       _kind: 'reading-list',
       _validFromDateTime: pastDate.toISOString(), // Past date
-      _validUntilDateTime: futureDate.toISOString(), // Future date
-      _createdDateTime: futureDate.toISOString(), // Created in future
+      _validUntilDateTime: pastDate.toISOString(), // Past date
+      publishedDate: pastDate.toISOString(),
     });
 
     // Create relations for all lists
@@ -1787,13 +1785,13 @@ describe('GET /list-entity-relations', () => {
     // Test filtering with AND and OR conditions
     // Find lists that are either:
     // 1. Currently active (past validFrom and future validUntil) OR
-    // 2. Created in the past
+    // 2. Have public visibility
     const filterStr =
       'listFilter[where][or][0][and][0][_validFromDateTime][lt]=' +
       encodeURIComponent(now.toISOString()) +
       '&listFilter[where][or][0][and][1][_validUntilDateTime][gt]=' +
       encodeURIComponent(now.toISOString()) +
-      '&listFilter[where][or][1][_createdDateTime][lt]=' +
+      '&listFilter[where][or][1][publishedDate][lt]=' +
       encodeURIComponent(now.toISOString());
 
     const response = await client
@@ -1801,7 +1799,28 @@ describe('GET /list-entity-relations', () => {
       .query(filterStr)
       .expect(200);
 
-    // Should return relations from List 1 (created in past) and List 4 (currently active)
+    console.log(response.body);
+
+    // Retrieve and log all lists from /lists endpoint
+    console.log('\n=== All Lists from /lists endpoint ===');
+    const allListsResponse = await client
+      .get('/lists')
+      .query({
+        filter: {
+          order: '_name ASC',
+        },
+      })
+      .expect(200);
+    console.log('\nLists in database:');
+    allListsResponse.body.forEach((list: any, index: number) => {
+      console.log(`\nList ${index + 1}:`);
+      console.log('Name:', list._name);
+      console.log('validFrom:', list._validFromDateTime);
+      console.log('validUntil:', list._validUntilDateTime);
+      console.log('publishedDate:', list.publishedDate);
+    });
+
+    // Should return relations from List 1 (public) and List 3 (validFrom in past, validUntil in future)
     expect(response.body).to.be.Array().and.have.length(2);
     const listNames = response.body
       .map((r: any) => r._fromMetadata._name)
