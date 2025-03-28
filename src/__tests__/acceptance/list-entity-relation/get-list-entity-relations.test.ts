@@ -1819,6 +1819,7 @@ describe('GET /list-entity-relations', () => {
       console.log('validUntil:', list._validUntilDateTime);
       console.log('publishedDate:', list.publishedDate);
     });
+    console.log('now:', now.toISOString());
 
     // Should return relations from List 1 (public) and List 3 (validFrom in past, validUntil in future)
     expect(response.body).to.be.Array().and.have.length(2);
