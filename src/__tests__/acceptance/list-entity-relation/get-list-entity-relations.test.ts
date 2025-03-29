@@ -1682,7 +1682,7 @@ describe('GET /list-entity-relations', () => {
     // Test filtering with AND and OR conditions
     // Find lists that are either:
     // 1. Currently active (past validFrom and future validUntil) OR
-    // 2. Have public visibility
+    // 2. Created in the past
     const filterStr =
       'listFilter[where][or][0][and][0][_validFromDateTime][lt]=' +
       encodeURIComponent(now.toISOString()) +
