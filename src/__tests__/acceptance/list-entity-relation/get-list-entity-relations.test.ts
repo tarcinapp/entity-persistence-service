@@ -2142,4 +2142,203 @@ describe('GET /list-entity-relations', () => {
       futureDate.toISOString(),
     );
   });
+
+  it('filter: using listSet[audience] for user and group access control', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      list_kinds: 'reading-list',
+      autoapprove_list_entity_relations: 'true',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 1);
+
+    // Create test entity
+    const bookId = await createTestEntity(client, {
+      _name: 'Test Book',
+      _kind: 'book',
+    });
+
+    // Create lists with different combinations of ownership, visibility and status
+
+    // 1. Public active list (should be accessible to all)
+    const publicActiveListId = await createTestList(client, {
+      _name: 'Public Active List',
+      _kind: 'reading-list',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    // 2. Public inactive list (should not be accessible)
+    const publicInactiveListId = await createTestList(client, {
+      _name: 'Public Inactive List',
+      _kind: 'reading-list',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(), // Expired
+    });
+
+    // 3. Private list owned by user-123 (should be accessible to user-123)
+    const userOwnedListId = await createTestList(client, {
+      _name: 'User Owned List',
+      _kind: 'reading-list',
+      _visibility: 'private',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      _ownerUsers: ['user-123'],
+    });
+
+    // 4. Private list owned by group-456 (should be accessible to members of group-456)
+    const groupOwnedListId = await createTestList(client, {
+      _name: 'Group Owned List',
+      _kind: 'reading-list',
+      _visibility: 'private',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      _ownerGroups: ['group-456'],
+    });
+
+    // 5. Private list with user-123 as viewer (should be accessible to user-123)
+    const userViewableListId = await createTestList(client, {
+      _name: 'User Viewable List',
+      _kind: 'reading-list',
+      _visibility: 'private',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      _viewerUsers: ['user-123'],
+    });
+
+    // 6. Private list with group-456 as viewer (should be accessible to members of group-456)
+    const groupViewableListId = await createTestList(client, {
+      _name: 'Group Viewable List',
+      _kind: 'reading-list',
+      _visibility: 'private',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      _viewerGroups: ['group-456'],
+    });
+
+    // 7. Private list with no access for the test user (should not be accessible)
+    const noAccessListId = await createTestList(client, {
+      _name: 'No Access List',
+      _kind: 'reading-list',
+      _visibility: 'private',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      _ownerUsers: ['other-user'],
+    });
+
+    // Create relations for all lists
+    await createTestRelation({
+      _listId: publicActiveListId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+    });
+
+    await createTestRelation({
+      _listId: publicInactiveListId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+    });
+
+    await createTestRelation({
+      _listId: userOwnedListId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+    });
+
+    await createTestRelation({
+      _listId: groupOwnedListId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+    });
+
+    await createTestRelation({
+      _listId: userViewableListId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+    });
+
+    await createTestRelation({
+      _listId: groupViewableListId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+    });
+
+    await createTestRelation({
+      _listId: noAccessListId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+    });
+
+    // Test 1: Filter for lists accessible to user-123
+    const userFilterStr = 'listSet[audience][userIds]=user-123';
+    const userResponse = await client
+      .get('/list-entity-relations')
+      .query(userFilterStr)
+      .expect(200);
+
+    // Should return relations from:
+    // - Public active list (public + active)
+    // - User owned list (owner + active)
+    // - User viewable list (viewer + active)
+    expect(userResponse.body).to.be.Array().and.have.length(3);
+    const userAccessibleLists = userResponse.body
+      .map((r: any) => r._fromMetadata._name)
+      .sort();
+    expect(userAccessibleLists).to.eql([
+      'Public Active List',
+      'User Owned List',
+      'User Viewable List',
+    ]);
+
+    // Test 2: Filter for lists accessible to a member of group-456
+    const groupFilterStr = 'listSet[audience][groupIds]=group-456';
+    const groupResponse = await client
+      .get('/list-entity-relations')
+      .query(groupFilterStr)
+      .expect(200);
+
+    // Should return relations from:
+    // - Public active list (public + active)
+    // - Group owned list (owner + active)
+    // - Group viewable list (viewer + active)
+    expect(groupResponse.body).to.be.Array().and.have.length(3);
+    const groupAccessibleLists = groupResponse.body
+      .map((r: any) => r._fromMetadata._name)
+      .sort();
+    expect(groupAccessibleLists).to.eql([
+      'Group Owned List',
+      'Group Viewable List',
+      'Public Active List',
+    ]);
+
+    // Test 3: Filter for lists accessible to both user-123 and a member of group-456
+    const combinedFilterStr =
+      'listSet[audience][userIds]=user-123&listSet[audience][groupIds]=group-456';
+    const combinedResponse = await client
+      .get('/list-entity-relations')
+      .query(combinedFilterStr)
+      .expect(200);
+
+    // Should return relations from all accessible lists
+    expect(combinedResponse.body).to.be.Array().and.have.length(5);
+    const combinedAccessibleLists = combinedResponse.body
+      .map((r: any) => r._fromMetadata._name)
+      .sort();
+    expect(combinedAccessibleLists).to.eql([
+      'Group Owned List',
+      'Group Viewable List',
+      'Public Active List',
+      'User Owned List',
+      'User Viewable List',
+    ]);
+  });
 });
