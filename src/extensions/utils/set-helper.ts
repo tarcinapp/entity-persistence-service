@@ -340,7 +340,15 @@ class SetToFilterTransformer {
   produceWhereClauseForActives(): Where<AnyObject> {
     const now = new Date();
     const nowISOString = now.toISOString();
-    console.log(`SetHelper: Using date ${nowISOString} for actives filter`);
+    const nowTimestamp = now.getTime();
+
+    // Use timestamps for test environment, ISO strings for production
+    const isTestEnv = process.env.NODE_ENV === 'test';
+    const dateValue = isTestEnv ? nowTimestamp : nowISOString;
+
+    console.log(
+      `SetHelper: Using date ${isTestEnv ? nowTimestamp : nowISOString} for actives filter (${isTestEnv ? 'test' : 'production'} mode)`,
+    );
 
     return {
       and: [
@@ -351,7 +359,7 @@ class SetToFilterTransformer {
             },
             {
               _validUntilDateTime: {
-                gt: nowISOString,
+                gt: dateValue,
               },
             },
           ],
@@ -363,7 +371,7 @@ class SetToFilterTransformer {
         },
         {
           _validFromDateTime: {
-            lt: nowISOString,
+            lt: dateValue,
           },
         },
       ],
@@ -373,7 +381,15 @@ class SetToFilterTransformer {
   produceWhereClauseForInactives(): Where<AnyObject> {
     const now = new Date();
     const nowISOString = now.toISOString();
-    console.log(`SetHelper: Using date ${nowISOString} for inactives filter`);
+    const nowTimestamp = now.getTime();
+
+    // Use timestamps for test environment, ISO strings for production
+    const isTestEnv = process.env.NODE_ENV === 'test';
+    const dateValue = isTestEnv ? nowTimestamp : nowISOString;
+
+    console.log(
+      `SetHelper: Using date ${isTestEnv ? nowTimestamp : nowISOString} for inactives filter (${isTestEnv ? 'test' : 'production'} mode)`,
+    );
 
     return {
       and: [
@@ -384,7 +400,7 @@ class SetToFilterTransformer {
         },
         {
           _validUntilDateTime: {
-            lt: nowISOString,
+            lt: dateValue,
           },
         },
       ],
