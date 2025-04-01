@@ -1218,86 +1218,16 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
 
     // Handle $and and $or at the top level
     if ('and' in where) {
-      // Get all conditions from AND
-      const allConditions = where.and.map(
-        (condition: Where<ListToEntityRelation>) => {
-          const result = this.buildMongoQuery(condition);
-          this.loggingService.debug(
-            `AND condition result: ${JSON.stringify(result, null, 2)}`,
-            {},
-            this.request,
-          );
+      // Directly map LoopBack's "and" to MongoDB's "$and" - preserving structure
+      query.$and = where.and.map((condition: Where<ListToEntityRelation>) => {
+        const result = this.buildMongoQuery(condition);
+        this.loggingService.debug(
+          `AND condition result: ${JSON.stringify(result, null, 2)}`,
+          {},
+          this.request,
+        );
 
-          return result;
-        },
-      );
-
-      // First check if we're combining operators for the same field
-      const groupedByField: Record<string, Record<string, unknown>> = {};
-
-      // Group conditions by field name
-      allConditions.forEach((condition: Record<string, unknown>) => {
-        Object.entries(condition).forEach(([field, value]) => {
-          // Log any date field values and their transformations
-          if (this.isDateField(field)) {
-            this.loggingService.debug(
-              `Date field ${field} found with value: ${JSON.stringify(value)}`,
-              {},
-              this.request,
-            );
-          }
-
-          // Handle $and/$or operators specially
-          if (field === '$and' || field === '$or') {
-            if (!query[field]) {
-              query[field] = [];
-            }
-
-            // Ensure items are properly spread (not nested arrays)
-            if (Array.isArray(value)) {
-              // Add each item individually to avoid nested arrays
-              value.forEach((item) => {
-                (query[field] as any[]).push(item);
-              });
-            } else {
-              (query[field] as any[]).push(value);
-            }
-
-            return;
-          }
-
-          // Initialize field entry if it doesn't exist
-          if (!groupedByField[field]) {
-            groupedByField[field] = {};
-          }
-
-          // If value is an object with MongoDB operators, merge them
-          if (
-            typeof value === 'object' &&
-            value !== null &&
-            !Array.isArray(value)
-          ) {
-            Object.assign(
-              groupedByField[field],
-              value as Record<string, unknown>,
-            );
-          } else {
-            // Simple equality condition
-            groupedByField[field] = value as unknown as Record<string, unknown>;
-          }
-        });
-      });
-
-      // Add all grouped conditions to the query
-      Object.entries(groupedByField).forEach(([field, operators]) => {
-        query[field] = operators;
-        if (this.isDateField(field)) {
-          this.loggingService.debug(
-            `Final grouped date field ${field}: ${JSON.stringify(operators)}`,
-            {},
-            this.request,
-          );
-        }
+        return result;
       });
 
       return query;
@@ -1310,34 +1240,16 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
         this.request,
       );
 
-      // Process each condition in the or array
-      const orConditions = where.or.map(
-        (condition: Where<ListToEntityRelation>) => {
-          const result = this.buildMongoQuery(condition);
-          this.loggingService.debug(
-            `OR sub-condition result: ${JSON.stringify(result, null, 2)}`,
-            {},
-            this.request,
-          );
+      // Directly map LoopBack's "or" to MongoDB's "$or" - preserving structure
+      query.$or = where.or.map((condition: Where<ListToEntityRelation>) => {
+        const result = this.buildMongoQuery(condition);
+        this.loggingService.debug(
+          `OR sub-condition result: ${JSON.stringify(result, null, 2)}`,
+          {},
+          this.request,
+        );
 
-          return result;
-        },
-      );
-
-      // Flatten the array of conditions to ensure they're proper objects
-      query.$or = [] as Record<string, unknown>[];
-
-      orConditions.forEach((condition: Record<string, unknown>) => {
-        // If condition has its own $or, merge those conditions instead of nesting
-        if ('$or' in condition && Array.isArray(condition.$or)) {
-          // Add each condition from nested $or to our top level $or
-          condition.$or.forEach((nestedCondition: Record<string, unknown>) => {
-            (query.$or as Record<string, unknown>[]).push(nestedCondition);
-          });
-        } else {
-          // Regular condition - add directly
-          (query.$or as Record<string, unknown>[]).push(condition);
-        }
+        return result;
       });
 
       this.loggingService.debug(

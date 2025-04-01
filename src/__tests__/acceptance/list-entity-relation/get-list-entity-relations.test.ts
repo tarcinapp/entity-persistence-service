@@ -2195,11 +2195,11 @@ describe('GET /list-entity-relations', () => {
       _ownerUsers: ['user-123'],
     });
 
-    // 4. Private list owned by group-456 (should be accessible to members of group-456)
+    // 4. Protected list owned by group-456 (should be accessible to members of group-456)
     const groupOwnedListId = await createTestList(client, {
       _name: 'Group Owned List',
       _kind: 'reading-list',
-      _visibility: 'private',
+      _visibility: 'protected',
       _validFromDateTime: pastDate.toISOString(),
       _validUntilDateTime: futureDate.toISOString(),
       _ownerGroups: ['group-456'],
@@ -2219,7 +2219,7 @@ describe('GET /list-entity-relations', () => {
     const groupViewableListId = await createTestList(client, {
       _name: 'Group Viewable List',
       _kind: 'reading-list',
-      _visibility: 'private',
+      _visibility: 'protected',
       _validFromDateTime: pastDate.toISOString(),
       _validUntilDateTime: futureDate.toISOString(),
       _viewerGroups: ['group-456'],
