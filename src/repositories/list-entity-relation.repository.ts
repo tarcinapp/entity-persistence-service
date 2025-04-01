@@ -188,6 +188,29 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
         {},
         this.request,
       );
+
+      // Log date values if set filter for 'actives' is used
+      if (
+        filter.where &&
+        typeof filter.where === 'object' &&
+        '$or' in filter.where &&
+        Array.isArray((filter.where as Record<string, unknown>)['$or'])
+      ) {
+        this.loggingService.debug(
+          `Set filter with $or detected, checking for active date conditions`,
+          {},
+          this.request,
+        );
+
+        // Log current date for comparison
+        const now = new Date();
+        this.loggingService.debug(
+          `Current date for comparison: ${now.toISOString()} (${now.getTime()})`,
+          {},
+          this.request,
+        );
+      }
+
       const mongoQuery = this.buildMongoQuery(filter.where);
       this.loggingService.debug(
         `MongoDB Query: ${JSON.stringify(mongoQuery, null, 2)}`,
@@ -1185,20 +1208,142 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
   private buildMongoQuery(
     where: Where<ListToEntityRelation>,
   ): Record<string, unknown> {
+    this.loggingService.debug(
+      `Building MongoDB query from: ${JSON.stringify(where, null, 2)}`,
+      {},
+      this.request,
+    );
+
     const query: Record<string, unknown> = {};
 
     // Handle $and and $or at the top level
     if ('and' in where) {
-      query.$and = where.and.map((condition: Where<ListToEntityRelation>) =>
-        this.buildMongoQuery(condition),
+      // Get all conditions from AND
+      const allConditions = where.and.map(
+        (condition: Where<ListToEntityRelation>) => {
+          const result = this.buildMongoQuery(condition);
+          this.loggingService.debug(
+            `AND condition result: ${JSON.stringify(result, null, 2)}`,
+            {},
+            this.request,
+          );
+
+          return result;
+        },
       );
+
+      // First check if we're combining operators for the same field
+      const groupedByField: Record<string, Record<string, unknown>> = {};
+
+      // Group conditions by field name
+      allConditions.forEach((condition: Record<string, unknown>) => {
+        Object.entries(condition).forEach(([field, value]) => {
+          // Log any date field values and their transformations
+          if (this.isDateField(field)) {
+            this.loggingService.debug(
+              `Date field ${field} found with value: ${JSON.stringify(value)}`,
+              {},
+              this.request,
+            );
+          }
+
+          // Handle $and/$or operators specially
+          if (field === '$and' || field === '$or') {
+            if (!query[field]) {
+              query[field] = [];
+            }
+
+            // Ensure items are properly spread (not nested arrays)
+            if (Array.isArray(value)) {
+              // Add each item individually to avoid nested arrays
+              value.forEach((item) => {
+                (query[field] as any[]).push(item);
+              });
+            } else {
+              (query[field] as any[]).push(value);
+            }
+
+            return;
+          }
+
+          // Initialize field entry if it doesn't exist
+          if (!groupedByField[field]) {
+            groupedByField[field] = {};
+          }
+
+          // If value is an object with MongoDB operators, merge them
+          if (
+            typeof value === 'object' &&
+            value !== null &&
+            !Array.isArray(value)
+          ) {
+            Object.assign(
+              groupedByField[field],
+              value as Record<string, unknown>,
+            );
+          } else {
+            // Simple equality condition
+            groupedByField[field] = value as unknown as Record<string, unknown>;
+          }
+        });
+      });
+
+      // Add all grouped conditions to the query
+      Object.entries(groupedByField).forEach(([field, operators]) => {
+        query[field] = operators;
+        if (this.isDateField(field)) {
+          this.loggingService.debug(
+            `Final grouped date field ${field}: ${JSON.stringify(operators)}`,
+            {},
+            this.request,
+          );
+        }
+      });
 
       return query;
     }
 
     if ('or' in where) {
-      query.$or = where.or.map((condition: Where<ListToEntityRelation>) =>
-        this.buildMongoQuery(condition),
+      this.loggingService.debug(
+        `Processing OR condition: ${JSON.stringify(where.or, null, 2)}`,
+        {},
+        this.request,
+      );
+
+      // Process each condition in the or array
+      const orConditions = where.or.map(
+        (condition: Where<ListToEntityRelation>) => {
+          const result = this.buildMongoQuery(condition);
+          this.loggingService.debug(
+            `OR sub-condition result: ${JSON.stringify(result, null, 2)}`,
+            {},
+            this.request,
+          );
+
+          return result;
+        },
+      );
+
+      // Flatten the array of conditions to ensure they're proper objects
+      query.$or = [] as Record<string, unknown>[];
+
+      orConditions.forEach((condition: Record<string, unknown>) => {
+        // If condition has its own $or, merge those conditions instead of nesting
+        if ('$or' in condition && Array.isArray(condition.$or)) {
+          // Add each condition from nested $or to our top level $or
+          condition.$or.forEach((nestedCondition: Record<string, unknown>) => {
+            (query.$or as Record<string, unknown>[]).push(nestedCondition);
+          });
+        } else {
+          // Regular condition - add directly
+          (query.$or as Record<string, unknown>[]).push(condition);
+        }
+      });
+
+      this.loggingService.debug(
+        `Final processed OR condition: ${JSON.stringify(query.$or, null, 2)}`,
+        {},
+        this.request,
       );
 
       return query;
@@ -1214,7 +1359,27 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
         ) {
           // Handle nested objects by flattening with dot notation
           const nestedConditions = this.flattenObject(value, key);
-          Object.assign(query, nestedConditions);
+
+          // Merge any overlapping field conditions rather than overwriting
+          for (const [nestedKey, nestedValue] of Object.entries(
+            nestedConditions,
+          )) {
+            if (
+              query[nestedKey] &&
+              typeof query[nestedKey] === 'object' &&
+              typeof nestedValue === 'object' &&
+              !Array.isArray(query[nestedKey]) &&
+              !Array.isArray(nestedValue)
+            ) {
+              // Merge MongoDB operators for the same field
+              Object.assign(
+                query[nestedKey] as Record<string, unknown>,
+                nestedValue as Record<string, unknown>,
+              );
+            } else {
+              query[nestedKey] = nestedValue;
+            }
+          }
         } else {
           // Handle comparison operators
           const operator = Object.keys(value)[0];
@@ -1224,8 +1389,13 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
           const processedValue =
             this.isDateField(key) &&
             operatorValue !== null &&
+            operatorValue !== undefined &&
             this.isValidDateString(operatorValue)
-              ? new Date(operatorValue)
+              ? new Date(
+                  typeof operatorValue === 'string'
+                    ? operatorValue
+                    : String(operatorValue),
+                )
               : operatorValue;
 
           switch (operator) {
@@ -1265,24 +1435,51 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
               const betweenCondition: Record<string, unknown> = {};
 
               // Only add lower bound if it exists
-              if (operatorValue[0] !== null && operatorValue[0] !== undefined) {
+              if (
+                processedValue[0] !== null &&
+                processedValue[0] !== undefined
+              ) {
                 betweenCondition.$gte =
                   this.isDateField(key) &&
-                  this.isValidDateString(operatorValue[0] as string)
-                    ? new Date(operatorValue[0] as string)
-                    : operatorValue[0];
+                  this.isValidDateString(processedValue[0])
+                    ? new Date(
+                        typeof processedValue[0] === 'string'
+                          ? processedValue[0]
+                          : String(processedValue[0]),
+                      )
+                    : processedValue[0];
               }
 
               // Only add upper bound if it exists
-              if (operatorValue[1] !== null && operatorValue[1] !== undefined) {
+              if (
+                processedValue[1] !== null &&
+                processedValue[1] !== undefined
+              ) {
                 betweenCondition.$lte =
                   this.isDateField(key) &&
-                  this.isValidDateString(operatorValue[1] as string)
-                    ? new Date(operatorValue[1] as string)
-                    : operatorValue[1];
+                  this.isValidDateString(processedValue[1])
+                    ? new Date(
+                        typeof processedValue[1] === 'string'
+                          ? processedValue[1]
+                          : String(processedValue[1]),
+                      )
+                    : processedValue[1];
               }
 
-              query[key] = betweenCondition;
+              // If there's already a condition for this field, merge with it
+              if (
+                query[key] &&
+                typeof query[key] === 'object' &&
+                !Array.isArray(query[key])
+              ) {
+                Object.assign(
+                  query[key] as Record<string, unknown>,
+                  betweenCondition,
+                );
+              } else {
+                query[key] = betweenCondition;
+              }
+
               break;
             }
             case 'exists':
@@ -1299,7 +1496,7 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
               break;
             case 'and':
               query[key] = {
-                $and: operatorValue.map(
+                $and: processedValue.map(
                   (condition: Where<ListToEntityRelation>) =>
                     this.buildMongoQuery(condition),
                 ),
@@ -1307,7 +1504,7 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
               break;
             case 'or':
               query[key] = {
-                $or: operatorValue.map(
+                $or: processedValue.map(
                   (condition: Where<ListToEntityRelation>) =>
                     this.buildMongoQuery(condition),
                 ),
@@ -1316,7 +1513,21 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
             default: {
               // If it's a nested operator structure, treat it as a nested condition
               const nestedQuery = this.buildMongoQuery(value);
-              query[key] = nestedQuery;
+
+              // If there's already a condition for this field, merge with it
+              if (
+                query[key] &&
+                typeof query[key] === 'object' &&
+                !Array.isArray(query[key])
+              ) {
+                Object.assign(
+                  query[key] as Record<string, unknown>,
+                  nestedQuery,
+                );
+              } else {
+                query[key] = nestedQuery;
+              }
+
               break;
             }
           }
@@ -1326,8 +1537,9 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
         query[key] =
           this.isDateField(key) &&
           value !== null &&
-          this.isValidDateString(value as string)
-            ? new Date(value as string)
+          value !== undefined &&
+          this.isValidDateString(value)
+            ? new Date(typeof value === 'string' ? value : String(value))
             : value;
       }
     }
@@ -1397,7 +1609,23 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
       ) {
         // Handle operator at the nested level
         const mongoOperator = this.loopbackToMongoOperator(key);
-        result[prefix] = { [mongoOperator]: value };
+
+        // Process value for field (including date handling)
+        const processedValue =
+          this.isDateField(prefix) &&
+          value !== null &&
+          value !== undefined &&
+          this.isValidDateString(value)
+            ? new Date(typeof value === 'string' ? value : String(value))
+            : value;
+
+        // If this field already has conditions, add to them instead of overwriting
+        if (result[prefix] && typeof result[prefix] === 'object') {
+          (result[prefix] as Record<string, unknown>)[mongoOperator] =
+            processedValue;
+        } else {
+          result[prefix] = { [mongoOperator]: processedValue };
+        }
       } else {
         // Handle leaf values
         if (this.isOperator(key)) {
@@ -1408,47 +1636,88 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
           const processedValue =
             this.isDateField(prefix) &&
             value !== null &&
-            this.isValidDateString(value as string)
-              ? new Date(value as string)
+            value !== undefined &&
+            this.isValidDateString(value)
+              ? new Date(typeof value === 'string' ? value : String(value))
               : value;
 
-          // Handle special case for array operators
-          if (key === 'inq') {
-            const inqValue = Array.isArray(processedValue)
-              ? processedValue
-              : [processedValue];
-            result[prefix] = { $in: inqValue };
-          } else if (key === 'nin') {
-            const ninValue = Array.isArray(processedValue)
-              ? processedValue
-              : [processedValue];
-            result[prefix] = { $nin: ninValue };
-          } else if (key === 'between') {
-            const betweenCondition: Record<string, unknown> = {};
-            const operatorValue = value as [unknown, unknown];
+          // If this field already has conditions, add to them instead of overwriting
+          if (result[prefix] && typeof result[prefix] === 'object') {
+            // Special cases for array operators
+            if (key === 'inq') {
+              const inqValue = Array.isArray(processedValue)
+                ? processedValue
+                : [processedValue];
+              (result[prefix] as Record<string, unknown>).$in = inqValue;
+            } else if (key === 'nin') {
+              const ninValue = Array.isArray(processedValue)
+                ? processedValue
+                : [processedValue];
+              (result[prefix] as Record<string, unknown>).$nin = ninValue;
+            } else if (key === 'between') {
+              const operatorValue = value as [unknown, unknown];
 
-            if (operatorValue[0] !== null && operatorValue[0] !== undefined) {
-              betweenCondition.$gte =
-                this.isDateField(prefix) &&
-                this.isValidDateString(operatorValue[0] as string)
-                  ? new Date(operatorValue[0] as string)
-                  : operatorValue[0];
+              if (operatorValue[0] !== null && operatorValue[0] !== undefined) {
+                (result[prefix] as Record<string, unknown>).$gte =
+                  this.isDateField(prefix) &&
+                  this.isValidDateString(operatorValue[0] as string)
+                    ? new Date(operatorValue[0] as string)
+                    : operatorValue[0];
+              }
+
+              if (operatorValue[1] !== null && operatorValue[1] !== undefined) {
+                (result[prefix] as Record<string, unknown>).$lte =
+                  this.isDateField(prefix) &&
+                  this.isValidDateString(operatorValue[1] as string)
+                    ? new Date(operatorValue[1] as string)
+                    : operatorValue[1];
+              }
+            } else if (key === 'exists') {
+              (result[prefix] as Record<string, unknown>).$exists =
+                Boolean(value);
+            } else {
+              (result[prefix] as Record<string, unknown>)[mongoOperator] =
+                processedValue;
             }
-
-            if (operatorValue[1] !== null && operatorValue[1] !== undefined) {
-              betweenCondition.$lte =
-                this.isDateField(prefix) &&
-                this.isValidDateString(operatorValue[1] as string)
-                  ? new Date(operatorValue[1] as string)
-                  : operatorValue[1];
-            }
-
-            result[prefix] = betweenCondition;
-          } else if (key === 'exists') {
-            // Ensure exists operator receives a boolean value
-            result[prefix] = { $exists: Boolean(value) };
           } else {
-            result[prefix] = { [mongoOperator]: processedValue };
+            // Handle special case for array operators
+            if (key === 'inq') {
+              const inqValue = Array.isArray(processedValue)
+                ? processedValue
+                : [processedValue];
+              result[prefix] = { $in: inqValue };
+            } else if (key === 'nin') {
+              const ninValue = Array.isArray(processedValue)
+                ? processedValue
+                : [processedValue];
+              result[prefix] = { $nin: ninValue };
+            } else if (key === 'between') {
+              const betweenCondition: Record<string, unknown> = {};
+              const operatorValue = value as [unknown, unknown];
+
+              if (operatorValue[0] !== null && operatorValue[0] !== undefined) {
+                betweenCondition.$gte =
+                  this.isDateField(prefix) &&
+                  this.isValidDateString(operatorValue[0] as string)
+                    ? new Date(operatorValue[0] as string)
+                    : operatorValue[0];
+              }
+
+              if (operatorValue[1] !== null && operatorValue[1] !== undefined) {
+                betweenCondition.$lte =
+                  this.isDateField(prefix) &&
+                  this.isValidDateString(operatorValue[1] as string)
+                    ? new Date(operatorValue[1] as string)
+                    : operatorValue[1];
+              }
+
+              result[prefix] = betweenCondition;
+            } else if (key === 'exists') {
+              // Ensure exists operator receives a boolean value
+              result[prefix] = { $exists: Boolean(value) };
+            } else {
+              result[prefix] = { [mongoOperator]: processedValue };
+            }
           }
         } else {
           result[newKey] = value;

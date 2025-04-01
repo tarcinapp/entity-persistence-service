@@ -338,6 +338,10 @@ class SetToFilterTransformer {
   }
 
   produceWhereClauseForActives(): Where<AnyObject> {
+    const now = new Date();
+    const nowISOString = now.toISOString();
+    console.log(`SetHelper: Using date ${nowISOString} for actives filter`);
+
     return {
       and: [
         {
@@ -347,7 +351,7 @@ class SetToFilterTransformer {
             },
             {
               _validUntilDateTime: {
-                gt: Date.now(),
+                gt: nowISOString,
               },
             },
           ],
@@ -359,7 +363,7 @@ class SetToFilterTransformer {
         },
         {
           _validFromDateTime: {
-            lt: Date.now(),
+            lt: nowISOString,
           },
         },
       ],
@@ -367,6 +371,10 @@ class SetToFilterTransformer {
   }
 
   produceWhereClauseForInactives(): Where<AnyObject> {
+    const now = new Date();
+    const nowISOString = now.toISOString();
+    console.log(`SetHelper: Using date ${nowISOString} for inactives filter`);
+
     return {
       and: [
         {
@@ -376,7 +384,7 @@ class SetToFilterTransformer {
         },
         {
           _validUntilDateTime: {
-            lt: Date.now(),
+            lt: nowISOString,
           },
         },
       ],

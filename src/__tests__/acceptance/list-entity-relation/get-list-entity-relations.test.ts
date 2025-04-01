@@ -823,6 +823,15 @@ describe('GET /list-entity-relations', () => {
     const futureDate = new Date(now);
     futureDate.setDate(futureDate.getDate() + 1);
 
+    console.log('Test dates:', {
+      now: now.toISOString(),
+      nowTimestamp: now.getTime(),
+      pastDate: pastDate.toISOString(),
+      pastTimestamp: pastDate.getTime(),
+      futureDate: futureDate.toISOString(),
+      futureTimestamp: futureDate.getTime(),
+    });
+
     // Create test entity and list
     const bookId = await createTestEntity(client, {
       _name: 'Test Book',
@@ -835,7 +844,7 @@ describe('GET /list-entity-relations', () => {
     });
 
     // Create active relation
-    await createTestRelation({
+    const activeRelation = await createTestRelation({
       _listId: listId,
       _entityId: bookId,
       _kind: 'reading-list-book',
@@ -844,7 +853,7 @@ describe('GET /list-entity-relations', () => {
     });
 
     // Create inactive relation
-    await createTestRelation({
+    const inactiveRelation = await createTestRelation({
       _listId: listId,
       _entityId: bookId,
       _kind: 'reading-list-book',
@@ -852,11 +861,18 @@ describe('GET /list-entity-relations', () => {
       _validUntilDateTime: pastDate.toISOString(),
     });
 
+    console.log('Created relations:', {
+      activeRelation,
+      inactiveRelation,
+    });
+
     // Get only active relations using set filter
     const response = await client
       .get('/list-entity-relations')
       .query({ set: { actives: true } })
       .expect(200);
+
+    console.log('Response:', response.body);
 
     expect(response.body).to.be.Array().and.have.length(1);
     expect(response.body[0]._validUntilDateTime).to.equal(
