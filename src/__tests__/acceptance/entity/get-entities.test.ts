@@ -895,8 +895,17 @@ describe('GET /entities', () => {
     // Create a date for the first day of current month
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    // Create a date for the second day of current month
-    const secondDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 2);
+    // Create a date for the current day (today) rather than hardcoding the second day
+    // This ensures the date is never in the future
+    const currentDay = new Date(now);
+    // Set the time to midnight to ensure it's earlier in the day
+    currentDay.setHours(0, 0, 0, 0);
+
+    // Create a date that's definitely in the past but still in this month
+    // If it's the first day of the month, use earlier hours on the same day
+    const definitelyPastDate = new Date(now);
+    // Set time to 3 hours ago to ensure it's in the past
+    definitelyPastDate.setHours(now.getHours() - 3);
 
     // Create a date in previous month
     const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 15);
@@ -919,8 +928,8 @@ describe('GET /entities', () => {
       _name: 'Recent Inactive Science Book',
       _kind: 'book',
       description: 'science',
-      _creationDateTime: secondDayOfMonth.toISOString(), // Definitely within current month
-      _validFromDateTime: secondDayOfMonth.toISOString(),
+      _creationDateTime: definitelyPastDate.toISOString(), // Several hours in the past
+      _validFromDateTime: definitelyPastDate.toISOString(),
       _validUntilDateTime: oneHourAgo.toISOString(), // Definitely inactive
     });
 
