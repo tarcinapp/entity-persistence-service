@@ -219,68 +219,26 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
         {},
         this.request,
       );
+
+      // Convert list filter to MongoDB query
       const listMongoQuery = this.buildMongoQuery(listFilter.where);
+
+      // Prefix all fields with "list." since we're filtering on the joined list documents
+      const prefixedListQuery = this.prefixQueryFields(listMongoQuery, 'list');
+
       this.loggingService.debug(
-        `List MongoDB Query: ${JSON.stringify(listMongoQuery, null, 2)}`,
+        `Prefixed list query: ${JSON.stringify(prefixedListQuery, null, 2)}`,
         {},
         this.request,
       );
 
-      // Handle $and and $or conditions properly
-      const matchConditions: Record<string, any> = {
-        'list.0': { $exists: true },
-      };
-
-      if (listMongoQuery.$or && Array.isArray(listMongoQuery.$or)) {
-        // Handle OR conditions
-        matchConditions.$or = listMongoQuery.$or.map(
-          (condition: Record<string, any>) => {
-            if (condition.$and && Array.isArray(condition.$and)) {
-              // If there's an AND condition inside OR, apply each condition to list.0
-              return {
-                $and: condition.$and.map(
-                  (andCondition: Record<string, any>) => {
-                    const prefixedCondition: Record<string, any> = {};
-                    Object.entries(andCondition).forEach(([key, value]) => {
-                      prefixedCondition[`list.0.${key}`] = value;
-                    });
-
-                    return prefixedCondition;
-                  },
-                ),
-              };
-            } else {
-              // If it's a simple condition, apply it directly to list.0
-              const prefixedCondition: Record<string, any> = {};
-              Object.entries(condition).forEach(([key, value]) => {
-                prefixedCondition[`list.0.${key}`] = value;
-              });
-
-              return prefixedCondition;
-            }
-          },
-        );
-      } else if (listMongoQuery.$and && Array.isArray(listMongoQuery.$and)) {
-        // Handle AND conditions
-        matchConditions.$and = listMongoQuery.$and.map(
-          (condition: Record<string, any>) => {
-            const prefixedCondition: Record<string, any> = {};
-            Object.entries(condition).forEach(([key, value]) => {
-              prefixedCondition[`list.0.${key}`] = value;
-            });
-
-            return prefixedCondition;
-          },
-        );
-      } else {
-        // Handle simple conditions
-        Object.entries(listMongoQuery).forEach(([key, value]) => {
-          matchConditions[`list.0.${key}`] = value;
-        });
-      }
-
+      // Add a match stage to filter based on list properties
       pipeline.push({
-        $match: matchConditions,
+        $match: {
+          // Ensure at least one list document exists in the list array
+          'list.0': { $exists: true },
+          ...prefixedListQuery,
+        },
       });
     }
 
@@ -310,23 +268,28 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
         {},
         this.request,
       );
+
+      // Convert entity filter to MongoDB query
       const entityMongoQuery = this.buildMongoQuery(entityFilter.where);
+
+      // Prefix all fields with "entity." since we're filtering on the joined entity documents
+      const prefixedEntityQuery = this.prefixQueryFields(
+        entityMongoQuery,
+        'entity',
+      );
+
       this.loggingService.debug(
-        `Entity MongoDB Query: ${JSON.stringify(entityMongoQuery, null, 2)}`,
+        `Prefixed entity query: ${JSON.stringify(prefixedEntityQuery, null, 2)}`,
         {},
         this.request,
       );
+
+      // Add a match stage to filter based on entity properties
       pipeline.push({
         $match: {
-          'entity.0': { $exists: true }, // Ensure entity exists
-          ...Object.entries(entityMongoQuery).reduce(
-            (acc, [key, value]) => {
-              acc[`entity.0.${key}`] = value;
-
-              return acc;
-            },
-            {} as Record<string, unknown>,
-          ),
+          // Ensure at least one entity document exists in the entity array
+          'entity.0': { $exists: true },
+          ...prefixedEntityQuery,
         },
       });
     }
@@ -1244,86 +1207,128 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     // Handle nested conditions
     for (const [key, value] of Object.entries(where)) {
       if (typeof value === 'object' && value !== null) {
-        // Handle comparison operators
-        const operator = Object.keys(value)[0];
-        const operatorValue = value[operator];
+        // Check if this is a plain object that should be flattened
+        if (
+          this.isPlainObject(value) &&
+          !this.isOperator(Object.keys(value)[0])
+        ) {
+          // Handle nested objects by flattening with dot notation
+          const nestedConditions = this.flattenObject(value, key);
+          Object.assign(query, nestedConditions);
+        } else {
+          // Handle comparison operators
+          const operator = Object.keys(value)[0];
+          const operatorValue = value[operator];
 
-        // Convert date strings to Date objects for date fields
-        const processedValue =
-          this.isDateField(key) && operatorValue !== null
-            ? new Date(operatorValue)
-            : operatorValue;
+          // Convert date strings to Date objects for date fields
+          const processedValue =
+            this.isDateField(key) &&
+            operatorValue !== null &&
+            this.isValidDateString(operatorValue)
+              ? new Date(operatorValue)
+              : operatorValue;
 
-        switch (operator) {
-          case 'eq':
-            query[key] = processedValue;
-            break;
-          case 'neq':
-            query[key] = { $ne: processedValue };
-            break;
-          case 'gt':
-            query[key] = { $gt: processedValue };
-            break;
-          case 'gte':
-            query[key] = { $gte: processedValue };
-            break;
-          case 'lt':
-            query[key] = { $lt: processedValue };
-            break;
-          case 'lte':
-            query[key] = { $lte: processedValue };
-            break;
-          case 'inq':
-            query[key] = { $in: processedValue };
-            break;
-          case 'nin':
-            query[key] = { $nin: processedValue };
-            break;
-          case 'between':
-            query[key] = {
-              $gte: this.isDateField(key)
-                ? new Date(operatorValue[0])
-                : operatorValue[0],
-              $lte: this.isDateField(key)
-                ? new Date(operatorValue[1])
-                : operatorValue[1],
-            };
-            break;
-          case 'exists':
-            query[key] = { $exists: processedValue };
-            break;
-          case 'like':
-            query[key] = { $regex: processedValue.replace(/%/g, '.*') };
-            break;
-          case 'ilike':
-            query[key] = {
-              $regex: processedValue.replace(/%/g, '.*'),
-              $options: 'i',
-            };
-            break;
-          case 'and':
-            query[key] = {
-              $and: operatorValue.map(
-                (condition: Where<ListToEntityRelation>) =>
-                  this.buildMongoQuery(condition),
-              ),
-            };
-            break;
-          case 'or':
-            query[key] = {
-              $or: operatorValue.map((condition: Where<ListToEntityRelation>) =>
-                this.buildMongoQuery(condition),
-              ),
-            };
-            break;
-          default:
-            // If it's a nested object but not a recognized operator, treat it as a nested condition
-            query[key] = this.buildMongoQuery(value);
+          switch (operator) {
+            case 'eq':
+              query[key] = processedValue;
+              break;
+            case 'neq':
+              query[key] = { $ne: processedValue };
+              break;
+            case 'gt':
+              query[key] = { $gt: processedValue };
+              break;
+            case 'gte':
+              query[key] = { $gte: processedValue };
+              break;
+            case 'lt':
+              query[key] = { $lt: processedValue };
+              break;
+            case 'lte':
+              query[key] = { $lte: processedValue };
+              break;
+            case 'inq': {
+              const inqValue = Array.isArray(processedValue)
+                ? processedValue
+                : [processedValue];
+              query[key] = { $in: inqValue };
+              break;
+            }
+            case 'nin': {
+              const ninValue = Array.isArray(processedValue)
+                ? processedValue
+                : [processedValue];
+              query[key] = { $nin: ninValue };
+              break;
+            }
+            case 'between': {
+              const betweenCondition: Record<string, unknown> = {};
+
+              // Only add lower bound if it exists
+              if (operatorValue[0] !== null && operatorValue[0] !== undefined) {
+                betweenCondition.$gte =
+                  this.isDateField(key) &&
+                  this.isValidDateString(operatorValue[0] as string)
+                    ? new Date(operatorValue[0] as string)
+                    : operatorValue[0];
+              }
+
+              // Only add upper bound if it exists
+              if (operatorValue[1] !== null && operatorValue[1] !== undefined) {
+                betweenCondition.$lte =
+                  this.isDateField(key) &&
+                  this.isValidDateString(operatorValue[1] as string)
+                    ? new Date(operatorValue[1] as string)
+                    : operatorValue[1];
+              }
+
+              query[key] = betweenCondition;
+              break;
+            }
+            case 'exists':
+              query[key] = { $exists: Boolean(processedValue) };
+              break;
+            case 'like':
+              query[key] = { $regex: processedValue.replace(/%/g, '.*') };
+              break;
+            case 'ilike':
+              query[key] = {
+                $regex: processedValue.replace(/%/g, '.*'),
+                $options: 'i',
+              };
+              break;
+            case 'and':
+              query[key] = {
+                $and: operatorValue.map(
+                  (condition: Where<ListToEntityRelation>) =>
+                    this.buildMongoQuery(condition),
+                ),
+              };
+              break;
+            case 'or':
+              query[key] = {
+                $or: operatorValue.map(
+                  (condition: Where<ListToEntityRelation>) =>
+                    this.buildMongoQuery(condition),
+                ),
+              };
+              break;
+            default: {
+              // If it's a nested operator structure, treat it as a nested condition
+              const nestedQuery = this.buildMongoQuery(value);
+              query[key] = nestedQuery;
+              break;
+            }
+          }
         }
       } else {
         // Handle direct value assignments
         query[key] =
-          this.isDateField(key) && value !== null ? new Date(value) : value;
+          this.isDateField(key) &&
+          value !== null &&
+          this.isValidDateString(value as string)
+            ? new Date(value as string)
+            : value;
       }
     }
 
@@ -1331,9 +1336,235 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
   }
 
   /**
+   * Check if the given key is a LoopBack operator
+   */
+  private isOperator(key: string): boolean {
+    const operators = [
+      'eq',
+      'neq',
+      'gt',
+      'gte',
+      'lt',
+      'lte',
+      'inq',
+      'nin',
+      'between',
+      'exists',
+      'like',
+      'ilike',
+      'and',
+      'or',
+    ];
+
+    return operators.includes(key);
+  }
+
+  /**
+   * Check if the value is a plain object (not array, null, etc.)
+   */
+  private isPlainObject(value: unknown): boolean {
+    return (
+      typeof value === 'object' &&
+      value !== null &&
+      !Array.isArray(value) &&
+      Object.getPrototypeOf(value) === Object.prototype
+    );
+  }
+
+  /**
+   * Flatten a nested object with dot notation
+   */
+  private flattenObject(
+    obj: Record<string, unknown>,
+    prefix = '',
+  ): Record<string, unknown> {
+    const result: Record<string, unknown> = {};
+
+    for (const [key, value] of Object.entries(obj)) {
+      const newKey = prefix ? `${prefix}.${key}` : key;
+
+      if (this.isPlainObject(value) && !this.isOperator(key)) {
+        // Recursively flatten nested objects
+        const nested = this.flattenObject(
+          value as Record<string, unknown>,
+          newKey,
+        );
+        Object.assign(result, nested);
+      } else if (
+        typeof value === 'object' &&
+        value !== null &&
+        this.isOperator(key)
+      ) {
+        // Handle operator at the nested level
+        const mongoOperator = this.loopbackToMongoOperator(key);
+        result[prefix] = { [mongoOperator]: value };
+      } else {
+        // Handle leaf values
+        if (this.isOperator(key)) {
+          // Convert operator to MongoDB format
+          const mongoOperator = this.loopbackToMongoOperator(key);
+
+          // Process value if it's a date field
+          const processedValue =
+            this.isDateField(prefix) &&
+            value !== null &&
+            this.isValidDateString(value as string)
+              ? new Date(value as string)
+              : value;
+
+          // Handle special case for array operators
+          if (key === 'inq') {
+            const inqValue = Array.isArray(processedValue)
+              ? processedValue
+              : [processedValue];
+            result[prefix] = { $in: inqValue };
+          } else if (key === 'nin') {
+            const ninValue = Array.isArray(processedValue)
+              ? processedValue
+              : [processedValue];
+            result[prefix] = { $nin: ninValue };
+          } else if (key === 'between') {
+            const betweenCondition: Record<string, unknown> = {};
+            const operatorValue = value as [unknown, unknown];
+
+            if (operatorValue[0] !== null && operatorValue[0] !== undefined) {
+              betweenCondition.$gte =
+                this.isDateField(prefix) &&
+                this.isValidDateString(operatorValue[0] as string)
+                  ? new Date(operatorValue[0] as string)
+                  : operatorValue[0];
+            }
+
+            if (operatorValue[1] !== null && operatorValue[1] !== undefined) {
+              betweenCondition.$lte =
+                this.isDateField(prefix) &&
+                this.isValidDateString(operatorValue[1] as string)
+                  ? new Date(operatorValue[1] as string)
+                  : operatorValue[1];
+            }
+
+            result[prefix] = betweenCondition;
+          } else if (key === 'exists') {
+            // Ensure exists operator receives a boolean value
+            result[prefix] = { $exists: Boolean(value) };
+          } else {
+            result[prefix] = { [mongoOperator]: processedValue };
+          }
+        } else {
+          result[newKey] = value;
+        }
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Convert LoopBack operator to MongoDB operator
+   */
+  private loopbackToMongoOperator(operator: string): string {
+    const operatorMap: Record<string, string> = {
+      eq: '$eq',
+      neq: '$ne',
+      gt: '$gt',
+      gte: '$gte',
+      lt: '$lt',
+      lte: '$lte',
+      inq: '$in',
+      nin: '$nin',
+      like: '$regex',
+      ilike: '$regex',
+      exists: '$exists',
+    };
+
+    return operatorMap[operator] || operator;
+  }
+
+  /**
    * Check if a field is a date field
    */
   private isDateField(field: string): boolean {
-    return field === '_validFromDateTime' || field === '_validUntilDateTime';
+    return (
+      field === '_validFromDateTime' ||
+      field === '_validUntilDateTime' ||
+      field.endsWith('._validFromDateTime') ||
+      field.endsWith('._validUntilDateTime') ||
+      field.endsWith('._createdDateTime') ||
+      field.endsWith('._lastUpdatedDateTime')
+    );
+  }
+
+  /**
+   * Check if a string is a valid date that can be parsed
+   */
+  private isValidDateString(value: unknown): boolean {
+    if (typeof value !== 'string' && !(value instanceof Date)) {
+      return false;
+    }
+
+    if (value instanceof Date) {
+      return !isNaN(value.getTime());
+    }
+
+    // Try to create a date and check if it's valid
+    const date = new Date(value);
+
+    return !isNaN(date.getTime());
+  }
+
+  /**
+   * Helper method to prefix all fields in a MongoDB query with a given prefix
+   * Useful for filtering on joined collections in aggregation pipelines
+   */
+  private prefixQueryFields(
+    query: Record<string, unknown>,
+    prefix: string,
+  ): Record<string, unknown> {
+    const prefixedQuery: Record<string, unknown> = {};
+
+    for (const [key, value] of Object.entries(query)) {
+      // Handle MongoDB operators (keys starting with $)
+      if (key.startsWith('$')) {
+        if (Array.isArray(value)) {
+          // Handle $and, $or, $nor operators which contain arrays of conditions
+          prefixedQuery[key] = value.map((condition) =>
+            this.prefixQueryFields(
+              condition as Record<string, unknown>,
+              prefix,
+            ),
+          );
+        } else {
+          // Keep other operators unchanged
+          prefixedQuery[key] = value;
+        }
+      } else {
+        // Handle regular field conditions
+        const prefixedKey = `${prefix}.${key}`;
+
+        if (
+          typeof value === 'object' &&
+          value !== null &&
+          !Array.isArray(value)
+        ) {
+          // Check if this is an operator object ($eq, $gt, etc.)
+          const firstKey = Object.keys(value)[0];
+          if (firstKey?.startsWith('$')) {
+            // This is an operator object, keep it as is
+            prefixedQuery[prefixedKey] = value;
+          } else {
+            // This is a nested object, recurse
+            prefixedQuery[prefixedKey] = this.prefixQueryFields(
+              value as Record<string, unknown>,
+              '',
+            );
+          }
+        } else {
+          // Simple value assignment
+          prefixedQuery[prefixedKey] = value;
+        }
+      }
+    }
+
+    return prefixedQuery;
   }
 }
