@@ -13,6 +13,7 @@ import {
   LoggingBindings,
   getLoggingConfig,
 } from './config/logging.config';
+import { MongoPipelineHelper } from './extensions/utils/mongo-pipeline-helper';
 import { MySequence } from './sequence';
 import { LoggingService } from './services/logging.service';
 
@@ -46,6 +47,9 @@ export class EntityPersistenceApplication extends BootMixin(
 
     // Bind LoggingService
     this.service(LoggingService);
+
+    // Bind MongoPipelineHelper as a service
+    this.service(MongoPipelineHelper);
 
     this.projectRoot = __dirname;
     // Customize @loopback/boot Booter Conventions here

@@ -20,6 +20,10 @@ import {
   KindConfigurationReader,
 } from './extensions';
 import { LookupBindings, LookupHelper } from './extensions/utils/lookup-helper';
+import {
+  MongoPipelineHelper,
+  MongoPipelineHelperBindings,
+} from './extensions/utils/mongo-pipeline-helper';
 
 export * from './application';
 
@@ -64,6 +68,9 @@ export async function main(options: ApplicationConfig = {}) {
 
   // add lookup helper to context
   app.bind(LookupBindings.HELPER).toClass(LookupHelper);
+
+  // add mongo pipeline helper to context
+  app.bind(MongoPipelineHelperBindings.HELPER).toClass(MongoPipelineHelper);
 
   await app.boot();
   await app.start();
