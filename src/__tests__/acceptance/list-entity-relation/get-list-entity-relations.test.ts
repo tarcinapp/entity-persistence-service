@@ -1935,4 +1935,211 @@ describe('GET /list-entity-relations', () => {
       .sort();
     expect(listNames).to.eql(['Active List', 'Active List Null End']);
   });
+
+  it('filter: by list active and public status using listSet[and]', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      list_kinds: 'reading-list',
+      autoapprove_list_entity_relations: 'true',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 1);
+
+    // Create test entity
+    const bookId = await createTestEntity(client, {
+      _name: 'Test Book',
+      _kind: 'book',
+    });
+
+    // Create lists with different combinations of active status and visibility
+    const activePublicListId = await createTestList(client, {
+      _name: 'Active Public List',
+      _kind: 'reading-list',
+      _validFromDateTime: pastDate.toISOString(), // Past date
+      _validUntilDateTime: futureDate.toISOString(), // Future date
+      _visibility: 'public',
+    });
+
+    const activePrivateListId = await createTestList(client, {
+      _name: 'Active Private List',
+      _kind: 'reading-list',
+      _validFromDateTime: pastDate.toISOString(), // Past date
+      _validUntilDateTime: futureDate.toISOString(), // Future date
+      _visibility: 'private',
+    });
+
+    const inactivePublicListId = await createTestList(client, {
+      _name: 'Inactive Public List',
+      _kind: 'reading-list',
+      _validFromDateTime: pastDate.toISOString(), // Past date
+      _validUntilDateTime: pastDate.toISOString(), // Past date (expired)
+      _visibility: 'public',
+    });
+
+    const inactivePrivateListId = await createTestList(client, {
+      _name: 'Inactive Private List',
+      _kind: 'reading-list',
+      _validFromDateTime: pastDate.toISOString(), // Past date
+      _validUntilDateTime: pastDate.toISOString(), // Past date (expired)
+      _visibility: 'private',
+    });
+
+    // Create relations for all lists
+    await createTestRelation({
+      _listId: activePublicListId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+    });
+
+    await createTestRelation({
+      _listId: activePrivateListId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+    });
+
+    await createTestRelation({
+      _listId: inactivePublicListId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+    });
+
+    await createTestRelation({
+      _listId: inactivePrivateListId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+    });
+
+    // Filter for lists that are both active AND public
+    const filterStr =
+      'listSet[and][0][actives]=true&listSet[and][1][publics]=true';
+    const response = await client
+      .get('/list-entity-relations')
+      .query(filterStr)
+      .expect(200);
+
+    // Should return relations from lists that are both active and public
+    expect(response.body).to.be.Array().and.have.length(1);
+    expect(response.body[0]._fromMetadata._name).to.equal('Active Public List');
+    expect(response.body[0]._fromMetadata._visibility).to.equal('public');
+    expect(response.body[0]._fromMetadata._validFromDateTime).to.equal(
+      pastDate.toISOString(),
+    );
+    expect(response.body[0]._fromMetadata._validUntilDateTime).to.equal(
+      futureDate.toISOString(),
+    );
+  });
+
+  it('filter: combine listSet[actives], listSet[publics], and set[actives]', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      list_kinds: 'reading-list',
+      autoapprove_list_entity_relations: 'true',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 1);
+
+    // Create test entity
+    const bookId = await createTestEntity(client, {
+      _name: 'Test Book',
+      _kind: 'book',
+    });
+
+    // Create lists with different combinations of active status and visibility
+    const activePublicListId = await createTestList(client, {
+      _name: 'Active Public List',
+      _kind: 'reading-list',
+      _validFromDateTime: pastDate.toISOString(), // Past date
+      _validUntilDateTime: futureDate.toISOString(), // Future date
+      _visibility: 'public',
+    });
+
+    const activePrivateListId = await createTestList(client, {
+      _name: 'Active Private List',
+      _kind: 'reading-list',
+      _validFromDateTime: pastDate.toISOString(), // Past date
+      _validUntilDateTime: futureDate.toISOString(), // Future date
+      _visibility: 'private',
+    });
+
+    const inactivePublicListId = await createTestList(client, {
+      _name: 'Inactive Public List',
+      _kind: 'reading-list',
+      _validFromDateTime: pastDate.toISOString(), // Past date
+      _validUntilDateTime: pastDate.toISOString(), // Past date (expired)
+      _visibility: 'public',
+    });
+
+    // Create active and inactive relations for each list
+    // Active relation for active public list
+    await createTestRelation({
+      _listId: activePublicListId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    // Inactive relation for active public list
+    await createTestRelation({
+      _listId: activePublicListId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(), // Expired
+    });
+
+    // Active relation for active private list
+    await createTestRelation({
+      _listId: activePrivateListId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    // Active relation for inactive public list
+    await createTestRelation({
+      _listId: inactivePublicListId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    // Filter for:
+    // 1. Active lists (listSet[actives])
+    // 2. Public lists (listSet[publics])
+    // 3. Active relations (set[actives])
+    const filterStr =
+      'listSet[actives]=true&listSet[publics]=true&set[actives]=true';
+    const response = await client
+      .get('/list-entity-relations')
+      .query(filterStr)
+      .expect(200);
+
+    // Should return only the active relation from the active public list
+    expect(response.body).to.be.Array().and.have.length(1);
+    expect(response.body[0]._fromMetadata._name).to.equal('Active Public List');
+    expect(response.body[0]._fromMetadata._visibility).to.equal('public');
+    expect(response.body[0]._validFromDateTime).to.equal(
+      pastDate.toISOString(),
+    );
+    expect(response.body[0]._validUntilDateTime).to.equal(
+      futureDate.toISOString(),
+    );
+  });
 });
