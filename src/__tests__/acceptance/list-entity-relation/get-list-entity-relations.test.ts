@@ -1845,4 +1845,94 @@ describe('GET /list-entity-relations', () => {
       .sort();
     expect(listNames).to.eql(['Active List', 'Active List Null End']);
   });
+
+  it('filter: by list active status using listSet[actives]', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      list_kinds: 'reading-list',
+      autoapprove_list_entity_relations: 'true',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 1);
+
+    // Create test entity
+    const bookId = await createTestEntity(client, {
+      _name: 'Test Book',
+      _kind: 'book',
+    });
+
+    // Create lists with different date combinations
+    const activeListId = await createTestList(client, {
+      _name: 'Active List',
+      _kind: 'reading-list',
+      _validFromDateTime: pastDate.toISOString(), // Past date
+      _validUntilDateTime: futureDate.toISOString(), // Future date
+    });
+
+    const activeListNullEndId = await createTestList(client, {
+      _name: 'Active List Null End',
+      _kind: 'reading-list',
+      _validFromDateTime: pastDate.toISOString(), // Past date
+      _validUntilDateTime: null, // No end date
+    });
+
+    const futureListId = await createTestList(client, {
+      _name: 'Future List',
+      _kind: 'reading-list',
+      _validFromDateTime: futureDate.toISOString(), // Future date
+      _validUntilDateTime: null,
+    });
+
+    const expiredListId = await createTestList(client, {
+      _name: 'Expired List',
+      _kind: 'reading-list',
+      _validFromDateTime: pastDate.toISOString(), // Past date
+      _validUntilDateTime: pastDate.toISOString(), // Past date (expired)
+    });
+
+    // Create relations for all lists
+    await createTestRelation({
+      _listId: activeListId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+    });
+
+    await createTestRelation({
+      _listId: activeListNullEndId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+    });
+
+    await createTestRelation({
+      _listId: futureListId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+    });
+
+    await createTestRelation({
+      _listId: expiredListId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+    });
+
+    // Filter for active lists using listSet[actives]
+    const response = await client
+      .get('/list-entity-relations')
+      .query({ listSet: { actives: true } })
+      .expect(200);
+
+    // Should return relations from active lists only
+    expect(response.body).to.be.Array().and.have.length(2);
+    const listNames = response.body
+      .map((r: any) => r._fromMetadata._name)
+      .sort();
+    expect(listNames).to.eql(['Active List', 'Active List Null End']);
+  });
 });
