@@ -23,7 +23,7 @@ import {
 } from '@loopback/rest';
 import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
 import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
-import { GenericEntity, HttpErrorResponse } from '../models';
+import { GenericEntity, HttpErrorResponse, List } from '../models';
 import {
   UNMODIFIABLE_COMMON_FIELDS,
   UnmodifiableCommonFields,
@@ -538,5 +538,51 @@ export class EntityController {
     entity: Omit<GenericEntity, UnmodifiableCommonFields | '_parents'>,
   ): Promise<GenericEntity> {
     return this.entityRepository.createChild(id, entity);
+  }
+
+  @get('/entities/{id}/lists', {
+    responses: {
+      '200': {
+        description: 'Array of List model instances through Entity',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'array',
+              items: getModelSchemaRef(List, {
+                includeRelations: true,
+              }),
+            },
+          },
+        },
+      },
+      '404': {
+        description: 'Entity not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+  async findLists(
+    @param.path.string('id') id: string,
+    @param.query.object('set') set?: Set,
+    @param.query.object('filter', getFilterSchemaFor(List))
+    filter?: Filter<List>,
+  ): Promise<List[]> {
+    if (set) {
+      filter = new SetFilterBuilder<List>(set, {
+        filter: filter,
+      }).build();
+    }
+
+    sanitizeFilterFields(filter);
+
+    return this.entityRepository.lists(id).find(filter);
   }
 }
