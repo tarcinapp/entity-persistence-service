@@ -5,7 +5,6 @@ import {
   teardownApplication,
   createTestEntity,
   createTestList,
-  AppWithClient,
 } from '../test-helper';
 
 describe('GET /entities/{id}/lists', () => {

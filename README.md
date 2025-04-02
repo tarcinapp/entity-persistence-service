@@ -630,6 +630,9 @@ const response = await client.get('/entities').query({
 
 This is a known limitation in Loopback's implementation of field selection when dealing with models that allow arbitrary fields.
 
+### 3. Version Incrementation for Update All operations.
+When performing PATCH or PUT operations on a single record, the version field (_version) is automatically incremented by 1. However, for bulk update operations (updateAll), version tracking is not supported. The version field remains unchanged even when records are modified.
+
 # Development Status
 
 * All configurations are fully implemented for generic-entities.
