@@ -2341,4 +2341,182 @@ describe('GET /list-entity-relations', () => {
       'User Viewable List',
     ]);
   });
+
+  it('filter: combine listSet[audience], set[actives], and entitySet[audience]', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      list_kinds: 'reading-list',
+      autoapprove_list_entity_relations: 'true',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 1);
+
+    // Create test entities with different access controls
+    const publicBookId = await createTestEntity(client, {
+      _name: 'Public Book',
+      _kind: 'book',
+      _visibility: 'public',
+    });
+
+    const privateBookId = await createTestEntity(client, {
+      _name: 'Private Book',
+      _kind: 'book',
+      _visibility: 'private',
+      _ownerUsers: ['user-123'],
+    });
+
+    const protectedBookId = await createTestEntity(client, {
+      _name: 'Protected Book',
+      _kind: 'book',
+      _visibility: 'protected',
+      _ownerGroups: ['group-456'],
+    });
+
+    // Create lists with different access controls
+    const publicListId = await createTestList(client, {
+      _name: 'Public List',
+      _kind: 'reading-list',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    const privateListId = await createTestList(client, {
+      _name: 'Private List',
+      _kind: 'reading-list',
+      _visibility: 'private',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      _ownerUsers: ['user-123'],
+    });
+
+    const protectedListId = await createTestList(client, {
+      _name: 'Protected List',
+      _kind: 'reading-list',
+      _visibility: 'protected',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      _ownerGroups: ['group-456'],
+    });
+
+    // Create active and inactive relations with different combinations
+    // Active relations
+    await createTestRelation({
+      _listId: publicListId,
+      _entityId: publicBookId,
+      _kind: 'reading-list-book',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    await createTestRelation({
+      _listId: privateListId,
+      _entityId: privateBookId,
+      _kind: 'reading-list-book',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    await createTestRelation({
+      _listId: protectedListId,
+      _entityId: protectedBookId,
+      _kind: 'reading-list-book',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    // Inactive relations
+    await createTestRelation({
+      _listId: publicListId,
+      _entityId: publicBookId,
+      _kind: 'reading-list-book',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(), // Expired
+    });
+
+    await createTestRelation({
+      _listId: privateListId,
+      _entityId: privateBookId,
+      _kind: 'reading-list-book',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(), // Expired
+    });
+
+    // Test 1: Filter for active relations where user-123 has access to both list and entity
+    const userFilterStr =
+      'listSet[audience][userIds]=user-123&' +
+      'set[actives]=true&' +
+      'entitySet[audience][userIds]=user-123';
+    const userResponse = await client
+      .get('/list-entity-relations')
+      .query(userFilterStr)
+      .expect(200);
+
+    // Should return only the active relation where user-123 has access to both list and entity
+    expect(userResponse.body).to.be.Array().and.have.length(1);
+    expect(userResponse.body[0]._fromMetadata._name).to.equal('Private List');
+    expect(userResponse.body[0]._toMetadata._name).to.equal('Private Book');
+    expect(userResponse.body[0]._validUntilDateTime).to.equal(
+      futureDate.toISOString(),
+    );
+
+    // Test 2: Filter for active relations where group-456 has access to both list and entity
+    const groupFilterStr =
+      'listSet[audience][groupIds]=group-456&' +
+      'set[actives]=true&' +
+      'entitySet[audience][groupIds]=group-456';
+    const groupResponse = await client
+      .get('/list-entity-relations')
+      .query(groupFilterStr)
+      .expect(200);
+
+    // Should return only the active relation where group-456 has access to both list and entity
+    expect(groupResponse.body).to.be.Array().and.have.length(1);
+    expect(groupResponse.body[0]._fromMetadata._name).to.equal(
+      'Protected List',
+    );
+    expect(groupResponse.body[0]._toMetadata._name).to.equal('Protected Book');
+    expect(groupResponse.body[0]._validUntilDateTime).to.equal(
+      futureDate.toISOString(),
+    );
+
+    // Test 3: Filter for active relations where user-123 has access to list and group-456 has access to entity
+    const mixedFilterStr =
+      'listSet[audience][userIds]=user-123&' +
+      'set[actives]=true&' +
+      'entitySet[audience][groupIds]=group-456';
+    const mixedResponse = await client
+      .get('/list-entity-relations')
+      .query(mixedFilterStr)
+      .expect(200);
+
+    // Should return no relations since no relation matches both conditions
+    expect(mixedResponse.body).to.be.Array().and.have.length(0);
+
+    // Test 4: Filter for active relations where either user-123 or group-456 has access to both list and entity
+    const combinedFilterStr =
+      'listSet[audience][userIds]=user-123&' +
+      'listSet[audience][groupIds]=group-456&' +
+      'set[actives]=true&' +
+      'entitySet[audience][userIds]=user-123&' +
+      'entitySet[audience][groupIds]=group-456';
+    const combinedResponse = await client
+      .get('/list-entity-relations')
+      .query(combinedFilterStr)
+      .expect(200);
+
+    // Should return active relations where either user-123 or group-456 has access to both list and entity
+    expect(combinedResponse.body).to.be.Array().and.have.length(2);
+    const combinedAccessibleLists = combinedResponse.body
+      .map((r: any) => r._fromMetadata._name)
+      .sort();
+    expect(combinedAccessibleLists).to.eql(['Private List', 'Protected List']);
+  });
 });
