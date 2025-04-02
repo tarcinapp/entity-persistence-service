@@ -8,7 +8,7 @@ import {
   createTestEntity,
 } from '../test-helper';
 
-describe('DELETE /lists/{id}/entities', () => {
+describe('PUT /list-entity-relations/{id}', () => {
   let client: Client;
   let appWithClient: AppWithClient | undefined;
 
@@ -41,7 +41,7 @@ describe('DELETE /lists/{id}/entities', () => {
     appWithClient = undefined;
   });
 
-  it('removes entities from a list', async () => {
+  it('replaces relation with new data', async () => {
     // Set up the application with default configuration
     appWithClient = await setupApplication({
       list_kinds: 'reading',
@@ -57,56 +57,50 @@ describe('DELETE /lists/{id}/entities', () => {
       description: 'A test list',
     });
 
-    // Create test entities
-    const entity1Id = await createTestEntity(client, {
-      _name: 'First Book',
+    // Create test entity
+    const entityId = await createTestEntity(client, {
+      _name: 'Test Book',
       _kind: 'book',
-      description: 'First book description',
+      description: 'A test book',
     });
 
-    const entity2Id = await createTestEntity(client, {
-      _name: 'Second Book',
-      _kind: 'book',
-      description: 'Second book description',
-    });
-
-    // Create relations
-    await client
+    // Create relation
+    const relationResponse = await client
       .post('/list-entity-relations')
       .send({
         _listId: listId,
-        _entityId: entity1Id,
+        _entityId: entityId,
+        _visibility: 'private',
       })
       .expect(200);
 
+    const relationId = relationResponse.body._id;
+
+    // Replace relation with new data
     await client
-      .post('/list-entity-relations')
+      .put(`/list-entity-relations/${relationId}`)
       .send({
         _listId: listId,
-        _entityId: entity2Id,
+        _entityId: entityId,
+        _kind: 'relation',
+        _visibility: 'public',
       })
-      .expect(200);
+      .expect(204);
 
-    // Remove entities from the list
+    // Verify changes by getting the updated relation
     const response = await client
-      .delete(`/lists/${listId}/entities`)
-      .expect(200);
-    expect(response.body).to.have.property('count', 2);
-
-    // Verify relations were deleted
-    const relationsResponse = await client
-      .get(`/list-entity-relations?filter[where][_listId]=${listId}`)
+      .get(`/list-entity-relations/${relationId}`)
       .expect(200);
 
-    expect(relationsResponse.body).to.be.an.Array();
-    expect(relationsResponse.body).to.have.length(0);
-
-    // Verify entities are no longer associated with the list
-    const entitiesResponse = await client
-      .get(`/lists/${listId}/entities`)
-      .expect(200);
-
-    expect(entitiesResponse.body).to.be.an.Array();
-    expect(entitiesResponse.body).to.have.length(0);
+    // Verify response
+    expect(response.body).to.have.property('_id', relationId);
+    expect(response.body).to.have.property('_listId', listId);
+    expect(response.body).to.have.property('_entityId', entityId);
+    expect(response.body).to.have.property('_kind', 'relation');
+    expect(response.body).to.have.property('_visibility', 'public');
+    expect(response.body).to.have.property('_version', 2); // Version should be incremented
+    expect(response.body).to.have.property('_validFromDateTime');
+    expect(response.body).to.have.property('_createdDateTime');
+    expect(response.body).to.have.property('_lastUpdatedDateTime');
   });
 });

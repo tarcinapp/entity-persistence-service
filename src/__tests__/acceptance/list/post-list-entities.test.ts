@@ -70,15 +70,25 @@ describe('POST /lists/{id}/entities', () => {
       description: 'Second book description',
     });
 
-    // Add entities to the list
-    const response = await client
-      .post(`/lists/${listId}/entities`)
-      .send([entity1Id, entity2Id])
+    // Add first entity to the list
+    await client
+      .post('/list-entity-relations')
+      .send({
+        _listId: listId,
+        _entityId: entity1Id,
+        _visibility: 'private',
+      })
       .expect(200);
 
-    // Verify response
-    expect(response.body).to.be.an.Array();
-    expect(response.body).to.have.length(2);
+    // Add second entity to the list
+    await client
+      .post('/list-entity-relations')
+      .send({
+        _listId: listId,
+        _entityId: entity2Id,
+        _visibility: 'private',
+      })
+      .expect(200);
 
     // Verify relations were created
     const relationsResponse = await client

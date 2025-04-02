@@ -8,7 +8,7 @@ import {
   createTestEntity,
 } from '../test-helper';
 
-describe('DELETE /lists/{id}/entities', () => {
+describe('DELETE /list-entity-relations/{id}', () => {
   let client: Client;
   let appWithClient: AppWithClient | undefined;
 
@@ -41,7 +41,7 @@ describe('DELETE /lists/{id}/entities', () => {
     appWithClient = undefined;
   });
 
-  it('removes entities from a list', async () => {
+  it('deletes relation', async () => {
     // Set up the application with default configuration
     appWithClient = await setupApplication({
       list_kinds: 'reading',
@@ -57,56 +57,29 @@ describe('DELETE /lists/{id}/entities', () => {
       description: 'A test list',
     });
 
-    // Create test entities
-    const entity1Id = await createTestEntity(client, {
-      _name: 'First Book',
+    // Create test entity
+    const entityId = await createTestEntity(client, {
+      _name: 'Test Book',
       _kind: 'book',
-      description: 'First book description',
+      description: 'A test book',
     });
 
-    const entity2Id = await createTestEntity(client, {
-      _name: 'Second Book',
-      _kind: 'book',
-      description: 'Second book description',
-    });
-
-    // Create relations
-    await client
+    // Create relation
+    const relationResponse = await client
       .post('/list-entity-relations')
       .send({
         _listId: listId,
-        _entityId: entity1Id,
+        _entityId: entityId,
+        _visibility: 'private',
       })
       .expect(200);
 
-    await client
-      .post('/list-entity-relations')
-      .send({
-        _listId: listId,
-        _entityId: entity2Id,
-      })
-      .expect(200);
+    const relationId = relationResponse.body._id;
 
-    // Remove entities from the list
-    const response = await client
-      .delete(`/lists/${listId}/entities`)
-      .expect(200);
-    expect(response.body).to.have.property('count', 2);
+    // Delete relation
+    await client.delete(`/list-entity-relations/${relationId}`).expect(204);
 
-    // Verify relations were deleted
-    const relationsResponse = await client
-      .get(`/list-entity-relations?filter[where][_listId]=${listId}`)
-      .expect(200);
-
-    expect(relationsResponse.body).to.be.an.Array();
-    expect(relationsResponse.body).to.have.length(0);
-
-    // Verify entities are no longer associated with the list
-    const entitiesResponse = await client
-      .get(`/lists/${listId}/entities`)
-      .expect(200);
-
-    expect(entitiesResponse.body).to.be.an.Array();
-    expect(entitiesResponse.body).to.have.length(0);
+    // Verify relation is deleted by attempting to get it
+    await client.get(`/list-entity-relations/${relationId}`).expect(404);
   });
 });
