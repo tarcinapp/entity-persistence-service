@@ -86,40 +86,7 @@ export class MongoPipelineHelper {
 
     // Add where conditions if they exist
     if (filter?.where) {
-      this.loggingService.debug(
-        `Original filter: ${JSON.stringify(filter.where, null, 2)}`,
-        {},
-        this.request,
-      );
-
-      // Log date values if set filter for 'actives' is used
-      if (
-        filter.where &&
-        typeof filter.where === 'object' &&
-        '$or' in filter.where &&
-        Array.isArray((filter.where as Record<string, unknown>)['$or'])
-      ) {
-        this.loggingService.debug(
-          `Set filter with $or detected, checking for active date conditions`,
-          {},
-          this.request,
-        );
-
-        // Log current date for comparison
-        const now = new Date();
-        this.loggingService.debug(
-          `Current date for comparison: ${now.toISOString()} (${now.getTime()})`,
-          {},
-          this.request,
-        );
-      }
-
       const mongoQuery = this.buildMongoQuery(filter.where);
-      this.loggingService.debug(
-        `MongoDB Query: ${JSON.stringify(mongoQuery, null, 2)}`,
-        {},
-        this.request,
-      );
       pipeline.push({
         $match: mongoQuery,
       });
@@ -140,23 +107,11 @@ export class MongoPipelineHelper {
 
     // Add list filter if specified
     if (listFilter?.where) {
-      this.loggingService.debug(
-        `List filter: ${JSON.stringify(listFilter.where, null, 2)}`,
-        {},
-        this.request,
-      );
-
       // Convert list filter to MongoDB query
       const listMongoQuery = this.buildMongoQuery(listFilter.where);
 
       // Prefix all fields with "list." since we're filtering on the joined list documents
       const prefixedListQuery = this.prefixQueryFields(listMongoQuery, 'list');
-
-      this.loggingService.debug(
-        `Prefixed list query: ${JSON.stringify(prefixedListQuery, null, 2)}`,
-        {},
-        this.request,
-      );
 
       // Add a match stage to filter based on list properties
       pipeline.push({
@@ -189,12 +144,6 @@ export class MongoPipelineHelper {
 
     // Add entity filter if specified
     if (entityFilter?.where) {
-      this.loggingService.debug(
-        `Entity filter: ${JSON.stringify(entityFilter.where, null, 2)}`,
-        {},
-        this.request,
-      );
-
       // Convert entity filter to MongoDB query
       const entityMongoQuery = this.buildMongoQuery(entityFilter.where);
 
@@ -202,12 +151,6 @@ export class MongoPipelineHelper {
       const prefixedEntityQuery = this.prefixQueryFields(
         entityMongoQuery,
         'entity',
-      );
-
-      this.loggingService.debug(
-        `Prefixed entity query: ${JSON.stringify(prefixedEntityQuery, null, 2)}`,
-        {},
-        this.request,
       );
 
       // Add a match stage to filter based on entity properties
@@ -380,55 +323,23 @@ export class MongoPipelineHelper {
   private buildMongoQuery(
     where: Where<ListToEntityRelation>,
   ): Record<string, unknown> {
-    this.loggingService.debug(
-      `Building MongoDB query from: ${JSON.stringify(where, null, 2)}`,
-      {},
-      this.request,
-    );
-
     const query: Record<string, unknown> = {};
 
     // Handle $and and $or at the top level
     if ('and' in where) {
       // Directly map LoopBack's "and" to MongoDB's "$and" - preserving structure
       query.$and = where.and.map((condition: Where<ListToEntityRelation>) => {
-        const result = this.buildMongoQuery(condition);
-        this.loggingService.debug(
-          `AND condition result: ${JSON.stringify(result, null, 2)}`,
-          {},
-          this.request,
-        );
-
-        return result;
+        return this.buildMongoQuery(condition);
       });
 
       return query;
     }
 
     if ('or' in where) {
-      this.loggingService.debug(
-        `Processing OR condition: ${JSON.stringify(where.or, null, 2)}`,
-        {},
-        this.request,
-      );
-
       // Directly map LoopBack's "or" to MongoDB's "$or" - preserving structure
       query.$or = where.or.map((condition: Where<ListToEntityRelation>) => {
-        const result = this.buildMongoQuery(condition);
-        this.loggingService.debug(
-          `OR sub-condition result: ${JSON.stringify(result, null, 2)}`,
-          {},
-          this.request,
-        );
-
-        return result;
+        return this.buildMongoQuery(condition);
       });
-
-      this.loggingService.debug(
-        `Final processed OR condition: ${JSON.stringify(query.$or, null, 2)}`,
-        {},
-        this.request,
-      );
 
       return query;
     }

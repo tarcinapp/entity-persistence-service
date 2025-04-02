@@ -144,9 +144,7 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
 
       // Use the native MongoDB driver's aggregate method
       this.loggingService.debug(
-        `Pipeline: ${JSON.stringify(pipeline, null, 2)}`,
-        {},
-        this.request,
+        `Filters: ${JSON.stringify({ filter, entityFilter, listFilter }, null, 2)}\nPipeline: ${JSON.stringify(pipeline, null, 2)}`,
       );
       const cursor = relationCollection.aggregate(pipeline);
       const result = await cursor.toArray();
