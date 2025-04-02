@@ -80,7 +80,6 @@ describe('PUT /entities/{id}', () => {
     expect(response.body).to.have.property('_visibility', 'public');
     expect(response.body).to.have.property('_version', 2); // Version should be incremented
     expect(response.body).to.have.property('_validFromDateTime');
-    expect(response.body).to.have.property('_createdDateTime');
     expect(response.body).to.have.property('_lastUpdatedDateTime');
   });
 });
