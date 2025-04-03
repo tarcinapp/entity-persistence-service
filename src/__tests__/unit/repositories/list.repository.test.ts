@@ -43,6 +43,7 @@ describe('ListRepository', () => {
     const customListEntityRelRepoStub = sinon.createStubInstance(
       CustomEntityThroughListRepository,
     );
+    const listRepoStub = sinon.createStubInstance(ListRepository);
     const loggingServiceStub = sinon.createStubInstance(LoggingService);
 
     // Create a mock lookup helper
@@ -68,6 +69,7 @@ describe('ListRepository', () => {
       Getter.fromValue(entityRepoStub),
       Getter.fromValue(listReactionsRepoStub),
       Getter.fromValue(customListEntityRelRepoStub),
+      Getter.fromValue(listRepoStub),
       testSetup.configReaders.uniquenessConfigReader,
       testSetup.configReaders.recordLimitConfigReader,
       testSetup.configReaders.kindConfigReader,

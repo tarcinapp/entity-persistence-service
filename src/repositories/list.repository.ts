@@ -55,7 +55,7 @@ export class ListRepository extends DefaultCrudRepository<
 > {
   public readonly entities: (
     listId: typeof List.prototype._id,
-  ) => CustomEntityThroughListRepository;
+  ) => Promise<CustomEntityThroughListRepository>;
 
   public readonly reactions: HasManyRepositoryFactory<
     ListReactions,
@@ -75,6 +75,9 @@ export class ListRepository extends DefaultCrudRepository<
 
     @repository.getter('CustomListEntityRelRepository')
     protected customListEntityRelRepositoryGetter: Getter<CustomEntityThroughListRepository>,
+
+    @repository.getter('ListRepository')
+    protected listRepositoryGetter: Getter<ListRepository>,
 
     @inject('extensions.uniqueness.configurationreader')
     private uniquenessConfigReader: UniquenessConfigurationReader,
@@ -114,8 +117,11 @@ export class ListRepository extends DefaultCrudRepository<
       this.reactions.inclusionResolver,
     );
 
-    // make genericEntities inclusion available through a custom repository
-    this.entities = (listId: typeof List.prototype._id) => {
+    // Define the entities method
+    this.entities = async (listId: typeof List.prototype._id) => {
+      // First verify that the list exists - this will throw 404 if not found
+      await this.findById(listId);
+
       const repo = new CustomEntityThroughListRepository(
         this.dataSource,
         this.entityRepositoryGetter,
@@ -128,8 +134,6 @@ export class ListRepository extends DefaultCrudRepository<
 
       return repo;
     };
-
-    //const genericEntitiesInclusionResolver = this.createHasManyThroughRepositoryFactoryFor('_genericEntities', entityRepositoryGetter, listEntityRelationRepositoryGetter).inclusionResolver
 
     this.registerInclusionResolver(
       '_entities',

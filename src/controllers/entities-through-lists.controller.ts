@@ -95,7 +95,9 @@ export class EntitiesThroughListController {
     sanitizeFilterFields(filter);
     sanitizeFilterFields(filterThrough);
 
-    return this.listRepository.entities(id).find(filter, filterThrough);
+    const repo = await this.listRepository.entities(id);
+
+    return repo.find(filter, filterThrough);
   }
 
   @post('/lists/{id}/entities', {
@@ -171,7 +173,9 @@ export class EntitiesThroughListController {
     })
     entity: Omit<GenericEntity, UnmodifiableCommonFields>,
   ): Promise<GenericEntity> {
-    return this.listRepository.entities(id).create(entity);
+    const repo = await this.listRepository.entities(id);
+
+    return repo.create(entity);
   }
 
   @patch('/lists/{id}/entities', {
@@ -262,9 +266,9 @@ export class EntitiesThroughListController {
     sanitizeFilterFields(filter);
     sanitizeFilterFields(filterThrough);
 
-    return this.listRepository
-      .entities(id)
-      .updateAll(entity, filter.where, filterThrough.where);
+    const repo = await this.listRepository.entities(id);
+
+    return repo.updateAll(entity, filter.where, filterThrough.where);
   }
 
   @del('/lists/{id}/entities', {
@@ -309,8 +313,8 @@ export class EntitiesThroughListController {
       }).build();
     }
 
-    return this.listRepository
-      .entities(id)
-      .deleteAll(filter.where, whereThrough);
+    const repo = await this.listRepository.entities(id);
+
+    return repo.deleteAll(filter.where, whereThrough);
   }
 }
