@@ -27,8 +27,16 @@ import {
 
 import { CustomListThroughEntityRepository } from './custom-list-through-entity.repository';
 import { EntityReactionsRepository } from './entity-reactions.repository';
-import { FilterMatcher } from '../extensions/utils/filter-matcher';
+import { ListEntityRelationRepository } from './list-entity-relation.repository';
+import { ListRepository } from './list.repository';
 
+import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
+import { FilterMatcher } from '../extensions/utils/filter-matcher';
+import {
+  LookupHelper,
+  LookupBindings,
+} from '../extensions/utils/lookup-helper';
+import { SetFilterBuilder } from '../extensions/utils/set-helper';
 import {
   GenericEntity,
   GenericEntityRelations,
@@ -36,16 +44,8 @@ import {
   EntityReactions,
   SingleError,
 } from '../models';
-import { ListEntityRelationRepository } from './list-entity-relation.repository';
-import { ListRepository } from './list.repository';
-
-import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
-import {
-  LookupHelper,
-  LookupBindings,
-} from '../extensions/utils/lookup-helper';
-import { SetFilterBuilder } from '../extensions/utils/set-helper';
 import { UnmodifiableCommonFields } from '../models/base-types/unmodifiable-common-fields';
+import { LoggingService } from '../services/logging.service';
 
 export class EntityRepository extends DefaultCrudRepository<
   GenericEntity,
@@ -97,6 +97,9 @@ export class EntityRepository extends DefaultCrudRepository<
 
     @inject(LookupBindings.HELPER)
     private lookupHelper: LookupHelper,
+
+    @inject('services.LoggingService')
+    private loggingService: LoggingService,
   ) {
     super(GenericEntity, dataSource);
 
@@ -158,6 +161,8 @@ export class EntityRepository extends DefaultCrudRepository<
         this.responseLimitConfigReader.getEntityResponseLimit(),
       ),
     };
+
+    this.loggingService.info('EntityRepository - Modified filter:', { filter });
 
     return super
       .find(filter, options)

@@ -19,6 +19,7 @@ import {
   EntityReactionsRepository,
 } from '../../../repositories';
 import { EntityRepository } from '../../../repositories/entity.repository';
+import { LoggingService } from '../../../services/logging.service';
 
 describe('EntityRepository', () => {
   let app: EntityPersistenceApplication;
@@ -37,6 +38,7 @@ describe('EntityRepository', () => {
       ListEntityRelationRepository,
     );
     const listRepoStub = sinon.createStubInstance(ListRepository);
+    const loggingServiceStub = sinon.createStubInstance(LoggingService);
 
     // Create a mock lookup helper
     const mockLookupHelper = sinon.createStubInstance(LookupHelper);
@@ -66,6 +68,7 @@ describe('EntityRepository', () => {
       testSetup.configReaders.idempotencyConfigReader,
       testSetup.configReaders.responseLimitConfigReader,
       mockLookupHelper,
+      loggingServiceStub,
     );
   });
 
