@@ -151,30 +151,37 @@ export class EntityRepository extends DefaultCrudRepository<
     filter?: Filter<GenericEntity>,
     options?: Options,
   ): Promise<(GenericEntity & GenericEntityRelations)[]> {
-    const limit =
-      filter?.limit ?? this.responseLimitConfigReader.getEntityResponseLimit();
+    try {
+      const limit =
+        filter?.limit ??
+        this.responseLimitConfigReader.getEntityResponseLimit();
 
-    filter = {
-      ...filter,
-      limit: Math.min(
-        limit,
-        this.responseLimitConfigReader.getEntityResponseLimit(),
-      ),
-    };
+      filter = {
+        ...filter,
+        limit: Math.min(
+          limit,
+          this.responseLimitConfigReader.getEntityResponseLimit(),
+        ),
+      };
 
-    this.loggingService.info('EntityRepository.find - Modified filter:', {
-      filter,
-    });
+      this.loggingService.info('EntityRepository.find - Modified filter:', {
+        filter,
+      });
 
-    return super
-      .find(filter, options)
-      .then((entities) => this.processLookups(entities, filter));
+      const entities = await super.find(filter, options);
+
+      return await this.processLookups(entities, filter);
+    } catch (error) {
+      this.loggingService.error('EntityRepository.find - Error:', { error });
+      throw error;
+    }
   }
 
   async create(data: DataObject<GenericEntity>, options?: Options) {
-    const idempotencyKey = this.calculateIdempotencyKey(data);
+    try {
+      const idempotencyKey = this.calculateIdempotencyKey(data);
+      const foundIdempotent = await this.findIdempotentEntity(idempotencyKey);
 
-    return this.findIdempotentEntity(idempotencyKey).then((foundIdempotent) => {
       if (foundIdempotent) {
         this.loggingService.info(
           'EntityRepository.create - Found idempotent record, skipping creation:',
@@ -193,27 +200,38 @@ export class EntityRepository extends DefaultCrudRepository<
 
       // we do not have identical data in the db
       // go ahead, validate, enrich and create the data
-      return this.createNewEntityFacade(data, options);
-    });
+      return await this.createNewEntityFacade(data, options);
+    } catch (error) {
+      this.loggingService.error('EntityRepository.create - Error:', { error });
+      throw error;
+    }
   }
 
   async replaceById(id: string, data: DataObject<GenericEntity>) {
-    return this.modifyIncomingEntityForUpdates(id, data)
-      .then((collection) => {
-        // calculate idempotencyKey
-        const idempotencyKey = this.calculateIdempotencyKey(collection.data);
+    try {
+      const collection = await this.modifyIncomingEntityForUpdates(id, data);
 
-        // set idempotencyKey
-        if (idempotencyKey) {
-          collection.data._idempotencyKey = idempotencyKey;
-        }
+      // calculate idempotencyKey
+      const idempotencyKey = this.calculateIdempotencyKey(collection.data);
 
-        return collection;
-      })
-      .then((collection) =>
-        this.validateIncomingEntityForReplace(id, collection.data),
-      )
-      .then((validEnrichedData) => super.replaceById(id, validEnrichedData));
+      // set idempotencyKey
+      if (idempotencyKey) {
+        collection.data._idempotencyKey = idempotencyKey;
+      }
+
+      const validEnrichedData = await this.validateIncomingEntityForReplace(
+        id,
+        collection.data,
+      );
+
+      return await super.replaceById(id, validEnrichedData);
+    } catch (error) {
+      this.loggingService.error('EntityRepository.replaceById - Error:', {
+        error,
+        id,
+      });
+      throw error;
+    }
   }
 
   async updateById(
@@ -221,34 +239,37 @@ export class EntityRepository extends DefaultCrudRepository<
     data: DataObject<GenericEntity>,
     options?: Options,
   ) {
-    return this.modifyIncomingEntityForUpdates(id, data)
-      .then((collection) => {
-        const mergedData = _.defaults(
-          {},
-          collection.data,
-          collection.existingData,
-        );
+    try {
+      const collection = await this.modifyIncomingEntityForUpdates(id, data);
 
-        // calculate idempotencyKey
-        const idempotencyKey = this.calculateIdempotencyKey(mergedData);
-
-        // set idempotencyKey
-        if (idempotencyKey) {
-          collection.data._idempotencyKey = idempotencyKey;
-        }
-
-        return collection;
-      })
-      .then((collection) =>
-        this.validateIncomingDataForUpdate(
-          id,
-          collection.existingData,
-          collection.data,
-        ),
-      )
-      .then((validEnrichedData) =>
-        super.updateById(id, validEnrichedData, options),
+      const mergedData = _.defaults(
+        {},
+        collection.data,
+        collection.existingData,
       );
+
+      // calculate idempotencyKey
+      const idempotencyKey = this.calculateIdempotencyKey(mergedData);
+
+      // set idempotencyKey
+      if (idempotencyKey) {
+        collection.data._idempotencyKey = idempotencyKey;
+      }
+
+      const validEnrichedData = await this.validateIncomingDataForUpdate(
+        id,
+        collection.existingData,
+        collection.data,
+      );
+
+      return await super.updateById(id, validEnrichedData, options);
+    } catch (error) {
+      this.loggingService.error('EntityRepository.updateById - Error:', {
+        error,
+        id,
+      });
+      throw error;
+    }
   }
 
   async updateAll(
@@ -256,68 +277,95 @@ export class EntityRepository extends DefaultCrudRepository<
     where?: Where<GenericEntity>,
     options?: Options,
   ) {
-    // Check if user is trying to change the _kind field
-    if (data._kind !== undefined) {
-      throw new HttpErrorResponse({
-        statusCode: 422,
-        name: 'ImmutableFieldError',
-        message: 'Entity kind cannot be changed after creation.',
-        code: 'IMMUTABLE-ENTITY-KIND',
-        status: 422,
+    try {
+      // Check if user is trying to change the _kind field
+      if (data._kind !== undefined) {
+        throw new HttpErrorResponse({
+          statusCode: 422,
+          name: 'ImmutableFieldError',
+          message: 'Entity kind cannot be changed after creation.',
+          code: 'IMMUTABLE-ENTITY-KIND',
+          status: 422,
+        });
+      }
+
+      const now = new Date().toISOString();
+      data._lastUpdatedDateTime = now;
+
+      this.generateSlug(data);
+
+      this.setCountFields(data);
+
+      this.loggingService.info('EntityRepository.updateAll - Modified data:', {
+        data,
+        where,
       });
+
+      return await super.updateAll(data, where, options);
+    } catch (error) {
+      this.loggingService.error('EntityRepository.updateAll - Error:', {
+        error,
+        where,
+      });
+      throw error;
     }
-
-    const now = new Date().toISOString();
-    data._lastUpdatedDateTime = now;
-
-    this.generateSlug(data);
-
-    this.setCountFields(data);
-
-    this.loggingService.info('EntityRepository.updateAll - Modified data:', {
-      data,
-      where,
-    });
-
-    return super.updateAll(data, where, options);
   }
 
   async deleteById(id: string, options?: Options): Promise<void> {
-    const listEntityRelationRepo =
-      await this.listEntityRelationRepositoryGetter();
+    try {
+      const listEntityRelationRepo =
+        await this.listEntityRelationRepositoryGetter();
 
-    // delete all relations
-    await listEntityRelationRepo.deleteAll({
-      _entityId: id,
-    });
+      // delete all relations
+      await listEntityRelationRepo.deleteAll({
+        _entityId: id,
+      });
 
-    return super.deleteById(id, options);
+      return await super.deleteById(id, options);
+    } catch (error) {
+      this.loggingService.error('EntityRepository.deleteById - Error:', {
+        error,
+        id,
+      });
+      throw error;
+    }
   }
 
   async deleteAll(
     where?: Where<GenericEntity> | undefined,
     options?: Options,
   ): Promise<Count> {
-    const listEntityRelationRepo =
-      await this.listEntityRelationRepositoryGetter();
+    try {
+      const listEntityRelationRepo =
+        await this.listEntityRelationRepositoryGetter();
 
-    this.loggingService.info('EntityRepository.deleteAll - Where condition:', {
-      where,
-    });
+      this.loggingService.info(
+        'EntityRepository.deleteAll - Where condition:',
+        {
+          where,
+        },
+      );
 
-    // delete all relations
-    await listEntityRelationRepo.deleteAll({
-      _entityId: {
-        inq: (
-          await this.find({
-            where: where,
-            fields: ['_id'],
-          })
-        ).map((entity) => entity._id),
-      },
-    });
+      // delete all relations
+      await listEntityRelationRepo.deleteAll({
+        _entityId: {
+          inq: (
+            await this.find({
+              where: where,
+              fields: ['_id'],
+            })
+          ).map((entity) => entity._id),
+        },
+      });
 
-    return super.deleteAll(where, options);
+      return await super.deleteAll(where, options);
+    } catch (error) {
+      this.loggingService.error('EntityRepository.deleteAll - Error:', {
+        error,
+        where,
+      });
+      throw error;
+    }
   }
 
   private async findIdempotentEntity(
@@ -853,23 +901,29 @@ export class EntityRepository extends DefaultCrudRepository<
     filter?: FilterExcludingWhere<GenericEntity>,
     options?: Options,
   ): Promise<GenericEntity & GenericEntityRelations> {
-    return super
-      .findById(id, filter, options)
-      .catch(() => null)
-      .then((entity) => {
-        if (!entity) {
-          throw new HttpErrorResponse({
-            statusCode: 404,
-            name: 'NotFoundError',
-            message: "Entity with id '" + id + "' could not be found.",
-            code: 'ENTITY-NOT-FOUND',
-            status: 404,
-          });
-        }
+    try {
+      const entity = await super
+        .findById(id, filter, options)
+        .catch(() => null);
 
-        return entity;
-      })
-      .then((entity) => this.processLookup(entity, filter));
+      if (!entity) {
+        throw new HttpErrorResponse({
+          statusCode: 404,
+          name: 'NotFoundError',
+          message: "Entity with id '" + id + "' could not be found.",
+          code: 'ENTITY-NOT-FOUND',
+          status: 404,
+        });
+      }
+
+      return await this.processLookup(entity, filter);
+    } catch (error) {
+      this.loggingService.error('EntityRepository.findById - Error:', {
+        error,
+        id,
+      });
+      throw error;
+    }
   }
 
   async findParents(
@@ -877,46 +931,57 @@ export class EntityRepository extends DefaultCrudRepository<
     filter?: Filter<GenericEntity>,
     options?: Options,
   ): Promise<(GenericEntity & GenericEntityRelations)[]> {
-    // First, get the entity's parent references
-    const entity = await this.findById(entityId, {
-      fields: { _parents: true },
-    });
-
-    if (!entity) {
-      throw new HttpErrorResponse({
-        statusCode: 404,
-        name: 'NotFoundError',
-        message: "Entity with id '" + entityId + "' could not be found.",
-        code: 'ENTITY-NOT-FOUND',
-        status: 404,
+    try {
+      // First, get the entity's parent references
+      const entity = await this.findById(entityId, {
+        fields: { _parents: true },
       });
+
+      if (!entity) {
+        throw new HttpErrorResponse({
+          statusCode: 404,
+          name: 'NotFoundError',
+          message: "Entity with id '" + entityId + "' could not be found.",
+          code: 'ENTITY-NOT-FOUND',
+          status: 404,
+        });
+      }
+
+      if (!entity._parents || entity._parents.length === 0) {
+        return [];
+      }
+
+      // Extract parent IDs from the URIs
+      const parentIds = entity._parents.map((uri: string) =>
+        uri.split('/').pop(),
+      );
+
+      // Create a new filter that includes the parent IDs
+      const parentFilter: Filter<GenericEntity> = {
+        ...filter,
+        where: {
+          and: [
+            { _id: { inq: parentIds } },
+            ...(filter?.where ? [filter.where] : []),
+          ],
+        },
+      };
+
+      this.loggingService.info(
+        'EntityRepository.findParents - Parent filter:',
+        {
+          parentFilter,
+        },
+      );
+
+      return await this.find(parentFilter, options);
+    } catch (error) {
+      this.loggingService.error('EntityRepository.findParents - Error:', {
+        error,
+        entityId,
+      });
+      throw error;
     }
-
-    if (!entity._parents || entity._parents.length === 0) {
-      return [];
-    }
-
-    // Extract parent IDs from the URIs
-    const parentIds = entity._parents.map((uri: string) =>
-      uri.split('/').pop(),
-    );
-
-    // Create a new filter that includes the parent IDs
-    const parentFilter: Filter<GenericEntity> = {
-      ...filter,
-      where: {
-        and: [
-          { _id: { inq: parentIds } },
-          ...(filter?.where ? [filter.where] : []),
-        ],
-      },
-    };
-
-    this.loggingService.info('EntityRepository.findParents - Parent filter:', {
-      parentFilter,
-    });
-
-    return this.find(parentFilter, options);
   }
 
   async findChildren(
@@ -924,52 +989,71 @@ export class EntityRepository extends DefaultCrudRepository<
     filter?: Filter<GenericEntity>,
     options?: Options,
   ): Promise<(GenericEntity & GenericEntityRelations)[]> {
-    // First verify that the entity exists
-    const entity = await this.findById(entityId, {
-      fields: { _id: true },
-    });
-
-    if (!entity) {
-      throw new HttpErrorResponse({
-        statusCode: 404,
-        name: 'NotFoundError',
-        message: "Entity with id '" + entityId + "' could not be found.",
-        code: 'ENTITY-NOT-FOUND',
-        status: 404,
+    try {
+      // First verify that the entity exists
+      const entity = await this.findById(entityId, {
+        fields: { _id: true },
       });
+
+      if (!entity) {
+        throw new HttpErrorResponse({
+          statusCode: 404,
+          name: 'NotFoundError',
+          message: "Entity with id '" + entityId + "' could not be found.",
+          code: 'ENTITY-NOT-FOUND',
+          status: 404,
+        });
+      }
+
+      const uri = `tapp://localhost/entities/${entityId}`;
+
+      // Create a filter to find entities where _parents contains the given entityId
+      const childFilter: Filter<GenericEntity> = {
+        ...filter,
+        where: {
+          and: [{ _parents: uri }, ...(filter?.where ? [filter.where] : [])],
+        },
+      };
+
+      this.loggingService.info(
+        'EntityRepository.findChildren - Child filter:',
+        {
+          childFilter,
+        },
+      );
+
+      return await this.find(childFilter, options);
+    } catch (error) {
+      this.loggingService.error('EntityRepository.findChildren - Error:', {
+        error,
+        entityId,
+      });
+      throw error;
     }
-
-    const uri = `tapp://localhost/entities/${entityId}`;
-
-    // Create a filter to find entities where _parents contains the given entityId
-    const childFilter: Filter<GenericEntity> = {
-      ...filter,
-      where: {
-        and: [{ _parents: uri }, ...(filter?.where ? [filter.where] : [])],
-      },
-    };
-
-    this.loggingService.info('EntityRepository.findChildren - Child filter:', {
-      childFilter,
-    });
-
-    return this.find(childFilter, options);
   }
 
   async createChild(
     parentId: string,
     entity: Omit<GenericEntity, UnmodifiableCommonFields | '_parents'>,
   ): Promise<GenericEntity> {
-    // First verify that the parent exists
-    await this.findById(parentId);
+    try {
+      // First verify that the parent exists
+      await this.findById(parentId);
 
-    // Add the parent reference to the entity
-    const childEntity = {
-      ...entity,
-      _parents: [`tapp://localhost/entities/${parentId}`],
-    };
+      // Add the parent reference to the entity
+      const childEntity = {
+        ...entity,
+        _parents: [`tapp://localhost/entities/${parentId}`],
+      };
 
-    // Create the child entity
-    return this.create(childEntity);
+      // Create the child entity
+      return await this.create(childEntity);
+    } catch (error) {
+      this.loggingService.error('EntityRepository.createChild - Error:', {
+        error,
+        parentId,
+      });
+      throw error;
+    }
   }
 }
