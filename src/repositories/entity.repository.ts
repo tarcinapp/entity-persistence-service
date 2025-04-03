@@ -178,60 +178,44 @@ export class EntityRepository extends DefaultCrudRepository<
   }
 
   async create(data: DataObject<GenericEntity>, options?: Options) {
-    try {
-      const idempotencyKey = this.calculateIdempotencyKey(data);
-      const foundIdempotent = await this.findIdempotentEntity(idempotencyKey);
+    const idempotencyKey = this.calculateIdempotencyKey(data);
+    const foundIdempotent = await this.findIdempotentEntity(idempotencyKey);
 
-      if (foundIdempotent) {
-        this.loggingService.info(
-          'EntityRepository.create - Found idempotent record, skipping creation:',
-          {
-            idempotencyKey,
-            existingEntityId: foundIdempotent._id,
-          },
-        );
+    if (foundIdempotent) {
+      this.loggingService.info(
+        'EntityRepository.create - Idempotent entity found. Skipping creation.',
+        {
+          idempotencyKey,
+          existingEntity: foundIdempotent,
+        },
+      );
 
-        return foundIdempotent;
-      }
-
-      if (idempotencyKey) {
-        data._idempotencyKey = idempotencyKey;
-      }
-
-      // we do not have identical data in the db
-      // go ahead, validate, enrich and create the data
-      return await this.createNewEntityFacade(data, options);
-    } catch (error) {
-      this.loggingService.error('EntityRepository.create - Error:', { error });
-      throw error;
+      return foundIdempotent;
     }
+
+    if (idempotencyKey) {
+      data._idempotencyKey = idempotencyKey;
+    }
+
+    // No identical data in the DB → Validate, enrich, and create
+    return this.createNewEntityFacade(data, options);
   }
 
   async replaceById(id: string, data: DataObject<GenericEntity>) {
-    try {
-      const collection = await this.modifyIncomingEntityForUpdates(id, data);
+    const collection = await this.modifyIncomingEntityForUpdates(id, data);
 
-      // calculate idempotencyKey
-      const idempotencyKey = this.calculateIdempotencyKey(collection.data);
-
-      // set idempotencyKey
-      if (idempotencyKey) {
-        collection.data._idempotencyKey = idempotencyKey;
-      }
-
-      const validEnrichedData = await this.validateIncomingEntityForReplace(
-        id,
-        collection.data,
-      );
-
-      return await super.replaceById(id, validEnrichedData);
-    } catch (error) {
-      this.loggingService.error('EntityRepository.replaceById - Error:', {
-        error,
-        id,
-      });
-      throw error;
+    // Calculate idempotencyKey and assign it if present
+    const idempotencyKey = this.calculateIdempotencyKey(collection.data);
+    if (idempotencyKey) {
+      collection.data._idempotencyKey = idempotencyKey;
     }
+
+    const validEnrichedData = await this.validateIncomingEntityForReplace(
+      id,
+      collection.data,
+    );
+
+    return super.replaceById(id, validEnrichedData);
   }
 
   async updateById(
@@ -239,37 +223,26 @@ export class EntityRepository extends DefaultCrudRepository<
     data: DataObject<GenericEntity>,
     options?: Options,
   ) {
-    try {
-      const collection = await this.modifyIncomingEntityForUpdates(id, data);
+    const collection = await this.modifyIncomingEntityForUpdates(id, data);
 
-      const mergedData = _.defaults(
-        {},
-        collection.data,
-        collection.existingData,
-      );
+    // Merge incoming data with existing entity data to ensure completeness
+    const mergedData = _.defaults({}, collection.data, collection.existingData);
 
-      // calculate idempotencyKey
-      const idempotencyKey = this.calculateIdempotencyKey(mergedData);
+    // Calculate idempotencyKey based on the fully merged entity
+    const idempotencyKey = this.calculateIdempotencyKey(mergedData);
 
-      // set idempotencyKey
-      if (idempotencyKey) {
-        collection.data._idempotencyKey = idempotencyKey;
-      }
-
-      const validEnrichedData = await this.validateIncomingDataForUpdate(
-        id,
-        collection.existingData,
-        collection.data,
-      );
-
-      return await super.updateById(id, validEnrichedData, options);
-    } catch (error) {
-      this.loggingService.error('EntityRepository.updateById - Error:', {
-        error,
-        id,
-      });
-      throw error;
+    // Store the idempotencyKey in the data being updated
+    if (idempotencyKey) {
+      collection.data._idempotencyKey = idempotencyKey;
     }
+
+    const validEnrichedData = await this.validateIncomingDataForUpdate(
+      id,
+      collection.existingData,
+      collection.data,
+    );
+
+    return super.updateById(id, validEnrichedData, options);
   }
 
   async updateAll(
@@ -277,95 +250,68 @@ export class EntityRepository extends DefaultCrudRepository<
     where?: Where<GenericEntity>,
     options?: Options,
   ) {
-    try {
-      // Check if user is trying to change the _kind field
-      if (data._kind !== undefined) {
-        throw new HttpErrorResponse({
-          statusCode: 422,
-          name: 'ImmutableFieldError',
-          message: 'Entity kind cannot be changed after creation.',
-          code: 'IMMUTABLE-ENTITY-KIND',
-          status: 422,
-        });
-      }
-
-      const now = new Date().toISOString();
-      data._lastUpdatedDateTime = now;
-
-      this.generateSlug(data);
-
-      this.setCountFields(data);
-
-      this.loggingService.info('EntityRepository.updateAll - Modified data:', {
-        data,
-        where,
+    // Check if user is trying to change the _kind field, which is immutable
+    if (data._kind !== undefined) {
+      throw new HttpErrorResponse({
+        statusCode: 422,
+        name: 'ImmutableFieldError',
+        message: 'Entity kind cannot be changed after creation.',
+        code: 'IMMUTABLE-ENTITY-KIND',
+        status: 422,
       });
-
-      return await super.updateAll(data, where, options);
-    } catch (error) {
-      this.loggingService.error('EntityRepository.updateAll - Error:', {
-        error,
-        where,
-      });
-      throw error;
     }
+
+    const now = new Date().toISOString();
+    data._lastUpdatedDateTime = now;
+
+    // Generate slug and set count fields
+    this.generateSlug(data);
+    this.setCountFields(data);
+
+    this.loggingService.info('EntityRepository.updateAll - Modified data:', {
+      data,
+      where,
+    });
+
+    return super.updateAll(data, where, options);
   }
 
   async deleteById(id: string, options?: Options): Promise<void> {
-    try {
-      const listEntityRelationRepo =
-        await this.listEntityRelationRepositoryGetter();
+    const listEntityRelationRepo =
+      await this.listEntityRelationRepositoryGetter();
 
-      // delete all relations
-      await listEntityRelationRepo.deleteAll({
-        _entityId: id,
-      });
+    // Delete all relations associated with the entity
+    await listEntityRelationRepo.deleteAll({
+      _entityId: id,
+    });
 
-      return await super.deleteById(id, options);
-    } catch (error) {
-      this.loggingService.error('EntityRepository.deleteById - Error:', {
-        error,
-        id,
-      });
-      throw error;
-    }
+    return super.deleteById(id, options);
   }
 
   async deleteAll(
-    where?: Where<GenericEntity> | undefined,
+    where?: Where<GenericEntity>,
     options?: Options,
   ): Promise<Count> {
-    try {
-      const listEntityRelationRepo =
-        await this.listEntityRelationRepositoryGetter();
+    const listEntityRelationRepo =
+      await this.listEntityRelationRepositoryGetter();
 
-      this.loggingService.info(
-        'EntityRepository.deleteAll - Where condition:',
-        {
-          where,
-        },
-      );
+    this.loggingService.info('EntityRepository.deleteAll - Where condition:', {
+      where,
+    });
 
-      // delete all relations
-      await listEntityRelationRepo.deleteAll({
-        _entityId: {
-          inq: (
-            await this.find({
-              where: where,
-              fields: ['_id'],
-            })
-          ).map((entity) => entity._id),
-        },
-      });
+    // Delete all relations by matching _entityId
+    const idsToDelete = (
+      await this.find({
+        where: where,
+        fields: ['_id'],
+      })
+    ).map((entity) => entity._id);
 
-      return await super.deleteAll(where, options);
-    } catch (error) {
-      this.loggingService.error('EntityRepository.deleteAll - Error:', {
-        error,
-        where,
-      });
-      throw error;
-    }
+    await listEntityRelationRepo.deleteAll({
+      _entityId: { inq: idsToDelete },
+    });
+
+    return super.deleteAll(where, options);
   }
 
   private async findIdempotentEntity(
