@@ -186,24 +186,38 @@ export class ListRepository extends DefaultCrudRepository<
     return this.processLookups(lists, filter);
   }
 
-  async findById(id: string, filter?: FilterExcludingWhere<List>) {
-    return super
-      .findById(id, filter)
-      .catch(() => null)
-      .then((list) => {
-        if (!list) {
-          throw new HttpErrorResponse({
-            statusCode: 404,
-            name: 'NotFoundError',
-            message: "List with id '" + id + "' could not be found.",
-            code: 'LIST-NOT-FOUND',
-            status: 404,
-          });
-        }
+  async findById(
+    id: string,
+    filter?: FilterExcludingWhere<List>,
+  ): Promise<List> {
+    try {
+      // Call the LoopBack super method, which already throws an error if not found
+      const list = await super.findById(id, filter);
 
-        return list;
-      })
-      .then((list) => this.processLookup(list, filter));
+      // Return the successfully found entity
+      return list;
+    } catch (error) {
+      // Handle specific known errors, such as "Entity not found"
+      if (error.code === 'ENTITY_NOT_FOUND') {
+        this.loggingService.warn(`List with id '${id}' not found.`);
+        throw new HttpErrorResponse({
+          statusCode: 404,
+          name: 'NotFoundError',
+          message: `List with id '${id}' could not be found.`,
+          code: 'LIST-NOT-FOUND',
+          status: 404,
+        });
+      }
+
+      // Log and rethrow unexpected errors for better debugging
+      this.loggingService.error('Unexpected Error in findById:', {
+        error,
+        id,
+      });
+
+      // Re-throw the error to allow global error handlers to process it
+      throw error;
+    }
   }
 
   async create(data: DataObject<List>) {
