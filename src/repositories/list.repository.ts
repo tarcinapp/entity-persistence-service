@@ -46,6 +46,7 @@ import {
 } from '../extensions/utils/lookup-helper';
 import { SetFilterBuilder } from '../extensions/utils/set-helper';
 import { UnmodifiableCommonFields } from '../models/base-types/unmodifiable-common-fields';
+import { LoggingService } from '../services/logging.service';
 
 export class ListRepository extends DefaultCrudRepository<
   List,
@@ -98,6 +99,9 @@ export class ListRepository extends DefaultCrudRepository<
 
     @inject(LookupBindings.HELPER)
     private lookupHelper: LookupHelper,
+
+    @inject('services.LoggingService')
+    private loggingService: LoggingService,
   ) {
     super(List, dataSource);
 
@@ -162,20 +166,29 @@ export class ListRepository extends DefaultCrudRepository<
   }
 
   async find(filter?: Filter<List>, options?: Options) {
-    const limit =
-      filter?.limit ?? this.responseLimitConfigReader.getListResponseLimit();
+    try {
+      const limit =
+        filter?.limit ?? this.responseLimitConfigReader.getListResponseLimit();
 
-    filter = {
-      ...filter,
-      limit: Math.min(
-        limit,
-        this.responseLimitConfigReader.getListResponseLimit(),
-      ),
-    };
+      filter = {
+        ...filter,
+        limit: Math.min(
+          limit,
+          this.responseLimitConfigReader.getListResponseLimit(),
+        ),
+      };
 
-    return super
-      .find(filter, options)
-      .then((lists) => this.processLookups(lists, filter));
+      this.loggingService.info('ListRepository.find - Modified filter:', {
+        filter,
+      });
+
+      const lists = await super.find(filter, options);
+
+      return await this.processLookups(lists, filter);
+    } catch (error) {
+      this.loggingService.error('ListRepository.find - Error:', { error });
+      throw error;
+    }
   }
 
   async findById(id: string, filter?: FilterExcludingWhere<List>) {
