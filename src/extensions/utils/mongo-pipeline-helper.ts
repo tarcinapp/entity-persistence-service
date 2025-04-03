@@ -3,7 +3,6 @@ import type { Filter, Where } from '@loopback/repository';
 import type { Request } from '@loopback/rest';
 import { RestBindings } from '@loopback/rest';
 import type { ListToEntityRelation } from '../../models';
-import type { LoggingService } from '../../services/logging.service';
 
 export const MongoPipelineHelperBindings = {
   HELPER: BindingKey.create<MongoPipelineHelper>(
@@ -65,8 +64,6 @@ export type PipelineStage =
 @injectable({ scope: BindingScope.TRANSIENT })
 export class MongoPipelineHelper {
   constructor(
-    @inject('services.LoggingService')
-    private loggingService: LoggingService,
     @inject(RestBindings.Http.REQUEST)
     private request: Request,
   ) {}
