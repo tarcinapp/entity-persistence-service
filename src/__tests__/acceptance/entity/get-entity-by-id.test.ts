@@ -69,4 +69,26 @@ describe('GET /entities/{id}', () => {
     expect(response.body).to.have.property('_createdDateTime');
     expect(response.body).to.have.property('_lastUpdatedDateTime');
   });
+
+  it('returns 404 when entity is not found', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+    });
+    ({ client } = appWithClient);
+
+    // Try to get a non-existent entity
+    const nonExistentId = 'non-existent-id';
+    const response = await client.get(`/entities/${nonExistentId}`).expect(404);
+
+    // Verify error response
+    expect(response.body.error).to.have.property('statusCode', 404);
+    expect(response.body.error).to.have.property('name', 'NotFoundError');
+    expect(response.body.error).to.have.property(
+      'message',
+      `Entity with id '${nonExistentId}' could not be found.`,
+    );
+    expect(response.body.error).to.have.property('code', 'ENTITY-NOT-FOUND');
+    expect(response.body.error).to.have.property('status', 404);
+  });
 });
