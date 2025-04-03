@@ -166,29 +166,24 @@ export class ListRepository extends DefaultCrudRepository<
   }
 
   async find(filter?: Filter<List>, options?: Options) {
-    try {
-      const limit =
-        filter?.limit ?? this.responseLimitConfigReader.getListResponseLimit();
+    const limit =
+      filter?.limit ?? this.responseLimitConfigReader.getListResponseLimit();
 
-      filter = {
-        ...filter,
-        limit: Math.min(
-          limit,
-          this.responseLimitConfigReader.getListResponseLimit(),
-        ),
-      };
+    filter = {
+      ...filter,
+      limit: Math.min(
+        limit,
+        this.responseLimitConfigReader.getListResponseLimit(),
+      ),
+    };
 
-      this.loggingService.info('ListRepository.find - Modified filter:', {
-        filter,
-      });
+    this.loggingService.info('ListRepository.find - Modified filter:', {
+      filter,
+    });
 
-      const lists = await super.find(filter, options);
+    const lists = await super.find(filter, options);
 
-      return await this.processLookups(lists, filter);
-    } catch (error) {
-      this.loggingService.error('ListRepository.find - Error:', { error });
-      throw error;
-    }
+    return this.processLookups(lists, filter);
   }
 
   async findById(id: string, filter?: FilterExcludingWhere<List>) {
@@ -310,6 +305,11 @@ export class ListRepository extends DefaultCrudRepository<
     this.generateSlug(data);
     this.setCountFields(data);
 
+    this.loggingService.info('ListRepository.updateAll - Modified data:', {
+      data,
+      where,
+    });
+
     return super.updateAll(data, where, options);
   }
 
@@ -331,6 +331,10 @@ export class ListRepository extends DefaultCrudRepository<
   ): Promise<Count> {
     const listEntityRelationRepo =
       await this.listEntityRelationRepositoryGetter();
+
+    this.loggingService.info('ListRepository.deleteAll - Where condition:', {
+      where,
+    });
 
     // delete all relations
     await listEntityRelationRepo.deleteAll({
@@ -944,6 +948,10 @@ export class ListRepository extends DefaultCrudRepository<
       },
     };
 
+    this.loggingService.info('ListRepository.findParents - Parent filter:', {
+      parentFilter,
+    });
+
     return this.find(parentFilter, options);
   }
 
@@ -976,6 +984,10 @@ export class ListRepository extends DefaultCrudRepository<
         and: [{ _parents: uri }, ...(filter?.where ? [filter.where] : [])],
       },
     };
+
+    this.loggingService.info('ListRepository.findChildren - Child filter:', {
+      childFilter,
+    });
 
     return this.find(childFilter, options);
   }
