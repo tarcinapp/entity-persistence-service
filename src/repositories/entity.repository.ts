@@ -162,7 +162,9 @@ export class EntityRepository extends DefaultCrudRepository<
       ),
     };
 
-    this.loggingService.info('EntityRepository - Modified filter:', { filter });
+    this.loggingService.info('EntityRepository.find - Modified filter:', {
+      filter,
+    });
 
     return super
       .find(filter, options)
@@ -174,6 +176,14 @@ export class EntityRepository extends DefaultCrudRepository<
 
     return this.findIdempotentEntity(idempotencyKey).then((foundIdempotent) => {
       if (foundIdempotent) {
+        this.loggingService.info(
+          'EntityRepository.create - Found idempotent record, skipping creation:',
+          {
+            idempotencyKey,
+            existingEntityId: foundIdempotent._id,
+          },
+        );
+
         return foundIdempotent;
       }
 
@@ -264,6 +274,11 @@ export class EntityRepository extends DefaultCrudRepository<
 
     this.setCountFields(data);
 
+    this.loggingService.info('EntityRepository.updateAll - Modified data:', {
+      data,
+      where,
+    });
+
     return super.updateAll(data, where, options);
   }
 
@@ -285,6 +300,10 @@ export class EntityRepository extends DefaultCrudRepository<
   ): Promise<Count> {
     const listEntityRelationRepo =
       await this.listEntityRelationRepositoryGetter();
+
+    this.loggingService.info('EntityRepository.deleteAll - Where condition:', {
+      where,
+    });
 
     // delete all relations
     await listEntityRelationRepo.deleteAll({
@@ -893,6 +912,10 @@ export class EntityRepository extends DefaultCrudRepository<
       },
     };
 
+    this.loggingService.info('EntityRepository.findParents - Parent filter:', {
+      parentFilter,
+    });
+
     return this.find(parentFilter, options);
   }
 
@@ -925,6 +948,10 @@ export class EntityRepository extends DefaultCrudRepository<
         and: [{ _parents: uri }, ...(filter?.where ? [filter.where] : [])],
       },
     };
+
+    this.loggingService.info('EntityRepository.findChildren - Child filter:', {
+      childFilter,
+    });
 
     return this.find(childFilter, options);
   }
