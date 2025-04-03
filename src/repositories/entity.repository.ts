@@ -902,27 +902,30 @@ export class EntityRepository extends DefaultCrudRepository<
     options?: Options,
   ): Promise<GenericEntity & GenericEntityRelations> {
     try {
-      const entity = await super
-        .findById(id, filter, options)
-        .catch(() => null);
+      const entity = await super.findById(id, filter, options);
 
-      if (!entity) {
+      return await this.processLookup(entity, filter);
+    } catch (error) {
+      if (error.code === 'ENTITY_NOT_FOUND') {
+        this.loggingService.warn(`Entity with id '${id}' not found.`);
         throw new HttpErrorResponse({
           statusCode: 404,
           name: 'NotFoundError',
-          message: "Entity with id '" + id + "' could not be found.",
+          message: `Entity with id '${id}' could not be found.`,
           code: 'ENTITY-NOT-FOUND',
           status: 404,
         });
       }
 
-      return await this.processLookup(entity, filter);
-    } catch (error) {
-      this.loggingService.error('EntityRepository.findById - Error:', {
-        error,
-        id,
-      });
-      throw error;
+      this.loggingService.error(
+        'EntityRepository.findById - Unexpected Error:',
+        {
+          error,
+          id,
+        },
+      );
+
+      throw error; // Rethrow unexpected errors
     }
   }
 
@@ -936,16 +939,6 @@ export class EntityRepository extends DefaultCrudRepository<
       const entity = await this.findById(entityId, {
         fields: { _parents: true },
       });
-
-      if (!entity) {
-        throw new HttpErrorResponse({
-          statusCode: 404,
-          name: 'NotFoundError',
-          message: "Entity with id '" + entityId + "' could not be found.",
-          code: 'ENTITY-NOT-FOUND',
-          status: 404,
-        });
-      }
 
       if (!entity._parents || entity._parents.length === 0) {
         return [];
@@ -990,20 +983,10 @@ export class EntityRepository extends DefaultCrudRepository<
     options?: Options,
   ): Promise<(GenericEntity & GenericEntityRelations)[]> {
     try {
-      // First verify that the entity exists
-      const entity = await this.findById(entityId, {
+      // First verify that the entity exists, throw error if not
+      await this.findById(entityId, {
         fields: { _id: true },
       });
-
-      if (!entity) {
-        throw new HttpErrorResponse({
-          statusCode: 404,
-          name: 'NotFoundError',
-          message: "Entity with id '" + entityId + "' could not be found.",
-          code: 'ENTITY-NOT-FOUND',
-          status: 404,
-        });
-      }
 
       const uri = `tapp://localhost/entities/${entityId}`;
 
