@@ -41,6 +41,38 @@ describe('POST /lists/{id}/entities', () => {
     appWithClient = undefined;
   });
 
+  it('returns 404 when list does not exist', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading',
+      entity_kinds: 'book',
+      autoapprove_list_entity_relations: 'true',
+    });
+    ({ client } = appWithClient);
+
+    const nonExistentId = 'non-existent-id';
+    const entity = {
+      _name: 'Test Book',
+      _kind: 'book',
+      description: 'A test book',
+    };
+
+    const response = await client
+      .post(`/lists/${nonExistentId}/entities`)
+      .send(entity)
+      .expect(404);
+
+    // Verify error response
+    expect(response.body.error).to.have.property('statusCode', 404);
+    expect(response.body.error).to.have.property('name', 'NotFoundError');
+    expect(response.body.error).to.have.property(
+      'message',
+      `List with id '${nonExistentId}' could not be found.`,
+    );
+    expect(response.body.error).to.have.property('code', 'LIST-NOT-FOUND');
+    expect(response.body.error).to.have.property('status', 404);
+  });
+
   it('adds entities to a list', async () => {
     // Set up the application with default configuration
     appWithClient = await setupApplication({

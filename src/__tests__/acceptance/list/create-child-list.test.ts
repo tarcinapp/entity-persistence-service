@@ -37,6 +37,35 @@ describe('POST /lists/{id}/children', () => {
     appWithClient = undefined;
   });
 
+  it('returns 404 when parent list does not exist', async () => {
+    appWithClient = await setupApplication({
+      // use default values
+    });
+    ({ client } = appWithClient);
+
+    const nonExistentId = 'non-existent-id';
+    const childList: Partial<List> = {
+      _name: 'Child List',
+      _kind: 'list',
+      description: 'A child list',
+    };
+
+    const response = await client
+      .post(`/lists/${nonExistentId}/children`)
+      .send(childList)
+      .expect(404);
+
+    // Verify error response
+    expect(response.body.error).to.have.property('statusCode', 404);
+    expect(response.body.error).to.have.property('name', 'NotFoundError');
+    expect(response.body.error).to.have.property(
+      'message',
+      `List with id '${nonExistentId}' could not be found.`,
+    );
+    expect(response.body.error).to.have.property('code', 'LIST-NOT-FOUND');
+    expect(response.body.error).to.have.property('status', 404);
+  });
+
   it('creates a child list under a parent list', async () => {
     appWithClient = await setupApplication({
       // use default values

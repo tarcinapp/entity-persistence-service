@@ -23,7 +23,7 @@ import {
 } from '@loopback/rest';
 import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
 import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
-import { GenericEntity, HttpErrorResponse, List } from '../models';
+import { GenericEntity, HttpErrorResponse } from '../models';
 import {
   UNMODIFIABLE_COMMON_FIELDS,
   UnmodifiableCommonFields,
@@ -180,10 +180,11 @@ export class EntityController {
       content: {
         'application/json': {
           schema: getModelSchemaRef(GenericEntity, {
-            title: 'NewEntity',
+            title: 'PartialEntity',
             partial: true,
             exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof GenericEntity)[],
             includeRelations: false,
+            optional: ['_name'],
           }),
         },
       },
@@ -284,10 +285,11 @@ export class EntityController {
       content: {
         'application/json': {
           schema: getModelSchemaRef(GenericEntity, {
-            title: 'PatchEntity',
+            title: 'PartialEntity',
             partial: true,
             exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof GenericEntity)[],
             includeRelations: false,
+            optional: ['_name'],
           }),
         },
       },

@@ -180,7 +180,7 @@ export class ListController {
       content: {
         'application/json': {
           schema: getModelSchemaRef(List, {
-            title: 'NewList',
+            title: 'PartialList',
             partial: true,
             exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof List)[],
             includeRelations: false,
@@ -288,10 +288,11 @@ export class ListController {
       content: {
         'application/json': {
           schema: getModelSchemaRef(List, {
-            title: 'NewList',
+            title: 'PartialList',
             partial: true,
             exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof List)[],
             includeRelations: false,
+            optional: ['_name'],
           }),
         },
       },
