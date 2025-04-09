@@ -288,7 +288,7 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     if (data._kind) {
       throw new HttpErrorResponse({
         statusCode: 422,
-        name: 'ValidationError',
+        name: 'ImmutableKindError',
         message: 'Relation kind cannot be changed after creation.',
         code: 'IMMUTABLE-RELATION-KIND',
         status: 422,
@@ -378,7 +378,7 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     if (data._kind && data._kind !== existingData._kind) {
       throw new HttpErrorResponse({
         statusCode: 422,
-        name: 'ValidationError',
+        name: 'ImmutableKindError',
         message: 'Relation kind cannot be changed after creation.',
         code: 'IMMUTABLE-RELATION-KIND',
         status: 422,
@@ -412,7 +412,7 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     if (data._kind && data._kind !== existingData._kind) {
       throw new HttpErrorResponse({
         statusCode: 422,
-        name: 'ValidationError',
+        name: 'ImmutableKindError',
         message: 'Relation kind cannot be changed after creation.',
         code: 'IMMUTABLE-RELATION-KIND',
         status: 422,

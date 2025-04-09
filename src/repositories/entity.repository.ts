@@ -254,7 +254,7 @@ export class EntityRepository extends DefaultCrudRepository<
     if (data._kind !== undefined) {
       throw new HttpErrorResponse({
         statusCode: 422,
-        name: 'ImmutableFieldError',
+        name: 'ImmutableKindError',
         message: 'Entity kind cannot be changed after creation.',
         code: 'IMMUTABLE-ENTITY-KIND',
         status: 422,
@@ -415,7 +415,7 @@ export class EntityRepository extends DefaultCrudRepository<
     if (data._kind !== undefined && data._kind !== existingEntity._kind) {
       throw new HttpErrorResponse({
         statusCode: 422,
-        name: 'ImmutableFieldError',
+        name: 'ImmutableKindError',
         message: `Entity kind cannot be changed after creation. Current kind is '${existingEntity._kind}'.`,
         code: 'IMMUTABLE-ENTITY-KIND',
         status: 422,
@@ -438,7 +438,7 @@ export class EntityRepository extends DefaultCrudRepository<
     if (data._kind !== undefined && data._kind !== existingData._kind) {
       throw new HttpErrorResponse({
         statusCode: 422,
-        name: 'ImmutableFieldError',
+        name: 'ImmutableKindError',
         message: `Entity kind cannot be changed after creation. Current kind is '${existingData._kind}'.`,
         code: 'IMMUTABLE-ENTITY-KIND',
         status: 422,
