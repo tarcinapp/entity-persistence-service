@@ -82,4 +82,49 @@ describe('PUT /entities/{id}', () => {
     expect(response.body).to.have.property('_validFromDateTime');
     expect(response.body).to.have.property('_lastUpdatedDateTime');
   });
+
+  it('should not allow changing _kind field with PUT operation', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book,article',
+    });
+    ({ client } = appWithClient);
+
+    // Create test entity
+    const entityId = await createTestEntity(client, {
+      _name: 'Test Book',
+      _kind: 'book',
+      description: 'Test description',
+      _visibility: 'private',
+    });
+
+    // Attempt to replace entity with different _kind
+    const response = await client
+      .put(`/entities/${entityId}`)
+      .send({
+        _name: 'Test Article',
+        _kind: 'article', // Attempting to change _kind
+        description: 'Test description',
+        _visibility: 'private',
+      })
+      .expect(422);
+
+    // Verify error response
+    expect(response.body).to.have.property('error');
+    expect(response.body.error).to.have.property('statusCode', 422);
+    expect(response.body.error).to.have.property('name', 'ImmutableKindError');
+    expect(response.body.error).to.have.property(
+      'message',
+      "Entity kind cannot be changed after creation. Current kind is 'book'.",
+    );
+    expect(response.body.error).to.have.property(
+      'code',
+      'IMMUTABLE-ENTITY-KIND',
+    );
+    expect(response.body.error).to.have.property('status', 422);
+
+    // Verify _kind remains unchanged by getting the entity
+    const getResponse = await client.get(`/entities/${entityId}`).expect(200);
+    expect(getResponse.body).to.have.property('_kind', 'book');
+  });
 });

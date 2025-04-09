@@ -82,4 +82,46 @@ describe('PUT /lists/{id}', () => {
     expect(response.body).to.have.property('_validFromDateTime');
     expect(response.body).to.have.property('_lastUpdatedDateTime');
   });
+
+  it('should not allow changing _kind field with PUT operation', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading,shopping',
+    });
+    ({ client } = appWithClient);
+
+    // Create test list
+    const listId = await createTestList(client, {
+      _name: 'Test Reading List',
+      _kind: 'reading',
+      description: 'Test description',
+      _visibility: 'private',
+    });
+
+    // Attempt to replace list with different _kind
+    const response = await client
+      .put(`/lists/${listId}`)
+      .send({
+        _name: 'Test Shopping List',
+        _kind: 'shopping', // Attempting to change _kind
+        description: 'Test description',
+        _visibility: 'private',
+      })
+      .expect(422);
+
+    // Verify error response
+    expect(response.body).to.have.property('error');
+    expect(response.body.error).to.have.property('statusCode', 422);
+    expect(response.body.error).to.have.property('name', 'ImmutableKindError');
+    expect(response.body.error).to.have.property(
+      'message',
+      'List kind cannot be changed after creation.',
+    );
+    expect(response.body.error).to.have.property('code', 'IMMUTABLE-LIST-KIND');
+    expect(response.body.error).to.have.property('status', 422);
+
+    // Verify _kind remains unchanged by getting the list
+    const getResponse = await client.get(`/lists/${listId}`).expect(200);
+    expect(getResponse.body).to.have.property('_kind', 'reading');
+  });
 });
