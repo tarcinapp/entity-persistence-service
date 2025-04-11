@@ -30,7 +30,7 @@ export const ENV_CONFIG_KEYS = {
 
 export const RecordLimitCheckerBindings = {
   SERVICE: BindingKey.create<RecordLimitCheckerService>(
-    'services.record_limit_checker',
+    'services.record-limit-checker',
   ),
 };
 
@@ -38,6 +38,15 @@ export const RecordLimitCheckerBindings = {
 export type EntityModelClass = (new (...args: any[]) => Entity) & {
   modelName: string;
 };
+
+// Mapping of model names to their error code prefixes
+const MODEL_ERROR_CODES = {
+  genericentity: 'ENTITY',
+  list: 'LIST',
+  listtoentityrelation: 'RELATION',
+  entityreactions: 'ENTITY-REACTION',
+  listreactions: 'LIST-REACTION',
+} as const;
 
 export class RecordLimitCheckerService {
   private config: RecordLimitConfig;
@@ -194,6 +203,26 @@ export class RecordLimitCheckerService {
   }
 
   /**
+   * Get error code prefix for a model
+   */
+  private getErrorCodePrefix(modelName: string): string {
+    return (
+      MODEL_ERROR_CODES[
+        modelName.toLowerCase() as keyof typeof MODEL_ERROR_CODES
+      ] ?? modelName.toUpperCase()
+    );
+  }
+
+  /**
+   * Get friendly model name for error messages
+   */
+  private getFriendlyModelName(modelName: string): string {
+    const prefix = this.getErrorCodePrefix(modelName);
+
+    return prefix.toLowerCase();
+  }
+
+  /**
    * Check all applicable limits for a model
    */
   async checkLimits<T extends Entity>(
@@ -221,16 +250,20 @@ export class RecordLimitCheckerService {
         const count = await repository.count(filter.where);
 
         if (count.count >= limit) {
+          const errorCodePrefix = this.getErrorCodePrefix(modelClass.modelName);
+          const errorCode = `${errorCodePrefix}-LIMIT-EXCEEDED`;
+          const friendlyName = this.getFriendlyModelName(modelClass.modelName);
+
           throw new HttpErrorResponse({
             statusCode: 429,
             name: 'LimitExceededError',
-            message: `Record limit exceeded for ${modelClass.modelName}`,
-            code: `${modelClass.modelName.toUpperCase()}-LIMIT-EXCEEDED`,
+            message: `Record limit exceeded for ${friendlyName}`,
+            code: errorCode,
             status: 429,
             details: [
               new SingleError({
-                code: `${modelClass.modelName.toUpperCase()}-LIMIT-EXCEEDED`,
-                message: `Record limit exceeded for ${modelClass.modelName}`,
+                code: errorCode,
+                message: `Record limit exceeded for ${friendlyName}`,
                 info: {
                   limit,
                   scope: interpolatedScope,

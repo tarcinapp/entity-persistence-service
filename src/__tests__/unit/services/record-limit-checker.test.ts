@@ -1,0 +1,371 @@
+import type { DefaultCrudRepository } from '@loopback/repository';
+import { Entity } from '@loopback/repository';
+import { expect } from '@loopback/testlab';
+import type { LoggingService } from '../../../services/logging.service';
+import { RecordLimitCheckerService } from '../../../services/record-limit-checker.service';
+
+describe('Utilities: RecordLimitChecker', () => {
+  let service: RecordLimitCheckerService;
+  let mockLoggingService: Partial<LoggingService>;
+  let mockRepository: Partial<DefaultCrudRepository<any, any, any>>;
+  let processEnvBackup: NodeJS.ProcessEnv;
+
+  // Mock entity class
+  class GenericEntity extends Entity {}
+
+  beforeEach(() => {
+    // Backup process.env
+    processEnvBackup = { ...process.env };
+
+    // Create mock logging service
+    mockLoggingService = {
+      debug: () => {},
+      error: () => {},
+      warn: () => {},
+    };
+
+    // Create mock repository
+    mockRepository = {
+      count: async () => ({ count: 0 }),
+    };
+
+    // Create service instance
+    service = new RecordLimitCheckerService(
+      mockLoggingService as LoggingService,
+    );
+  });
+
+  afterEach(() => {
+    // Restore process.env
+    process.env = processEnvBackup;
+  });
+
+  describe('configuration parsing', () => {
+    it('should parse entity limits from environment variables', async () => {
+      const limits = [
+        { scope: 'filter[where][_kind]=book', limit: 10 },
+        { scope: 'set[actives]', limit: 20 },
+      ];
+
+      process.env.ENTITY_RECORD_LIMITS = JSON.stringify(limits);
+
+      service = new RecordLimitCheckerService(
+        mockLoggingService as LoggingService,
+      );
+
+      // Create a test entity that would match both limits
+      const testData = {
+        _kind: 'book',
+        _validFromDateTime: new Date().toISOString(), // This makes it match set[actives]
+        _validUntilDateTime: null,
+      };
+      let errorThrown = false;
+
+      // Track the filters used in count calls
+      const capturedFilters: any[] = [];
+      let callCount = 0;
+      mockRepository.count = async (filter) => {
+        capturedFilters.push(filter);
+        callCount++;
+
+        // First limit check should pass, second should fail
+        return { count: callCount === 1 ? 5 : 20 };
+      };
+
+      try {
+        await service.checkLimits(
+          GenericEntity,
+          testData,
+          mockRepository as DefaultCrudRepository<any, any, any>,
+        );
+      } catch (error) {
+        errorThrown = true;
+        expect(error.statusCode).to.equal(429);
+        expect(error.code).to.equal('ENTITY-LIMIT-EXCEEDED');
+      }
+
+      expect(errorThrown).to.be.true();
+
+      // Should call count twice since the record matches both limits
+      expect(capturedFilters).to.have.length(2);
+
+      // Verify the filters used in the count calls
+      expect(capturedFilters[0]).to.deepEqual({
+        _kind: 'book',
+      });
+
+      // The second filter should be from set[actives]
+      expect(capturedFilters[1]).to.deepEqual({
+        and: [
+          {
+            or: [
+              {
+                _validUntilDateTime: null,
+              },
+              {
+                _validUntilDateTime: {
+                  gt: capturedFilters[1].and[0].or[1]._validUntilDateTime.gt, // Dynamic date
+                },
+              },
+            ],
+          },
+          {
+            _validFromDateTime: {
+              neq: null,
+            },
+          },
+          {
+            _validFromDateTime: {
+              lt: capturedFilters[1].and[2]._validFromDateTime.lt, // Dynamic date
+            },
+          },
+        ],
+      });
+    });
+
+    it('should handle invalid JSON in environment variables', () => {
+      process.env.ENTITY_RECORD_LIMITS = 'invalid json';
+
+      expect(() => {
+        new RecordLimitCheckerService(mockLoggingService as LoggingService);
+      }).to.throw('Invalid record limits configuration');
+    });
+  });
+
+  describe('scope interpolation', () => {
+    it('should interpolate simple values', async () => {
+      const limits = [{ scope: 'filter[where][_kind]=${_kind}', limit: 10 }];
+
+      process.env.ENTITY_RECORD_LIMITS = JSON.stringify(limits);
+      service = new RecordLimitCheckerService(
+        mockLoggingService as LoggingService,
+      );
+
+      // Spy on repository.count to capture the filter
+      let capturedFilter: any;
+      mockRepository.count = async (filter) => {
+        capturedFilter = filter;
+
+        return { count: 0 };
+      };
+
+      await service.checkLimits(
+        GenericEntity,
+        { _kind: 'book' },
+        mockRepository as DefaultCrudRepository<any, any, any>,
+      );
+
+      expect(capturedFilter).to.deepEqual({
+        _kind: 'book',
+      });
+    });
+
+    it('should interpolate array values', async () => {
+      const limits = [
+        {
+          scope: 'filter[where][_ownerUsers][inq][0]=${_ownerUsers[0]}',
+          limit: 10,
+        },
+      ];
+
+      process.env.ENTITY_RECORD_LIMITS = JSON.stringify(limits);
+      service = new RecordLimitCheckerService(
+        mockLoggingService as LoggingService,
+      );
+
+      let capturedFilter: any;
+      mockRepository.count = async (filter) => {
+        capturedFilter = filter;
+
+        return { count: 0 };
+      };
+
+      await service.checkLimits(
+        GenericEntity,
+        { _ownerUsers: ['user1', 'user2'] },
+        mockRepository as DefaultCrudRepository<any, any, any>,
+      );
+
+      expect(capturedFilter).to.deepEqual({
+        _ownerUsers: { inq: ['user1'] },
+      });
+    });
+
+    it('should handle missing properties gracefully', async () => {
+      const limits = [
+        { scope: 'filter[where][missing]=${nonexistent}', limit: 10 },
+      ];
+
+      process.env.ENTITY_RECORD_LIMITS = JSON.stringify(limits);
+      service = new RecordLimitCheckerService(
+        mockLoggingService as LoggingService,
+      );
+
+      let warningLogged = false;
+      mockLoggingService.warn = () => {
+        warningLogged = true;
+      };
+
+      await service.checkLimits(
+        GenericEntity,
+        { _kind: 'book' },
+        mockRepository as DefaultCrudRepository<any, any, any>,
+      );
+
+      expect(warningLogged).to.be.true();
+    });
+
+    it('should handle set[audience] with userIds parameter', async () => {
+      const limits = [
+        { scope: 'set[audience][userIds]=${_ownerUsers}', limit: 10 },
+      ];
+
+      process.env.ENTITY_RECORD_LIMITS = JSON.stringify(limits);
+      service = new RecordLimitCheckerService(
+        mockLoggingService as LoggingService,
+      );
+
+      let capturedFilter: any;
+      mockRepository.count = async (filter) => {
+        capturedFilter = filter;
+
+        return { count: 0 };
+      };
+
+      const validFromDateTime = new Date().toISOString();
+
+      await service.checkLimits(
+        GenericEntity,
+        {
+          _ownerUsers: ['user1', 'user2'],
+          _validFromDateTime: validFromDateTime,
+          _validUntilDateTime: null,
+        },
+        mockRepository as DefaultCrudRepository<any, any, any>,
+      );
+
+      // The audience set should create a filter that checks:
+      // 1. Record is active (validFrom/Until)
+      // 2. Record is public OR owned by the specified users
+      expect(capturedFilter).to.Object();
+    });
+
+    it('should use dot notation to access nested values', async () => {
+      const limits = [
+        {
+          // Use dot notation only in interpolation values, not in filter structure
+          scope:
+            'filter[where][and][0][metadata.key]=${metadata.key}&filter[where][and][1][metadata.nested.value]=${metadata.nested.value}',
+          limit: 10,
+        },
+      ];
+
+      process.env.ENTITY_RECORD_LIMITS = JSON.stringify(limits);
+      service = new RecordLimitCheckerService(
+        mockLoggingService as LoggingService,
+      );
+
+      let capturedFilter: any;
+      mockRepository.count = async (filter) => {
+        capturedFilter = filter;
+
+        return { count: 0 };
+      };
+
+      const testData = {
+        metadata: {
+          key: 'value1',
+          nested: {
+            value: 'value2',
+          },
+        },
+      };
+
+      await service.checkLimits(
+        GenericEntity,
+        testData,
+        mockRepository as DefaultCrudRepository<any, any, any>,
+      );
+
+      // Filter should have proper nested structure
+      expect(capturedFilter).to.deepEqual({
+        and: [
+          {
+            'metadata.key': 'value1',
+          },
+          {
+            'metadata.nested.value': 'value2',
+          },
+        ],
+      });
+    });
+  });
+
+  describe('limit checking', () => {
+    it('should not throw when count is below limit', async () => {
+      const limits = [{ scope: 'filter[where][_kind]=book', limit: 10 }];
+
+      process.env.ENTITY_RECORD_LIMITS = JSON.stringify(limits);
+      service = new RecordLimitCheckerService(
+        mockLoggingService as LoggingService,
+      );
+
+      mockRepository.count = async () => ({ count: 5 });
+
+      await expect(
+        service.checkLimits(
+          GenericEntity,
+          { _kind: 'book' },
+          mockRepository as DefaultCrudRepository<any, any, any>,
+        ),
+      ).to.not.be.rejected();
+    });
+
+    it('should throw when count equals limit', async () => {
+      const limits = [{ scope: 'filter[where][_kind]=book', limit: 10 }];
+
+      process.env.ENTITY_RECORD_LIMITS = JSON.stringify(limits);
+      service = new RecordLimitCheckerService(
+        mockLoggingService as LoggingService,
+      );
+
+      mockRepository.count = async () => ({ count: 10 });
+
+      await expect(
+        service.checkLimits(
+          GenericEntity,
+          { _kind: 'book' },
+          mockRepository as DefaultCrudRepository<any, any, any>,
+        ),
+      ).to.be.rejectedWith('Record limit exceeded for entity');
+    });
+
+    it('should skip limits that dont match the record', async () => {
+      const limits = [
+        { scope: 'filter[where][_kind]=book', limit: 10 },
+        { scope: 'filter[where][_kind]=article', limit: 5 },
+      ];
+
+      process.env.ENTITY_RECORD_LIMITS = JSON.stringify(limits);
+      service = new RecordLimitCheckerService(
+        mockLoggingService as LoggingService,
+      );
+
+      let checkCount = 0;
+      mockRepository.count = async () => {
+        checkCount++;
+
+        return { count: 0 };
+      };
+
+      await service.checkLimits(
+        GenericEntity,
+        { _kind: 'book' },
+        mockRepository as DefaultCrudRepository<any, any, any>,
+      );
+
+      // Should only check the matching limit
+      expect(checkCount).to.equal(1);
+    });
+  });
+});
