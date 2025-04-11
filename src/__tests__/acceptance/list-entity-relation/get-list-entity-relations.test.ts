@@ -2519,4 +2519,141 @@ describe('GET /list-entity-relations', () => {
       .sort();
     expect(combinedAccessibleLists).to.eql(['Private List', 'Protected List']);
   });
+
+  it('filter: by nested list properties using dot notation', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      list_kinds: 'reading-list,watch-list',
+    });
+    ({ client } = appWithClient);
+
+    // Create test entities
+    const bookId = await createTestEntity(client, {
+      _name: 'Test Book',
+      _kind: 'book',
+    });
+
+    // Create test lists with nested properties
+    const readingListId = await createTestList(client, {
+      _name: 'Reading List',
+      _kind: 'reading-list',
+      _visibility: 'public',
+      metadata: {
+        category: 'fiction',
+        tags: ['novel', 'classic'],
+        rating: {
+          score: 4.5,
+          reviews: 100,
+        },
+      },
+    });
+
+    const watchListId = await createTestList(client, {
+      _name: 'Watch List',
+      _kind: 'watch-list',
+      _visibility: 'private',
+      metadata: {
+        category: 'non-fiction',
+        tags: ['documentary', 'educational'],
+        rating: {
+          score: 3.8,
+          reviews: 50,
+        },
+      },
+    });
+
+    // Create relations for both lists
+    await createTestRelation({
+      _listId: readingListId,
+      _entityId: bookId,
+      _kind: 'reading-list-book',
+    });
+
+    await createTestRelation({
+      _listId: watchListId,
+      _entityId: bookId,
+      _kind: 'watch-list-book',
+    });
+
+    // Test filtering by nested category
+    const categoryResponse = await client
+      .get('/list-entity-relations')
+      .query({
+        listFilter: {
+          where: {
+            'metadata.category': 'fiction',
+          },
+        },
+      })
+      .expect(200);
+
+    expect(categoryResponse.body).to.be.Array().and.have.length(1);
+    expect(categoryResponse.body[0]._fromMetadata._name).to.equal(
+      'Reading List',
+    );
+    expect(categoryResponse.body[0]._fromMetadata.metadata.category).to.equal(
+      'fiction',
+    );
+
+    // Test filtering by nested array element
+    const tagsResponse = await client
+      .get('/list-entity-relations')
+      .query({
+        listFilter: {
+          where: {
+            'metadata.tags': { inq: ['documentary'] },
+          },
+        },
+      })
+      .expect(200);
+
+    expect(tagsResponse.body).to.be.Array().and.have.length(1);
+    expect(tagsResponse.body[0]._fromMetadata._name).to.equal('Watch List');
+    expect(tagsResponse.body[0]._fromMetadata.metadata.tags).to.containDeep([
+      'documentary',
+    ]);
+
+    // Test filtering by deeply nested property
+    const ratingResponse = await client
+      .get('/list-entity-relations')
+      .query({
+        listFilter: {
+          where: {
+            'metadata.rating.score': { gt: 4 },
+          },
+        },
+      })
+      .expect(200);
+
+    expect(ratingResponse.body).to.be.Array().and.have.length(1);
+    expect(ratingResponse.body[0]._fromMetadata._name).to.equal('Reading List');
+    expect(ratingResponse.body[0]._fromMetadata.metadata.rating.score).to.equal(
+      4.5,
+    );
+
+    // Test combining multiple nested filters
+    const combinedResponse = await client
+      .get('/list-entity-relations')
+      .query({
+        listFilter: {
+          where: {
+            and: [
+              { 'metadata.category': 'non-fiction' },
+              { 'metadata.rating.reviews': { gt: 40 } },
+            ],
+          },
+        },
+      })
+      .expect(200);
+
+    expect(combinedResponse.body).to.be.Array().and.have.length(1);
+    expect(combinedResponse.body[0]._fromMetadata._name).to.equal('Watch List');
+    expect(combinedResponse.body[0]._fromMetadata.metadata.category).to.equal(
+      'non-fiction',
+    );
+    expect(
+      combinedResponse.body[0]._fromMetadata.metadata.rating.reviews,
+    ).to.equal(50);
+  });
 });
