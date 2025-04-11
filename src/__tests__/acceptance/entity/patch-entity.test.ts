@@ -109,7 +109,7 @@ describe('PATCH /entities/{id}', () => {
     // Verify error response
     expect(response.body).to.have.property('error');
     expect(response.body.error).to.have.property('statusCode', 422);
-    expect(response.body.error).to.have.property('name', 'ImmutableFieldError');
+    expect(response.body.error).to.have.property('name', 'ImmutableKindError');
     expect(response.body.error).to.have.property(
       'message',
       "Entity kind cannot be changed after creation. Current kind is 'book'.",

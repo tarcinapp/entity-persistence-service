@@ -141,7 +141,7 @@ describe('Utilities: RecordLimitChecker', () => {
         mockLoggingService as LoggingService,
       );
 
-      // Spy on repository.count to capture the filter
+      // Track the filter used in count call
       let capturedFilter: any;
       mockRepository.count = async (filter) => {
         capturedFilter = filter;
@@ -149,12 +149,15 @@ describe('Utilities: RecordLimitChecker', () => {
         return { count: 0 };
       };
 
+      // Call the service and wait for it to complete
       await service.checkLimits(
         GenericEntity,
         { _kind: 'book' },
         mockRepository as DefaultCrudRepository<any, any, any>,
       );
 
+      // Now we can safely check the captured filter
+      expect(capturedFilter).to.not.be.undefined();
       expect(capturedFilter).to.deepEqual({
         _kind: 'book',
       });
