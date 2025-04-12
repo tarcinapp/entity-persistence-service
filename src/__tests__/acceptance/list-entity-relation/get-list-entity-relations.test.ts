@@ -1135,40 +1135,91 @@ describe('GET /list-entity-relations', () => {
     // Set up the application with default configuration
     appWithClient = await setupApplication({
       entity_kinds: 'book',
-      list_kinds: 'reading-list,watch-list',
+      list_kinds: 'reading-list,watch-list,music-list',
     });
     ({ client } = appWithClient);
 
     // Create test entities
-    const bookId = await createTestEntity(client, {
-      _name: 'Test Book',
+    const bookId1 = await createTestEntity(client, {
+      _name: 'Test Book 1',
+      _kind: 'book',
+    });
+
+    const bookId2 = await createTestEntity(client, {
+      _name: 'Test Book 2',
       _kind: 'book',
     });
 
     // Create test lists with different properties
-    const readingListId = await createTestList(client, {
-      _name: 'Reading List',
+    const readingListId1 = await createTestList(client, {
+      _name: 'Reading List 1',
       _kind: 'reading-list',
       _visibility: 'public',
+      _ownerUsers: ['user-123'],
+      _viewerUsers: ['viewer-456'],
     });
 
-    const watchListId = await createTestList(client, {
-      _name: 'Watch List',
+    const readingListId2 = await createTestList(client, {
+      _name: 'Reading List 2',
+      _kind: 'reading-list',
+      _visibility: 'public',
+      _ownerUsers: ['user-123'],
+      _viewerUsers: ['viewer-456'],
+    });
+
+    const watchListId1 = await createTestList(client, {
+      _name: 'Watch List 1',
       _kind: 'watch-list',
       _visibility: 'private',
+      _ownerUsers: ['user-789'],
+      _viewerUsers: ['viewer-012'],
     });
 
-    // Create relations for both lists
+    const watchListId2 = await createTestList(client, {
+      _name: 'Watch List 2',
+      _kind: 'watch-list',
+      _visibility: 'private',
+      _ownerUsers: ['user-789'],
+      _viewerUsers: ['viewer-012'],
+    });
+
+    const musicListId = await createTestList(client, {
+      _name: 'Music List',
+      _kind: 'music-list',
+      _visibility: 'protected',
+      _ownerGroups: ['group-345'],
+      _viewerGroups: ['group-678'],
+    });
+
+    // Create relations for all lists
     await createTestRelation({
-      _listId: readingListId,
-      _entityId: bookId,
+      _listId: readingListId1,
+      _entityId: bookId1,
       _kind: 'reading-list-book',
     });
 
     await createTestRelation({
-      _listId: watchListId,
-      _entityId: bookId,
+      _listId: readingListId2,
+      _entityId: bookId2,
+      _kind: 'reading-list-book',
+    });
+
+    await createTestRelation({
+      _listId: watchListId1,
+      _entityId: bookId1,
       _kind: 'watch-list-book',
+    });
+
+    await createTestRelation({
+      _listId: watchListId2,
+      _entityId: bookId2,
+      _kind: 'watch-list-book',
+    });
+
+    await createTestRelation({
+      _listId: musicListId,
+      _entityId: bookId1,
+      _kind: 'music-list-book',
     });
 
     // Test filtering by list visibility
@@ -1177,7 +1228,9 @@ describe('GET /list-entity-relations', () => {
       .query({
         filter: {
           where: {
-            _kind: { inq: ['reading-list-book', 'watch-list-book'] },
+            _kind: {
+              inq: ['reading-list-book', 'watch-list-book', 'music-list-book'],
+            },
           },
         },
         listFilter: {
@@ -1188,9 +1241,14 @@ describe('GET /list-entity-relations', () => {
       })
       .expect(200);
 
-    expect(response.body).to.be.Array().and.have.length(1);
+    expect(response.body).to.be.Array().and.have.length(2);
     expect(response.body[0]._fromMetadata._visibility).to.equal('public');
-    expect(response.body[0]._fromMetadata._name).to.equal('Reading List');
+    expect(response.body[1]._fromMetadata._visibility).to.equal('public');
+    expect(
+      response.body.map(
+        (r: { _fromMetadata: { _name: string } }) => r._fromMetadata._name,
+      ),
+    ).to.containDeep(['Reading List 1', 'Reading List 2']);
 
     // Test filtering by list kind
     const kindResponse = await client
@@ -1204,9 +1262,14 @@ describe('GET /list-entity-relations', () => {
       })
       .expect(200);
 
-    expect(kindResponse.body).to.be.Array().and.have.length(1);
+    expect(kindResponse.body).to.be.Array().and.have.length(2);
     expect(kindResponse.body[0]._fromMetadata._kind).to.equal('watch-list');
-    expect(kindResponse.body[0]._fromMetadata._name).to.equal('Watch List');
+    expect(kindResponse.body[1]._fromMetadata._kind).to.equal('watch-list');
+    expect(
+      kindResponse.body.map(
+        (r: { _fromMetadata: { _name: string } }) => r._fromMetadata._name,
+      ),
+    ).to.containDeep(['Watch List 1', 'Watch List 2']);
 
     // Test combining relation and list filters
     const combinedResponse = await client
@@ -1226,14 +1289,26 @@ describe('GET /list-entity-relations', () => {
       })
       .expect(200);
 
-    expect(combinedResponse.body).to.be.Array().and.have.length(1);
+    expect(combinedResponse.body).to.be.Array().and.have.length(2);
     expect(combinedResponse.body[0]._kind).to.equal('reading-list-book');
+    expect(combinedResponse.body[1]._kind).to.equal('reading-list-book');
     expect(combinedResponse.body[0]._fromMetadata._visibility).to.equal(
+      'public',
+    );
+    expect(combinedResponse.body[1]._fromMetadata._visibility).to.equal(
       'public',
     );
     expect(combinedResponse.body[0]._fromMetadata._kind).to.equal(
       'reading-list',
     );
+    expect(combinedResponse.body[1]._fromMetadata._kind).to.equal(
+      'reading-list',
+    );
+    expect(
+      combinedResponse.body.map(
+        (r: { _fromMetadata: { _name: string } }) => r._fromMetadata._name,
+      ),
+    ).to.containDeep(['Reading List 1', 'Reading List 2']);
   });
 
   it('pagination: with list property filtering', async () => {
