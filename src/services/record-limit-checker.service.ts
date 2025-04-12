@@ -1,5 +1,10 @@
 import { BindingKey, inject } from '@loopback/core';
-import { DefaultCrudRepository, Entity, Filter } from '@loopback/repository';
+import {
+  DefaultCrudRepository,
+  Entity,
+  Filter,
+  DataObject,
+} from '@loopback/repository';
 import _ from 'lodash';
 import { parse } from 'qs';
 import { FilterMatcher } from '../extensions/utils/filter-matcher';
@@ -227,7 +232,7 @@ export class RecordLimitCheckerService {
    */
   async checkLimits<T extends Entity>(
     modelClass: EntityModelClass,
-    newData: T,
+    newData: DataObject<T>,
     repository: DefaultCrudRepository<T, any, any>,
   ): Promise<void> {
     const limits = this.getLimitsForModel(modelClass) ?? [];
