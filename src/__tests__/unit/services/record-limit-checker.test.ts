@@ -231,6 +231,8 @@ describe('Utilities: RecordLimitChecker', () => {
       let capturedFilter: any;
       mockRepository.count = async (filter) => {
         capturedFilter = filter;
+        // Small delay to prevent race condition with filter capture
+        await new Promise((resolve) => setTimeout(resolve, 10));
 
         return { count: 0 };
       };
@@ -247,9 +249,6 @@ describe('Utilities: RecordLimitChecker', () => {
         mockRepository as DefaultCrudRepository<any, any, any>,
       );
 
-      // The audience set should create a filter that checks:
-      // 1. Record is active (validFrom/Until)
-      // 2. Record is public OR owned by the specified users
       expect(capturedFilter).to.Object();
     });
 
