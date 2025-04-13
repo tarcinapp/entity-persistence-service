@@ -18,24 +18,24 @@ import { EntityDbDataSource } from '../datasources';
 import {
   IdempotencyConfigurationReader,
   KindConfigurationReader,
-  RecordLimitsConfigurationReader,
-  SetFilterBuilder,
   UniquenessConfigurationReader,
   ValidfromConfigurationReader,
 } from '../extensions';
-import { FilterMatcher } from '../extensions/utils/filter-matcher';
 import { MongoPipelineHelper } from '../extensions/utils/mongo-pipeline-helper';
-import { Set } from '../extensions/utils/set-helper';
+import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
 import {
   ListEntityRelationRelations,
   ListToEntityRelation,
   HttpErrorResponse,
-  SingleError,
 } from '../models';
 import { EntityRepository } from './entity.repository';
 import { ListRepository } from './list.repository';
 import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
 import { LoggingService } from '../services/logging.service';
+import {
+  RecordLimitCheckerService,
+  RecordLimitCheckerBindings,
+} from '../services/record-limit-checker.service';
 
 export class ListEntityRelationRepository extends DefaultCrudRepository<
   ListToEntityRelation,
@@ -61,9 +61,6 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     @inject('extensions.validfrom.configurationreader')
     private validfromConfigReader: ValidfromConfigurationReader,
 
-    @inject('extensions.record-limits.configurationreader')
-    private recordLimitConfigReader: RecordLimitsConfigurationReader,
-
     @inject('extensions.uniqueness.configurationreader')
     private uniquenessConfigReader: UniquenessConfigurationReader,
 
@@ -78,6 +75,9 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
 
     @inject('services.MongoPipelineHelper')
     private mongoPipelineHelper: MongoPipelineHelper,
+
+    @inject(RecordLimitCheckerBindings.SERVICE)
+    private recordLimitChecker: RecordLimitCheckerService,
   ) {
     super(ListToEntityRelation, dataSource);
   }
@@ -510,162 +510,11 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
   }
 
   private async checkRecordLimits(newData: DataObject<ListToEntityRelation>) {
-    await Promise.all([
-      this.checkListEntityRelationLimits(newData),
-      this.checkListEntityCountLimits(newData),
-    ]);
-  }
-
-  private async checkListEntityRelationLimits(
-    newData: DataObject<ListToEntityRelation>,
-  ) {
-    // Check if record limits are configured for the given kind
-    if (
-      !this.recordLimitConfigReader.isRecordLimitsConfiguredForListEntityRelations(
-        newData._kind,
-      )
-    ) {
-      return;
-    }
-
-    // Retrieve the limit and set based on the environment configurations
-    const limit =
-      this.recordLimitConfigReader.getRecordLimitsCountForListEntityRelations(
-        newData._kind,
-      );
-    const set =
-      this.recordLimitConfigReader.getRecordLimitsSetForListEntityRelations(
-        newData._kind,
-      );
-
-    // Build the initial filter
-    let filterBuilder: FilterBuilder<ListToEntityRelation>;
-    if (
-      this.recordLimitConfigReader.isLimitConfiguredForKindForListEntityRelations(
-        newData._kind,
-      )
-    ) {
-      filterBuilder = new FilterBuilder<ListToEntityRelation>({
-        where: {
-          _kind: newData._kind,
-        },
-      });
-    } else {
-      filterBuilder = new FilterBuilder<ListToEntityRelation>();
-    }
-
-    let filter = filterBuilder.build();
-
-    // Apply set filter if configured
-    if (set) {
-      filter = new SetFilterBuilder<ListToEntityRelation>(set, {
-        filter: filter,
-      }).build();
-
-      // Check if the new record would match the set filter
-      if (!this.wouldRecordMatchFilter(newData, filter.where)) {
-        // Record wouldn't be part of the set, no need to check limits
-        return;
-      }
-    }
-
-    // Get the current count of records
-    const currentCount = await this.count(filter.where);
-
-    // Throw an error if the limit is exceeded
-    if (currentCount.count >= limit!) {
-      throw new HttpErrorResponse({
-        statusCode: 429,
-        name: 'LimitExceededError',
-        message: `Relation limit is exceeded.`,
-        code: 'RELATION-LIMIT-EXCEEDED',
-        status: 429,
-        details: [
-          new SingleError({
-            code: 'RELATION-LIMIT-EXCEEDED',
-            info: {
-              limit: limit,
-            },
-          }),
-        ],
-      });
-    }
-  }
-
-  /**
-   * Evaluates if a record would match a given filter
-   * @param record The record to evaluate
-   * @param whereClause The filter conditions to check
-   * @returns boolean indicating if the record would match the filter
-   */
-  private wouldRecordMatchFilter(
-    record: DataObject<ListToEntityRelation>,
-    whereClause: Where<ListToEntityRelation> | undefined,
-  ): boolean {
-    return FilterMatcher.matches(record, whereClause);
-  }
-
-  private async checkListEntityCountLimits(
-    newData: DataObject<ListToEntityRelation>,
-  ) {
-    // Ensure listId exists
-    if (!newData._listId) {
-      throw new HttpErrorResponse({
-        statusCode: 400,
-        name: 'BadRequestError',
-        message: 'List id is required.',
-        code: 'MISSING-LIST-ID',
-        status: 400,
-      });
-    }
-
-    const listId = newData._listId; // TypeScript now knows this is string
-
-    // Get the list to check its kind
-    const list = await this.listRepositoryGetter().then((repo) =>
-      repo.findById(listId),
+    await this.recordLimitChecker.checkLimits(
+      ListToEntityRelation,
+      newData,
+      this,
     );
-
-    // Check if entity count limits are configured for the list's kind
-    if (
-      !this.recordLimitConfigReader.isRecordLimitsConfiguredForListEntityCount(
-        list._kind,
-      )
-    ) {
-      return;
-    }
-
-    // Get the configured limit for this kind of list
-    const limit =
-      this.recordLimitConfigReader.getRecordLimitsCountForListEntityCount(
-        list._kind,
-      );
-
-    // Count existing relations for this list
-    const currentCount = await this.count({
-      _listId: listId,
-    });
-
-    // Throw an error if the limit would be exceeded
-    if (currentCount.count >= limit!) {
-      throw new HttpErrorResponse({
-        statusCode: 429,
-        name: 'LimitExceededError',
-        message: `List entity limit is exceeded. This list cannot contain more than ${limit} entities.`,
-        code: 'LIST-ENTITY-LIMIT-EXCEEDED',
-        status: 429,
-        details: [
-          new SingleError({
-            code: 'LIST-ENTITY-LIMIT-EXCEEDED',
-            info: {
-              limit: limit,
-              listId: listId,
-              listKind: list._kind,
-            },
-          }),
-        ],
-      });
-    }
   }
 
   async checkDependantsExistence(

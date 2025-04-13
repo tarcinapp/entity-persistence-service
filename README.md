@@ -538,25 +538,148 @@ These setting limits the number of record can be returned for each data model. I
 
 ### Record Limits
 
-These settings limit the number of records that can be created for entities and lists. There is no limit for reactions and tags. But you can configure daily or hourly limits from gateway.
-You can set these configurations per entity kind by adding `_for_{kindname}` suffix to the configuration name.
+The record limit mechanism allows you to control the number of records that can be created in the system. It provides a flexible way to define limits based on various criteria such as record type, kind, ownership, and state.
 
-| Configration                                           | Description                                                          | Example Value   |
-| ------------------------------------------------------ | -------------------------------------------------------------------- | --------------- |
-| **record_limit_entity_count**                          | Max entities that can be created.                                    | 100             |
-| **record_limit_entity_scope**                          | Scope where record limits will be applied.                           | `set[audience]` |
-| **record_limit_entity_count_for_{kind_name}**          | Max entities that can be created for a specific entity kind.         | 100             |
-| **record_limit_entity_scope_for_{kind_name}**          | Scope where record limits will be applied for a specific kind        | 50              |
-| **record_limit_list_count**                            | Max lists that can be created.                                       | 50              |
-| **record_limit_list_scope**                            | Scope where record limits will be applied.                           | `set[audience]` |
-| **record_limit_list_count_for_{kind_name}**            | Max lists that can be created for a specific list kind.              | 50              |
-| **record_limit_list_scope_for_{kind_name}**            | Scope where record limits will be applied for a specific kind        | 50              |
-| **record_limit_list_entity_count**                     | Max entities that can be added to a list.                            | 1000            |
-| **record_limit_list_entity_count_for_{kind_name}**     | Max entities that can be added to a list of a specific kind.         | 500             |
-| **record_limit_list_entity_rel_count**                 | Max number of relations that can be created between list and entity. | 50              |
-| **record_limit_list_entity_rel_scope**                 | Scope where record limits will be applied.                           | `set[audience]` |
-| **record_limit_list_entity_rel_count_for_{kind_name}** | Max number of relations that can be created for a specific kind.     | 50              |
-| **record_limit_list_entity_rel_scope_for_{kind_name}** | Scope where record limits will be applied for a specific kind        | 50              |
+#### Configuration Mechanism
+
+Record limits are configured through environment variables using a JSON-based notation. Each type of record (entity, list, relation, reactions) has its own configuration variable:
+
+| Environment Variable | Description |
+|---------------------|-------------|
+| `ENTITY_RECORD_LIMITS` | Configures limits for entity records |
+| `LIST_RECORD_LIMITS` | Configures limits for list records |
+| `RELATION_RECORD_LIMITS` | Configures limits for list-entity relations |
+| `ENTITY_REACTION_RECORD_LIMITS` | Configures limits for entity reactions |
+| `LIST_REACTION_RECORD_LIMITS` | Configures limits for list reactions |
+
+#### Configuration Schema
+
+Each environment variable accepts a JSON array of limit configurations:
+
+```json
+[
+  {
+    "scope": "string",  // Filter or set expression defining where the limit applies
+    "limit": number    // Maximum number of records allowed in this scope
+  }
+]
+```
+
+The `scope` field supports:
+- Empty string (`""`) for global limits
+- Filter expressions (`filter[where][field]=value`)
+- Set expressions (`set[setname]`)
+- Combined expressions using `&` operator
+
+#### Dynamic Value Interpolation
+
+The scope field supports interpolation of record values using `${fieldname}` syntax:
+- `${_kind}` - Record's kind
+- `${_ownerUsers}` - Record's owner users
+- `${_listId}` - Relation's list ID
+- Any other field from the record being created
+
+#### Common Use Cases and Examples
+
+1. **Global Record Limit**
+   ```bash
+   # Limit total entities to 1000
+   ENTITY_RECORD_LIMITS='[{"scope":"","limit":1000}]'
+   ```
+
+2. **Kind-Specific Limits**
+   ```bash
+   # Limit book entities to 100, movie entities to 50
+   ENTITY_RECORD_LIMITS='[
+     {"scope":"filter[where][_kind]=book","limit":100},
+     {"scope":"filter[where][_kind]=movie","limit":50}
+   ]'
+   ```
+
+3. **Active Records Limit**
+   ```bash
+   # Limit active entities to 50
+   ENTITY_RECORD_LIMITS='[{"scope":"set[actives]","limit":50}]'
+   ```
+
+4. **Per-User Limits**
+   ```bash
+   # Limit each user to 10 lists
+   LIST_RECORD_LIMITS='[{"scope":"set[owners][userIds]=${_ownerUsers}","limit":10}]'
+   ```
+
+5. **Combined Criteria**
+   ```bash
+   # Limit active public book entities to 20
+   ENTITY_RECORD_LIMITS='[{
+     "scope":"set[actives]&set[publics]&filter[where][_kind]=book",
+     "limit":20
+   }]'
+   ```
+
+6. **List-Entity Relations**
+   ```bash
+   # Limit each list to 100 entities
+   RELATION_RECORD_LIMITS='[{
+     "scope":"filter[where][_listId]=${_listId}",
+     "limit":100
+   }]'
+
+   # Different limits for different list kinds
+   RELATION_RECORD_LIMITS='[
+     {"scope":"filter[where][_listId]=${_listId}&filter[where][_kind]=reading-list","limit":10},
+     {"scope":"filter[where][_listId]=${_listId}&filter[where][_kind]=watch-list","limit":20}
+   ]'
+   ```
+
+7. **Multiple Limits**
+   ```bash
+   # Combined global and kind-specific limits
+   LIST_RECORD_LIMITS='[
+     {"scope":"","limit":1000},
+     {"scope":"filter[where][_kind]=featured","limit":10},
+     {"scope":"set[actives]&set[publics]","limit":50}
+   ]'
+   ```
+
+#### Filter Expressions
+
+Filter expressions use the Loopback query syntax:
+- Simple equality: `filter[where][field]=value`
+- Multiple conditions: `filter[where][field1]=value1&filter[where][field2]=value2`
+- Nested fields: `filter[where][field.nested]=value`
+
+#### Set Expressions
+
+Available sets for filtering:
+- `set[actives]` - Currently active records (based on validity dates)
+- `set[publics]` - Public records
+- `set[owners]` - Records by owner
+- `set[viewers]` - Records by viewer
+- `set[audience]` - Records by combined owners and viewers
+
+#### Error Handling
+
+When a limit is exceeded, the service returns a 429 error with details:
+```json
+{
+  "statusCode": 429,
+  "name": "LimitExceededError",
+  "message": "Record limit exceeded for [type]",
+  "code": "[TYPE]-LIMIT-EXCEEDED",
+  "status": 429,
+  "details": [{
+    "code": "[TYPE]-LIMIT-EXCEEDED",
+    "message": "Record limit exceeded for [type]",
+    "info": {
+      "limit": number,
+      "scope": "string"
+    }
+  }]
+}
+```
+
+Where `[type]` is one of: entity, list, relation, entity-reaction, list-reaction.
 
 ### Idempotency
 

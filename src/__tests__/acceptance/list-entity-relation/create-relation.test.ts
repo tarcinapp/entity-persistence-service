@@ -147,7 +147,7 @@ describe('POST /list-entity-relations', () => {
     appWithClient = await setupApplication({
       autoapprove_list_entity_relations: 'true',
       list_entity_rel_kinds: 'consists,references',
-      record_limit_list_entity_rel_count: '2',
+      RELATION_RECORD_LIMITS: '[{"scope":"","limit":2}]',
     });
     client = appWithClient.client;
 
@@ -195,21 +195,22 @@ describe('POST /list-entity-relations', () => {
       })
       .expect(429);
 
-    expect(response.body).to.have.property('error');
-    expect(response.body.error).to.have.property('name', 'LimitExceededError');
-    expect(response.body.error).to.have.property('statusCode', 429);
-    expect(response.body.error).to.have.property(
-      'code',
-      'RELATION-LIMIT-EXCEEDED',
-    );
-    expect(response.body.error).to.have.property(
-      'message',
-      'Relation limit is exceeded.',
-    );
-    expect(response.body.error).to.have.property('details').which.is.an.Array();
-    expect(response.body.error.details[0]).to.have.properties({
+    expect(response.body.error).to.containDeep({
+      statusCode: 429,
+      name: 'LimitExceededError',
+      message: 'Record limit exceeded for relation',
       code: 'RELATION-LIMIT-EXCEEDED',
-      info: { limit: 2 },
+      status: 429,
+      details: [
+        {
+          code: 'RELATION-LIMIT-EXCEEDED',
+          message: 'Record limit exceeded for relation',
+          info: {
+            limit: 2,
+            scope: '',
+          },
+        },
+      ],
     });
   });
 
@@ -217,8 +218,8 @@ describe('POST /list-entity-relations', () => {
     appWithClient = await setupApplication({
       autoapprove_list_entity_relations: 'true',
       list_entity_rel_kinds: 'consists,references',
-      record_limit_list_entity_rel_count_for_consists: '1',
-      record_limit_list_entity_rel_count_for_references: '2',
+      RELATION_RECORD_LIMITS:
+        '[{"scope":"filter[where][_kind]=consists","limit":1},{"scope":"filter[where][_kind]=references","limit":2}]',
     });
     client = appWithClient.client;
 
@@ -259,26 +260,22 @@ describe('POST /list-entity-relations', () => {
       })
       .expect(429);
 
-    expect(consistsResponse.body).to.have.property('error');
-    expect(consistsResponse.body.error).to.have.property(
-      'name',
-      'LimitExceededError',
-    );
-    expect(consistsResponse.body.error).to.have.property('statusCode', 429);
-    expect(consistsResponse.body.error).to.have.property(
-      'code',
-      'RELATION-LIMIT-EXCEEDED',
-    );
-    expect(consistsResponse.body.error).to.have.property(
-      'message',
-      'Relation limit is exceeded.',
-    );
-    expect(consistsResponse.body.error)
-      .to.have.property('details')
-      .which.is.an.Array();
-    expect(consistsResponse.body.error.details[0]).to.have.properties({
+    expect(consistsResponse.body.error).to.containDeep({
+      statusCode: 429,
+      name: 'LimitExceededError',
+      message: 'Record limit exceeded for relation',
       code: 'RELATION-LIMIT-EXCEEDED',
-      info: { limit: 1 },
+      status: 429,
+      details: [
+        {
+          code: 'RELATION-LIMIT-EXCEEDED',
+          message: 'Record limit exceeded for relation',
+          info: {
+            limit: 1,
+            scope: 'filter[where][_kind]=consists',
+          },
+        },
+      ],
     });
 
     // Create first 'references' relation - should succeed
@@ -311,26 +308,22 @@ describe('POST /list-entity-relations', () => {
       })
       .expect(429);
 
-    expect(referencesResponse.body).to.have.property('error');
-    expect(referencesResponse.body.error).to.have.property(
-      'name',
-      'LimitExceededError',
-    );
-    expect(referencesResponse.body.error).to.have.property('statusCode', 429);
-    expect(referencesResponse.body.error).to.have.property(
-      'code',
-      'RELATION-LIMIT-EXCEEDED',
-    );
-    expect(referencesResponse.body.error).to.have.property(
-      'message',
-      'Relation limit is exceeded.',
-    );
-    expect(referencesResponse.body.error)
-      .to.have.property('details')
-      .which.is.an.Array();
-    expect(referencesResponse.body.error.details[0]).to.have.properties({
+    expect(referencesResponse.body.error).to.containDeep({
+      statusCode: 429,
+      name: 'LimitExceededError',
+      message: 'Record limit exceeded for relation',
       code: 'RELATION-LIMIT-EXCEEDED',
-      info: { limit: 2 },
+      status: 429,
+      details: [
+        {
+          code: 'RELATION-LIMIT-EXCEEDED',
+          message: 'Record limit exceeded for relation',
+          info: {
+            limit: 2,
+            scope: 'filter[where][_kind]=references',
+          },
+        },
+      ],
     });
   });
 
@@ -432,7 +425,8 @@ describe('POST /list-entity-relations', () => {
     appWithClient = await setupApplication({
       autoapprove_list_entity_relations: 'true',
       list_entity_rel_kinds: 'consists,references',
-      record_limit_list_entity_count: '2',
+      RELATION_RECORD_LIMITS:
+        '[{"scope":"filter[where][_listId]=${_listId}","limit":2}]',
     });
     client = appWithClient.client;
 
@@ -480,25 +474,22 @@ describe('POST /list-entity-relations', () => {
       })
       .expect(429);
 
-    expect(response.body).to.have.property('error');
-    expect(response.body.error).to.have.property('name', 'LimitExceededError');
-    expect(response.body.error).to.have.property('statusCode', 429);
-    expect(response.body.error).to.have.property(
-      'code',
-      'LIST-ENTITY-LIMIT-EXCEEDED',
-    );
-    expect(response.body.error).to.have.property(
-      'message',
-      'List entity limit is exceeded. This list cannot contain more than 2 entities.',
-    );
-    expect(response.body.error).to.have.property('details').which.is.an.Array();
-    expect(response.body.error.details[0]).to.have.properties({
-      code: 'LIST-ENTITY-LIMIT-EXCEEDED',
-      info: {
-        limit: 2,
-        listId: list._id,
-        listKind: 'list',
-      },
+    expect(response.body.error).to.containDeep({
+      statusCode: 429,
+      name: 'LimitExceededError',
+      message: 'Record limit exceeded for relation',
+      code: 'RELATION-LIMIT-EXCEEDED',
+      status: 429,
+      details: [
+        {
+          code: 'RELATION-LIMIT-EXCEEDED',
+          message: 'Record limit exceeded for relation',
+          info: {
+            limit: 2,
+            scope: `filter[where][_listId]=${list._id}`,
+          },
+        },
+      ],
     });
   });
 
@@ -506,8 +497,8 @@ describe('POST /list-entity-relations', () => {
     appWithClient = await setupApplication({
       autoapprove_list_entity_relations: 'true',
       list_kinds: 'reading-list,watch-list',
-      'record_limit_list_entity_count_for_reading-list': '1',
-      'record_limit_list_entity_count_for_watch-list': '2',
+      RELATION_RECORD_LIMITS:
+        '[{"scope":"filter[where][_listId]=${_listId}&filter[where][_kind]=reading-list","limit":1},{"scope":"filter[where][_listId]=${_listId}&filter[where][_kind]=watch-list","limit":2}]',
     });
     client = appWithClient.client;
 
@@ -558,30 +549,22 @@ describe('POST /list-entity-relations', () => {
       })
       .expect(429);
 
-    expect(readingListResponse.body).to.have.property('error');
-    expect(readingListResponse.body.error).to.have.property(
-      'name',
-      'LimitExceededError',
-    );
-    expect(readingListResponse.body.error).to.have.property('statusCode', 429);
-    expect(readingListResponse.body.error).to.have.property(
-      'code',
-      'LIST-ENTITY-LIMIT-EXCEEDED',
-    );
-    expect(readingListResponse.body.error).to.have.property(
-      'message',
-      'List entity limit is exceeded. This list cannot contain more than 1 entities.',
-    );
-    expect(readingListResponse.body.error)
-      .to.have.property('details')
-      .which.is.an.Array();
-    expect(readingListResponse.body.error.details[0]).to.have.properties({
-      code: 'LIST-ENTITY-LIMIT-EXCEEDED',
-      info: {
-        limit: 1,
-        listId: readingList._id,
-        listKind: 'reading-list',
-      },
+    expect(readingListResponse.body.error).to.containDeep({
+      statusCode: 429,
+      name: 'LimitExceededError',
+      message: 'Record limit exceeded for relation',
+      code: 'RELATION-LIMIT-EXCEEDED',
+      status: 429,
+      details: [
+        {
+          code: 'RELATION-LIMIT-EXCEEDED',
+          message: 'Record limit exceeded for relation',
+          info: {
+            limit: 1,
+            scope: `filter[where][_listId]=${readingList._id}&filter[where][_kind]=reading-list`,
+          },
+        },
+      ],
     });
 
     // Test watch-list (limit: 2)
@@ -612,30 +595,22 @@ describe('POST /list-entity-relations', () => {
       })
       .expect(429);
 
-    expect(watchListResponse.body).to.have.property('error');
-    expect(watchListResponse.body.error).to.have.property(
-      'name',
-      'LimitExceededError',
-    );
-    expect(watchListResponse.body.error).to.have.property('statusCode', 429);
-    expect(watchListResponse.body.error).to.have.property(
-      'code',
-      'LIST-ENTITY-LIMIT-EXCEEDED',
-    );
-    expect(watchListResponse.body.error).to.have.property(
-      'message',
-      'List entity limit is exceeded. This list cannot contain more than 2 entities.',
-    );
-    expect(watchListResponse.body.error)
-      .to.have.property('details')
-      .which.is.an.Array();
-    expect(watchListResponse.body.error.details[0]).to.have.properties({
-      code: 'LIST-ENTITY-LIMIT-EXCEEDED',
-      info: {
-        limit: 2,
-        listId: watchList._id,
-        listKind: 'watch-list',
-      },
+    expect(watchListResponse.body.error).to.containDeep({
+      statusCode: 429,
+      name: 'LimitExceededError',
+      message: 'Record limit exceeded for relation',
+      code: 'RELATION-LIMIT-EXCEEDED',
+      status: 429,
+      details: [
+        {
+          code: 'RELATION-LIMIT-EXCEEDED',
+          message: 'Record limit exceeded for relation',
+          info: {
+            limit: 2,
+            scope: `filter[where][_listId]=${watchList._id}&filter[where][_kind]=watch-list`,
+          },
+        },
+      ],
     });
   });
 });
