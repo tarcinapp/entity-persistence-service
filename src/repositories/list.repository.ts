@@ -20,7 +20,6 @@ import { EntityDbDataSource } from '../datasources';
 import {
   IdempotencyConfigurationReader,
   KindConfigurationReader,
-  RecordLimitsConfigurationReader,
   UniquenessConfigurationReader,
   ValidfromConfigurationReader,
   VisibilityConfigurationReader,
@@ -32,14 +31,12 @@ import {
   HttpErrorResponse,
   ListReactions,
   ListRelations,
-  SingleError,
 } from '../models';
 import { CustomEntityThroughListRepository } from './custom-entity-through-list.repository';
 import { EntityRepository } from './entity.repository';
 import { ListEntityRelationRepository } from './list-entity-relation.repository';
 import { ListReactionsRepository } from './list-reactions.repository';
 import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
-import { FilterMatcher } from '../extensions/utils/filter-matcher';
 import {
   LookupBindings,
   LookupHelper,
@@ -47,6 +44,10 @@ import {
 import { SetFilterBuilder } from '../extensions/utils/set-helper';
 import { UnmodifiableCommonFields } from '../models/base-types/unmodifiable-common-fields';
 import { LoggingService } from '../services/logging.service';
+import {
+  RecordLimitCheckerService,
+  RecordLimitCheckerBindings,
+} from '../services/record-limit-checker.service';
 
 export class ListRepository extends DefaultCrudRepository<
   List,
@@ -82,9 +83,6 @@ export class ListRepository extends DefaultCrudRepository<
     @inject('extensions.uniqueness.configurationreader')
     private uniquenessConfigReader: UniquenessConfigurationReader,
 
-    @inject('extensions.record-limits.configurationreader')
-    private recordLimitConfigReader: RecordLimitsConfigurationReader,
-
     @inject('extensions.kind.configurationreader')
     private kindConfigReader: KindConfigurationReader,
 
@@ -105,6 +103,9 @@ export class ListRepository extends DefaultCrudRepository<
 
     @inject('services.LoggingService')
     private loggingService: LoggingService,
+
+    @inject(RecordLimitCheckerBindings.SERVICE)
+    private recordLimitChecker: RecordLimitCheckerService,
   ) {
     super(List, dataSource);
 
@@ -671,86 +672,7 @@ export class ListRepository extends DefaultCrudRepository<
   }
 
   private async checkRecordLimits(newData: DataObject<List>) {
-    if (
-      !this.recordLimitConfigReader.isRecordLimitsConfiguredForLists(
-        newData._kind,
-      )
-    ) {
-      return;
-    }
-
-    const limit = this.recordLimitConfigReader.getRecordLimitsCountForLists(
-      newData._kind,
-    );
-    const set = this.recordLimitConfigReader.getRecordLimitsSetForLists(
-      newData._ownerUsers,
-      newData._ownerGroups,
-      newData._kind,
-    );
-
-    let filterBuilder: FilterBuilder<List>;
-
-    if (
-      this.recordLimitConfigReader.isLimitConfiguredForKindForLists(
-        newData._kind,
-      )
-    ) {
-      filterBuilder = new FilterBuilder<List>({
-        where: {
-          _kind: newData._kind,
-        },
-      });
-    } else {
-      filterBuilder = new FilterBuilder<List>();
-    }
-
-    let filter = filterBuilder.build();
-
-    // add set filter if configured
-    if (set) {
-      filter = new SetFilterBuilder<List>(set, {
-        filter: filter,
-      }).build();
-
-      // Check if the new record would match the set filter
-      if (!this.wouldRecordMatchFilter(newData, filter.where)) {
-        // Record wouldn't be part of the set, no need to check limits
-        return;
-      }
-    }
-
-    const currentCount = await this.count(filter.where);
-
-    if (currentCount.count >= limit!) {
-      throw new HttpErrorResponse({
-        statusCode: 429,
-        name: 'LimitExceededError',
-        message: `List limit is exceeded.`,
-        code: 'LIST-LIMIT-EXCEEDED',
-        status: 429,
-        details: [
-          new SingleError({
-            code: 'LIST-LIMIT-EXCEEDED',
-            info: {
-              limit: limit,
-            },
-          }),
-        ],
-      });
-    }
-  }
-
-  /**
-   * Evaluates if a record would match a given filter
-   * @param record The record to evaluate
-   * @param whereClause The filter conditions to check
-   * @returns boolean indicating if the record would match the filter
-   */
-  private wouldRecordMatchFilter(
-    record: DataObject<List>,
-    whereClause: Where<List> | undefined,
-  ): boolean {
-    return FilterMatcher.matches(record, whereClause);
+    await this.recordLimitChecker.checkLimits(List, newData, this);
   }
 
   private generateSlug(data: DataObject<List>) {

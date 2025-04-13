@@ -587,7 +587,7 @@ describe('POST /lists', () => {
     // Set up the environment variables with record limit
     appWithClient = await setupApplication({
       list_kinds: 'book-list',
-      record_limit_list_count: '2', // Only allow 2 records total
+      LIST_RECORD_LIMITS: '[{"scope":"","limit":2}]',
     });
     ({ client } = appWithClient);
 
@@ -621,14 +621,16 @@ describe('POST /lists', () => {
     expect(errorResponse.body.error).to.containDeep({
       statusCode: 429,
       name: 'LimitExceededError',
-      message: 'List limit is exceeded.',
+      message: 'Record limit exceeded for list',
       code: 'LIST-LIMIT-EXCEEDED',
       status: 429,
       details: [
         {
           code: 'LIST-LIMIT-EXCEEDED',
+          message: 'Record limit exceeded for list',
           info: {
             limit: 2,
+            scope: '',
           },
         },
       ],
@@ -639,7 +641,8 @@ describe('POST /lists', () => {
     // Set up the environment variables with kind-specific record limit
     appWithClient = await setupApplication({
       list_kinds: 'book-list,featured-list',
-      'record_limit_list_count_for_book-list': '1', // Only allow 1 book-list
+      LIST_RECORD_LIMITS:
+        '[{"scope":"filter[where][_kind]=book-list","limit":1}]', // Only allow 1 book-list
     });
     ({ client } = appWithClient);
 
@@ -673,14 +676,16 @@ describe('POST /lists', () => {
     expect(errorResponse.body.error).to.containDeep({
       statusCode: 429,
       name: 'LimitExceededError',
-      message: 'List limit is exceeded.',
+      message: 'Record limit exceeded for list',
       code: 'LIST-LIMIT-EXCEEDED',
       status: 429,
       details: [
         {
           code: 'LIST-LIMIT-EXCEEDED',
+          message: 'Record limit exceeded for list',
           info: {
             limit: 1,
+            scope: 'filter[where][_kind]=book-list',
           },
         },
       ],
@@ -691,8 +696,7 @@ describe('POST /lists', () => {
     // Set up the environment variables with record set limit for active records
     appWithClient = await setupApplication({
       list_kinds: 'book-list',
-      record_limit_list_count: '2', // Allow 2 records total and active at a time
-      record_limit_list_scope: 'set[actives]', // Limit applies to active records
+      LIST_RECORD_LIMITS: '[{"scope":"set[actives]","limit":2}]', // Allow 2 active records at a time
     });
     ({ client } = appWithClient);
 
@@ -748,14 +752,16 @@ describe('POST /lists', () => {
     expect(errorResponse.body.error).to.containDeep({
       statusCode: 429,
       name: 'LimitExceededError',
-      message: 'List limit is exceeded.',
+      message: 'Record limit exceeded for list',
       code: 'LIST-LIMIT-EXCEEDED',
       status: 429,
       details: [
         {
           code: 'LIST-LIMIT-EXCEEDED',
+          message: 'Record limit exceeded for list',
           info: {
             limit: 2,
+            scope: 'set[actives]',
           },
         },
       ],
@@ -766,8 +772,8 @@ describe('POST /lists', () => {
     // Set up the environment variables with kind-specific record set limit
     appWithClient = await setupApplication({
       list_kinds: 'book-list,featured-list',
-      'record_limit_list_scope_for_book-list': 'set[actives]',
-      'record_limit_list_count_for_book-list': '1', // Only 1 active book-list
+      LIST_RECORD_LIMITS:
+        '[{"scope":"set[actives]&filter[where][_kind]=book-list","limit":1}]', // Only 1 active book-list
     });
     ({ client } = appWithClient);
 
@@ -813,14 +819,16 @@ describe('POST /lists', () => {
     expect(errorResponse.body.error).to.containDeep({
       statusCode: 429,
       name: 'LimitExceededError',
-      message: 'List limit is exceeded.',
+      message: 'Record limit exceeded for list',
       code: 'LIST-LIMIT-EXCEEDED',
       status: 429,
       details: [
         {
           code: 'LIST-LIMIT-EXCEEDED',
+          message: 'Record limit exceeded for list',
           info: {
             limit: 1,
+            scope: 'set[actives]&filter[where][_kind]=book-list',
           },
         },
       ],
@@ -831,8 +839,7 @@ describe('POST /lists', () => {
     // Set up the environment variables with record set limit for both active and public records
     appWithClient = await setupApplication({
       list_kinds: 'book-list',
-      record_limit_list_count: '2', // Allow 2 records total that are both active and public
-      record_limit_list_scope: 'set[actives]&set[publics]', // Limit applies to records that are both active and public
+      LIST_RECORD_LIMITS: '[{"scope":"set[actives]&set[publics]","limit":2}]', // Allow 2 records that are both active and public
     });
     ({ client } = appWithClient);
 
@@ -903,14 +910,16 @@ describe('POST /lists', () => {
     expect(errorResponse.body.error).to.containDeep({
       statusCode: 429,
       name: 'LimitExceededError',
-      message: 'List limit is exceeded.',
+      message: 'Record limit exceeded for list',
       code: 'LIST-LIMIT-EXCEEDED',
       status: 429,
       details: [
         {
           code: 'LIST-LIMIT-EXCEEDED',
+          message: 'Record limit exceeded for list',
           info: {
             limit: 2,
+            scope: 'set[actives]&set[publics]',
           },
         },
       ],
@@ -921,8 +930,8 @@ describe('POST /lists', () => {
     // Set up the environment variables with record set limit for owners
     appWithClient = await setupApplication({
       list_kinds: 'book-list',
-      record_limit_list_count: '2', // Allow 2 records per user
-      record_limit_list_scope: 'set[owners]', // Limit applies per owner
+      LIST_RECORD_LIMITS:
+        '[{"scope":"set[owners][userIds]=${_ownerUsers}","limit":2}]', // Allow 2 records per user
     });
     ({ client } = appWithClient);
 
@@ -970,14 +979,16 @@ describe('POST /lists', () => {
     expect(errorResponse.body.error).to.containDeep({
       statusCode: 429,
       name: 'LimitExceededError',
-      message: 'List limit is exceeded.',
+      message: 'Record limit exceeded for list',
       code: 'LIST-LIMIT-EXCEEDED',
       status: 429,
       details: [
         {
           code: 'LIST-LIMIT-EXCEEDED',
+          message: 'Record limit exceeded for list',
           info: {
             limit: 2,
+            scope: 'set[owners][userIds]=user-123,user-789',
           },
         },
       ],
@@ -998,14 +1009,16 @@ describe('POST /lists', () => {
     expect(secondErrorResponse.body.error).to.containDeep({
       statusCode: 429,
       name: 'LimitExceededError',
-      message: 'List limit is exceeded.',
+      message: 'Record limit exceeded for list',
       code: 'LIST-LIMIT-EXCEEDED',
       status: 429,
       details: [
         {
           code: 'LIST-LIMIT-EXCEEDED',
+          message: 'Record limit exceeded for list',
           info: {
             limit: 2,
+            scope: 'set[owners][userIds]=user-123',
           },
         },
       ],

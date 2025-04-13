@@ -7,11 +7,10 @@ import {
 } from './test-helper.repository';
 import type { EntityPersistenceApplication } from '../../..';
 import { LookupHelper } from '../../../extensions/utils/lookup-helper';
-import { HttpErrorResponse } from '../../../models';
+import { HttpErrorResponse, SingleError, List } from '../../../models';
 import type {
   GenericEntity,
   GenericEntityRelations,
-  List,
   ListRelations,
 } from '../../../models';
 import {
@@ -22,6 +21,7 @@ import {
 } from '../../../repositories';
 import { ListRepository } from '../../../repositories/list.repository';
 import { LoggingService } from '../../../services/logging.service';
+import { RecordLimitCheckerService } from '../../../services/record-limit-checker.service';
 
 describe('ListRepository', () => {
   let app: EntityPersistenceApplication;
@@ -45,6 +45,9 @@ describe('ListRepository', () => {
     );
     const listRepoStub = sinon.createStubInstance(ListRepository);
     const loggingServiceStub = sinon.createStubInstance(LoggingService);
+    const recordLimitCheckerStub = sinon.createStubInstance(
+      RecordLimitCheckerService,
+    );
 
     // Create a mock lookup helper
     const mockLookupHelper = sinon.createStubInstance(LookupHelper);
@@ -71,7 +74,6 @@ describe('ListRepository', () => {
       Getter.fromValue(customListEntityRelRepoStub),
       Getter.fromValue(listRepoStub),
       testSetup.configReaders.uniquenessConfigReader,
-      testSetup.configReaders.recordLimitConfigReader,
       testSetup.configReaders.kindConfigReader,
       testSetup.configReaders.visibilityConfigReader,
       testSetup.configReaders.validfromConfigReader,
@@ -79,6 +81,7 @@ describe('ListRepository', () => {
       testSetup.configReaders.responseLimitConfigReader,
       mockLookupHelper,
       loggingServiceStub,
+      recordLimitCheckerStub,
     );
   });
 
@@ -282,11 +285,8 @@ describe('ListRepository', () => {
           )
           .returns(false);
         recordLimitStub = sinon
-          .stub(
-            repository['recordLimitConfigReader'],
-            'isRecordLimitsConfiguredForLists',
-          )
-          .returns(false);
+          .stub(repository['recordLimitChecker'], 'checkLimits')
+          .resolves();
       });
 
       it('should enrich list with managed fields', async () => {
@@ -381,32 +381,40 @@ describe('ListRepository', () => {
 
       it('should throw error when record limit is exceeded', async () => {
         const inputData = { _kind: 'test-kind', _name: 'test' };
-        const limit = 5;
 
-        recordLimitStub.returns(true);
-        sinon
-          .stub(
-            repository['recordLimitConfigReader'],
-            'getRecordLimitsCountForLists',
-          )
-          .returns(limit);
-        sinon
-          .stub(
-            Object.getPrototypeOf(Object.getPrototypeOf(repository)),
-            'count',
-          )
-          .resolves({ count: limit });
+        // Override the default stub
+        recordLimitStub.rejects(
+          new HttpErrorResponse({
+            statusCode: 429,
+            name: 'LimitExceededError',
+            message: 'Record limit exceeded for list',
+            code: 'LIST-LIMIT-EXCEEDED',
+            status: 429,
+            details: [
+              new SingleError({
+                code: 'LIST-LIMIT-EXCEEDED',
+                message: 'Record limit exceeded for list',
+                info: {
+                  limit: 5,
+                  scope: '{}',
+                },
+              }),
+            ],
+          }),
+        );
 
         try {
           await repository.create(inputData);
           throw new Error('Expected error was not thrown');
         } catch (error) {
           expect(error).to.be.instanceOf(HttpErrorResponse);
-          expect(error.message).to.match(/List limit is exceeded/);
-          expect(error.details?.[0].info.limit).to.equal(limit);
+          expect(error.message).to.match(/Record limit exceeded for list/);
+          expect(error.details?.[0].info.limit).to.equal(5);
         }
 
-        expect(superCreateStub.called).to.be.false();
+        expect(recordLimitStub.calledOnce).to.be.true();
+        expect(recordLimitStub.firstCall.args[0]).to.equal(List);
+        expect(recordLimitStub.firstCall.args[1]).to.deepEqual(inputData);
       });
 
       it('should generate slug from name if not provided', async () => {
