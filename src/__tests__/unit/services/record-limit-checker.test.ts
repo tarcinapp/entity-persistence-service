@@ -232,7 +232,7 @@ describe('Utilities: RecordLimitChecker', () => {
       mockRepository.count = async (filter) => {
         capturedFilter = filter;
         // Small delay to prevent race condition with filter capture
-        await new Promise((resolve) => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 50));
 
         return { count: 0 };
       };
