@@ -20,6 +20,7 @@ import {
 } from '../../../repositories';
 import { EntityRepository } from '../../../repositories/entity.repository';
 import { LoggingService } from '../../../services/logging.service';
+import { RecordLimitCheckerService } from '../../../services/record-limit-checker.service';
 
 describe('EntityRepository', () => {
   let app: EntityPersistenceApplication;
@@ -39,6 +40,9 @@ describe('EntityRepository', () => {
     );
     const listRepoStub = sinon.createStubInstance(ListRepository);
     const loggingServiceStub = sinon.createStubInstance(LoggingService);
+    const recordLimitCheckerStub = sinon.createStubInstance(
+      RecordLimitCheckerService,
+    );
 
     // Create a mock lookup helper
     const mockLookupHelper = sinon.createStubInstance(LookupHelper);
@@ -61,7 +65,6 @@ describe('EntityRepository', () => {
       Getter.fromValue(reactionsRepoStub),
       Getter.fromValue(listEntityRelationRepoStub),
       testSetup.configReaders.uniquenessConfigReader,
-      testSetup.configReaders.recordLimitConfigReader,
       testSetup.configReaders.kindConfigReader,
       testSetup.configReaders.visibilityConfigReader,
       testSetup.configReaders.validfromConfigReader,
@@ -69,6 +72,7 @@ describe('EntityRepository', () => {
       testSetup.configReaders.responseLimitConfigReader,
       mockLookupHelper,
       loggingServiceStub,
+      recordLimitCheckerStub,
     );
   });
 
@@ -293,11 +297,8 @@ describe('EntityRepository', () => {
           )
           .returns(false);
         recordLimitStub = sinon
-          .stub(
-            repository['recordLimitConfigReader'],
-            'isRecordLimitsConfiguredForEntities',
-          )
-          .returns(false);
+          .stub(repository['recordLimitChecker'], 'checkLimits')
+          .resolves();
       });
 
       it('should enrich entity with managed fields', async () => {
@@ -433,33 +434,23 @@ describe('EntityRepository', () => {
       it('should throw error when record limit is exceeded', async () => {
         const inputData = { _name: 'test', _kind: 'test-kind' };
 
-        // Override the default stubs
-        recordLimitStub.returns(true);
-        sinon
-          .stub(
-            repository['recordLimitConfigReader'],
-            'getRecordLimitsCountForEntities',
-          )
-          .returns(5);
-        sinon
-          .stub(
-            repository['recordLimitConfigReader'],
-            'isLimitConfiguredForKindForEntities',
-          )
-          .returns(true);
-        sinon
-          .stub(
-            Object.getPrototypeOf(Object.getPrototypeOf(repository)),
-            'count',
-          )
-          .resolves({ count: 5 });
+        // Override the default stub
+        recordLimitStub.rejects(
+          new HttpErrorResponse({
+            statusCode: 429,
+            name: 'LimitExceededError',
+            message: 'Record limit exceeded for entity',
+            code: 'ENTITY-LIMIT-EXCEEDED',
+            status: 429,
+          }),
+        );
 
         try {
           await repository.create(inputData);
           throw new Error('Expected error was not thrown');
         } catch (error) {
           expect(error).to.be.instanceOf(HttpErrorResponse);
-          expect(error.message).to.match(/Entity limit is exceeded/);
+          expect(error.message).to.match(/Record limit exceeded for entity/);
         }
       });
 

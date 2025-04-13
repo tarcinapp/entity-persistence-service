@@ -606,7 +606,7 @@ describe('POST /entities', () => {
     // Set up the environment variables with record limit
     appWithClient = await setupApplication({
       entity_kinds: 'book',
-      record_limit_entity_count: '2', // Only allow 2 records total
+      ENTITY_RECORD_LIMITS: '[{"scope":"","limit":2}]',
     });
     ({ client } = appWithClient);
 
@@ -640,7 +640,7 @@ describe('POST /entities', () => {
     expect(errorResponse.body.error).to.containDeep({
       statusCode: 429,
       name: 'LimitExceededError',
-      message: 'Entity limit is exceeded.',
+      message: 'Record limit exceeded for entity',
       code: 'ENTITY-LIMIT-EXCEEDED',
       status: 429,
       details: [
@@ -648,6 +648,7 @@ describe('POST /entities', () => {
           code: 'ENTITY-LIMIT-EXCEEDED',
           info: {
             limit: 2,
+            scope: '',
           },
         },
       ],

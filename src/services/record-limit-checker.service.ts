@@ -37,7 +37,7 @@ export const RecordLimitCheckerBindings = {
   SERVICE: BindingKey.create<RecordLimitCheckerService>(
     'services.record-limit-checker',
   ),
-};
+} as const;
 
 // Type for model class that extends Entity and has static modelName
 export type EntityModelClass = (new (...args: any[]) => Entity) & {

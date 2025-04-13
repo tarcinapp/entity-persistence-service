@@ -19,7 +19,6 @@ import { EntityDbDataSource } from '../datasources';
 import {
   IdempotencyConfigurationReader,
   KindConfigurationReader,
-  RecordLimitsConfigurationReader,
   UniquenessConfigurationReader,
   ValidfromConfigurationReader,
   VisibilityConfigurationReader,
@@ -31,7 +30,6 @@ import { ListEntityRelationRepository } from './list-entity-relation.repository'
 import { ListRepository } from './list.repository';
 
 import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
-import { FilterMatcher } from '../extensions/utils/filter-matcher';
 import {
   LookupHelper,
   LookupBindings,
@@ -42,10 +40,10 @@ import {
   GenericEntityRelations,
   HttpErrorResponse,
   EntityReactions,
-  SingleError,
 } from '../models';
 import { UnmodifiableCommonFields } from '../models/base-types/unmodifiable-common-fields';
 import { LoggingService } from '../services/logging.service';
+import { RecordLimitCheckerService } from '../services/record-limit-checker.service';
 
 export class EntityRepository extends DefaultCrudRepository<
   GenericEntity,
@@ -77,9 +75,6 @@ export class EntityRepository extends DefaultCrudRepository<
     @inject('extensions.uniqueness.configurationreader')
     private uniquenessConfigReader: UniquenessConfigurationReader,
 
-    @inject('extensions.record-limits.configurationreader')
-    private recordLimitConfigReader: RecordLimitsConfigurationReader,
-
     @inject('extensions.kind.configurationreader')
     private kindConfigReader: KindConfigurationReader,
 
@@ -100,6 +95,9 @@ export class EntityRepository extends DefaultCrudRepository<
 
     @inject('services.LoggingService')
     private loggingService: LoggingService,
+
+    @inject('services.record-limit-checker')
+    private recordLimitChecker: RecordLimitCheckerService,
   ) {
     super(GenericEntity, dataSource);
 
@@ -398,7 +396,7 @@ export class EntityRepository extends DefaultCrudRepository<
 
     return Promise.all([
       this.checkUniquenessForCreate(data),
-      this.checkRecordLimits(data),
+      this.recordLimitChecker.checkLimits(GenericEntity, data, this),
     ]).then(() => {
       return data;
     });
@@ -423,8 +421,13 @@ export class EntityRepository extends DefaultCrudRepository<
     }
 
     const uniquenessCheck = this.checkUniquenessForUpdate(id, data);
+    const limitCheck = this.recordLimitChecker.checkLimits(
+      GenericEntity,
+      data,
+      this,
+    );
 
-    await uniquenessCheck;
+    await Promise.all([uniquenessCheck, limitCheck]);
 
     return data;
   }
@@ -452,11 +455,16 @@ export class EntityRepository extends DefaultCrudRepository<
       data,
     );
     const uniquenessCheck = this.checkUniquenessForUpdate(id, mergedData);
+    const limitCheck = this.recordLimitChecker.checkLimits(
+      GenericEntity,
+      mergedData,
+      this,
+    );
 
     this.generateSlug(data);
     this.setCountFields(data);
 
-    await uniquenessCheck;
+    await Promise.all([uniquenessCheck, limitCheck]);
 
     return data;
   }
@@ -580,86 +588,17 @@ export class EntityRepository extends DefaultCrudRepository<
       });
   }
 
-  private async checkRecordLimits(newData: DataObject<GenericEntity>) {
-    if (
-      !this.recordLimitConfigReader.isRecordLimitsConfiguredForEntities(
-        newData._kind,
-      )
-    ) {
-      return;
-    }
-
-    const limit = this.recordLimitConfigReader.getRecordLimitsCountForEntities(
-      newData._kind,
-    );
-    const set = this.recordLimitConfigReader.getRecordLimitsSetForEntities(
-      newData._ownerUsers,
-      newData._ownerGroups,
-      newData._kind,
-    );
-    let filterBuilder: FilterBuilder<GenericEntity>;
-
-    if (
-      this.recordLimitConfigReader.isLimitConfiguredForKindForEntities(
-        newData._kind,
-      )
-    ) {
-      filterBuilder = new FilterBuilder<GenericEntity>({
-        where: {
-          _kind: newData._kind,
-        },
-      });
-    } else {
-      filterBuilder = new FilterBuilder<GenericEntity>();
-    }
-
-    let filter = filterBuilder.build();
-
-    // add set filter if configured
-    if (set) {
-      filter = new SetFilterBuilder<GenericEntity>(set, {
-        filter: filter,
-      }).build();
-
-      // Check if the new record would match the set filter
-      if (!this.wouldRecordMatchFilter(newData, filter.where)) {
-        // Record wouldn't be part of the set, no need to check limits
-        return;
-      }
-    }
-
-    const currentCount = await this.count(filter.where);
-
-    if (currentCount.count >= limit!) {
-      throw new HttpErrorResponse({
-        statusCode: 429,
-        name: 'LimitExceededError',
-        message: `Entity limit is exceeded.`,
-        code: 'ENTITY-LIMIT-EXCEEDED',
-        status: 429,
-        details: [
-          new SingleError({
-            code: 'ENTITY-LIMIT-EXCEEDED',
-            info: {
-              limit: limit,
-            },
-          }),
-        ],
-      });
-    }
+  private async checkRecordLimits(_newData: DataObject<GenericEntity>) {
+    // This method is no longer needed as we're using the RecordLimitCheckerService
+    return;
   }
 
-  /**
-   * Evaluates if a record would match a given filter
-   * @param record The record to evaluate
-   * @param whereClause The filter conditions to check
-   * @returns boolean indicating if the record would match the filter
-   */
   private wouldRecordMatchFilter(
-    record: DataObject<GenericEntity>,
-    whereClause: Where<GenericEntity> | undefined,
+    _record: DataObject<GenericEntity>,
+    _whereClause: Where<GenericEntity> | undefined,
   ): boolean {
-    return FilterMatcher.matches(record, whereClause);
+    // This method is no longer needed as we're using the RecordLimitCheckerService
+    return true;
   }
 
   private generateSlug(data: DataObject<GenericEntity>) {

@@ -24,6 +24,10 @@ import {
   MongoPipelineHelper,
   MongoPipelineHelperBindings,
 } from './extensions/utils/mongo-pipeline-helper';
+import {
+  RecordLimitCheckerService,
+  RecordLimitCheckerBindings,
+} from './services/record-limit-checker.service';
 
 export * from './application';
 
@@ -71,6 +75,11 @@ export async function main(options: ApplicationConfig = {}) {
 
   // add mongo pipeline helper to context
   app.bind(MongoPipelineHelperBindings.HELPER).toClass(MongoPipelineHelper);
+
+  // add record limit checker service to context
+  app
+    .bind(RecordLimitCheckerBindings.SERVICE)
+    .toClass(RecordLimitCheckerService);
 
   await app.boot();
   await app.start();

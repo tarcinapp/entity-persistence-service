@@ -31,6 +31,10 @@ import {
   LookupHelper,
 } from '../../extensions/utils/lookup-helper';
 import type { GenericEntity, List } from '../../models';
+import {
+  RecordLimitCheckerBindings,
+  RecordLimitCheckerService,
+} from '../../services/record-limit-checker.service';
 
 /**
  * Utility function to verify that all fields in two responses match exactly
@@ -84,9 +88,9 @@ export interface TestEnvironmentVariables {
   list_entity_rel_kinds?: string;
 
   // Default Values Configuration
-  // default_entity_kind?: string;
-  // default_list_kind?: string;
-  // default_relation_kind?: string;
+  default_entity_kind?: string;
+  default_list_kind?: string;
+  default_relation_kind?: string;
 
   // Uniqueness Configuration
   uniqueness_entity_fields?: string;
@@ -114,18 +118,11 @@ export interface TestEnvironmentVariables {
   response_limit_list_reaction?: string;
 
   // Record Limits Configuration
-  record_limit_entity_count?: string;
-  record_limit_entity_set?: string;
-  record_limit_list_count?: string;
-  record_limit_list_set?: string;
-  record_limit_list_entity_rel_count?: string;
-  record_limit_list_entity_rel_set?: string;
-  record_limit_entity_reaction_count?: string;
-  record_limit_entity_reaction_set?: string;
-  record_limit_list_reaction_count?: string;
-  record_limit_list_reaction_set?: string;
-  record_limit_tag_count?: string;
-  record_limit_tag_set?: string;
+  ENTITY_RECORD_LIMITS?: string;
+  LIST_RECORD_LIMITS?: string;
+  RELATION_RECORD_LIMITS?: string;
+  ENTITY_REACTION_RECORD_LIMITS?: string;
+  LIST_REACTION_RECORD_LIMITS?: string;
 
   // Idempotency Configuration
   idempotency_entity?: string;
@@ -168,39 +165,6 @@ export interface TestEnvironmentVariables {
   [key: `response_limit_entity_reaction_for_${string}`]: string;
   [key: `response_limit_list_reaction_for_${string}`]: string;
   [key: `response_limit_tag_for_${string}`]: string;
-
-  [key: `record_limit_entity_count_for_${string}`]: string;
-  [key: `record_limit_entity_set_for_${string}`]: string;
-  [key: `record_limit_list_count_for_${string}`]: string;
-  [key: `record_limit_list_set_for_${string}`]: string;
-  [key: `record_limit_list_entity_rel_count_for_${string}`]: string;
-  [key: `record_limit_list_entity_rel_set_for_${string}`]: string;
-  [key: `record_limit_entity_reaction_count_for_${string}`]: string;
-  [key: `record_limit_entity_reaction_set_for_${string}`]: string;
-  [key: `record_limit_list_reaction_count_for_${string}`]: string;
-  [key: `record_limit_list_reaction_set_for_${string}`]: string;
-  [key: `record_limit_tag_count_for_${string}`]: string;
-  [key: `record_limit_tag_set_for_${string}`]: string;
-
-  [key: `idempotency_entity_for_${string}`]: string;
-  [key: `idempotency_entity_set_for_${string}`]: string;
-  [key: `idempotency_list_for_${string}`]: string;
-  [key: `idempotency_list_set_for_${string}`]: string;
-  [key: `idempotency_list_entity_rel_for_${string}`]: string;
-  [key: `idempotency_list_entity_rel_set_for_${string}`]: string;
-  [key: `idempotency_entity_reaction_for_${string}`]: string;
-  [key: `idempotency_entity_reaction_set_for_${string}`]: string;
-  [key: `idempotency_list_reaction_for_${string}`]: string;
-  [key: `idempotency_list_reaction_set_for_${string}`]: string;
-  [key: `idempotency_tag_for_${string}`]: string;
-  [key: `idempotency_tag_set_for_${string}`]: string;
-
-  [key: `record_limit_entity_scope_for_${string}`]: string;
-  [key: `record_limit_list_scope_for_${string}`]: string;
-  [key: `record_limit_list_entity_rel_scope_for_${string}`]: string;
-  [key: `record_limit_entity_reaction_scope_for_${string}`]: string;
-  [key: `record_limit_list_reaction_scope_for_${string}`]: string;
-  [key: `record_limit_tag_scope_for_${string}`]: string;
 
   [key: string]: string | undefined;
 }
@@ -469,6 +433,11 @@ export async function setupApplication(
 
   // Add lookup helper binding for tests
   app.bind(LookupBindings.HELPER).toClass(LookupHelper);
+
+  // add record limit checker service to context
+  app
+    .bind(RecordLimitCheckerBindings.SERVICE)
+    .toClass(RecordLimitCheckerService);
 
   await app.boot();
   await app.start();
