@@ -659,7 +659,7 @@ describe('POST /entities', () => {
     // Set up the environment variables with kind-specific record limit
     appWithClient = await setupApplication({
       entity_kinds: 'book,movie',
-      record_limit_entity_count_for_book: '1', // Only allow 1 book entity
+      ENTITY_RECORD_LIMITS: '[{"scope":"filter[where][_kind]=book","limit":1}]', // Only allow 1 book entity
     });
     ({ client } = appWithClient);
 
@@ -693,14 +693,16 @@ describe('POST /entities', () => {
     expect(errorResponse.body.error).to.containDeep({
       statusCode: 429,
       name: 'LimitExceededError',
-      message: 'Entity limit is exceeded.',
+      message: 'Record limit exceeded for entity',
       code: 'ENTITY-LIMIT-EXCEEDED',
       status: 429,
       details: [
         {
           code: 'ENTITY-LIMIT-EXCEEDED',
+          message: 'Record limit exceeded for entity',
           info: {
             limit: 1,
+            scope: 'filter[where][_kind]=book',
           },
         },
       ],
@@ -711,8 +713,7 @@ describe('POST /entities', () => {
     // Set up the environment variables with record set limit for active records
     appWithClient = await setupApplication({
       entity_kinds: 'book',
-      record_limit_entity_count: '2', // Allow 2 records total and active at a time
-      record_limit_entity_scope: 'set[actives]', // Limit applies to active records
+      ENTITY_RECORD_LIMITS: '[{"scope":"set[actives]","limit":2}]', // Allow 2 active records at a time
     });
     ({ client } = appWithClient);
 
@@ -768,14 +769,16 @@ describe('POST /entities', () => {
     expect(errorResponse.body.error).to.containDeep({
       statusCode: 429,
       name: 'LimitExceededError',
-      message: 'Entity limit is exceeded.',
+      message: 'Record limit exceeded for entity',
       code: 'ENTITY-LIMIT-EXCEEDED',
       status: 429,
       details: [
         {
           code: 'ENTITY-LIMIT-EXCEEDED',
+          message: 'Record limit exceeded for entity',
           info: {
             limit: 2,
+            scope: 'set[actives]',
           },
         },
       ],
@@ -786,8 +789,8 @@ describe('POST /entities', () => {
     // Set up the environment variables with kind-specific record set limit
     appWithClient = await setupApplication({
       entity_kinds: 'book,movie',
-      record_limit_entity_scope_for_book: 'set[actives]',
-      record_limit_entity_count_for_book: '1', // Only 1 active book entity
+      ENTITY_RECORD_LIMITS:
+        '[{"scope":"set[actives]&filter[where][_kind]=book","limit":1}]', // Only 1 active book entity
     });
     ({ client } = appWithClient);
 
@@ -833,14 +836,16 @@ describe('POST /entities', () => {
     expect(errorResponse.body.error).to.containDeep({
       statusCode: 429,
       name: 'LimitExceededError',
-      message: 'Entity limit is exceeded.',
+      message: 'Record limit exceeded for entity',
       code: 'ENTITY-LIMIT-EXCEEDED',
       status: 429,
       details: [
         {
           code: 'ENTITY-LIMIT-EXCEEDED',
+          message: 'Record limit exceeded for entity',
           info: {
             limit: 1,
+            scope: 'set[actives]&filter[where][_kind]=book',
           },
         },
       ],
@@ -851,8 +856,7 @@ describe('POST /entities', () => {
     // Set up the environment variables with record set limit for both active and public records
     appWithClient = await setupApplication({
       entity_kinds: 'book',
-      record_limit_entity_count: '2', // Allow 2 records total that are both active and public
-      record_limit_entity_scope: 'set[actives]&set[publics]', // Limit applies to records that are both active and public
+      ENTITY_RECORD_LIMITS: '[{"scope":"set[actives]&set[publics]","limit":2}]', // Allow 2 records that are both active and public
     });
     ({ client } = appWithClient);
 
@@ -923,14 +927,16 @@ describe('POST /entities', () => {
     expect(errorResponse.body.error).to.containDeep({
       statusCode: 429,
       name: 'LimitExceededError',
-      message: 'Entity limit is exceeded.',
+      message: 'Record limit exceeded for entity',
       code: 'ENTITY-LIMIT-EXCEEDED',
       status: 429,
       details: [
         {
           code: 'ENTITY-LIMIT-EXCEEDED',
+          message: 'Record limit exceeded for entity',
           info: {
             limit: 2,
+            scope: 'set[actives]&set[publics]',
           },
         },
       ],
@@ -941,8 +947,8 @@ describe('POST /entities', () => {
     // Set up the environment variables with record set limit for owners
     appWithClient = await setupApplication({
       entity_kinds: 'book',
-      record_limit_entity_count: '2', // Allow 2 records per user
-      record_limit_entity_scope: 'set[owners]', // Limit applies per owner
+      ENTITY_RECORD_LIMITS:
+        '[{"scope":"set[owners][userIds]=${_ownerUsers}","limit":2}]', // Allow 2 records per user
     });
     ({ client } = appWithClient);
 
@@ -990,14 +996,16 @@ describe('POST /entities', () => {
     expect(errorResponse.body.error).to.containDeep({
       statusCode: 429,
       name: 'LimitExceededError',
-      message: 'Entity limit is exceeded.',
+      message: 'Record limit exceeded for entity',
       code: 'ENTITY-LIMIT-EXCEEDED',
       status: 429,
       details: [
         {
           code: 'ENTITY-LIMIT-EXCEEDED',
+          message: 'Record limit exceeded for entity',
           info: {
             limit: 2,
+            scope: 'set[owners][userIds]=user-123,user-789',
           },
         },
       ],
