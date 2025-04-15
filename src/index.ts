@@ -24,10 +24,8 @@ import {
   MongoPipelineHelper,
   MongoPipelineHelperBindings,
 } from './extensions/utils/mongo-pipeline-helper';
-import {
-  RecordLimitCheckerService,
-  RecordLimitCheckerBindings,
-} from './services/record-limit-checker.service';
+import { RecordLimitCheckerBindings } from './services/record-limit-checker.bindings';
+import { RecordLimitCheckerService } from './services/record-limit-checker.service';
 
 export * from './application';
 

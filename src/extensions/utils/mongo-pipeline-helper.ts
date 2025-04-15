@@ -51,6 +51,10 @@ export type AddFieldsStage = {
   $addFields: Record<string, any>;
 };
 
+export type CountStage = {
+  $count: string;
+};
+
 export type PipelineStage =
   | LookupStage
   | UnwindStage
@@ -59,7 +63,8 @@ export type PipelineStage =
   | MatchStage
   | SortStage
   | SkipStage
-  | AddFieldsStage;
+  | AddFieldsStage
+  | CountStage;
 
 @injectable({ scope: BindingScope.TRANSIENT })
 export class MongoPipelineHelper {

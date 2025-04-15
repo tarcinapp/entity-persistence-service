@@ -43,7 +43,7 @@ describe('Utilities: RecordLimitChecker', () => {
   describe('configuration parsing', () => {
     it('should parse entity limits from environment variables', async () => {
       const limits = [
-        { scope: 'filter[where][_kind]=book', limit: 10 },
+        { scope: 'where[_kind]=book', limit: 10 },
         { scope: 'set[actives]', limit: 20 },
       ];
 
@@ -134,7 +134,7 @@ describe('Utilities: RecordLimitChecker', () => {
 
   describe('scope interpolation', () => {
     it('should interpolate simple values', async () => {
-      const limits = [{ scope: 'filter[where][_kind]=${_kind}', limit: 10 }];
+      const limits = [{ scope: 'where[_kind]=${_kind}', limit: 10 }];
 
       process.env.ENTITY_RECORD_LIMITS = JSON.stringify(limits);
       service = new RecordLimitCheckerService(
@@ -166,7 +166,7 @@ describe('Utilities: RecordLimitChecker', () => {
     it('should interpolate array values', async () => {
       const limits = [
         {
-          scope: 'filter[where][_ownerUsers][inq][0]=${_ownerUsers[0]}',
+          scope: 'where[_ownerUsers][inq][0]=${_ownerUsers[0]}',
           limit: 10,
         },
       ];
@@ -195,9 +195,7 @@ describe('Utilities: RecordLimitChecker', () => {
     });
 
     it('should handle missing properties gracefully', async () => {
-      const limits = [
-        { scope: 'filter[where][missing]=${nonexistent}', limit: 10 },
-      ];
+      const limits = [{ scope: 'where[missing]=${nonexistent}', limit: 10 }];
 
       process.env.ENTITY_RECORD_LIMITS = JSON.stringify(limits);
       service = new RecordLimitCheckerService(
@@ -257,7 +255,7 @@ describe('Utilities: RecordLimitChecker', () => {
         {
           // Use dot notation only in interpolation values, not in filter structure
           scope:
-            'filter[where][and][0][metadata.key]=${metadata.key}&filter[where][and][1][metadata.nested.value]=${metadata.nested.value}',
+            'where[and][0][metadata.key]=${metadata.key}&where[and][1][metadata.nested.value]=${metadata.nested.value}',
           limit: 10,
         },
       ];
@@ -305,7 +303,7 @@ describe('Utilities: RecordLimitChecker', () => {
 
   describe('limit checking', () => {
     it('should not throw when count is below limit', async () => {
-      const limits = [{ scope: 'filter[where][_kind]=book', limit: 10 }];
+      const limits = [{ scope: 'where[_kind]=book', limit: 10 }];
 
       process.env.ENTITY_RECORD_LIMITS = JSON.stringify(limits);
       service = new RecordLimitCheckerService(
@@ -324,7 +322,7 @@ describe('Utilities: RecordLimitChecker', () => {
     });
 
     it('should throw when count equals limit', async () => {
-      const limits = [{ scope: 'filter[where][_kind]=book', limit: 10 }];
+      const limits = [{ scope: 'where[_kind]=book', limit: 10 }];
 
       process.env.ENTITY_RECORD_LIMITS = JSON.stringify(limits);
       service = new RecordLimitCheckerService(
@@ -344,8 +342,8 @@ describe('Utilities: RecordLimitChecker', () => {
 
     it('should skip limits that dont match the record', async () => {
       const limits = [
-        { scope: 'filter[where][_kind]=book', limit: 10 },
-        { scope: 'filter[where][_kind]=article', limit: 5 },
+        { scope: 'where[_kind]=book', limit: 10 },
+        { scope: 'where[_kind]=article', limit: 5 },
       ];
 
       process.env.ENTITY_RECORD_LIMITS = JSON.stringify(limits);

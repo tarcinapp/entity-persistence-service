@@ -129,25 +129,67 @@ export class ListEntityRelController {
     },
   })
   async count(
+    @param.query.object('set') set?: Set,
     @param.where(ListToEntityRelation)
     where?: Where<ListToEntityRelation>,
-    @param.query.object('set') set?: Set,
+    @param.where(ListToEntityRelation)
+    listWhere?: Where<ListToEntityRelation>,
+    @param.query.object('listSet')
+    listSet?: Set,
+    @param.where(ListToEntityRelation)
+    entityWhere?: Where<ListToEntityRelation>,
+    @param.query.object('entitySet')
+    entitySet?: Set,
   ): Promise<Count> {
+    // Build relation filter
     const filterBuilder = new FilterBuilder<ListToEntityRelation>();
-
     if (where) {
       filterBuilder.where(where);
     }
 
     let filter = filterBuilder.build();
-
     if (set) {
       filter = new SetFilterBuilder<ListToEntityRelation>(set, {
         filter: filter,
       }).build();
     }
 
-    return this.listEntityRelationRepository.count(filter.where);
+    // Build list filter
+    const listFilterBuilder = new FilterBuilder<ListToEntityRelation>();
+    if (listWhere) {
+      listFilterBuilder.where(listWhere);
+    }
+
+    let listFilter = listFilterBuilder.build();
+    if (listSet) {
+      listFilter = new SetFilterBuilder<ListToEntityRelation>(listSet, {
+        filter: listFilter,
+      }).build();
+    }
+
+    // Build entity filter
+    const entityFilterBuilder = new FilterBuilder<ListToEntityRelation>();
+    if (entityWhere) {
+      entityFilterBuilder.where(entityWhere);
+    }
+
+    let entityFilter = entityFilterBuilder.build();
+    if (entitySet) {
+      entityFilter = new SetFilterBuilder<ListToEntityRelation>(entitySet, {
+        filter: entityFilter,
+      }).build();
+    }
+
+    sanitizeFilterFields(filter);
+    sanitizeFilterFields(listFilter);
+    sanitizeFilterFields(entityFilter);
+
+    return this.listEntityRelationRepository.count(
+      filter.where,
+      listFilter.where,
+      entityFilter.where,
+      undefined,
+    );
   }
 
   @get('/list-entity-relations', {

@@ -31,10 +31,8 @@ import {
   LookupHelper,
 } from '../../extensions/utils/lookup-helper';
 import type { GenericEntity, List } from '../../models';
-import {
-  RecordLimitCheckerBindings,
-  RecordLimitCheckerService,
-} from '../../services/record-limit-checker.service';
+import { RecordLimitCheckerBindings } from '../../services/record-limit-checker.bindings';
+import { RecordLimitCheckerService } from '../../services/record-limit-checker.service';
 
 /**
  * Utility function to verify that all fields in two responses match exactly

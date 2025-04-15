@@ -44,10 +44,8 @@ import {
 import { SetFilterBuilder } from '../extensions/utils/set-helper';
 import { UnmodifiableCommonFields } from '../models/base-types/unmodifiable-common-fields';
 import { LoggingService } from '../services/logging.service';
-import {
-  RecordLimitCheckerService,
-  RecordLimitCheckerBindings,
-} from '../services/record-limit-checker.service';
+import { RecordLimitCheckerBindings } from '../services/record-limit-checker.bindings';
+import { RecordLimitCheckerService } from '../services/record-limit-checker.service';
 
 export class ListRepository extends DefaultCrudRepository<
   List,

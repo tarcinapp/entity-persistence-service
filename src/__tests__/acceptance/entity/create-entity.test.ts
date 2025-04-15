@@ -659,7 +659,7 @@ describe('POST /entities', () => {
     // Set up the environment variables with kind-specific record limit
     appWithClient = await setupApplication({
       entity_kinds: 'book,movie',
-      ENTITY_RECORD_LIMITS: '[{"scope":"filter[where][_kind]=book","limit":1}]', // Only allow 1 book entity
+      ENTITY_RECORD_LIMITS: '[{"scope":"where[_kind]=book","limit":1}]', // Only allow 1 book entity
     });
     ({ client } = appWithClient);
 
@@ -702,7 +702,7 @@ describe('POST /entities', () => {
           message: 'Record limit exceeded for entity',
           info: {
             limit: 1,
-            scope: 'filter[where][_kind]=book',
+            scope: 'where[_kind]=book',
           },
         },
       ],
@@ -790,7 +790,7 @@ describe('POST /entities', () => {
     appWithClient = await setupApplication({
       entity_kinds: 'book,movie',
       ENTITY_RECORD_LIMITS:
-        '[{"scope":"set[actives]&filter[where][_kind]=book","limit":1}]', // Only 1 active book entity
+        '[{"scope":"set[actives]&where[_kind]=book","limit":1}]', // Only 1 active book entity
     });
     ({ client } = appWithClient);
 
@@ -845,7 +845,7 @@ describe('POST /entities', () => {
           message: 'Record limit exceeded for entity',
           info: {
             limit: 1,
-            scope: 'set[actives]&filter[where][_kind]=book',
+            scope: 'set[actives]&where[_kind]=book',
           },
         },
       ],

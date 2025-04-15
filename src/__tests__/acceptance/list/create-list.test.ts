@@ -641,8 +641,7 @@ describe('POST /lists', () => {
     // Set up the environment variables with kind-specific record limit
     appWithClient = await setupApplication({
       list_kinds: 'book-list,featured-list',
-      LIST_RECORD_LIMITS:
-        '[{"scope":"filter[where][_kind]=book-list","limit":1}]', // Only allow 1 book-list
+      LIST_RECORD_LIMITS: '[{"scope":"where[_kind]=book-list","limit":1}]', // Only allow 1 book-list
     });
     ({ client } = appWithClient);
 
@@ -685,7 +684,7 @@ describe('POST /lists', () => {
           message: 'Record limit exceeded for list',
           info: {
             limit: 1,
-            scope: 'filter[where][_kind]=book-list',
+            scope: 'where[_kind]=book-list',
           },
         },
       ],
@@ -773,7 +772,7 @@ describe('POST /lists', () => {
     appWithClient = await setupApplication({
       list_kinds: 'book-list,featured-list',
       LIST_RECORD_LIMITS:
-        '[{"scope":"set[actives]&filter[where][_kind]=book-list","limit":1}]', // Only 1 active book-list
+        '[{"scope":"set[actives]&where[_kind]=book-list","limit":1}]', // Only 1 active book-list
     });
     ({ client } = appWithClient);
 
@@ -828,7 +827,7 @@ describe('POST /lists', () => {
           message: 'Record limit exceeded for list',
           info: {
             limit: 1,
-            scope: 'set[actives]&filter[where][_kind]=book-list',
+            scope: 'set[actives]&where[_kind]=book-list',
           },
         },
       ],

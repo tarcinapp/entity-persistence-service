@@ -1,16 +1,20 @@
-import { BindingKey, inject } from '@loopback/core';
+import { inject } from '@loopback/core';
 import {
-  DefaultCrudRepository,
+  DataObject,
   Entity,
   Filter,
-  DataObject,
+  Where,
+  FilterBuilder,
+  DefaultCrudRepository,
+  Count,
 } from '@loopback/repository';
 import _ from 'lodash';
 import { parse } from 'qs';
+import { LoggingService } from './logging.service';
 import { FilterMatcher } from '../extensions/utils/filter-matcher';
 import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
 import { HttpErrorResponse, SingleError } from '../models';
-import { LoggingService } from './logging.service';
+import { ListEntityRelationRepository } from '../repositories/list-entity-relation.repository';
 
 export interface RecordLimit {
   scope: string;
@@ -31,12 +35,6 @@ export const ENV_CONFIG_KEYS = {
   RELATION: 'RELATION_RECORD_LIMITS',
   ENTITY_REACTION: 'ENTITY_REACTION_RECORD_LIMITS',
   LIST_REACTION: 'LIST_REACTION_RECORD_LIMITS',
-} as const;
-
-export const RecordLimitCheckerBindings = {
-  SERVICE: BindingKey.create<RecordLimitCheckerService>(
-    'services.record-limit-checker',
-  ),
 } as const;
 
 // Type for model class that extends Entity and has static modelName
@@ -157,19 +155,63 @@ export class RecordLimitCheckerService {
   /**
    * Convert scope string to a Filter object
    */
-  private scopeToFilter(scope: string): Filter<any> {
+  private scopeToFilter(scope: string): {
+    filter: Filter<any>;
+    entityFilter?: Filter<any>;
+    listFilter?: Filter<any>;
+  } {
     const parsed = parse(scope);
     const parsedSet = parsed.set as Set;
-    const parsedFilter = parsed.filter as Filter<any>;
+    const parsedWhere = parsed.where as Where<any>;
+    const parsedListSet = parsed.listSet as Set;
+    const parsedListWhere = parsed.listWhere as Where<any>;
+    const parsedEntitySet = parsed.entitySet as Set;
+    const parsedEntityWhere = parsed.entityWhere as Where<any>;
 
-    // Handle both regular filters and sets
+    // Handle relation filter
+    const filterBuilder = new FilterBuilder();
+    if (parsedWhere) {
+      filterBuilder.where(parsedWhere);
+    }
+
+    let filter = filterBuilder.build();
     if (parsedSet) {
-      return new SetFilterBuilder(parsedSet, {
-        filter: parsedFilter ?? {},
+      filter = new SetFilterBuilder(parsedSet, {
+        filter: filter,
       }).build();
     }
 
-    return parsedFilter ?? {};
+    // Handle list filter
+    const listFilterBuilder = new FilterBuilder();
+    if (parsedListWhere) {
+      listFilterBuilder.where(parsedListWhere);
+    }
+
+    let listFilter = listFilterBuilder.build();
+    if (parsedListSet) {
+      listFilter = new SetFilterBuilder(parsedListSet, {
+        filter: listFilter,
+      }).build();
+    }
+
+    // Handle entity filter
+    const entityFilterBuilder = new FilterBuilder();
+    if (parsedEntityWhere) {
+      entityFilterBuilder.where(parsedEntityWhere);
+    }
+
+    let entityFilter = entityFilterBuilder.build();
+    if (parsedEntitySet) {
+      entityFilter = new SetFilterBuilder(parsedEntitySet, {
+        filter: entityFilter,
+      }).build();
+    }
+
+    return {
+      filter,
+      entityFilter,
+      listFilter,
+    };
   }
 
   /**
@@ -244,7 +286,8 @@ export class RecordLimitCheckerService {
         const interpolatedScope = this.interpolateScope(scope, newData);
 
         // Convert scope to filter
-        const filter = this.scopeToFilter(interpolatedScope);
+        const { filter, entityFilter, listFilter } =
+          this.scopeToFilter(interpolatedScope);
 
         // Check if new record would match this filter
         if (!this.recordMatchesFilter(newData, filter)) {
@@ -252,7 +295,21 @@ export class RecordLimitCheckerService {
         }
 
         // Count existing records in scope
-        const count = await repository.count(filter.where);
+        let count: Count;
+        if (repository instanceof ListEntityRelationRepository) {
+          // Special handling for ListEntityRelationRepository
+          count = await (
+            repository as unknown as ListEntityRelationRepository
+          ).count(
+            filter.where,
+            listFilter?.where,
+            entityFilter?.where,
+            undefined,
+          );
+        } else {
+          // Standard handling for other repositories
+          count = await repository.count(filter.where);
+        }
 
         if (count.count >= limit) {
           const errorCodePrefix = this.getErrorCodePrefix(modelClass.modelName);

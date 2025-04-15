@@ -9,8 +9,9 @@ import {
   repository,
   Where,
   WhereBuilder,
+  Count,
+  Entity,
 } from '@loopback/repository';
-import { Request, RestBindings } from '@loopback/rest';
 import * as crypto from 'crypto';
 import _ from 'lodash';
 import { parse } from 'qs';
@@ -28,15 +29,14 @@ import {
   ListEntityRelationRelations,
   ListToEntityRelation,
   HttpErrorResponse,
+  List,
 } from '../models';
 import { EntityRepository } from './entity.repository';
 import { ListRepository } from './list.repository';
 import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
 import { LoggingService } from '../services/logging.service';
-import {
-  RecordLimitCheckerService,
-  RecordLimitCheckerBindings,
-} from '../services/record-limit-checker.service';
+import { RecordLimitCheckerBindings } from '../services/record-limit-checker.bindings';
+import { RecordLimitCheckerService } from '../services/record-limit-checker.service';
 
 export class ListEntityRelationRepository extends DefaultCrudRepository<
   ListToEntityRelation,
@@ -71,9 +71,6 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     @inject('services.LoggingService')
     private loggingService: LoggingService,
 
-    @inject(RestBindings.Http.REQUEST)
-    private request: Request,
-
     @inject('services.MongoPipelineHelper')
     private mongoPipelineHelper: MongoPipelineHelper,
 
@@ -85,8 +82,8 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
 
   async find(
     filter?: Filter<ListToEntityRelation>,
-    entityFilter?: Filter<any>,
-    listFilter?: Filter<any>,
+    entityFilter?: Filter<ListToEntityRelation>,
+    listFilter?: Filter<ListToEntityRelation>,
   ): Promise<(ListToEntityRelation & ListEntityRelationRelations)[]> {
     // Get collection names from repositories
     const [listRepo, entityRepo] = await Promise.all([
@@ -153,6 +150,78 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
       return result as (ListToEntityRelation & ListEntityRelationRelations)[];
     } catch (error) {
       throw new Error(`Failed to execute aggregation: ${error}`);
+    }
+  }
+
+  async count(
+    where?: Where<ListToEntityRelation>,
+    listWhere?: Where<List>,
+    entityWhere?: Where<Entity>,
+    _options?: Options,
+  ): Promise<Count> {
+    // Convert where to filter for pipeline generation
+    const filter = where ? { where } : undefined;
+    const listFilter = listWhere ? { where: listWhere } : undefined;
+    const entityFilter = entityWhere ? { where: entityWhere } : undefined;
+
+    // Get collection names from repositories
+    const [listRepo, entityRepo] = await Promise.all([
+      this.listRepositoryGetter(),
+      this.entityRepositoryGetter(),
+    ]);
+
+    // Get collection names from mongodb settings
+    const listCollectionName =
+      listRepo.modelClass.definition.settings?.mongodb?.collection;
+    const entityCollectionName =
+      entityRepo.modelClass.definition.settings?.mongodb?.collection;
+    const relationCollectionName =
+      this.modelClass.definition.settings?.mongodb?.collection;
+
+    if (
+      !listCollectionName ||
+      !entityCollectionName ||
+      !relationCollectionName
+    ) {
+      throw new Error(
+        'Required MongoDB collection names not configured in model settings',
+      );
+    }
+
+    // Get the MongoDB collection for executing the aggregation
+    const relationCollection = this.dataSource.connector?.collection(
+      relationCollectionName,
+    );
+
+    if (!relationCollection) {
+      throw new Error('Required MongoDB collection not found');
+    }
+
+    try {
+      // Build the pipeline using the helper
+      const pipeline = this.mongoPipelineHelper.buildListEntityRelationPipeline(
+        listCollectionName,
+        entityCollectionName,
+        0, // No limit needed for counting
+        filter,
+        entityFilter,
+        listFilter,
+      );
+
+      // Add a $count stage at the end of the pipeline
+      pipeline.push({ $count: 'count' });
+
+      // Use the native MongoDB driver's aggregate method
+      this.loggingService.debug(
+        `Count Filters: ${JSON.stringify({ filter, entityFilter, listFilter }, null, 2)}\nPipeline: ${JSON.stringify(pipeline, null, 2)}`,
+      );
+      const cursor = relationCollection.aggregate(pipeline);
+      const result = await cursor.toArray();
+
+      // Return count object
+      return { count: result.length > 0 ? result[0].count : 0 };
+    } catch (error) {
+      throw new Error(`Failed to execute count aggregation: ${error}`);
     }
   }
 

@@ -219,7 +219,7 @@ describe('POST /list-entity-relations', () => {
       autoapprove_list_entity_relations: 'true',
       list_entity_rel_kinds: 'consists,references',
       RELATION_RECORD_LIMITS:
-        '[{"scope":"filter[where][_kind]=consists","limit":1},{"scope":"filter[where][_kind]=references","limit":2}]',
+        '[{"scope":"where[_kind]=consists","limit":1},{"scope":"where[_kind]=references","limit":2}]',
     });
     client = appWithClient.client;
 
@@ -272,7 +272,7 @@ describe('POST /list-entity-relations', () => {
           message: 'Record limit exceeded for relation',
           info: {
             limit: 1,
-            scope: 'filter[where][_kind]=consists',
+            scope: 'where[_kind]=consists',
           },
         },
       ],
@@ -320,7 +320,7 @@ describe('POST /list-entity-relations', () => {
           message: 'Record limit exceeded for relation',
           info: {
             limit: 2,
-            scope: 'filter[where][_kind]=references',
+            scope: 'where[_kind]=references',
           },
         },
       ],
@@ -426,7 +426,7 @@ describe('POST /list-entity-relations', () => {
       autoapprove_list_entity_relations: 'true',
       list_entity_rel_kinds: 'consists,references',
       RELATION_RECORD_LIMITS:
-        '[{"scope":"filter[where][_listId]=${_listId}","limit":2}]',
+        '[{"scope":"where[_listId]=${_listId}","limit":2}]',
     });
     client = appWithClient.client;
 
@@ -486,7 +486,7 @@ describe('POST /list-entity-relations', () => {
           message: 'Record limit exceeded for relation',
           info: {
             limit: 2,
-            scope: `filter[where][_listId]=${list._id}`,
+            scope: `where[_listId]=${list._id}`,
           },
         },
       ],
@@ -498,7 +498,7 @@ describe('POST /list-entity-relations', () => {
       autoapprove_list_entity_relations: 'true',
       list_kinds: 'reading-list,watch-list',
       RELATION_RECORD_LIMITS:
-        '[{"scope":"filter[where][_listId]=${_listId}&filter[where][_kind]=reading-list","limit":1},{"scope":"filter[where][_listId]=${_listId}&filter[where][_kind]=watch-list","limit":2}]',
+        '[{"scope":"where[_listId]=${_listId}&listWhere[_kind]=reading-list","limit":1},{"scope":"where[_listId]=${_listId}&listWhere[_kind]=watch-list","limit":2}]',
     });
     client = appWithClient.client;
 
@@ -561,7 +561,7 @@ describe('POST /list-entity-relations', () => {
           message: 'Record limit exceeded for relation',
           info: {
             limit: 1,
-            scope: `filter[where][_listId]=${readingList._id}&filter[where][_kind]=reading-list`,
+            scope: `where[_listId]=${readingList._id}&listWhere[_kind]=reading-list`,
           },
         },
       ],
@@ -607,7 +607,7 @@ describe('POST /list-entity-relations', () => {
           message: 'Record limit exceeded for relation',
           info: {
             limit: 2,
-            scope: `filter[where][_listId]=${watchList._id}&filter[where][_kind]=watch-list`,
+            scope: `where[_listId]=${watchList._id}&listWhere[_kind]=watch-list`,
           },
         },
       ],

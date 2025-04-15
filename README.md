@@ -561,7 +561,7 @@ Each environment variable accepts a JSON array of limit configurations:
 ```json
 [
   {
-    "scope": "string",  // Filter or set expression defining where the limit applies
+    "scope": "string",  // Where clauses or set expressions defining where the limit applies
     "limit": number    // Maximum number of records allowed in this scope
   }
 ]
@@ -569,9 +569,9 @@ Each environment variable accepts a JSON array of limit configurations:
 
 The `scope` field supports:
 - Empty string (`""`) for global limits
-- Filter expressions (`filter[where][field]=value`)
+- Where clause expressions (`where[field]=value`)
 - Set expressions (`set[setname]`)
-- Combined expressions using `&` operator
+- Combined expressions using `&` and logical `AND`, `OR` operators
 
 #### Dynamic Value Interpolation
 
@@ -593,8 +593,8 @@ The scope field supports interpolation of record values using `${fieldname}` syn
    ```bash
    # Limit book entities to 100, movie entities to 50
    ENTITY_RECORD_LIMITS='[
-     {"scope":"filter[where][_kind]=book","limit":100},
-     {"scope":"filter[where][_kind]=movie","limit":50}
+     {"scope":"where[_kind]=book","limit":100},
+     {"scope":"where[_kind]=movie","limit":50}
    ]'
    ```
 
@@ -614,7 +614,7 @@ The scope field supports interpolation of record values using `${fieldname}` syn
    ```bash
    # Limit active public book entities to 20
    ENTITY_RECORD_LIMITS='[{
-     "scope":"set[actives]&set[publics]&filter[where][_kind]=book",
+     "scope":"set[actives]&set[publics]&where[_kind]=book",
      "limit":20
    }]'
    ```
@@ -623,14 +623,14 @@ The scope field supports interpolation of record values using `${fieldname}` syn
    ```bash
    # Limit each list to 100 entities
    RELATION_RECORD_LIMITS='[{
-     "scope":"filter[where][_listId]=${_listId}",
+     "scope":"where[_listId]=${_listId}",
      "limit":100
    }]'
 
    # Different limits for different list kinds
    RELATION_RECORD_LIMITS='[
-     {"scope":"filter[where][_listId]=${_listId}&filter[where][_kind]=reading-list","limit":10},
-     {"scope":"filter[where][_listId]=${_listId}&filter[where][_kind]=watch-list","limit":20}
+     {"scope":"where[_listId]=${_listId}&where[_kind]=reading-list","limit":10},
+     {"scope":"where[_listId]=${_listId}&where[_kind]=watch-list","limit":20}
    ]'
    ```
 
@@ -639,7 +639,7 @@ The scope field supports interpolation of record values using `${fieldname}` syn
    # Combined global and kind-specific limits
    LIST_RECORD_LIMITS='[
      {"scope":"","limit":1000},
-     {"scope":"filter[where][_kind]=featured","limit":10},
+     {"scope":"where[_kind]=featured","limit":10},
      {"scope":"set[actives]&set[publics]","limit":50}
    ]'
    ```
@@ -647,9 +647,9 @@ The scope field supports interpolation of record values using `${fieldname}` syn
 #### Filter Expressions
 
 Filter expressions use the Loopback query syntax:
-- Simple equality: `filter[where][field]=value`
-- Multiple conditions: `filter[where][field1]=value1&filter[where][field2]=value2`
-- Nested fields: `filter[where][field.nested]=value`
+- Simple equality: `where[field]=value`
+- Multiple conditions: `where[field1]=value1&where[field2]=value2`
+- Nested fields: `where[field.nested]=value`
 
 #### Set Expressions
 
