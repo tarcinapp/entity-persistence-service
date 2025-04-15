@@ -14,6 +14,7 @@ import { Request, RestBindings } from '@loopback/rest';
 import * as crypto from 'crypto';
 import _ from 'lodash';
 import { parse } from 'qs';
+import slugify from 'slugify/slugify';
 import { EntityDbDataSource } from '../datasources';
 import {
   IdempotencyConfigurationReader,
@@ -632,10 +633,21 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
    * Ensure data kind is properly formatted.
    */
   private checkDataKindFormat(data: DataObject<ListToEntityRelation>) {
+    // make sure data kind is slug format
     if (data._kind) {
-      const formattedKind = _.kebabCase(data._kind);
-      if (formattedKind !== data._kind) {
-        throw new Error(`Invalid kind format: Use '${formattedKind}' instead.`);
+      const slugKind: string = slugify(data._kind, {
+        lower: true,
+        strict: true,
+      });
+
+      if (slugKind !== data._kind) {
+        throw new HttpErrorResponse({
+          statusCode: 422,
+          name: 'InvalidKindError',
+          message: `Relation kind '${data._kind}' is not valid. Use '${slugKind}' instead.`,
+          code: 'INVALID-RELATION-KIND',
+          status: 422,
+        });
       }
     }
   }
@@ -650,9 +662,11 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
      * this point. If it's not valid, we raise an error with the allowed valid
      * values for 'kind'.
      */
-    const kind = data._kind ?? '';
 
-    if (!this.kindConfigReader.isKindAcceptableForListEntityRelations(kind)) {
+    if (
+      data._kind &&
+      !this.kindConfigReader.isKindAcceptableForListEntityRelations(data._kind)
+    ) {
       const validValues =
         this.kindConfigReader.allowedKindsForEntityListRelations;
 
