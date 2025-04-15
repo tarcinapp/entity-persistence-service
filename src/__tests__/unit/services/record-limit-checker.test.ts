@@ -68,6 +68,8 @@ describe('Utilities: RecordLimitChecker', () => {
         capturedFilters.push(filter);
         callCount++;
 
+        await new Promise((resolve) => setTimeout(resolve, 50));
+
         // First limit check should pass, second should fail
         return { count: callCount === 1 ? 5 : 20 };
       };
