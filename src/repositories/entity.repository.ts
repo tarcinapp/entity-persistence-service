@@ -4,12 +4,10 @@ import {
   DataObject,
   DefaultCrudRepository,
   Filter,
-  FilterBuilder,
   FilterExcludingWhere,
   HasManyRepositoryFactory,
   Options,
   Where,
-  WhereBuilder,
   repository,
 } from '@loopback/repository';
 import * as crypto from 'crypto';
@@ -34,7 +32,6 @@ import {
   LookupHelper,
   LookupBindings,
 } from '../extensions/utils/lookup-helper';
-import { SetFilterBuilder } from '../extensions/utils/set-helper';
 import {
   GenericEntity,
   GenericEntityRelations,
@@ -662,123 +659,25 @@ export class EntityRepository extends DefaultCrudRepository<
   }
 
   private async checkUniquenessForCreate(newData: DataObject<GenericEntity>) {
-    // return if no uniqueness is configured
-    if (
-      !this.uniquenessConfigReader.isUniquenessConfiguredForEntities(
-        newData._kind,
-      )
-    ) {
-      return;
-    }
-
-    const whereBuilder: WhereBuilder<GenericEntity> =
-      new WhereBuilder<GenericEntity>();
-
-    // read the fields (name, slug) array for this kind
-    const fields: string[] = this.uniquenessConfigReader.getFieldsForEntities(
-      newData._kind,
-    );
-    const set = this.uniquenessConfigReader.getSetForEntities(
-      newData._ownerUsers,
-      newData._ownerGroups,
-      newData._kind,
-    );
-
-    // add uniqueness fields to where builder
-    _.forEach(fields, (field) => {
-      whereBuilder.and({
-        [field]: _.get(newData, field),
-      });
-    });
-
-    let filter = new FilterBuilder<GenericEntity>()
-      .where(whereBuilder.build())
-      .build();
-
-    // add set filter if configured
-    if (set) {
-      filter = new SetFilterBuilder<GenericEntity>(set, {
-        filter: filter,
-      }).build();
-    }
-
-    const existingEntity = await super.findOne(filter);
-
-    if (existingEntity) {
-      throw new HttpErrorResponse({
-        statusCode: 409,
-        name: 'DataUniquenessViolationError',
-        message: 'Entity already exists.',
-        code: 'ENTITY-ALREADY-EXISTS',
-        status: 409,
-      });
-    }
+    await this.recordLimitChecker.checkUniqueness(GenericEntity, newData, this);
   }
 
   private async checkUniquenessForUpdate(
     id: string,
     newData: DataObject<GenericEntity>,
   ) {
-    if (
-      !this.uniquenessConfigReader.isUniquenessConfiguredForEntities(
-        newData._kind,
-      )
-    ) {
-      return;
-    }
-
-    const whereBuilder: WhereBuilder<GenericEntity> =
-      new WhereBuilder<GenericEntity>();
-
-    // read the fields (name, slug) array for this kind
-    const fields: string[] = this.uniquenessConfigReader.getFieldsForEntities(
-      newData._kind,
+    // we need to merge existing data with incoming data in order to check uniqueness
+    const existingData = await this.findById(id);
+    const mergedData = _.assign(
+      {},
+      existingData && _.pickBy(existingData, (value) => value !== null),
+      newData,
     );
-    const set = this.uniquenessConfigReader.getSetForEntities(
-      newData._ownerUsers,
-      newData._ownerGroups,
-      newData._kind,
+    await this.recordLimitChecker.checkUniqueness(
+      GenericEntity,
+      mergedData,
+      this,
     );
-
-    _.forEach(fields, (field) => {
-      whereBuilder.and({
-        [field]: _.get(newData, field),
-      });
-    });
-
-    // this is for preventing the same data to be returned
-    whereBuilder.and({
-      _id: {
-        neq: id,
-      },
-    });
-
-    let filter = new FilterBuilder<GenericEntity>()
-      .where(whereBuilder.build())
-      .fields('_id')
-      .build();
-
-    // add set filter if configured
-    if (set) {
-      filter = new SetFilterBuilder<GenericEntity>(set, {
-        filter: filter,
-      }).build();
-    }
-
-    // final uniqueness controlling filter
-    //console.log('Uniqueness Filter: ', JSON.stringify(filter));
-
-    const violatingEntity = await super.findOne(filter);
-
-    if (violatingEntity) {
-      throw new HttpErrorResponse({
-        statusCode: 409,
-        name: 'DataUniquenessViolationError',
-        message: 'Entity already exists.',
-        code: 'ENTITY-ALREADY-EXISTS',
-        status: 409,
-      });
-    }
   }
 
   async findById(

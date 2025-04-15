@@ -121,7 +121,7 @@ describe('POST /entities', () => {
     // Set up the environment variables
     appWithClient = await setupApplication({
       entity_kinds: 'book',
-      uniqueness_entity_fields: '_slug,_kind',
+      ENTITY_UNIQUENESS: 'where[_slug]=${_slug}&where[_kind]=${_kind}',
     });
     ({ client } = appWithClient);
 
@@ -154,9 +154,19 @@ describe('POST /entities', () => {
 
     expect(errorResponse.body.error).to.containDeep({
       statusCode: 409,
-      name: 'DataUniquenessViolationError',
-      message: 'Entity already exists.',
-      code: 'ENTITY-ALREADY-EXISTS',
+      name: 'UniquenessViolationError',
+      message: 'Entity already exists',
+      code: 'ENTITY-UNIQUENESS-VIOLATION',
+      status: 409,
+      details: [
+        {
+          code: 'ENTITY-UNIQUENESS-VIOLATION',
+          message: 'Entity already exists',
+          info: {
+            scope: 'where[_slug]=the-great-gatsby&where[_kind]=book',
+          },
+        },
+      ],
     });
   });
 
@@ -164,7 +174,8 @@ describe('POST /entities', () => {
     // Set up the environment variables
     appWithClient = await setupApplication({
       entity_kinds: 'book',
-      uniqueness_entity_fields: '_slug,_kind,_ownerUsers',
+      ENTITY_UNIQUENESS:
+        'where[_slug]=${_slug}&where[_kind]=${_kind}&set[owners][userIds]=${_ownerUsers[0]}',
     });
     ({ client } = appWithClient);
 
@@ -200,9 +211,20 @@ describe('POST /entities', () => {
 
     expect(errorResponse.body.error).to.containDeep({
       statusCode: 409,
-      name: 'DataUniquenessViolationError',
-      message: 'Entity already exists.',
-      code: 'ENTITY-ALREADY-EXISTS',
+      name: 'UniquenessViolationError',
+      message: 'Entity already exists',
+      code: 'ENTITY-UNIQUENESS-VIOLATION',
+      status: 409,
+      details: [
+        {
+          code: 'ENTITY-UNIQUENESS-VIOLATION',
+          message: 'Entity already exists',
+          info: {
+            scope:
+              'where[_slug]=the-great-gatsby&where[_kind]=book&set[owners][userIds]=user-123',
+          },
+        },
+      ],
     });
   });
 
@@ -260,8 +282,8 @@ describe('POST /entities', () => {
     // Set up the environment variables with set[owners] uniqueness
     appWithClient = await setupApplication({
       entity_kinds: 'book',
-      uniqueness_entity_fields: '_slug,_kind',
-      uniqueness_entity_scope: 'set[owners]',
+      ENTITY_UNIQUENESS:
+        'where[_slug]=${_slug}&where[_kind]=${_kind}&set[owners][userIds]=${_ownerUsers}',
     });
     ({ client } = appWithClient);
 
@@ -301,9 +323,20 @@ describe('POST /entities', () => {
 
     expect(errorResponse.body.error).to.containDeep({
       statusCode: 409,
-      name: 'DataUniquenessViolationError',
-      message: 'Entity already exists.',
-      code: 'ENTITY-ALREADY-EXISTS',
+      name: 'UniquenessViolationError',
+      message: 'Entity already exists',
+      code: 'ENTITY-UNIQUENESS-VIOLATION',
+      status: 409,
+      details: [
+        {
+          code: 'ENTITY-UNIQUENESS-VIOLATION',
+          message: 'Entity already exists',
+          info: {
+            scope:
+              'where[_slug]=the-great-gatsby&where[_kind]=book&set[owners][userIds]=user-123,user-999',
+          },
+        },
+      ],
     });
   });
 
@@ -311,8 +344,8 @@ describe('POST /entities', () => {
     // Set up the environment variables with set[actives] uniqueness
     appWithClient = await setupApplication({
       entity_kinds: 'book',
-      uniqueness_entity_fields: '_slug,_kind',
-      uniqueness_entity_scope: 'set[actives]',
+      ENTITY_UNIQUENESS:
+        'where[_slug]=${_slug}&where[_kind]=${_kind}&set[actives]',
     });
     ({ client } = appWithClient);
 
@@ -363,9 +396,20 @@ describe('POST /entities', () => {
 
     expect(errorResponse.body.error).to.containDeep({
       statusCode: 409,
-      name: 'DataUniquenessViolationError',
-      message: 'Entity already exists.',
-      code: 'ENTITY-ALREADY-EXISTS',
+      name: 'UniquenessViolationError',
+      message: 'Entity already exists',
+      code: 'ENTITY-UNIQUENESS-VIOLATION',
+      status: 409,
+      details: [
+        {
+          code: 'ENTITY-UNIQUENESS-VIOLATION',
+          message: 'Entity already exists',
+          info: {
+            scope:
+              'where[_slug]=the-great-gatsby&where[_kind]=book&set[actives]',
+          },
+        },
+      ],
     });
   });
 

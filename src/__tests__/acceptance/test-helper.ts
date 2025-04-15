@@ -97,6 +97,11 @@ export interface TestEnvironmentVariables {
   uniqueness_entity_scope?: string;
   uniqueness_list_scope?: string;
   uniqueness_list_entity_rel_scope?: string;
+  ENTITY_UNIQUENESS?: string;
+  LIST_UNIQUENESS?: string;
+  RELATION_UNIQUENESS?: string;
+  ENTITY_REACTION_UNIQUENESS?: string;
+  LIST_REACTION_UNIQUENESS?: string;
 
   // Auto Approve Configuration
   autoapprove_entity?: string;

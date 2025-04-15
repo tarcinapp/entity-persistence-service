@@ -22,19 +22,35 @@ export interface RecordLimit {
 }
 
 export interface RecordLimitConfig {
+  // Record limits
   entityLimits?: RecordLimit[];
   listLimits?: RecordLimit[];
   relationLimits?: RecordLimit[];
   entityReactionLimits?: RecordLimit[];
   listReactionLimits?: RecordLimit[];
+
+  // Uniqueness scopes
+  entityUniqueness?: string[];
+  listUniqueness?: string[];
+  relationUniqueness?: string[];
+  entityReactionUniqueness?: string[];
+  listReactionUniqueness?: string[];
 }
 
 export const ENV_CONFIG_KEYS = {
+  // Record limits
   ENTITY: 'ENTITY_RECORD_LIMITS',
   LIST: 'LIST_RECORD_LIMITS',
   RELATION: 'RELATION_RECORD_LIMITS',
   ENTITY_REACTION: 'ENTITY_REACTION_RECORD_LIMITS',
   LIST_REACTION: 'LIST_REACTION_RECORD_LIMITS',
+
+  // Uniqueness
+  ENTITY_UNIQUENESS: 'ENTITY_UNIQUENESS',
+  LIST_UNIQUENESS: 'LIST_UNIQUENESS',
+  RELATION_UNIQUENESS: 'RELATION_UNIQUENESS',
+  ENTITY_REACTION_UNIQUENESS: 'ENTITY_REACTION_UNIQUENESS',
+  LIST_REACTION_UNIQUENESS: 'LIST_REACTION_UNIQUENESS',
 } as const;
 
 // Type for model class that extends Entity and has static modelName
@@ -63,13 +79,12 @@ export class RecordLimitCheckerService {
 
   /**
    * Initialize configuration by parsing environment variables
-   * This is called once during service construction
    */
   private initializeConfig(): void {
     this.config = {};
 
     try {
-      // Parse each environment variable if it exists
+      // Parse record limits
       if (process.env[ENV_CONFIG_KEYS.ENTITY]) {
         const envVar = process.env[ENV_CONFIG_KEYS.ENTITY];
         if (typeof envVar === 'string') {
@@ -105,27 +120,56 @@ export class RecordLimitCheckerService {
         }
       }
 
-      this.loggingService.debug('Record limits configuration initialized:', {
-        config: this.config,
-      });
+      // Parse uniqueness scopes
+      if (process.env[ENV_CONFIG_KEYS.ENTITY_UNIQUENESS]) {
+        const envVar = process.env[ENV_CONFIG_KEYS.ENTITY_UNIQUENESS];
+        if (typeof envVar === 'string') {
+          this.config.entityUniqueness = envVar.split(',');
+        }
+      }
+
+      if (process.env[ENV_CONFIG_KEYS.LIST_UNIQUENESS]) {
+        const envVar = process.env[ENV_CONFIG_KEYS.LIST_UNIQUENESS];
+        if (typeof envVar === 'string') {
+          this.config.listUniqueness = envVar.split(',');
+        }
+      }
+
+      if (process.env[ENV_CONFIG_KEYS.RELATION_UNIQUENESS]) {
+        const envVar = process.env[ENV_CONFIG_KEYS.RELATION_UNIQUENESS];
+        if (typeof envVar === 'string') {
+          this.config.relationUniqueness = envVar.split(',');
+        }
+      }
+
+      if (process.env[ENV_CONFIG_KEYS.ENTITY_REACTION_UNIQUENESS]) {
+        const envVar = process.env[ENV_CONFIG_KEYS.ENTITY_REACTION_UNIQUENESS];
+        if (typeof envVar === 'string') {
+          this.config.entityReactionUniqueness = envVar.split(',');
+        }
+      }
+
+      if (process.env[ENV_CONFIG_KEYS.LIST_REACTION_UNIQUENESS]) {
+        const envVar = process.env[ENV_CONFIG_KEYS.LIST_REACTION_UNIQUENESS];
+        if (typeof envVar === 'string') {
+          this.config.listReactionUniqueness = envVar.split(',');
+        }
+      }
+
+      this.loggingService.debug(
+        'Record limits and uniqueness configuration initialized:',
+        {
+          config: this.config,
+        },
+      );
     } catch (error) {
-      this.loggingService.error('Failed to parse record limits config:', error);
-      throw new Error('Invalid record limits configuration');
+      this.loggingService.error('Failed to parse configuration:', error);
+      throw new Error('Invalid configuration');
     }
   }
 
   /**
-   * Interpolate values from the data object into the scope string.
-   * Supports dot notation for nested properties using lodash.get
-   * Examples:
-   * - "${_kind}" -> value of data._kind
-   * - "${author.name}" -> value of data.author.name
-   * - "${_ownerUsers}" -> joins array values with comma
-   * - "${deep.nested.property}" -> uses lodash.get for deep property access
-   *
-   * @param scope The scope string containing ${property} placeholders
-   * @param data The data object to get values from
-   * @returns Interpolated string with values from data
+   * Interpolate values from the data object into the scope string
    */
   private interpolateScope(scope: string, data: object): string {
     return scope.replace(/\${([^}]+)}/g, (match, path) => {
@@ -250,6 +294,26 @@ export class RecordLimitCheckerService {
   }
 
   /**
+   * Get uniqueness scopes for a model
+   */
+  private getUniquenessScopes(modelName: string): string[] | undefined {
+    switch (modelName.toLowerCase()) {
+      case 'genericentity':
+        return this.config.entityUniqueness;
+      case 'list':
+        return this.config.listUniqueness;
+      case 'listtoentityrelation':
+        return this.config.relationUniqueness;
+      case 'entityreactions':
+        return this.config.entityReactionUniqueness;
+      case 'listreactions':
+        return this.config.listReactionUniqueness;
+      default:
+        return undefined;
+    }
+  }
+
+  /**
    * Get error code prefix for a model
    */
   private getErrorCodePrefix(modelName: string): string {
@@ -328,6 +392,71 @@ export class RecordLimitCheckerService {
                 message: `Record limit exceeded for ${friendlyName}`,
                 info: {
                   limit,
+                  scope: interpolatedScope,
+                },
+              }),
+            ],
+          });
+        }
+      }),
+    );
+  }
+
+  /**
+   * Check uniqueness for a model
+   */
+  async checkUniqueness<T extends Entity>(
+    modelClass: EntityModelClass,
+    newData: DataObject<T>,
+    repository: DefaultCrudRepository<T, any, any>,
+  ): Promise<void> {
+    const modelName = modelClass.modelName;
+    const uniquenessScopes = this.getUniquenessScopes(modelName);
+
+    if (!uniquenessScopes) {
+      return;
+    }
+
+    await Promise.all(
+      uniquenessScopes.map(async (scope) => {
+        const interpolatedScope = this.interpolateScope(scope, newData);
+        const { filter, entityFilter, listFilter } =
+          this.scopeToFilter(interpolatedScope);
+
+        if (!this.recordMatchesFilter(newData, filter)) {
+          return;
+        }
+
+        let count: Count;
+        if (repository instanceof ListEntityRelationRepository) {
+          count = await (
+            repository as unknown as ListEntityRelationRepository
+          ).count(
+            filter.where,
+            listFilter?.where,
+            entityFilter?.where,
+            undefined,
+          );
+        } else {
+          count = await repository.count(filter.where);
+        }
+
+        if (count.count > 0) {
+          const errorCodePrefix = this.getErrorCodePrefix(modelName);
+          const errorCode = `${errorCodePrefix}-UNIQUENESS-VIOLATION`;
+          const friendlyName = this.getFriendlyModelName(modelName);
+
+          throw new HttpErrorResponse({
+            statusCode: 409,
+            name: 'UniquenessViolationError',
+            message: `${friendlyName.charAt(0).toUpperCase() + friendlyName.slice(1)} already exists`,
+            code: errorCode,
+            status: 409,
+            details: [
+              new SingleError({
+                code: errorCode,
+                message: `${friendlyName.charAt(0).toUpperCase() + friendlyName.slice(1)} already exists`,
+                info: {
                   scope: interpolatedScope,
                 },
               }),
