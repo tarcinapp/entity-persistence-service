@@ -130,7 +130,7 @@ describe('Utilities: RecordLimitChecker', () => {
 
       expect(() => {
         new RecordLimitCheckerService(mockLoggingService as LoggingService);
-      }).to.throw('Invalid record limits configuration');
+      }).to.throw('Invalid configuration');
     });
   });
 
