@@ -4,13 +4,11 @@ import {
   DataObject,
   DefaultCrudRepository,
   Filter,
-  FilterBuilder,
   FilterExcludingWhere,
   HasManyRepositoryFactory,
   InclusionResolver,
   Options,
   Where,
-  WhereBuilder,
   repository,
 } from '@loopback/repository';
 import * as crypto from 'crypto';
@@ -41,7 +39,6 @@ import {
   LookupBindings,
   LookupHelper,
 } from '../extensions/utils/lookup-helper';
-import { SetFilterBuilder } from '../extensions/utils/set-helper';
 import { UnmodifiableCommonFields } from '../models/base-types/unmodifiable-common-fields';
 import { LoggingService } from '../services/logging.service';
 import { RecordLimitCheckerBindings } from '../services/record-limit-checker.bindings';
@@ -739,113 +736,21 @@ export class ListRepository extends DefaultCrudRepository<
   }
 
   private async checkUniquenessForCreate(newData: DataObject<List>) {
-    // return if no uniqueness is configured
-    if (
-      !this.uniquenessConfigReader.isUniquenessConfiguredForLists(newData._kind)
-    ) {
-      return;
-    }
-
-    const whereBuilder: WhereBuilder<List> = new WhereBuilder<List>();
-
-    // read the fields (name, slug) array for this kind
-    const fields: string[] = this.uniquenessConfigReader.getFieldsForLists(
-      newData._kind,
-    );
-    const set = this.uniquenessConfigReader.getSetForLists(
-      newData._ownerUsers,
-      newData._ownerGroups,
-      newData._kind,
-    );
-
-    // add uniqueness fields to where builder
-    _.forEach(fields, (field) => {
-      whereBuilder.and({
-        [field]: _.get(newData, field),
-      });
-    });
-
-    let filter = new FilterBuilder<List>().where(whereBuilder.build()).build();
-
-    // add set filter if configured
-    if (set) {
-      filter = new SetFilterBuilder<List>(set, {
-        filter: filter,
-      }).build();
-    }
-
-    const existingList = await super.findOne(filter);
-
-    if (existingList) {
-      throw new HttpErrorResponse({
-        statusCode: 409,
-        name: 'DataUniquenessViolationError',
-        message: 'List already exists.',
-        code: 'LIST-ALREADY-EXISTS',
-        status: 409,
-      });
-    }
+    await this.recordLimitChecker.checkUniqueness(List, newData, this);
   }
 
   private async checkUniquenessForUpdate(
     id: string,
     newData: DataObject<List>,
   ) {
-    // return if no uniqueness is configured
-    if (
-      !this.uniquenessConfigReader.isUniquenessConfiguredForLists(newData._kind)
-    ) {
-      return;
-    }
-
-    const whereBuilder: WhereBuilder<List> = new WhereBuilder<List>();
-
-    // read the fields (name, slug) array for this kind
-    const fields: string[] = this.uniquenessConfigReader.getFieldsForLists(
-      newData._kind,
+    // we need to merge existing data with incoming data in order to check uniqueness
+    const existingData = await this.findById(id);
+    const mergedData = _.assign(
+      {},
+      existingData && _.pickBy(existingData, (value) => value !== null),
+      newData,
     );
-
-    const set = this.uniquenessConfigReader.getSetForLists(
-      newData._ownerUsers,
-      newData._ownerGroups,
-      newData._kind,
-    );
-
-    _.forEach(fields, (field) => {
-      whereBuilder.and({
-        [field]: _.get(newData, field),
-      });
-    });
-
-    // this is for preventing the same data to be returned
-    whereBuilder.and({
-      _id: {
-        neq: id,
-      },
-    });
-
-    let filter = new FilterBuilder<List>()
-      .where(whereBuilder.build())
-      .fields('_id')
-      .build();
-
-    if (set) {
-      filter = new SetFilterBuilder<List>(set, {
-        filter: filter,
-      }).build();
-    }
-
-    const violatingList = await super.findOne(filter);
-
-    if (violatingList) {
-      throw new HttpErrorResponse({
-        statusCode: 409,
-        name: 'DataUniquenessViolationError',
-        message: 'List already exists.',
-        code: 'LIST-ALREADY-EXISTS',
-        status: 409,
-      });
-    }
+    await this.recordLimitChecker.checkUniqueness(List, mergedData, this);
   }
 
   async findParents(
