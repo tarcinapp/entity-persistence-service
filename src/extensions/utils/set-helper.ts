@@ -340,11 +340,6 @@ class SetToFilterTransformer {
   produceWhereClauseForActives(): Where<AnyObject> {
     const now = new Date();
     const nowISOString = now.toISOString();
-    const nowTimestamp = now.getTime();
-
-    // Use timestamps for test environment, ISO strings for production
-    const isTestEnv = process.env.NODE_ENV === 'test';
-    const dateValue = isTestEnv ? nowTimestamp : nowISOString;
 
     return {
       and: [
@@ -355,7 +350,7 @@ class SetToFilterTransformer {
             },
             {
               _validUntilDateTime: {
-                gt: dateValue,
+                gt: nowISOString,
               },
             },
           ],
@@ -367,7 +362,7 @@ class SetToFilterTransformer {
         },
         {
           _validFromDateTime: {
-            lt: dateValue,
+            lt: nowISOString,
           },
         },
       ],
@@ -377,11 +372,6 @@ class SetToFilterTransformer {
   produceWhereClauseForInactives(): Where<AnyObject> {
     const now = new Date();
     const nowISOString = now.toISOString();
-    const nowTimestamp = now.getTime();
-
-    // Use timestamps for test environment, ISO strings for production
-    const isTestEnv = process.env.NODE_ENV === 'test';
-    const dateValue = isTestEnv ? nowTimestamp : nowISOString;
 
     return {
       and: [
@@ -392,7 +382,7 @@ class SetToFilterTransformer {
         },
         {
           _validUntilDateTime: {
-            lt: dateValue,
+            lt: nowISOString,
           },
         },
       ],
