@@ -16,6 +16,8 @@ describe('Utilities: RecordLimitChecker', () => {
   beforeEach(() => {
     // Backup process.env
     processEnvBackup = { ...process.env };
+    // Clear any existing limits and ensure we start with a clean state
+    delete process.env.ENTITY_RECORD_LIMITS;
 
     // Create mock logging service
     mockLoggingService = {
@@ -24,7 +26,7 @@ describe('Utilities: RecordLimitChecker', () => {
       warn: () => {},
     };
 
-    // Create mock repository
+    // Create mock repository with a fresh instance for each test
     mockRepository = {
       count: async () => ({ count: 0 }),
     };
@@ -38,6 +40,10 @@ describe('Utilities: RecordLimitChecker', () => {
   afterEach(() => {
     // Restore process.env
     process.env = processEnvBackup;
+    // Clear any references to prevent memory leaks
+    service = null as any;
+    mockRepository = null as any;
+    mockLoggingService = null as any;
   });
 
   describe('configuration parsing', () => {
@@ -49,44 +55,57 @@ describe('Utilities: RecordLimitChecker', () => {
 
       process.env.ENTITY_RECORD_LIMITS = JSON.stringify(limits);
 
+      // Create a new service instance after setting the environment variable
       service = new RecordLimitCheckerService(
         mockLoggingService as LoggingService,
       );
 
       // Create a test entity that would match both limits
+      const now = new Date();
       const testData = {
         _kind: 'book',
-        _validFromDateTime: new Date().toISOString(), // This makes it match set[actives]
+        _validFromDateTime: now.getTime() - 1000, // Ensure it's in the past
         _validUntilDateTime: null,
       };
-      let errorThrown = false;
 
       // Track the filters used in count calls
       const capturedFilters: any[] = [];
       let callCount = 0;
+      const countPromises: Promise<{ count: number }>[] = [];
+      let errorThrown = false;
+      let error: any;
+
       mockRepository.count = async (filter) => {
         capturedFilters.push(filter);
         callCount++;
+        // Add a small delay to prevent race conditions
+        await new Promise((resolve) => setTimeout(resolve, 1));
+        const promise = Promise.resolve({ count: callCount === 1 ? 5 : 20 });
+        countPromises.push(promise);
 
-        await new Promise((resolve) => setTimeout(resolve, 50));
-
-        // First limit check should pass, second should fail
-        return { count: callCount === 1 ? 5 : 20 };
+        return promise;
       };
 
-      try {
-        await service.checkLimits(
+      // Wrap the checkLimits call in a try-catch and ensure we wait for all operations
+      const checkLimitsPromise = service
+        .checkLimits(
           GenericEntity,
           testData,
           mockRepository as DefaultCrudRepository<any, any, any>,
-        );
-      } catch (error) {
-        errorThrown = true;
-        expect(error.statusCode).to.equal(429);
-        expect(error.code).to.equal('ENTITY-LIMIT-EXCEEDED');
-      }
+        )
+        .catch((e) => {
+          errorThrown = true;
+          error = e;
+        });
 
+      // Wait for all operations to complete
+      await Promise.all([checkLimitsPromise, ...countPromises]);
+
+      // Verify the error was thrown
       expect(errorThrown).to.be.true();
+      expect(error).to.not.be.undefined();
+      expect(error.statusCode).to.equal(429);
+      expect(error.code).to.equal('ENTITY-LIMIT-EXCEEDED');
 
       // Should call count twice since the record matches both limits
       expect(capturedFilters).to.have.length(2);
@@ -106,7 +125,7 @@ describe('Utilities: RecordLimitChecker', () => {
               },
               {
                 _validUntilDateTime: {
-                  gt: capturedFilters[1].and[0].or[1]._validUntilDateTime.gt, // Dynamic date
+                  gt: capturedFilters[1].and[0].or[1]._validUntilDateTime.gt,
                 },
               },
             ],
@@ -118,7 +137,7 @@ describe('Utilities: RecordLimitChecker', () => {
           },
           {
             _validFromDateTime: {
-              lt: capturedFilters[1].and[2]._validFromDateTime.lt, // Dynamic date
+              lt: capturedFilters[1].and[2]._validFromDateTime.lt,
             },
           },
         ],
@@ -231,8 +250,6 @@ describe('Utilities: RecordLimitChecker', () => {
       let capturedFilter: any;
       mockRepository.count = async (filter) => {
         capturedFilter = filter;
-        // Small delay to prevent race condition with filter capture
-        await new Promise((resolve) => setTimeout(resolve, 50));
 
         return { count: 0 };
       };
@@ -248,6 +265,9 @@ describe('Utilities: RecordLimitChecker', () => {
         },
         mockRepository as DefaultCrudRepository<any, any, any>,
       );
+
+      // Small delay to prevent race condition with filter capture
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
       expect(capturedFilter).to.Object();
     });
