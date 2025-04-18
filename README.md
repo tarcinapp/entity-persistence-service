@@ -758,6 +758,9 @@ This is a known limitation in Loopback's implementation of field selection when 
 ### 3. Version Incrementation for Update All operations.
 When performing PATCH or PUT operations on a single record, the version field (_version) is automatically incremented by 1. However, for bulk update operations (updateAll), version tracking is not supported. The version field remains unchanged even when records are modified.
 
+### 4. Dot Notation in Connected Model Filters for List-Entity Relations
+When querying list-entity relations, dot notation filtering (e.g., `metadata.status.current`) is not supported in `listFilter` and `entityFilter` parameters for connected models. While other filtering approaches work normally, nested property filtering using dot notation specifically for connected List and Entity models through their relations is not available.
+
 # Development Status
 
 * All configurations are fully implemented for generic-entities.
