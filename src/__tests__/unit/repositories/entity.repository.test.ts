@@ -583,19 +583,12 @@ describe('EntityRepository', () => {
     describe('validation and enrichment', () => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       let kindStub: sinon.SinonStub;
-      let uniquenessStub: sinon.SinonStub;
 
       beforeEach(() => {
         // Common stubs for validation tests
         kindStub = sinon
           .stub(repository['kindConfigReader'], 'isKindAcceptableForEntity')
           .returns(true);
-        uniquenessStub = sinon
-          .stub(
-            repository['uniquenessConfigReader'],
-            'isUniquenessConfiguredForEntities',
-          )
-          .returns(false);
         sinon
           .stub(
             repository['visibilityConfigReader'],
@@ -624,27 +617,54 @@ describe('EntityRepository', () => {
       });
 
       it('should throw error when uniqueness is violated', async () => {
-        const updateData = { _name: 'existing-name', _kind: 'test-kind' };
-        const existingEntity = { _id: 'another-id', _name: 'existing-name' };
+        const updateData = { _name: 'updated-name', _kind: 'test-kind' };
 
-        uniquenessStub.returns(true);
-        sinon
-          .stub(repository['uniquenessConfigReader'], 'getFieldsForEntities')
-          .returns(['_name']);
-        sinon
-          .stub(
-            Object.getPrototypeOf(Object.getPrototypeOf(repository)),
-            'findOne',
-          )
-          .resolves(existingEntity);
+        // Create a stub for the record limit checker
+        const recordLimitCheckerStub = sinon.createStubInstance(
+          RecordLimitCheckerService,
+        );
+        recordLimitCheckerStub.checkUniqueness.rejects(
+          new HttpErrorResponse({
+            statusCode: 409,
+            name: 'UniquenessViolationError',
+            message: 'Entity already exists',
+            code: 'ENTITY-UNIQUENESS-VIOLATION',
+            status: 409,
+            details: [
+              new SingleError({
+                code: 'ENTITY-UNIQUENESS-VIOLATION',
+                message: 'Entity already exists',
+                info: {
+                  scope: 'where[_name]=updated-name&where[_kind]=test-kind',
+                },
+              }),
+            ],
+          }),
+        );
+        recordLimitCheckerStub.checkLimits.resolves();
+
+        // Replace the repository's record limit checker with our stub
+        repository['recordLimitChecker'] = recordLimitCheckerStub;
 
         try {
           await repository.replaceById(existingId, updateData);
           throw new Error('Expected error was not thrown');
         } catch (error) {
           expect(error).to.be.instanceOf(HttpErrorResponse);
-          expect(error.message).to.match(/Entity already exists/);
+          expect(error.message).to.equal('Entity already exists');
+          expect(error.code).to.equal('ENTITY-UNIQUENESS-VIOLATION');
+          expect(error.details[0].info.scope).to.equal(
+            'where[_name]=updated-name&where[_kind]=test-kind',
+          );
         }
+
+        // Verify the record limit checker was called with correct parameters
+        expect(recordLimitCheckerStub.checkUniqueness.calledOnce).to.be.true();
+        const [modelClass, data, repo] =
+          recordLimitCheckerStub.checkUniqueness.firstCall.args;
+        expect(modelClass.modelName).to.equal('GenericEntity');
+        expect(data).to.containDeep(updateData);
+        expect(repo).to.equal(repository);
 
         expect(superReplaceByIdStub.called).to.be.false();
       });
