@@ -12,7 +12,7 @@ import type {
   List,
   ListRelations,
 } from '../../../models';
-import { HttpErrorResponse } from '../../../models';
+import { HttpErrorResponse, SingleError } from '../../../models';
 import {
   ListEntityRelationRepository,
   ListRepository,
@@ -267,8 +267,6 @@ describe('EntityRepository', () => {
     describe('validation and enrichment', () => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       let kindStub: sinon.SinonStub;
-      let uniquenessStub: sinon.SinonStub;
-      let recordLimitStub: sinon.SinonStub;
 
       beforeEach(() => {
         // Common stubs for validation tests
@@ -290,15 +288,6 @@ describe('EntityRepository', () => {
         sinon
           .stub(repository['validfromConfigReader'], 'getValidFromForEntities')
           .returns(true);
-        uniquenessStub = sinon
-          .stub(
-            repository['uniquenessConfigReader'],
-            'isUniquenessConfiguredForEntities',
-          )
-          .returns(false);
-        recordLimitStub = sinon
-          .stub(repository['recordLimitChecker'], 'checkLimits')
-          .resolves();
       });
 
       it('should enrich entity with managed fields', async () => {
@@ -434,44 +423,105 @@ describe('EntityRepository', () => {
       it('should throw error when record limit is exceeded', async () => {
         const inputData = { _name: 'test', _kind: 'test-kind' };
 
-        // Override the default stub
-        recordLimitStub.rejects(
+        // Create a stub for the record limit checker
+        const recordLimitCheckerStub = sinon.createStubInstance(
+          RecordLimitCheckerService,
+        );
+        recordLimitCheckerStub.checkLimits.rejects(
           new HttpErrorResponse({
             statusCode: 429,
             name: 'LimitExceededError',
             message: 'Record limit exceeded for entity',
             code: 'ENTITY-LIMIT-EXCEEDED',
             status: 429,
+            details: [
+              new SingleError({
+                code: 'ENTITY-LIMIT-EXCEEDED',
+                message: 'Record limit exceeded for entity',
+                info: {
+                  limit: 2,
+                  scope: 'where[_kind]=test-kind',
+                },
+              }),
+            ],
           }),
         );
+        recordLimitCheckerStub.checkUniqueness.resolves();
+
+        // Replace the repository's record limit checker with our stub
+        repository['recordLimitChecker'] = recordLimitCheckerStub;
 
         try {
           await repository.create(inputData);
           throw new Error('Expected error was not thrown');
         } catch (error) {
           expect(error).to.be.instanceOf(HttpErrorResponse);
-          expect(error.message).to.match(/Record limit exceeded for entity/);
+          expect(error.message).to.equal('Record limit exceeded for entity');
+          expect(error.code).to.equal('ENTITY-LIMIT-EXCEEDED');
+          expect(error.details[0].info.limit).to.equal(2);
+          expect(error.details[0].info.scope).to.equal(
+            'where[_kind]=test-kind',
+          );
         }
+
+        // Verify the record limit checker was called with correct parameters
+        expect(recordLimitCheckerStub.checkLimits.calledOnce).to.be.true();
+        const [modelClass, data, repo] =
+          recordLimitCheckerStub.checkLimits.firstCall.args;
+        expect(modelClass.modelName).to.equal('GenericEntity');
+        expect(data).to.deepEqual(inputData);
+        expect(repo).to.equal(repository);
       });
 
       it('should throw error when uniqueness is violated', async () => {
         const inputData = { _name: 'test', _kind: 'test-kind' };
-        const existingEntity = { _id: 'existing', _name: 'test' }; // Same _name as inputData
 
-        // Override the default stub
-        uniquenessStub.returns(true);
-        sinon
-          .stub(repository['uniquenessConfigReader'], 'getFieldsForEntities')
-          .returns(['_name']);
-        superFindOneStub.resolves(existingEntity);
+        // Create a stub for the record limit checker
+        const recordLimitCheckerStub = sinon.createStubInstance(
+          RecordLimitCheckerService,
+        );
+        recordLimitCheckerStub.checkUniqueness.rejects(
+          new HttpErrorResponse({
+            statusCode: 409,
+            name: 'UniquenessViolationError',
+            message: 'Entity already exists',
+            code: 'ENTITY-UNIQUENESS-VIOLATION',
+            status: 409,
+            details: [
+              new SingleError({
+                code: 'ENTITY-UNIQUENESS-VIOLATION',
+                message: 'Entity already exists',
+                info: {
+                  scope: 'where[_name]=test&where[_kind]=test-kind',
+                },
+              }),
+            ],
+          }),
+        );
+        recordLimitCheckerStub.checkLimits.resolves();
+
+        // Replace the repository's record limit checker with our stub
+        repository['recordLimitChecker'] = recordLimitCheckerStub;
 
         try {
           await repository.create(inputData);
           throw new Error('Expected error was not thrown');
         } catch (error) {
           expect(error).to.be.instanceOf(HttpErrorResponse);
-          expect(error.message).to.match(/Entity already exists/);
+          expect(error.message).to.equal('Entity already exists');
+          expect(error.code).to.equal('ENTITY-UNIQUENESS-VIOLATION');
+          expect(error.details[0].info.scope).to.equal(
+            'where[_name]=test&where[_kind]=test-kind',
+          );
         }
+
+        // Verify the record limit checker was called with correct parameters
+        expect(recordLimitCheckerStub.checkUniqueness.calledOnce).to.be.true();
+        const [modelClass, data, repo] =
+          recordLimitCheckerStub.checkUniqueness.firstCall.args;
+        expect(modelClass.modelName).to.equal('GenericEntity');
+        expect(data).to.deepEqual(inputData);
+        expect(repo).to.equal(repository);
       });
 
       it('should use default entity kind when _kind is missing', async () => {
