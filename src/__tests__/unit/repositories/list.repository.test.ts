@@ -7,11 +7,12 @@ import {
 } from './test-helper.repository';
 import type { EntityPersistenceApplication } from '../../..';
 import { LookupHelper } from '../../../extensions/utils/lookup-helper';
-import { HttpErrorResponse, SingleError, List } from '../../../models';
+import { HttpErrorResponse, SingleError } from '../../../models';
 import type {
   GenericEntity,
   GenericEntityRelations,
   ListRelations,
+  List,
 } from '../../../models';
 import {
   CustomEntityThroughListRepository,
@@ -261,8 +262,6 @@ describe('ListRepository', () => {
 
     describe('validation and enrichment', () => {
       let kindStub: sinon.SinonStub;
-      let uniquenessStub: sinon.SinonStub;
-      let recordLimitStub: sinon.SinonStub;
 
       beforeEach(() => {
         // Common stubs for validation tests
@@ -278,15 +277,6 @@ describe('ListRepository', () => {
         sinon
           .stub(repository['validfromConfigReader'], 'getValidFromForLists')
           .returns(true);
-        uniquenessStub = sinon
-          .stub(
-            repository['uniquenessConfigReader'],
-            'isUniquenessConfiguredForLists',
-          )
-          .returns(false);
-        recordLimitStub = sinon
-          .stub(repository['recordLimitChecker'], 'checkLimits')
-          .resolves();
       });
 
       it('should enrich list with managed fields', async () => {
@@ -359,62 +349,56 @@ describe('ListRepository', () => {
       });
 
       it('should throw error when uniqueness is violated', async () => {
-        const inputData = { _kind: 'test-kind', _name: 'existing-name' };
-        const existingList = { _id: 'existing-id', _name: 'existing-name' };
-
-        uniquenessStub.returns(true);
-        sinon
-          .stub(repository['uniquenessConfigReader'], 'getFieldsForLists')
-          .returns(['_name']);
-        superFindOneStub.resolves(existingList);
-
-        try {
-          await repository.create(inputData);
-          throw new Error('Expected error was not thrown');
-        } catch (error) {
-          expect(error).to.be.instanceOf(HttpErrorResponse);
-          expect(error.message).to.match(/List already exists/);
-        }
-
-        expect(superCreateStub.called).to.be.false();
-      });
-
-      it('should throw error when record limit is exceeded', async () => {
         const inputData = { _kind: 'test-kind', _name: 'test' };
 
-        // Override the default stub
-        recordLimitStub.rejects(
+        // Create a stub for the record limit checker
+        const recordLimitCheckerStub = sinon.createStubInstance(
+          RecordLimitCheckerService,
+        );
+        recordLimitCheckerStub.checkUniqueness.rejects(
           new HttpErrorResponse({
-            statusCode: 429,
-            name: 'LimitExceededError',
-            message: 'Record limit exceeded for list',
-            code: 'LIST-LIMIT-EXCEEDED',
-            status: 429,
+            statusCode: 409,
+            name: 'UniquenessViolationError',
+            message: 'List already exists',
+            code: 'LIST-UNIQUENESS-VIOLATION',
+            status: 409,
             details: [
               new SingleError({
-                code: 'LIST-LIMIT-EXCEEDED',
-                message: 'Record limit exceeded for list',
+                code: 'LIST-UNIQUENESS-VIOLATION',
+                message: 'List already exists',
                 info: {
-                  limit: 5,
-                  scope: '{}',
+                  scope: 'where[_name]=test&where[_kind]=test-kind',
                 },
               }),
             ],
           }),
         );
+        recordLimitCheckerStub.checkLimits.resolves();
+
+        // Replace the repository's record limit checker with our stub
+        repository['recordLimitChecker'] = recordLimitCheckerStub;
 
         try {
           await repository.create(inputData);
           throw new Error('Expected error was not thrown');
         } catch (error) {
           expect(error).to.be.instanceOf(HttpErrorResponse);
-          expect(error.message).to.match(/Record limit exceeded for list/);
-          expect(error.details?.[0].info.limit).to.equal(5);
+          expect(error.message).to.equal('List already exists');
+          expect(error.code).to.equal('LIST-UNIQUENESS-VIOLATION');
+          expect(error.details[0].info.scope).to.equal(
+            'where[_name]=test&where[_kind]=test-kind',
+          );
         }
 
-        expect(recordLimitStub.calledOnce).to.be.true();
-        expect(recordLimitStub.firstCall.args[0]).to.equal(List);
-        expect(recordLimitStub.firstCall.args[1]).to.deepEqual(inputData);
+        // Verify the record limit checker was called with correct parameters
+        expect(recordLimitCheckerStub.checkUniqueness.calledOnce).to.be.true();
+        const [modelClass, data, repo] =
+          recordLimitCheckerStub.checkUniqueness.firstCall.args;
+        expect(modelClass.modelName).to.equal('List');
+        expect(data).to.deepEqual(inputData);
+        expect(repo).to.equal(repository);
+
+        expect(superCreateStub.called).to.be.false();
       });
 
       it('should generate slug from name if not provided', async () => {
@@ -499,16 +483,8 @@ describe('ListRepository', () => {
     });
 
     describe('validation and enrichment', () => {
-      let uniquenessStub: sinon.SinonStub;
-
       beforeEach(() => {
         // Common stubs for validation tests
-        uniquenessStub = sinon
-          .stub(
-            repository['uniquenessConfigReader'],
-            'isUniquenessConfiguredForLists',
-          )
-          .returns(false);
         sinon
           .stub(repository['visibilityConfigReader'], 'getVisibilityForLists')
           .returns('public');
@@ -551,27 +527,54 @@ describe('ListRepository', () => {
       });
 
       it('should throw error when uniqueness is violated', async () => {
-        const updateData = { _name: 'existing-name', _kind: 'test-kind' };
-        const existingList = { _id: 'another-id', _name: 'existing-name' };
+        const updateData = { _name: 'updated-name', _kind: 'test-kind' };
 
-        uniquenessStub.returns(true);
-        sinon
-          .stub(repository['uniquenessConfigReader'], 'getFieldsForLists')
-          .returns(['_name']);
-        sinon
-          .stub(
-            Object.getPrototypeOf(Object.getPrototypeOf(repository)),
-            'findOne',
-          )
-          .resolves(existingList);
+        // Create a stub for the record limit checker
+        const recordLimitCheckerStub = sinon.createStubInstance(
+          RecordLimitCheckerService,
+        );
+        recordLimitCheckerStub.checkUniqueness.rejects(
+          new HttpErrorResponse({
+            statusCode: 409,
+            name: 'UniquenessViolationError',
+            message: 'List already exists',
+            code: 'LIST-UNIQUENESS-VIOLATION',
+            status: 409,
+            details: [
+              new SingleError({
+                code: 'LIST-UNIQUENESS-VIOLATION',
+                message: 'List already exists',
+                info: {
+                  scope: 'where[_name]=updated-name&where[_kind]=test-kind',
+                },
+              }),
+            ],
+          }),
+        );
+        recordLimitCheckerStub.checkLimits.resolves();
+
+        // Replace the repository's record limit checker with our stub
+        repository['recordLimitChecker'] = recordLimitCheckerStub;
 
         try {
           await repository.replaceById(existingId, updateData);
           throw new Error('Expected error was not thrown');
         } catch (error) {
           expect(error).to.be.instanceOf(HttpErrorResponse);
-          expect(error.message).to.match(/List already exists/);
+          expect(error.message).to.equal('List already exists');
+          expect(error.code).to.equal('LIST-UNIQUENESS-VIOLATION');
+          expect(error.details[0].info.scope).to.equal(
+            'where[_name]=updated-name&where[_kind]=test-kind',
+          );
         }
+
+        // Verify the record limit checker was called with correct parameters
+        expect(recordLimitCheckerStub.checkUniqueness.calledOnce).to.be.true();
+        const [modelClass, data, repo] =
+          recordLimitCheckerStub.checkUniqueness.firstCall.args;
+        expect(modelClass.modelName).to.equal('List');
+        expect(data).to.containDeep(updateData);
+        expect(repo).to.equal(repository);
 
         expect(superReplaceByIdStub.called).to.be.false();
       });
@@ -793,16 +796,8 @@ describe('ListRepository', () => {
     });
 
     describe('validation and enrichment', () => {
-      let uniquenessStub: sinon.SinonStub;
-
       beforeEach(() => {
         // Common stubs for validation tests
-        uniquenessStub = sinon
-          .stub(
-            repository['uniquenessConfigReader'],
-            'isUniquenessConfiguredForLists',
-          )
-          .returns(false);
         sinon
           .stub(repository['visibilityConfigReader'], 'getVisibilityForLists')
           .returns('public');
@@ -859,27 +854,54 @@ describe('ListRepository', () => {
       });
 
       it('should throw error when uniqueness is violated', async () => {
-        const updateData = { _name: 'existing-name' };
-        const conflictingList = { _id: 'another-id', _name: 'existing-name' };
+        const updateData = { _name: 'updated-name' };
 
-        uniquenessStub.returns(true);
-        sinon
-          .stub(repository['uniquenessConfigReader'], 'getFieldsForLists')
-          .returns(['_name']);
-        sinon
-          .stub(
-            Object.getPrototypeOf(Object.getPrototypeOf(repository)),
-            'findOne',
-          )
-          .resolves(conflictingList);
+        // Create a stub for the record limit checker
+        const recordLimitCheckerStub = sinon.createStubInstance(
+          RecordLimitCheckerService,
+        );
+        recordLimitCheckerStub.checkUniqueness.rejects(
+          new HttpErrorResponse({
+            statusCode: 409,
+            name: 'UniquenessViolationError',
+            message: 'List already exists',
+            code: 'LIST-UNIQUENESS-VIOLATION',
+            status: 409,
+            details: [
+              new SingleError({
+                code: 'LIST-UNIQUENESS-VIOLATION',
+                message: 'List already exists',
+                info: {
+                  scope: 'where[_name]=updated-name&where[_kind]=test-kind',
+                },
+              }),
+            ],
+          }),
+        );
+        recordLimitCheckerStub.checkLimits.resolves();
+
+        // Replace the repository's record limit checker with our stub
+        repository['recordLimitChecker'] = recordLimitCheckerStub;
 
         try {
           await repository.updateById(existingId, updateData);
           throw new Error('Expected error was not thrown');
         } catch (error) {
           expect(error).to.be.instanceOf(HttpErrorResponse);
-          expect(error.message).to.match(/List already exists/);
+          expect(error.message).to.equal('List already exists');
+          expect(error.code).to.equal('LIST-UNIQUENESS-VIOLATION');
+          expect(error.details[0].info.scope).to.equal(
+            'where[_name]=updated-name&where[_kind]=test-kind',
+          );
         }
+
+        // Verify the record limit checker was called with correct parameters
+        expect(recordLimitCheckerStub.checkUniqueness.calledOnce).to.be.true();
+        const [modelClass, data, repo] =
+          recordLimitCheckerStub.checkUniqueness.firstCall.args;
+        expect(modelClass.modelName).to.equal('List');
+        expect(data).to.containDeep(updateData);
+        expect(repo).to.equal(repository);
 
         expect(superUpdateByIdStub.called).to.be.false();
       });
