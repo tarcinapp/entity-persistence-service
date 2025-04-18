@@ -247,29 +247,34 @@ describe('Utilities: RecordLimitChecker', () => {
         mockLoggingService as LoggingService,
       );
 
-      let capturedFilter: any;
+      // Track all filters used in count calls
+      const capturedFilters: any[] = [];
+
       mockRepository.count = async (filter) => {
-        capturedFilter = filter;
+        capturedFilters.push(filter);
+        // Add a small delay to prevent race conditions
+        await new Promise((resolve) => setTimeout(resolve, 1));
 
         return { count: 0 };
       };
 
-      const validFromDateTime = new Date().toISOString();
+      const now = new Date();
+      const testData = {
+        _ownerUsers: ['user1', 'user2'],
+        _validFromDateTime: now.getTime() - 1000, // Ensure it's in the past
+        _validUntilDateTime: null,
+      };
 
       await service.checkLimits(
         GenericEntity,
-        {
-          _ownerUsers: ['user1', 'user2'],
-          _validFromDateTime: validFromDateTime,
-          _validUntilDateTime: null,
-        },
+        testData,
         mockRepository as DefaultCrudRepository<any, any, any>,
       );
 
-      // Small delay to prevent race condition with filter capture
-      await new Promise((resolve) => setTimeout(resolve, 50));
-
-      expect(capturedFilter).to.Object();
+      // Verify we captured at least one filter
+      expect(capturedFilters.length).to.be.greaterThan(0);
+      // The last captured filter should be the one we're interested in
+      expect(capturedFilters[capturedFilters.length - 1]).to.Object();
     });
 
     it('should use dot notation to access nested values', async () => {
