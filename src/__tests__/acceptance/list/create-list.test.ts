@@ -111,7 +111,7 @@ describe('POST /lists', () => {
     // Set up the environment variables
     appWithClient = await setupApplication({
       list_kinds: 'book-list',
-      uniqueness_list_fields: '_slug,_kind',
+      LIST_UNIQUENESS: 'where[_slug]=${_slug}&where[_kind]=${_kind}',
     });
     ({ client } = appWithClient);
 
@@ -141,9 +141,19 @@ describe('POST /lists', () => {
 
     expect(errorResponse.body.error).to.containDeep({
       statusCode: 409,
-      name: 'DataUniquenessViolationError',
-      message: 'List already exists.',
-      code: 'LIST-ALREADY-EXISTS',
+      name: 'UniquenessViolationError',
+      message: 'List already exists',
+      code: 'LIST-UNIQUENESS-VIOLATION',
+      status: 409,
+      details: [
+        {
+          code: 'LIST-UNIQUENESS-VIOLATION',
+          message: 'List already exists',
+          info: {
+            scope: 'where[_slug]=science-fiction-books&where[_kind]=book-list',
+          },
+        },
+      ],
     });
   });
 
@@ -151,7 +161,8 @@ describe('POST /lists', () => {
     // Set up the environment variables
     appWithClient = await setupApplication({
       list_kinds: 'book-list',
-      uniqueness_list_fields: '_slug,_kind,_ownerUsers',
+      LIST_UNIQUENESS:
+        'where[_slug]=${_slug}&where[_kind]=${_kind}&set[owners][userIds]=${_ownerUsers}',
     });
     ({ client } = appWithClient);
 
@@ -184,68 +195,29 @@ describe('POST /lists', () => {
 
     expect(errorResponse.body.error).to.containDeep({
       statusCode: 409,
-      name: 'DataUniquenessViolationError',
-      message: 'List already exists.',
-      code: 'LIST-ALREADY-EXISTS',
+      name: 'UniquenessViolationError',
+      message: 'List already exists',
+      code: 'LIST-UNIQUENESS-VIOLATION',
+      status: 409,
+      details: [
+        {
+          code: 'LIST-UNIQUENESS-VIOLATION',
+          message: 'List already exists',
+          info: {
+            scope:
+              'where[_slug]=science-fiction-books&where[_kind]=book-list&set[owners][userIds]=user-123',
+          },
+        },
+      ],
     });
-  });
-
-  it('allows duplicate list with different owner users when uniqueness includes owner users', async () => {
-    // Set up the environment variables
-    appWithClient = await setupApplication({
-      list_kinds: 'book-list',
-      uniqueness_list_fields: '_slug,_kind,_ownerUsers', // _ownerUsers is not contributing to uniqueness check
-    });
-    ({ client } = appWithClient);
-
-    // First list creation - should succeed
-    const firstList: Partial<List> = {
-      _name: 'Science Fiction Books',
-      _kind: 'book-list',
-      _ownerUsers: ['user-123', 'user-456'],
-      description: 'A list of science fiction books',
-    };
-
-    const firstResponse = await client
-      .post('/lists')
-      .send(firstList)
-      .expect(200);
-
-    expect(firstResponse.body._slug).to.be.equal('science-fiction-books');
-    expect(firstResponse.body._kind).to.be.equal('book-list');
-    expect(firstResponse.body._ownerUsers).to.containDeep([
-      'user-123',
-      'user-456',
-    ]);
-
-    // Second list with same name and kind and with same owner - should succeed because uniqueness is not enforced for array fields
-    const secondList: Partial<List> = {
-      _name: 'Science Fiction Books',
-      _kind: 'book-list',
-      _ownerUsers: ['user-123'], // Different owner
-      description: 'Another list of science fiction books',
-    };
-
-    const secondResponse = await client
-      .post('/lists')
-      .send(secondList)
-      .expect(200);
-
-    expect(secondResponse.body._slug).to.be.equal('science-fiction-books');
-    expect(secondResponse.body._kind).to.be.equal('book-list');
-    expect(secondResponse.body._ownerUsers).to.containDeep(['user-123']);
-
-    // Verify both records exist by getting all lists
-    const getAllResponse = await client.get('/lists').expect(200);
-    expect(getAllResponse.body).to.be.Array().lengthOf(2);
   });
 
   it('rejects duplicate list when uniqueness set includes owners and same user exists', async () => {
     // Set up the environment variables with set[owners] uniqueness
     appWithClient = await setupApplication({
       list_kinds: 'book-list',
-      uniqueness_list_fields: '_slug,_kind',
-      uniqueness_list_scope: 'set[owners]',
+      LIST_UNIQUENESS:
+        'where[_slug]=${_slug}&where[_kind]=${_kind}&set[owners][userIds]=${_ownerUsers}',
     });
     ({ client } = appWithClient);
 
@@ -285,9 +257,20 @@ describe('POST /lists', () => {
 
     expect(errorResponse.body.error).to.containDeep({
       statusCode: 409,
-      name: 'DataUniquenessViolationError',
-      message: 'List already exists.',
-      code: 'LIST-ALREADY-EXISTS',
+      name: 'UniquenessViolationError',
+      message: 'List already exists',
+      code: 'LIST-UNIQUENESS-VIOLATION',
+      status: 409,
+      details: [
+        {
+          code: 'LIST-UNIQUENESS-VIOLATION',
+          message: 'List already exists',
+          info: {
+            scope:
+              'where[_slug]=science-fiction-books&where[_kind]=book-list&set[owners][userIds]=user-123,user-999',
+          },
+        },
+      ],
     });
   });
 
@@ -295,8 +278,8 @@ describe('POST /lists', () => {
     // Set up the environment variables with set[actives] uniqueness
     appWithClient = await setupApplication({
       list_kinds: 'book-list',
-      uniqueness_list_fields: '_slug,_kind',
-      uniqueness_list_scope: 'set[actives]',
+      LIST_UNIQUENESS:
+        'where[_slug]=${_slug}&where[_kind]=${_kind}&set[actives]',
     });
     ({ client } = appWithClient);
 
@@ -347,9 +330,20 @@ describe('POST /lists', () => {
 
     expect(errorResponse.body.error).to.containDeep({
       statusCode: 409,
-      name: 'DataUniquenessViolationError',
-      message: 'List already exists.',
-      code: 'LIST-ALREADY-EXISTS',
+      name: 'UniquenessViolationError',
+      message: 'List already exists',
+      code: 'LIST-UNIQUENESS-VIOLATION',
+      status: 409,
+      details: [
+        {
+          code: 'LIST-UNIQUENESS-VIOLATION',
+          message: 'List already exists',
+          info: {
+            scope:
+              'where[_slug]=science-fiction-books&where[_kind]=book-list&set[actives]',
+          },
+        },
+      ],
     });
   });
 
