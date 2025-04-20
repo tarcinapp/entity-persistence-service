@@ -1,6 +1,7 @@
-import { injectable } from '@loopback/core';
+import { inject, injectable } from '@loopback/core';
 import { DefaultCrudRepository } from '@loopback/repository';
 import { get } from 'lodash';
+import { LoggingService } from './logging.service';
 import { ListEntityCommonBase } from '../models/base-models/list-entity-common-base.model';
 import { HttpErrorResponse } from '../models/http-error-response.model';
 import { List } from '../models/list.model';
@@ -17,7 +18,10 @@ export class LookupConstraintService {
   private entityConstraints: LookupConstraint[] = [];
   private listConstraints: LookupConstraint[] = [];
 
-  constructor() {
+  constructor(
+    @inject('services.LoggingService')
+    private loggingService: LoggingService,
+  ) {
     this.loadConstraints();
   }
 
@@ -29,8 +33,9 @@ export class LookupConstraintService {
       try {
         this.entityConstraints = JSON.parse(entityConstraintsJson);
       } catch (error) {
-        throw new Error(
+        this.loggingService.warn(
           'Failed to parse ENTITY_LOOKUP_CONSTRAINT environment variable',
+          error,
         );
       }
     }
@@ -39,8 +44,9 @@ export class LookupConstraintService {
       try {
         this.listConstraints = JSON.parse(listConstraintsJson);
       } catch (error) {
-        throw new Error(
+        this.loggingService.warn(
           'Failed to parse LIST_LOOKUP_CONSTRAINT environment variable',
+          error,
         );
       }
     }
@@ -118,8 +124,8 @@ export class LookupConstraintService {
         name: 'InvalidLookupConstraintError',
         message: `One or more lookup references in property '${constraint.propertyPath}' do not meet the constraint: expected targetKind='${constraint.targetKind}'.`,
         code: isList
-          ? 'LIST-INVALID-LOOKUP-CONSTRAINT'
-          : 'ENTITY-INVALID-LOOKUP-CONSTRAINT',
+          ? 'LIST-INVALID-LOOKUP-KIND'
+          : 'ENTITY-INVALID-LOOKUP-KIND',
         status: 422,
       });
     }
