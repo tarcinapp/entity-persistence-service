@@ -20,6 +20,7 @@ import {
 } from '../../../repositories';
 import { EntityRepository } from '../../../repositories/entity.repository';
 import { LoggingService } from '../../../services/logging.service';
+import { LookupConstraintService } from '../../../services/lookup-constraint.service';
 import { RecordLimitCheckerService } from '../../../services/record-limit-checker.service';
 
 describe('EntityRepository', () => {
@@ -42,6 +43,9 @@ describe('EntityRepository', () => {
     const loggingServiceStub = sinon.createStubInstance(LoggingService);
     const recordLimitCheckerStub = sinon.createStubInstance(
       RecordLimitCheckerService,
+    );
+    const lookupConstraintServiceStub = sinon.createStubInstance(
+      LookupConstraintService,
     );
 
     // Create a mock lookup helper
@@ -73,6 +77,7 @@ describe('EntityRepository', () => {
       mockLookupHelper,
       loggingServiceStub,
       recordLimitCheckerStub,
+      lookupConstraintServiceStub,
     );
   });
 

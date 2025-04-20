@@ -195,7 +195,7 @@ export class ListRepository extends DefaultCrudRepository<
       const list = await super.findById(id, filter);
 
       // Return the successfully found entity
-      return list;
+      return await this.processLookup(list, filter);
     } catch (error) {
       // Handle specific known errors, such as "Entity not found"
       if (error.code === 'ENTITY_NOT_FOUND') {

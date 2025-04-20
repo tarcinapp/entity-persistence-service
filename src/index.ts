@@ -24,6 +24,8 @@ import {
   MongoPipelineHelper,
   MongoPipelineHelperBindings,
 } from './extensions/utils/mongo-pipeline-helper';
+import { LookupConstraintBindings } from './services/lookup-constraint.bindings';
+import { LookupConstraintService } from './services/lookup-constraint.service';
 import { RecordLimitCheckerBindings } from './services/record-limit-checker.bindings';
 import { RecordLimitCheckerService } from './services/record-limit-checker.service';
 
@@ -78,6 +80,9 @@ export async function main(options: ApplicationConfig = {}) {
   app
     .bind(RecordLimitCheckerBindings.SERVICE)
     .toClass(RecordLimitCheckerService);
+
+  // add lookup constraint service to context
+  app.bind(LookupConstraintBindings.SERVICE).toClass(LookupConstraintService);
 
   await app.boot();
   await app.start();

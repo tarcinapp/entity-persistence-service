@@ -40,6 +40,8 @@ import {
 } from '../models';
 import { UnmodifiableCommonFields } from '../models/base-types/unmodifiable-common-fields';
 import { LoggingService } from '../services/logging.service';
+import { LookupConstraintBindings } from '../services/lookup-constraint.bindings';
+import { LookupConstraintService } from '../services/lookup-constraint.service';
 import { RecordLimitCheckerService } from '../services/record-limit-checker.service';
 
 export class EntityRepository extends DefaultCrudRepository<
@@ -95,6 +97,9 @@ export class EntityRepository extends DefaultCrudRepository<
 
     @inject('services.record-limit-checker')
     private recordLimitChecker: RecordLimitCheckerService,
+
+    @inject(LookupConstraintBindings.SERVICE)
+    private lookupConstraintService: LookupConstraintService,
   ) {
     super(GenericEntity, dataSource);
 
@@ -394,6 +399,10 @@ export class EntityRepository extends DefaultCrudRepository<
     return Promise.all([
       this.checkUniquenessForCreate(data),
       this.recordLimitChecker.checkLimits(GenericEntity, data, this),
+      this.lookupConstraintService.validateLookupConstraints(
+        data as GenericEntity,
+        this,
+      ),
     ]).then(() => {
       return data;
     });
@@ -423,8 +432,13 @@ export class EntityRepository extends DefaultCrudRepository<
       data,
       this,
     );
+    const lookupConstraintCheck =
+      this.lookupConstraintService.validateLookupConstraints(
+        data as GenericEntity,
+        this,
+      );
 
-    await Promise.all([uniquenessCheck, limitCheck]);
+    await Promise.all([uniquenessCheck, limitCheck, lookupConstraintCheck]);
 
     return data;
   }
@@ -457,11 +471,16 @@ export class EntityRepository extends DefaultCrudRepository<
       mergedData,
       this,
     );
+    const lookupConstraintCheck =
+      this.lookupConstraintService.validateLookupConstraints(
+        mergedData as GenericEntity,
+        this,
+      );
 
     this.generateSlug(data);
     this.setCountFields(data);
 
-    await Promise.all([uniquenessCheck, limitCheck]);
+    await Promise.all([uniquenessCheck, limitCheck, lookupConstraintCheck]);
 
     return data;
   }
