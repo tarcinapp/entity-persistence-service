@@ -1,16 +1,17 @@
-import { inject, injectable } from '@loopback/core';
-import { DefaultCrudRepository } from '@loopback/repository';
-import { get } from 'lodash';
+import { inject, injectable, Getter } from '@loopback/core';
+import { get, every } from 'lodash';
 import { LoggingService } from './logging.service';
 import { ListEntityCommonBase } from '../models/base-models/list-entity-common-base.model';
 import { HttpErrorResponse } from '../models/http-error-response.model';
 import { List } from '../models/list.model';
+import { EntityRepository } from '../repositories/entity.repository';
+import { ListRepository } from '../repositories/list.repository';
 
 interface LookupConstraint {
   propertyPath: string;
-  record: 'entity' | 'list';
-  sourceKind: string;
-  targetKind: string;
+  record?: 'entity' | 'list';
+  sourceKind?: string;
+  targetKind?: string;
 }
 
 @injectable()
@@ -21,6 +22,10 @@ export class LookupConstraintService {
   constructor(
     @inject('services.LoggingService')
     private loggingService: LoggingService,
+    @inject.getter('repositories.EntityRepository')
+    private getEntityRepository: Getter<EntityRepository>,
+    @inject.getter('repositories.ListRepository')
+    private getListRepository: Getter<ListRepository>,
   ) {
     this.loadConstraints();
   }
@@ -52,14 +57,17 @@ export class LookupConstraintService {
     }
   }
 
-  async validateLookupConstraints(
-    item: ListEntityCommonBase,
-    repository: DefaultCrudRepository<any, any>,
-  ) {
+  async validateLookupConstraints(item: ListEntityCommonBase) {
     const isList = item instanceof List;
     const applicableConstraints = (
       isList ? this.listConstraints : this.entityConstraints
-    ).filter((constraint) => constraint.sourceKind === item._kind);
+    ).filter(
+      (constraint) =>
+        // Apply constraint if:
+        // 1. No sourceKind specified (applies to all)
+        // 2. sourceKind matches the item's kind
+        !constraint.sourceKind || constraint.sourceKind === item._kind,
+    );
 
     if (applicableConstraints.length === 0) {
       return;
@@ -67,7 +75,7 @@ export class LookupConstraintService {
 
     await Promise.all(
       applicableConstraints.map((constraint) =>
-        this.validateConstraint(item, constraint, repository, isList),
+        this.validateConstraint(item, constraint, isList),
       ),
     );
   }
@@ -75,7 +83,6 @@ export class LookupConstraintService {
   private async validateConstraint(
     item: ListEntityCommonBase,
     constraint: LookupConstraint,
-    repository: DefaultCrudRepository<any, any>,
     isList: boolean,
   ) {
     const references = get(item, constraint.propertyPath);
@@ -84,50 +91,60 @@ export class LookupConstraintService {
     }
 
     const ids = Array.isArray(references) ? references : [references];
-    const validIds = ids.filter((id) => {
-      if (!id || typeof id !== 'string') {
-        return false;
-      }
 
-      const isValidFormat = this.validateReferenceFormat(id, constraint.record);
-      if (!isValidFormat) {
+    // Check if all references are valid strings
+    if (!every(ids, (id) => id && typeof id === 'string')) {
+      return;
+    }
+
+    // Only validate reference format if record is specified
+    if (constraint.record) {
+      const allValidFormat = every(ids, (id) =>
+        this.validateReferenceFormat(id, constraint.record!),
+      );
+      if (!allValidFormat) {
         throw new HttpErrorResponse({
           statusCode: 422,
           name: 'InvalidLookupReferenceError',
-          message: `Invalid reference format in property '${constraint.propertyPath}'. Expected format: 'tapp://localhost/${constraint.record}s/{id}'`,
+          message: `Invalid reference format in property '${constraint.propertyPath}'. Expected format: 'tapp://localhost/${constraint.record === 'entity' ? 'entities' : 'lists'}/{id}'`,
           code: isList
             ? 'LIST-INVALID-LOOKUP-REFERENCE'
             : 'ENTITY-INVALID-LOOKUP-REFERENCE',
           status: 422,
         });
       }
-
-      return true;
-    });
-
-    if (validIds.length === 0) {
-      return;
     }
 
-    const extractedIds = validIds.map((id) => this.extractIdFromReference(id));
-    const items = await repository.find({
-      where: { _id: { inq: extractedIds } },
-      fields: { _kind: true },
-    });
+    // Only validate target kinds if targetKind is specified
+    if (constraint.targetKind) {
+      const extractedIds = ids.map((id) => this.extractIdFromReference(id));
 
-    const invalidItems = items.filter(
-      (targetItem) => targetItem._kind !== constraint.targetKind,
-    );
-    if (invalidItems.length > 0) {
-      throw new HttpErrorResponse({
-        statusCode: 422,
-        name: 'InvalidLookupConstraintError',
-        message: `One or more lookup references in property '${constraint.propertyPath}' do not meet the constraint: expected targetKind='${constraint.targetKind}'.`,
-        code: isList
-          ? 'LIST-INVALID-LOOKUP-KIND'
-          : 'ENTITY-INVALID-LOOKUP-KIND',
-        status: 422,
-      });
+      // Get the appropriate repository based on the record type
+      const repository =
+        constraint.record === 'list'
+          ? await this.getListRepository()
+          : await this.getEntityRepository();
+
+      const items = (await repository.find({
+        where: { _id: { inq: extractedIds } },
+        fields: { _kind: true },
+      })) as Array<{ _kind: string }>;
+
+      const allValidKind = every(
+        items,
+        (target) => target._kind === constraint.targetKind,
+      );
+      if (!allValidKind) {
+        throw new HttpErrorResponse({
+          statusCode: 422,
+          name: 'InvalidLookupConstraintError',
+          message: `One or more lookup references in property '${constraint.propertyPath}' do not meet the constraint: expected targetKind='${constraint.targetKind}'.`,
+          code: isList
+            ? 'LIST-INVALID-LOOKUP-KIND'
+            : 'ENTITY-INVALID-LOOKUP-KIND',
+          status: 422,
+        });
+      }
     }
   }
 
