@@ -930,5 +930,724 @@ describe('Utilities: LookupConstraint', () => {
         ).to.be.rejectedWith(HttpErrorResponse);
       });
     });
+
+    describe('list to entity validation', () => {
+      describe('array case', () => {
+        it('should validate multiple entity references from list', async () => {
+          process.env.LIST_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'items',
+              record: 'entity',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const list = new List({
+            _kind: 'test',
+            _name: 'Test List',
+            _slug: 'test-list',
+            items: [
+              'tapp://localhost/entities/1',
+              'tapp://localhost/entities/2',
+            ],
+          });
+
+          await expect(
+            service.validateLookupConstraints(list),
+          ).to.not.be.rejected();
+        });
+      });
+
+      describe('single string case', () => {
+        it('should validate single entity reference from list', async () => {
+          process.env.LIST_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'items',
+              record: 'entity',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const list = new List({
+            _kind: 'test',
+            _name: 'Test List',
+            _slug: 'test-list',
+            items: 'tapp://localhost/entities/1',
+          });
+
+          await expect(
+            service.validateLookupConstraints(list),
+          ).to.not.be.rejected();
+        });
+      });
+
+      describe('without sourceKind and targetKind', () => {
+        it('should succeed when references match format', async () => {
+          process.env.LIST_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'items',
+              record: 'entity',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const list = new List({
+            _kind: 'test',
+            _name: 'Test List',
+            _slug: 'test-list',
+            items: 'tapp://localhost/entities/1',
+          });
+
+          await expect(
+            service.validateLookupConstraints(list),
+          ).to.not.be.rejected();
+        });
+
+        it('should reject when references do not match format', async () => {
+          process.env.LIST_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'items',
+              record: 'entity',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const list = new List({
+            _kind: 'test',
+            _name: 'Test List',
+            _slug: 'test-list',
+            items: 'invalid-reference',
+          });
+
+          await expect(
+            service.validateLookupConstraints(list),
+          ).to.be.rejectedWith(HttpErrorResponse);
+        });
+      });
+
+      describe('with sourceKind and targetKind', () => {
+        it('should succeed when referenced entity kind matches targetKind', async () => {
+          process.env.LIST_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'items',
+              record: 'entity',
+              sourceKind: 'test',
+              targetKind: 'target',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const list = new List({
+            _kind: 'test',
+            _name: 'Test List',
+            _slug: 'test-list',
+            items: 'tapp://localhost/entities/1',
+          });
+
+          // Mock repository to return entity with correct kind
+          mockEntityRepository.find.resolves([
+            new GenericEntity({
+              _kind: 'target',
+              _name: 'Target Entity',
+              _slug: 'target-entity',
+            }),
+          ]);
+
+          await expect(
+            service.validateLookupConstraints(list),
+          ).to.not.be.rejected();
+        });
+
+        it('should reject when referenced entity kind does not match targetKind', async () => {
+          process.env.LIST_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'items',
+              record: 'entity',
+              sourceKind: 'test',
+              targetKind: 'target',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const list = new List({
+            _kind: 'test',
+            _name: 'Test List',
+            _slug: 'test-list',
+            items: 'tapp://localhost/entities/1',
+          });
+
+          // Mock repository to return entity with incorrect kind
+          mockEntityRepository.find.resolves([
+            new GenericEntity({
+              _kind: 'wrong',
+              _name: 'Wrong Entity',
+              _slug: 'wrong-entity',
+            }),
+          ]);
+
+          await expect(
+            service.validateLookupConstraints(list),
+          ).to.be.rejectedWith(HttpErrorResponse);
+        });
+
+        it('should reject when any referenced entity kind in array does not match targetKind', async () => {
+          process.env.LIST_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'items',
+              record: 'entity',
+              sourceKind: 'test',
+              targetKind: 'target',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const list = new List({
+            _kind: 'test',
+            _name: 'Test List',
+            _slug: 'test-list',
+            items: [
+              'tapp://localhost/entities/1',
+              'tapp://localhost/entities/2',
+              'tapp://localhost/entities/3',
+            ],
+          });
+
+          // Mock repository to return entities with mixed kinds
+          mockEntityRepository.find.resolves([
+            new GenericEntity({
+              _kind: 'target', // This one is correct
+              _name: 'Target Entity 1',
+              _slug: 'target-entity-1',
+            }),
+            new GenericEntity({
+              _kind: 'wrong', // This one is incorrect
+              _name: 'Wrong Entity',
+              _slug: 'wrong-entity',
+            }),
+            new GenericEntity({
+              _kind: 'target', // This one is correct
+              _name: 'Target Entity 2',
+              _slug: 'target-entity-2',
+            }),
+          ]);
+
+          await expect(
+            service.validateLookupConstraints(list),
+          ).to.be.rejectedWith(HttpErrorResponse);
+        });
+      });
+
+      describe('mix of multiple constraints', () => {
+        it('should succeed when all constraints are satisfied', async () => {
+          process.env.LIST_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'items1',
+              record: 'entity',
+              sourceKind: 'test',
+              targetKind: 'target1',
+            },
+            {
+              propertyPath: 'items2',
+              record: 'entity',
+              sourceKind: 'test',
+              targetKind: 'target2',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const list = new List({
+            _kind: 'test',
+            _name: 'Test List',
+            _slug: 'test-list',
+            items1: 'tapp://localhost/entities/1',
+            items2: 'tapp://localhost/entities/2',
+          });
+
+          // Mock repository to return entities with correct kinds
+          mockEntityRepository.find
+            .onFirstCall()
+            .resolves([
+              new GenericEntity({
+                _kind: 'target1',
+                _name: 'Target1 Entity',
+                _slug: 'target1-entity',
+              }),
+            ])
+            .onSecondCall()
+            .resolves([
+              new GenericEntity({
+                _kind: 'target2',
+                _name: 'Target2 Entity',
+                _slug: 'target2-entity',
+              }),
+            ]);
+
+          await expect(
+            service.validateLookupConstraints(list),
+          ).to.not.be.rejected();
+        });
+
+        it('should reject when any constraint is not satisfied', async () => {
+          process.env.LIST_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'items1',
+              record: 'entity',
+              sourceKind: 'test',
+              targetKind: 'target1',
+            },
+            {
+              propertyPath: 'items2',
+              record: 'entity',
+              sourceKind: 'test',
+              targetKind: 'target2',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const list = new List({
+            _kind: 'test',
+            _name: 'Test List',
+            _slug: 'test-list',
+            items1: 'tapp://localhost/entities/1',
+            items2: 'tapp://localhost/entities/2',
+          });
+
+          // Mock repository to return entities with incorrect kind for second reference
+          mockEntityRepository.find
+            .onFirstCall()
+            .resolves([
+              new GenericEntity({
+                _kind: 'target1',
+                _name: 'Target1 Entity',
+                _slug: 'target1-entity',
+              }),
+            ])
+            .onSecondCall()
+            .resolves([
+              new GenericEntity({
+                _kind: 'wrong',
+                _name: 'Wrong Entity',
+                _slug: 'wrong-entity',
+              }),
+            ]);
+
+          await expect(
+            service.validateLookupConstraints(list),
+          ).to.be.rejectedWith(HttpErrorResponse);
+        });
+      });
+    });
+
+    describe('list to list validation', () => {
+      describe('array case', () => {
+        it('should validate multiple list references from list', async () => {
+          process.env.LIST_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'items',
+              record: 'list',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const list = new List({
+            _kind: 'test',
+            _name: 'Test List',
+            _slug: 'test-list',
+            items: ['tapp://localhost/lists/1', 'tapp://localhost/lists/2'],
+          });
+
+          await expect(
+            service.validateLookupConstraints(list),
+          ).to.not.be.rejected();
+        });
+      });
+
+      describe('single string case', () => {
+        it('should validate single list reference from list', async () => {
+          process.env.LIST_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'items',
+              record: 'list',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const list = new List({
+            _kind: 'test',
+            _name: 'Test List',
+            _slug: 'test-list',
+            items: 'tapp://localhost/lists/1',
+          });
+
+          await expect(
+            service.validateLookupConstraints(list),
+          ).to.not.be.rejected();
+        });
+      });
+
+      describe('without sourceKind and targetKind', () => {
+        it('should succeed when references match format', async () => {
+          process.env.LIST_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'items',
+              record: 'list',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const list = new List({
+            _kind: 'test',
+            _name: 'Test List',
+            _slug: 'test-list',
+            items: 'tapp://localhost/lists/1',
+          });
+
+          await expect(
+            service.validateLookupConstraints(list),
+          ).to.not.be.rejected();
+        });
+
+        it('should reject when references do not match format', async () => {
+          process.env.LIST_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'items',
+              record: 'list',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const list = new List({
+            _kind: 'test',
+            _name: 'Test List',
+            _slug: 'test-list',
+            items: 'invalid-reference',
+          });
+
+          await expect(
+            service.validateLookupConstraints(list),
+          ).to.be.rejectedWith(HttpErrorResponse);
+        });
+      });
+
+      describe('with sourceKind and targetKind', () => {
+        it('should succeed when referenced list kind matches targetKind', async () => {
+          process.env.LIST_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'items',
+              record: 'list',
+              sourceKind: 'test',
+              targetKind: 'target',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const list = new List({
+            _kind: 'test',
+            _name: 'Test List',
+            _slug: 'test-list',
+            items: 'tapp://localhost/lists/1',
+          });
+
+          // Mock repository to return list with correct kind
+          mockListRepository.find.resolves([
+            new List({
+              _kind: 'target',
+              _name: 'Target List',
+              _slug: 'target-list',
+            }),
+          ]);
+
+          await expect(
+            service.validateLookupConstraints(list),
+          ).to.not.be.rejected();
+        });
+
+        it('should reject when referenced list kind does not match targetKind', async () => {
+          process.env.LIST_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'items',
+              record: 'list',
+              sourceKind: 'test',
+              targetKind: 'target',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const list = new List({
+            _kind: 'test',
+            _name: 'Test List',
+            _slug: 'test-list',
+            items: 'tapp://localhost/lists/1',
+          });
+
+          // Mock repository to return list with incorrect kind
+          mockListRepository.find.resolves([
+            new List({
+              _kind: 'wrong',
+              _name: 'Wrong List',
+              _slug: 'wrong-list',
+            }),
+          ]);
+
+          await expect(
+            service.validateLookupConstraints(list),
+          ).to.be.rejectedWith(HttpErrorResponse);
+        });
+
+        it('should reject when any referenced list kind in array does not match targetKind', async () => {
+          process.env.LIST_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'items',
+              record: 'list',
+              sourceKind: 'test',
+              targetKind: 'target',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const list = new List({
+            _kind: 'test',
+            _name: 'Test List',
+            _slug: 'test-list',
+            items: [
+              'tapp://localhost/lists/1',
+              'tapp://localhost/lists/2',
+              'tapp://localhost/lists/3',
+            ],
+          });
+
+          // Mock repository to return lists with mixed kinds
+          mockListRepository.find.resolves([
+            new List({
+              _kind: 'target', // This one is correct
+              _name: 'Target List 1',
+              _slug: 'target-list-1',
+            }),
+            new List({
+              _kind: 'wrong', // This one is incorrect
+              _name: 'Wrong List',
+              _slug: 'wrong-list',
+            }),
+            new List({
+              _kind: 'target', // This one is correct
+              _name: 'Target List 2',
+              _slug: 'target-list-2',
+            }),
+          ]);
+
+          await expect(
+            service.validateLookupConstraints(list),
+          ).to.be.rejectedWith(HttpErrorResponse);
+        });
+      });
+
+      describe('mix of multiple constraints', () => {
+        it('should succeed when all constraints are satisfied', async () => {
+          process.env.LIST_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'items1',
+              record: 'list',
+              sourceKind: 'test',
+              targetKind: 'target1',
+            },
+            {
+              propertyPath: 'items2',
+              record: 'list',
+              sourceKind: 'test',
+              targetKind: 'target2',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const list = new List({
+            _kind: 'test',
+            _name: 'Test List',
+            _slug: 'test-list',
+            items1: 'tapp://localhost/lists/1',
+            items2: 'tapp://localhost/lists/2',
+          });
+
+          // Mock repository to return lists with correct kinds
+          mockListRepository.find
+            .onFirstCall()
+            .resolves([
+              new List({
+                _kind: 'target1',
+                _name: 'Target1 List',
+                _slug: 'target1-list',
+              }),
+            ])
+            .onSecondCall()
+            .resolves([
+              new List({
+                _kind: 'target2',
+                _name: 'Target2 List',
+                _slug: 'target2-list',
+              }),
+            ]);
+
+          await expect(
+            service.validateLookupConstraints(list),
+          ).to.not.be.rejected();
+        });
+
+        it('should reject when any constraint is not satisfied', async () => {
+          process.env.LIST_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'items1',
+              record: 'list',
+              sourceKind: 'test',
+              targetKind: 'target1',
+            },
+            {
+              propertyPath: 'items2',
+              record: 'list',
+              sourceKind: 'test',
+              targetKind: 'target2',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const list = new List({
+            _kind: 'test',
+            _name: 'Test List',
+            _slug: 'test-list',
+            items1: 'tapp://localhost/lists/1',
+            items2: 'tapp://localhost/lists/2',
+          });
+
+          // Mock repository to return lists with incorrect kind for second reference
+          mockListRepository.find
+            .onFirstCall()
+            .resolves([
+              new List({
+                _kind: 'target1',
+                _name: 'Target1 List',
+                _slug: 'target1-list',
+              }),
+            ])
+            .onSecondCall()
+            .resolves([
+              new List({
+                _kind: 'wrong',
+                _name: 'Wrong List',
+                _slug: 'wrong-list',
+              }),
+            ]);
+
+          await expect(
+            service.validateLookupConstraints(list),
+          ).to.be.rejectedWith(HttpErrorResponse);
+        });
+      });
+    });
   });
 });
