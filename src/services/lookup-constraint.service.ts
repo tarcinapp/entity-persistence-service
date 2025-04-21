@@ -1,5 +1,5 @@
 import { inject, injectable, Getter } from '@loopback/core';
-import { get, every } from 'lodash';
+import { get, every, isString } from 'lodash';
 import { LoggingService } from './logging.service';
 import { ListEntityCommonBase } from '../models/base-models/list-entity-common-base.model';
 import { HttpErrorResponse } from '../models/http-error-response.model';
@@ -92,11 +92,6 @@ export class LookupConstraintService {
 
     const ids = Array.isArray(references) ? references : [references];
 
-    // Check if all references are valid strings
-    if (!every(ids, (id) => id && typeof id === 'string')) {
-      return;
-    }
-
     // Only validate reference format if record is specified
     if (constraint.record) {
       const allValidFormat = every(ids, (id) =>
@@ -152,6 +147,10 @@ export class LookupConstraintService {
     reference: string,
     expectedType: 'entity' | 'list',
   ): boolean {
+    if (!isString(reference)) {
+      return false;
+    }
+
     if (expectedType === 'entity') {
       return reference.startsWith('tapp://localhost/entities/');
     }

@@ -1,6 +1,5 @@
 import { Getter } from '@loopback/core';
 import { expect, sinon } from '@loopback/testlab';
-import { ListEntityCommonBase } from '../../../models/base-models/list-entity-common-base.model';
 import { GenericEntity } from '../../../models/entity.model';
 import { HttpErrorResponse } from '../../../models/http-error-response.model';
 import { List } from '../../../models/list.model';
@@ -15,28 +14,6 @@ describe('Utilities: LookupConstraint', () => {
   let mockEntityRepository: sinon.SinonStubbedInstance<EntityRepository>;
   let mockListRepository: sinon.SinonStubbedInstance<ListRepository>;
   let processEnvBackup: NodeJS.ProcessEnv;
-
-  // Mock entity class that extends ListEntityCommonBase
-  class TestEntity extends ListEntityCommonBase {
-    references?: string[];
-
-    constructor(data?: Partial<TestEntity>) {
-      super(data);
-      if (data) {
-        this.references = data.references;
-      }
-    }
-  }
-
-  // Helper function to create a GenericEntity with minimal required fields
-  function createEntity(id: string, kind: string): GenericEntity {
-    return new GenericEntity({
-      _id: id,
-      _kind: kind,
-      _name: `${kind}-${id}`,
-      _slug: `${kind}-${id}`,
-    });
-  }
 
   beforeEach(() => {
     // Backup process.env
@@ -136,245 +113,822 @@ describe('Utilities: LookupConstraint', () => {
   });
 
   describe('constraint validation', () => {
-    it('should validate entity references with correct target kind', async () => {
-      const constraints = [
-        {
-          propertyPath: 'references',
-          record: 'entity',
-          sourceKind: 'book',
-          targetKind: 'author',
-        },
-      ];
+    describe('invalid references', () => {
+      it('should reject invalid reference format', async () => {
+        process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify([
+          {
+            propertyPath: 'references',
+            record: 'entity',
+          },
+        ]);
 
-      process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify(constraints);
-      service = new LookupConstraintService(
-        mockLoggingService as LoggingService,
-        Getter.fromValue(mockEntityRepository),
-        Getter.fromValue(mockListRepository),
-      );
+        // Create new service instance after setting environment variables
+        service = new LookupConstraintService(
+          mockLoggingService as LoggingService,
+          Getter.fromValue(mockEntityRepository),
+          Getter.fromValue(mockListRepository),
+        );
 
-      // Mock repository to return valid items
-      mockEntityRepository.find.resolves([
-        createEntity('author1', 'author'),
-        createEntity('author2', 'author'),
-      ]);
+        const entity = new GenericEntity({
+          _kind: 'test',
+          _name: 'Test Entity',
+          _slug: 'test-entity',
+          references: ['invalid-reference'],
+        });
 
-      const entity = new TestEntity({
-        _kind: 'book',
-        _name: 'Test Book',
-        _slug: 'test-book',
-        references: [
-          'tapp://localhost/entities/author1',
-          'tapp://localhost/entities/author2',
-        ],
+        await expect(
+          service.validateLookupConstraints(entity),
+        ).to.be.rejectedWith(HttpErrorResponse);
       });
 
-      await expect(
-        service.validateLookupConstraints(entity),
-      ).to.not.be.rejected();
+      it('should reject non-string reference', async () => {
+        process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify([
+          {
+            propertyPath: 'references',
+            record: 'entity',
+          },
+        ]);
+
+        // Create new service instance after setting environment variables
+        service = new LookupConstraintService(
+          mockLoggingService as LoggingService,
+          Getter.fromValue(mockEntityRepository),
+          Getter.fromValue(mockListRepository),
+        );
+
+        const entity = new GenericEntity({
+          _kind: 'test',
+          _name: 'Test Entity',
+          _slug: 'test-entity',
+          references: [123], // non-string reference
+        });
+
+        await expect(
+          service.validateLookupConstraints(entity),
+        ).to.be.rejectedWith(HttpErrorResponse);
+      });
     });
 
-    it('should validate list references with correct target kind', async () => {
-      const constraints = [
-        {
-          propertyPath: 'items',
-          record: 'entity',
-          sourceKind: 'booklist',
-          targetKind: 'book',
-        },
-      ];
+    describe('entity to entity validation', () => {
+      describe('array case', () => {
+        it('should validate multiple entity references', async () => {
+          process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'references',
+              record: 'entity',
+            },
+          ]);
 
-      process.env.LIST_LOOKUP_CONSTRAINT = JSON.stringify(constraints);
-      service = new LookupConstraintService(
-        mockLoggingService as LoggingService,
-        Getter.fromValue(mockEntityRepository),
-        Getter.fromValue(mockListRepository),
-      );
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
 
-      // Mock repository to return valid items
-      mockEntityRepository.find.resolves([
-        createEntity('book1', 'book'),
-        createEntity('book2', 'book'),
-      ]);
+          const entity = new GenericEntity({
+            _kind: 'test',
+            _name: 'Test Entity',
+            _slug: 'test-entity',
+            references: [
+              'tapp://localhost/entities/1',
+              'tapp://localhost/entities/2',
+            ],
+          });
 
-      const list = new List({
-        _kind: 'booklist',
-        _name: 'Test List',
-        _slug: 'test-list',
-        items: [
-          'tapp://localhost/entities/book1',
-          'tapp://localhost/entities/book2',
-        ],
+          await expect(
+            service.validateLookupConstraints(entity),
+          ).to.not.be.rejected();
+        });
+
+        it('should reject when referenced entity kind does not match targetKind', async () => {
+          process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'references',
+              record: 'entity',
+              sourceKind: 'test',
+              targetKind: 'target',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const entity = new GenericEntity({
+            _kind: 'test',
+            _name: 'Test Entity',
+            _slug: 'test-entity',
+            references: 'tapp://localhost/entities/1',
+          });
+
+          // Mock repository to return entity with incorrect kind
+          mockEntityRepository.find.resolves([
+            new GenericEntity({
+              _kind: 'wrong',
+              _name: 'Wrong Entity',
+              _slug: 'wrong-entity',
+            }),
+          ]);
+
+          await expect(
+            service.validateLookupConstraints(entity),
+          ).to.be.rejectedWith(HttpErrorResponse);
+        });
+
+        it('should reject when any referenced entity kind in array does not match targetKind', async () => {
+          process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'references',
+              record: 'entity',
+              sourceKind: 'test',
+              targetKind: 'target',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const entity = new GenericEntity({
+            _kind: 'test',
+            _name: 'Test Entity',
+            _slug: 'test-entity',
+            references: [
+              'tapp://localhost/entities/1',
+              'tapp://localhost/entities/2',
+              'tapp://localhost/entities/3',
+            ],
+          });
+
+          // Mock repository to return entities with mixed kinds
+          mockEntityRepository.find.resolves([
+            new GenericEntity({
+              _kind: 'target', // This one is correct
+              _name: 'Target Entity 1',
+              _slug: 'target-entity-1',
+            }),
+            new GenericEntity({
+              _kind: 'wrong', // This one is incorrect
+              _name: 'Wrong Entity',
+              _slug: 'wrong-entity',
+            }),
+            new GenericEntity({
+              _kind: 'target', // This one is correct
+              _name: 'Target Entity 2',
+              _slug: 'target-entity-2',
+            }),
+          ]);
+
+          await expect(
+            service.validateLookupConstraints(entity),
+          ).to.be.rejectedWith(HttpErrorResponse);
+        });
       });
 
-      await service.validateLookupConstraints(list);
+      describe('single string case', () => {
+        it('should validate single entity reference', async () => {
+          process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'references',
+              record: 'entity',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const entity = new GenericEntity({
+            _kind: 'test',
+            _name: 'Test Entity',
+            _slug: 'test-entity',
+            references: 'tapp://localhost/entities/1',
+          });
+
+          await expect(
+            service.validateLookupConstraints(entity),
+          ).to.not.be.rejected();
+        });
+      });
+
+      describe('without sourceKind and targetKind', () => {
+        it('should succeed when references match format', async () => {
+          process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'references',
+              record: 'entity',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const entity = new GenericEntity({
+            _kind: 'test',
+            _name: 'Test Entity',
+            _slug: 'test-entity',
+            references: 'tapp://localhost/entities/1',
+          });
+
+          await expect(
+            service.validateLookupConstraints(entity),
+          ).to.not.be.rejected();
+        });
+
+        it('should reject when references do not match format', async () => {
+          process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'references',
+              record: 'entity',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const entity = new GenericEntity({
+            _kind: 'test',
+            _name: 'Test Entity',
+            _slug: 'test-entity',
+            references: 'invalid-reference',
+          });
+
+          await expect(
+            service.validateLookupConstraints(entity),
+          ).to.be.rejectedWith(HttpErrorResponse);
+        });
+      });
+
+      describe('with sourceKind and targetKind', () => {
+        it('should succeed when referenced entity kind matches targetKind', async () => {
+          process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'references',
+              record: 'entity',
+              sourceKind: 'test',
+              targetKind: 'target',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const entity = new GenericEntity({
+            _kind: 'test', // This is the source kind, doesn't need to match target
+            _name: 'Test Entity',
+            _slug: 'test-entity',
+            references: 'tapp://localhost/entities/1',
+          });
+
+          // Mock repository to return referenced entity with correct target kind
+          mockEntityRepository.find.resolves([
+            new GenericEntity({
+              _kind: 'target', // This must match the targetKind in constraint
+              _name: 'Target Entity',
+              _slug: 'target-entity',
+            }),
+          ]);
+
+          await expect(
+            service.validateLookupConstraints(entity),
+          ).to.not.be.rejected();
+        });
+
+        it('should reject when referenced entity kind does not match targetKind', async () => {
+          process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'references',
+              record: 'entity',
+              sourceKind: 'test',
+              targetKind: 'target',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const entity = new GenericEntity({
+            _kind: 'test', // This is the source kind, doesn't need to match target
+            _name: 'Test Entity',
+            _slug: 'test-entity',
+            references: 'tapp://localhost/entities/1',
+          });
+
+          // Mock repository to return referenced entity with incorrect target kind
+          mockEntityRepository.find.resolves([
+            new GenericEntity({
+              _kind: 'wrong', // This doesn't match the targetKind in constraint
+              _name: 'Wrong Entity',
+              _slug: 'wrong-entity',
+            }),
+          ]);
+
+          await expect(
+            service.validateLookupConstraints(entity),
+          ).to.be.rejectedWith(HttpErrorResponse);
+        });
+      });
+
+      describe('mix of multiple constraints', () => {
+        it('should succeed when all constraints are satisfied', async () => {
+          process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'references1',
+              record: 'entity',
+              sourceKind: 'test',
+              targetKind: 'target1',
+            },
+            {
+              propertyPath: 'references2',
+              record: 'entity',
+              sourceKind: 'test',
+              targetKind: 'target2',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const entity = new GenericEntity({
+            _kind: 'test',
+            _name: 'Test Entity',
+            _slug: 'test-entity',
+            references1: 'tapp://localhost/entities/1',
+            references2: 'tapp://localhost/entities/2',
+          });
+
+          // Mock repository to return entities with correct kinds
+          mockEntityRepository.find
+            .onFirstCall()
+            .resolves([
+              new GenericEntity({
+                _kind: 'target1',
+                _name: 'Target1 Entity',
+                _slug: 'target1-entity',
+              }),
+            ])
+            .onSecondCall()
+            .resolves([
+              new GenericEntity({
+                _kind: 'target2',
+                _name: 'Target2 Entity',
+                _slug: 'target2-entity',
+              }),
+            ]);
+
+          await expect(
+            service.validateLookupConstraints(entity),
+          ).to.not.be.rejected();
+        });
+
+        it('should reject when any constraint is not satisfied', async () => {
+          process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'references1',
+              record: 'entity',
+              sourceKind: 'test',
+              targetKind: 'target1',
+            },
+            {
+              propertyPath: 'references2',
+              record: 'entity',
+              sourceKind: 'test',
+              targetKind: 'target2',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const entity = new GenericEntity({
+            _kind: 'test',
+            _name: 'Test Entity',
+            _slug: 'test-entity',
+            references1: 'tapp://localhost/entities/1',
+            references2: 'tapp://localhost/entities/2',
+          });
+
+          // Mock repository to return entities with incorrect kind for second reference
+          mockEntityRepository.find
+            .onFirstCall()
+            .resolves([
+              new GenericEntity({
+                _kind: 'target1',
+                _name: 'Target1 Entity',
+                _slug: 'target1-entity',
+              }),
+            ])
+            .onSecondCall()
+            .resolves([
+              new GenericEntity({
+                _kind: 'wrong',
+                _name: 'Wrong Entity',
+                _slug: 'wrong-entity',
+              }),
+            ]);
+
+          await expect(
+            service.validateLookupConstraints(entity),
+          ).to.be.rejectedWith(HttpErrorResponse);
+        });
+      });
+
+      it('should reject entity reference when only list references are allowed', async () => {
+        process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify([
+          {
+            propertyPath: 'references',
+            record: 'list', // Only list references are allowed
+          },
+        ]);
+
+        // Create new service instance after setting environment variables
+        service = new LookupConstraintService(
+          mockLoggingService as LoggingService,
+          Getter.fromValue(mockEntityRepository),
+          Getter.fromValue(mockListRepository),
+        );
+
+        const entity = new GenericEntity({
+          _kind: 'test',
+          _name: 'Test Entity',
+          _slug: 'test-entity',
+          references: 'tapp://localhost/entities/1', // Entity reference when only lists are allowed
+        });
+
+        await expect(
+          service.validateLookupConstraints(entity),
+        ).to.be.rejectedWith(HttpErrorResponse);
+      });
     });
 
-    it('should throw error for invalid reference format', async () => {
-      const constraints = [
-        {
-          propertyPath: 'references',
-          record: 'entity',
-          sourceKind: 'book',
-          targetKind: 'author',
-        },
-      ];
+    describe('entity to list validation', () => {
+      describe('array case', () => {
+        it('should validate multiple list references', async () => {
+          process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'references',
+              record: 'list',
+            },
+          ]);
 
-      process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify(constraints);
-      service = new LookupConstraintService(
-        mockLoggingService as LoggingService,
-        Getter.fromValue(mockEntityRepository),
-        Getter.fromValue(mockListRepository),
-      );
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
 
-      const entity = new TestEntity({
-        _kind: 'book',
-        _name: 'Test Book',
-        _slug: 'test-book',
-        references: ['invalid-reference'],
+          const entity = new GenericEntity({
+            _kind: 'test',
+            _name: 'Test Entity',
+            _slug: 'test-entity',
+            references: [
+              'tapp://localhost/lists/1',
+              'tapp://localhost/lists/2',
+            ],
+          });
+
+          await expect(
+            service.validateLookupConstraints(entity),
+          ).to.not.be.rejected();
+        });
       });
 
-      await expect(
-        service.validateLookupConstraints(entity),
-      ).to.be.rejectedWith(HttpErrorResponse);
-    });
+      describe('single string case', () => {
+        it('should validate single list reference', async () => {
+          process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'references',
+              record: 'list',
+            },
+          ]);
 
-    it('should throw error for invalid target kind', async () => {
-      const constraints = [
-        {
-          propertyPath: 'references',
-          record: 'entity',
-          sourceKind: 'book',
-          targetKind: 'author',
-        },
-      ];
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
 
-      process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify(constraints);
-      service = new LookupConstraintService(
-        mockLoggingService as LoggingService,
-        Getter.fromValue(mockEntityRepository),
-        Getter.fromValue(mockListRepository),
-      );
+          const entity = new GenericEntity({
+            _kind: 'test',
+            _name: 'Test Entity',
+            _slug: 'test-entity',
+            references: 'tapp://localhost/lists/1',
+          });
 
-      // Mock repository to return items with wrong kind
-      mockEntityRepository.find.resolves([
-        createEntity('wrong1', 'wrong'),
-        createEntity('wrong2', 'wrong'),
-      ]);
-
-      const entity = new TestEntity({
-        _kind: 'book',
-        _name: 'Test Book',
-        _slug: 'test-book',
-        references: [
-          'tapp://localhost/entities/wrong1',
-          'tapp://localhost/entities/wrong2',
-        ],
+          await expect(
+            service.validateLookupConstraints(entity),
+          ).to.not.be.rejected();
+        });
       });
 
-      await expect(
-        service.validateLookupConstraints(entity),
-      ).to.be.rejectedWith(HttpErrorResponse);
-    });
+      describe('without sourceKind and targetKind', () => {
+        it('should succeed when references match format', async () => {
+          process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'references',
+              record: 'list',
+            },
+          ]);
 
-    it('should skip validation when no constraints are configured', async () => {
-      const entity = new TestEntity({
-        _kind: 'book',
-        _name: 'Test Book',
-        _slug: 'test-book',
-        references: ['tapp://localhost/entities/any'],
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const entity = new GenericEntity({
+            _kind: 'test',
+            _name: 'Test Entity',
+            _slug: 'test-entity',
+            references: 'tapp://localhost/lists/1',
+          });
+
+          await expect(
+            service.validateLookupConstraints(entity),
+          ).to.not.be.rejected();
+        });
+
+        it('should reject when references do not match format', async () => {
+          process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'references',
+              record: 'list',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const entity = new GenericEntity({
+            _kind: 'test',
+            _name: 'Test Entity',
+            _slug: 'test-entity',
+            references: 'invalid-reference',
+          });
+
+          await expect(
+            service.validateLookupConstraints(entity),
+          ).to.be.rejectedWith(HttpErrorResponse);
+        });
       });
 
-      await expect(
-        service.validateLookupConstraints(entity),
-      ).to.not.be.rejected();
-    });
+      describe('with sourceKind and targetKind', () => {
+        it('should succeed when referenced list kind matches targetKind', async () => {
+          process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'references',
+              record: 'list',
+              sourceKind: 'test',
+              targetKind: 'target',
+            },
+          ]);
 
-    it('should skip validation when no references are provided', async () => {
-      const constraints = [
-        {
-          propertyPath: 'references',
-          record: 'entity',
-          sourceKind: 'book',
-          targetKind: 'author',
-        },
-      ];
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
 
-      process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify(constraints);
-      service = new LookupConstraintService(
-        mockLoggingService as LoggingService,
-        Getter.fromValue(mockEntityRepository),
-        Getter.fromValue(mockListRepository),
-      );
+          const entity = new GenericEntity({
+            _kind: 'test', // This is the source kind, doesn't need to match target
+            _name: 'Test Entity',
+            _slug: 'test-entity',
+            references: 'tapp://localhost/lists/1',
+          });
 
-      const entity = new TestEntity({
-        _kind: 'book',
-        _name: 'Test Book',
-        _slug: 'test-book',
-        references: [],
+          // Mock repository to return referenced list with correct target kind
+          mockListRepository.find.resolves([
+            new List({
+              _kind: 'target', // This must match the targetKind in constraint
+              _name: 'Target List',
+              _slug: 'target-list',
+            }),
+          ]);
+
+          await expect(
+            service.validateLookupConstraints(entity),
+          ).to.not.be.rejected();
+        });
+
+        it('should reject when referenced list kind does not match targetKind', async () => {
+          process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'references',
+              record: 'list',
+              sourceKind: 'test',
+              targetKind: 'target',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const entity = new GenericEntity({
+            _kind: 'test', // This is the source kind, doesn't need to match target
+            _name: 'Test Entity',
+            _slug: 'test-entity',
+            references: 'tapp://localhost/lists/1',
+          });
+
+          // Mock repository to return referenced list with incorrect target kind
+          mockListRepository.find.resolves([
+            new List({
+              _kind: 'wrong', // This doesn't match the targetKind in constraint
+              _name: 'Wrong List',
+              _slug: 'wrong-list',
+            }),
+          ]);
+
+          await expect(
+            service.validateLookupConstraints(entity),
+          ).to.be.rejectedWith(HttpErrorResponse);
+        });
       });
 
-      await expect(
-        service.validateLookupConstraints(entity),
-      ).to.not.be.rejected();
-    });
+      describe('mix of multiple constraints', () => {
+        it('should succeed when all constraints are satisfied', async () => {
+          process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'references1',
+              record: 'list',
+              sourceKind: 'test',
+              targetKind: 'target1',
+            },
+            {
+              propertyPath: 'references2',
+              record: 'list',
+              sourceKind: 'test',
+              targetKind: 'target2',
+            },
+          ]);
 
-    it('should validate entity references against constraints', async () => {
-      const entity = new GenericEntity({
-        _kind: 'test',
-        _name: 'Test Entity',
-        _slug: 'test-entity',
-        references: {
-          'test-reference': 'test-value',
-        },
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const entity = new GenericEntity({
+            _kind: 'test',
+            _name: 'Test Entity',
+            _slug: 'test-entity',
+            references1: 'tapp://localhost/lists/1',
+            references2: 'tapp://localhost/lists/2',
+          });
+
+          // Mock repository to return lists with correct kinds
+          mockListRepository.find
+            .onFirstCall()
+            .resolves([
+              new List({
+                _kind: 'target1',
+                _name: 'Target1 List',
+                _slug: 'target1-list',
+              }),
+            ])
+            .onSecondCall()
+            .resolves([
+              new List({
+                _kind: 'target2',
+                _name: 'Target2 List',
+                _slug: 'target2-list',
+              }),
+            ]);
+
+          await expect(
+            service.validateLookupConstraints(entity),
+          ).to.not.be.rejected();
+        });
+
+        it('should reject when any constraint is not satisfied', async () => {
+          process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify([
+            {
+              propertyPath: 'references1',
+              record: 'list',
+              sourceKind: 'test',
+              targetKind: 'target1',
+            },
+            {
+              propertyPath: 'references2',
+              record: 'list',
+              sourceKind: 'test',
+              targetKind: 'target2',
+            },
+          ]);
+
+          // Create new service instance after setting environment variables
+          service = new LookupConstraintService(
+            mockLoggingService as LoggingService,
+            Getter.fromValue(mockEntityRepository),
+            Getter.fromValue(mockListRepository),
+          );
+
+          const entity = new GenericEntity({
+            _kind: 'test',
+            _name: 'Test Entity',
+            _slug: 'test-entity',
+            references1: 'tapp://localhost/lists/1',
+            references2: 'tapp://localhost/lists/2',
+          });
+
+          // Mock repository to return lists with incorrect kind for second reference
+          mockListRepository.find
+            .onFirstCall()
+            .resolves([
+              new List({
+                _kind: 'target1',
+                _name: 'Target1 List',
+                _slug: 'target1-list',
+              }),
+            ])
+            .onSecondCall()
+            .resolves([
+              new List({
+                _kind: 'wrong',
+                _name: 'Wrong List',
+                _slug: 'wrong-list',
+              }),
+            ]);
+
+          await expect(
+            service.validateLookupConstraints(entity),
+          ).to.be.rejectedWith(HttpErrorResponse);
+        });
       });
 
-      await service.validateLookupConstraints(entity);
-      // No error should be thrown
-    });
+      it('should reject list reference when only entity references are allowed', async () => {
+        process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify([
+          {
+            propertyPath: 'references',
+            record: 'entity', // Only entity references are allowed
+          },
+        ]);
 
-    it('should throw error for invalid entity reference', async () => {
-      const entity = new GenericEntity({
-        _kind: 'test',
-        _name: 'Test Entity',
-        _slug: 'test-entity',
-        references: {
-          'invalid-reference': 'test-value',
-        },
+        // Create new service instance after setting environment variables
+        service = new LookupConstraintService(
+          mockLoggingService as LoggingService,
+          Getter.fromValue(mockEntityRepository),
+          Getter.fromValue(mockListRepository),
+        );
+
+        const entity = new GenericEntity({
+          _kind: 'test',
+          _name: 'Test Entity',
+          _slug: 'test-entity',
+          references: 'tapp://localhost/lists/1', // List reference when only entities are allowed
+        });
+
+        await expect(
+          service.validateLookupConstraints(entity),
+        ).to.be.rejectedWith(HttpErrorResponse);
       });
-
-      await expect(
-        service.validateLookupConstraints(entity),
-      ).to.be.rejectedWith(HttpErrorResponse);
-    });
-
-    it('should validate list references against constraints', async () => {
-      const list = new List({
-        _kind: 'test',
-        _name: 'Test List',
-        _slug: 'test-list',
-        references: {
-          'test-reference': 'test-value',
-        },
-      });
-
-      await service.validateLookupConstraints(list);
-      // No error should be thrown
-    });
-
-    it('should throw error for invalid list reference', async () => {
-      const list = new List({
-        _kind: 'test',
-        _name: 'Test List',
-        _slug: 'test-list',
-        references: {
-          'invalid-reference': 'test-value',
-        },
-      });
-
-      await expect(service.validateLookupConstraints(list)).to.be.rejectedWith(
-        HttpErrorResponse,
-      );
     });
   });
 });
