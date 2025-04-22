@@ -27,7 +27,7 @@ import {
   List,
   ListToEntityRelation,
   HttpErrorResponse,
-  ListReactions,
+  ListReaction,
   ListRelations,
 } from '../models';
 import { CustomEntityThroughListRepository } from './custom-entity-through-list.repository';
@@ -54,7 +54,7 @@ export class ListRepository extends DefaultCrudRepository<
   ) => Promise<CustomEntityThroughListRepository>;
 
   public readonly reactions: HasManyRepositoryFactory<
-    ListReactions,
+    ListReaction,
     typeof List.prototype._id
   >;
 

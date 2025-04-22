@@ -15,7 +15,7 @@ import {
   post,
   requestBody,
 } from '@loopback/rest';
-import { List, ListReactions } from '../models';
+import { List, ListReaction } from '../models';
 import { ListRepository } from '../repositories';
 
 export class ReactionsThroughListsController {
@@ -30,7 +30,7 @@ export class ReactionsThroughListsController {
         description: 'Array of List has many ListReactions',
         content: {
           'application/json': {
-            schema: { type: 'array', items: getModelSchemaRef(ListReactions) },
+            schema: { type: 'array', items: getModelSchemaRef(ListReaction) },
           },
         },
       },
@@ -38,8 +38,8 @@ export class ReactionsThroughListsController {
   })
   async find(
     @param.path.string('id') id: string,
-    @param.query.object('filter') filter?: Filter<ListReactions>,
-  ): Promise<ListReactions[]> {
+    @param.query.object('filter') filter?: Filter<ListReaction>,
+  ): Promise<ListReaction[]> {
     return this.listRepository.reactions(id).find(filter);
   }
 
@@ -48,7 +48,7 @@ export class ReactionsThroughListsController {
       '200': {
         description: 'List model instance',
         content: {
-          'application/json': { schema: getModelSchemaRef(ListReactions) },
+          'application/json': { schema: getModelSchemaRef(ListReaction) },
         },
       },
     },
@@ -58,7 +58,7 @@ export class ReactionsThroughListsController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(ListReactions, {
+          schema: getModelSchemaRef(ListReaction, {
             title: 'NewListReactionsInList',
             exclude: ['id'],
             optional: ['listId'],
@@ -66,8 +66,8 @@ export class ReactionsThroughListsController {
         },
       },
     })
-    listReactions: Omit<ListReactions, 'id'>,
-  ): Promise<ListReactions> {
+    listReactions: Omit<ListReaction, 'id'>,
+  ): Promise<ListReaction> {
     return this.listRepository.reactions(id).create(listReactions);
   }
 
@@ -84,13 +84,13 @@ export class ReactionsThroughListsController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(ListReactions, { partial: true }),
+          schema: getModelSchemaRef(ListReaction, { partial: true }),
         },
       },
     })
-    listReactions: Partial<ListReactions>,
-    @param.query.object('where', getWhereSchemaFor(ListReactions))
-    where?: Where<ListReactions>,
+    listReactions: Partial<ListReaction>,
+    @param.query.object('where', getWhereSchemaFor(ListReaction))
+    where?: Where<ListReaction>,
   ): Promise<Count> {
     return this.listRepository.reactions(id).patch(listReactions, where);
   }
@@ -105,8 +105,8 @@ export class ReactionsThroughListsController {
   })
   async delete(
     @param.path.string('id') id: string,
-    @param.query.object('where', getWhereSchemaFor(ListReactions))
-    where?: Where<ListReactions>,
+    @param.query.object('where', getWhereSchemaFor(ListReaction))
+    where?: Where<ListReaction>,
   ): Promise<Count> {
     return this.listRepository.reactions(id).delete(where);
   }

@@ -2,7 +2,7 @@ import { hasMany, model, property } from '@loopback/repository';
 import { ListEntityCommonBase } from './base-models/list-entity-common-base.model';
 import { GenericEntity, GenericEntityWithRelations } from './entity.model';
 import { ListToEntityRelation } from './list-entity-relation.model';
-import { ListReactions } from './list-reactions.model';
+import { ListReaction } from './list-reactions.model';
 
 @model({
   settings: {
@@ -22,8 +22,8 @@ export class List extends ListEntityCommonBase {
   })
   _entities: GenericEntity[];
 
-  @hasMany(() => ListReactions, { keyTo: '_listId' })
-  _reactions?: ListReactions[];
+  @hasMany(() => ListReaction, { keyTo: '_listId' })
+  _reactions?: ListReaction[];
 
   @property({
     type: 'array',

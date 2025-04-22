@@ -10,7 +10,7 @@ import { ListWithRelations } from './list.model';
     },
   },
 })
-export class ListReactions extends ReactionsCommonBase {
+export class ListReaction extends ReactionsCommonBase {
   @property({
     type: 'string',
     required: true,
@@ -34,13 +34,13 @@ export class ListReactions extends ReactionsCommonBase {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [prop: string]: any;
 
-  constructor(data?: Partial<ListReactions>) {
+  constructor(data?: Partial<ListReaction>) {
     super(data);
   }
 }
 
-export interface ListReactionsRelations {
+export interface ListReactionRelations {
   list?: ListWithRelations;
 }
 
-export type ListReactionsWithRelations = ListReactions & ListReactionsRelations;
+export type ListReactionWithRelations = ListReaction & ListReactionRelations;
