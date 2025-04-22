@@ -1270,4 +1270,212 @@ describe('POST /entities', () => {
     const getAllResponse = await client.get('/entities').expect(200);
     expect(getAllResponse.body).to.be.Array().lengthOf(1);
   });
+
+  describe('lookup constraint validation', () => {
+    it('should reject entity with invalid entity reference when record=entity is configured', async () => {
+      appWithClient = await setupApplication({
+        entity_kinds: 'book,author',
+        ENTITY_LOOKUP_CONSTRAINT: JSON.stringify([
+          {
+            propertyPath: 'references',
+            record: 'entity',
+          },
+        ]),
+      });
+      ({ client } = appWithClient);
+
+      const newEntity = {
+        _name: 'Book with Invalid Reference',
+        _kind: 'book',
+        references: ['tapp://localhost/lists/1'], // List reference when entity is required
+      };
+
+      const errorResponse = await client
+        .post('/entities')
+        .send(newEntity)
+        .expect(422);
+
+      expect(errorResponse.body.error).to.containDeep({
+        statusCode: 422,
+        name: 'InvalidLookupReferenceError',
+        code: 'ENTITY-INVALID-LOOKUP-REFERENCE',
+        status: 422,
+      });
+    });
+
+    it('should reject entity with invalid list reference when record=list is configured', async () => {
+      appWithClient = await setupApplication({
+        entity_kinds: 'book,author',
+        ENTITY_LOOKUP_CONSTRAINT: JSON.stringify([
+          {
+            propertyPath: 'references',
+            record: 'list',
+          },
+        ]),
+      });
+      ({ client } = appWithClient);
+
+      const newEntity = {
+        _name: 'Book with Invalid Reference',
+        _kind: 'book',
+        references: ['tapp://localhost/entities/1'], // Entity reference when list is required
+      };
+
+      const errorResponse = await client
+        .post('/entities')
+        .send(newEntity)
+        .expect(422);
+
+      expect(errorResponse.body.error).to.containDeep({
+        statusCode: 422,
+        name: 'InvalidLookupReferenceError',
+        code: 'ENTITY-INVALID-LOOKUP-REFERENCE',
+        status: 422,
+      });
+    });
+
+    it('should reject entity with invalid target kind when targetKind is configured', async () => {
+      appWithClient = await setupApplication({
+        entity_kinds: 'book,author',
+        ENTITY_LOOKUP_CONSTRAINT: JSON.stringify([
+          {
+            propertyPath: 'references',
+            record: 'entity',
+            targetKind: 'author',
+          },
+        ]),
+      });
+      ({ client } = appWithClient);
+
+      // First create a book entity to reference
+      const bookEntity = {
+        _name: 'Referenced Book',
+        _kind: 'book',
+      };
+      const bookResponse = await client
+        .post('/entities')
+        .send(bookEntity)
+        .expect(200);
+      const bookId = bookResponse.body._id;
+
+      const newEntity = {
+        _name: 'Book with Wrong Reference',
+        _kind: 'book',
+        references: [`tapp://localhost/entities/${bookId}`], // References a book when author is required
+      };
+
+      const errorResponse = await client
+        .post('/entities')
+        .send(newEntity)
+        .expect(422);
+
+      expect(errorResponse.body.error).to.containDeep({
+        statusCode: 422,
+        name: 'InvalidLookupConstraintError',
+        code: 'ENTITY-INVALID-LOOKUP-KIND',
+        status: 422,
+      });
+    });
+
+    it('should accept entity with valid references when all constraints are satisfied', async () => {
+      appWithClient = await setupApplication({
+        entity_kinds: 'book,author',
+        ENTITY_LOOKUP_CONSTRAINT: JSON.stringify([
+          {
+            propertyPath: 'references',
+            record: 'entity',
+            sourceKind: 'book',
+            targetKind: 'author',
+          },
+        ]),
+      });
+      ({ client } = appWithClient);
+
+      // First create an author entity to reference
+      const authorEntity = {
+        _name: 'Referenced Author',
+        _kind: 'author',
+      };
+      const authorResponse = await client
+        .post('/entities')
+        .send(authorEntity)
+        .expect(200);
+      const authorId = authorResponse.body._id;
+
+      const newEntity = {
+        _name: 'Book with Valid References',
+        _kind: 'book', // Correct source kind
+        references: [`tapp://localhost/entities/${authorId}`], // References an author (correct target kind)
+      };
+
+      const response = await client
+        .post('/entities')
+        .send(newEntity)
+        .expect(200);
+
+      expect(response.body).to.containDeep({
+        _name: 'Book with Valid References',
+        _kind: 'book',
+        references: [`tapp://localhost/entities/${authorId}`],
+      });
+    });
+
+    it('should accept entity with multiple valid references when all constraints are satisfied', async () => {
+      appWithClient = await setupApplication({
+        entity_kinds: 'book,author',
+        ENTITY_LOOKUP_CONSTRAINT: JSON.stringify([
+          {
+            propertyPath: 'references',
+            record: 'entity',
+            sourceKind: 'book',
+            targetKind: 'author',
+          },
+        ]),
+      });
+      ({ client } = appWithClient);
+
+      // Create multiple author entities to reference
+      const author1 = {
+        _name: 'First Author',
+        _kind: 'author',
+      };
+      const author2 = {
+        _name: 'Second Author',
+        _kind: 'author',
+      };
+      const author1Response = await client
+        .post('/entities')
+        .send(author1)
+        .expect(200);
+      const author2Response = await client
+        .post('/entities')
+        .send(author2)
+        .expect(200);
+      const author1Id = author1Response.body._id;
+      const author2Id = author2Response.body._id;
+
+      const newEntity = {
+        _name: 'Book with Multiple References',
+        _kind: 'book',
+        references: [
+          `tapp://localhost/entities/${author1Id}`,
+          `tapp://localhost/entities/${author2Id}`,
+        ],
+      };
+
+      const response = await client
+        .post('/entities')
+        .send(newEntity)
+        .expect(200);
+
+      expect(response.body).to.containDeep({
+        _name: 'Book with Multiple References',
+        _kind: 'book',
+        references: [
+          `tapp://localhost/entities/${author1Id}`,
+          `tapp://localhost/entities/${author2Id}`,
+        ],
+      });
+    });
+  });
 });
