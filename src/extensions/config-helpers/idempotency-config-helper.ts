@@ -11,6 +11,8 @@ export class IdempotencyConfigurationReader {
   defaultListIdempotency: string[] = [];
   defaultEntityIdempotency: string[] = [];
   defaultListEntityRelIdempotency: string[] = [];
+  defaultEntityReactionIdempotency: string[] = [];
+  defaultListReactionIdempotency: string[] = [];
 
   public isIdempotencyConfiguredForEntities(kind?: string) {
     return (
@@ -26,12 +28,38 @@ export class IdempotencyConfigurationReader {
     );
   }
 
+  public isIdempotencyConfiguredForEntityReactions(kind?: string) {
+    return (
+      process.env['idempotency_entity_reaction'] !== undefined ||
+      this.isIdempotencyConfiguredForKindForEntityReactions(kind)
+    );
+  }
+
+  public isIdempotencyConfiguredForListReactions(kind?: string) {
+    return (
+      process.env['idempotency_list_reaction'] !== undefined ||
+      this.isIdempotencyConfiguredForKindForListReactions(kind)
+    );
+  }
+
   public isIdempotencyConfiguredForKindForEntities(kind?: string): boolean {
     return process.env[`idempotency_entity_for_${kind}`] !== undefined;
   }
 
   public isIdempotencyConfiguredForKindForLists(kind?: string): boolean {
     return process.env[`idempotency_list_for_${kind}`] !== undefined;
+  }
+
+  public isIdempotencyConfiguredForKindForEntityReactions(
+    kind?: string,
+  ): boolean {
+    return process.env[`idempotency_entity_reaction_for_${kind}`] !== undefined;
+  }
+
+  public isIdempotencyConfiguredForKindForListReactions(
+    kind?: string,
+  ): boolean {
+    return process.env[`idempotency_list_reaction_for_${kind}`] !== undefined;
   }
 
   public getIdempotencyForEntities(kind?: string): string[] {
@@ -63,6 +91,28 @@ export class IdempotencyConfigurationReader {
     }
 
     return idempotencyConfig || this.defaultListEntityRelIdempotency;
+  }
+
+  public getIdempotencyForEntityReactions(kind?: string): string[] {
+    let idempotencyConfig =
+      this.getIdempotencyConfigForKindForEntityReactions(kind);
+
+    if (isEmpty(idempotencyConfig)) {
+      idempotencyConfig = this.getIdempotencyConfigForEntityReactions();
+    }
+
+    return idempotencyConfig || this.defaultEntityReactionIdempotency;
+  }
+
+  public getIdempotencyForListReactions(kind?: string): string[] {
+    let idempotencyConfig =
+      this.getIdempotencyConfigForKindForListReactions(kind);
+
+    if (isEmpty(idempotencyConfig)) {
+      idempotencyConfig = this.getIdempotencyConfigForListReactions();
+    }
+
+    return idempotencyConfig || this.defaultListReactionIdempotency;
   }
 
   private getIdempotencyConfigForKindForEntities(kind?: string): string[] {
@@ -97,6 +147,32 @@ export class IdempotencyConfigurationReader {
 
   private getIdempotencyConfigForListEntityRel(): string[] {
     const config = process.env['idempotency_list_entity_rel'];
+
+    return config ? config.split(',').map((fieldPath) => fieldPath.trim()) : [];
+  }
+
+  private getIdempotencyConfigForKindForEntityReactions(
+    kind?: string,
+  ): string[] {
+    const config = process.env[`idempotency_entity_reaction_for_${kind}`];
+
+    return config ? config.split(',').map((fieldPath) => fieldPath.trim()) : [];
+  }
+
+  private getIdempotencyConfigForEntityReactions(): string[] {
+    const config = process.env['idempotency_entity_reaction'];
+
+    return config ? config.split(',').map((fieldPath) => fieldPath.trim()) : [];
+  }
+
+  private getIdempotencyConfigForKindForListReactions(kind?: string): string[] {
+    const config = process.env[`idempotency_list_reaction_for_${kind}`];
+
+    return config ? config.split(',').map((fieldPath) => fieldPath.trim()) : [];
+  }
+
+  private getIdempotencyConfigForListReactions(): string[] {
+    const config = process.env['idempotency_list_reaction'];
 
     return config ? config.split(',').map((fieldPath) => fieldPath.trim()) : [];
   }
