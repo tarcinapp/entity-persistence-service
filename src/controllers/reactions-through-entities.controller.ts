@@ -15,7 +15,7 @@ import {
   post,
   requestBody,
 } from '@loopback/rest';
-import { GenericEntity, EntityReaction } from '../models';
+import { EntityReaction, GenericEntity } from '../models';
 import { EntityRepository } from '../repositories';
 
 export class ReactionsThroughEntitiesController {
