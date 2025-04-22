@@ -1,6 +1,6 @@
 import { hasMany, model, property } from '@loopback/repository';
 import { ListEntityCommonBase } from './base-models/list-entity-common-base.model';
-import { EntityReactions } from './entity-reactions.model';
+import { EntityReaction } from './entity-reactions.model';
 
 @model({
   settings: {
@@ -11,8 +11,8 @@ import { EntityReactions } from './entity-reactions.model';
   },
 })
 export class GenericEntity extends ListEntityCommonBase {
-  @hasMany(() => EntityReactions, { keyTo: '_entityId' })
-  _reactions?: EntityReactions[];
+  @hasMany(() => EntityReaction, { keyTo: '_entityId' })
+  _reactions?: EntityReaction[];
 
   @property({
     type: 'array',

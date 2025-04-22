@@ -36,7 +36,7 @@ import {
   GenericEntity,
   GenericEntityRelations,
   HttpErrorResponse,
-  EntityReactions,
+  EntityReaction,
 } from '../models';
 import { UnmodifiableCommonFields } from '../models/base-types/unmodifiable-common-fields';
 import { LoggingService } from '../services/logging.service';
@@ -54,7 +54,7 @@ export class EntityRepository extends DefaultCrudRepository<
   ) => CustomListThroughEntityRepository;
 
   public readonly reactions: HasManyRepositoryFactory<
-    EntityReactions,
+    EntityReaction,
     typeof GenericEntity.prototype._id
   >;
 

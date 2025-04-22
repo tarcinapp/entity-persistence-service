@@ -15,7 +15,7 @@ import {
   post,
   requestBody,
 } from '@loopback/rest';
-import { GenericEntity, EntityReactions } from '../models';
+import { GenericEntity, EntityReaction } from '../models';
 import { EntityRepository } from '../repositories';
 
 export class ReactionsThroughEntitiesController {
@@ -32,7 +32,7 @@ export class ReactionsThroughEntitiesController {
           'application/json': {
             schema: {
               type: 'array',
-              items: getModelSchemaRef(EntityReactions),
+              items: getModelSchemaRef(EntityReaction),
             },
           },
         },
@@ -41,8 +41,8 @@ export class ReactionsThroughEntitiesController {
   })
   async find(
     @param.path.string('id') id: string,
-    @param.query.object('filter') filter?: Filter<EntityReactions>,
-  ): Promise<EntityReactions[]> {
+    @param.query.object('filter') filter?: Filter<EntityReaction>,
+  ): Promise<EntityReaction[]> {
     return this.entityRepo.reactions(id).find(filter);
   }
 
@@ -51,7 +51,7 @@ export class ReactionsThroughEntitiesController {
       '200': {
         description: 'Entity model instance',
         content: {
-          'application/json': { schema: getModelSchemaRef(EntityReactions) },
+          'application/json': { schema: getModelSchemaRef(EntityReaction) },
         },
       },
     },
@@ -61,7 +61,7 @@ export class ReactionsThroughEntitiesController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(EntityReactions, {
+          schema: getModelSchemaRef(EntityReaction, {
             title: 'NewReactionsInEntity',
             exclude: ['_id'],
             optional: ['entityId'],
@@ -69,8 +69,8 @@ export class ReactionsThroughEntitiesController {
         },
       },
     })
-    reactions: Omit<EntityReactions, 'id'>,
-  ): Promise<EntityReactions> {
+    reactions: Omit<EntityReaction, 'id'>,
+  ): Promise<EntityReaction> {
     return this.entityRepo.reactions(id).create(reactions);
   }
 
@@ -87,13 +87,13 @@ export class ReactionsThroughEntitiesController {
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(EntityReactions, { partial: true }),
+          schema: getModelSchemaRef(EntityReaction, { partial: true }),
         },
       },
     })
-    reactions: Partial<EntityReactions>,
-    @param.query.object('where', getWhereSchemaFor(EntityReactions))
-    where?: Where<EntityReactions>,
+    reactions: Partial<EntityReaction>,
+    @param.query.object('where', getWhereSchemaFor(EntityReaction))
+    where?: Where<EntityReaction>,
   ): Promise<Count> {
     return this.entityRepo.reactions(id).patch(reactions, where);
   }
@@ -108,8 +108,8 @@ export class ReactionsThroughEntitiesController {
   })
   async delete(
     @param.path.string('id') id: string,
-    @param.query.object('where', getWhereSchemaFor(EntityReactions))
-    where?: Where<EntityReactions>,
+    @param.query.object('where', getWhereSchemaFor(EntityReaction))
+    where?: Where<EntityReaction>,
   ): Promise<Count> {
     return this.entityRepo.reactions(id).delete(where);
   }

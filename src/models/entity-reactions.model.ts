@@ -10,7 +10,7 @@ import { GenericEntityWithRelations } from './entity.model';
     },
   },
 })
-export class EntityReactions extends ReactionsCommonBase {
+export class EntityReaction extends ReactionsCommonBase {
   @property({
     type: 'string',
     required: true,
@@ -34,7 +34,7 @@ export class EntityReactions extends ReactionsCommonBase {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [prop: string]: any;
 
-  constructor(data?: Partial<EntityReactions>) {
+  constructor(data?: Partial<EntityReaction>) {
     super(data);
   }
 }
@@ -43,5 +43,5 @@ export interface EntityReactionsRelations {
   entity?: GenericEntityWithRelations;
 }
 
-export type EntityReactionsWithRelations = EntityReactions &
+export type EntityReactionsWithRelations = EntityReaction &
   EntityReactionsRelations;

@@ -12,15 +12,15 @@ import {
   LookupHelper,
   LookupBindings,
 } from '../extensions/utils/lookup-helper';
-import { EntityReactions } from '../models';
+import { EntityReaction } from '../models';
 import { LoggingService } from '../services/logging.service';
 import { LookupConstraintBindings } from '../services/lookup-constraint.bindings';
 import { LookupConstraintService } from '../services/lookup-constraint.service';
 import { RecordLimitCheckerService } from '../services/record-limit-checker.service';
 
 export class EntityReactionsRepository extends DefaultCrudRepository<
-  EntityReactions,
-  typeof EntityReactions.prototype.id
+  EntityReaction,
+  typeof EntityReaction.prototype.id
 > {
   constructor(
     @inject('datasources.EntityDb') dataSource: EntityDbDataSource,
@@ -43,13 +43,13 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     @inject(LookupConstraintBindings.SERVICE)
     private lookupConstraintService: LookupConstraintService,
   ) {
-    super(EntityReactions, dataSource);
+    super(EntityReaction, dataSource);
   }
 
   private async processLookups(
-    reactions: EntityReactions[],
-    filter?: Filter<EntityReactions>,
-  ): Promise<EntityReactions[]> {
+    reactions: EntityReaction[],
+    filter?: Filter<EntityReaction>,
+  ): Promise<EntityReaction[]> {
     if (!filter?.lookup) {
       return reactions;
     }
@@ -62,9 +62,9 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
   }
 
   private async processLookup(
-    reaction: EntityReactions,
-    filter?: Filter<EntityReactions>,
-  ): Promise<EntityReactions> {
+    reaction: EntityReaction,
+    filter?: Filter<EntityReaction>,
+  ): Promise<EntityReaction> {
     if (!filter?.lookup) {
       return reaction;
     }
@@ -77,9 +77,9 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
   }
 
   async find(
-    filter?: Filter<EntityReactions>,
+    filter?: Filter<EntityReaction>,
     options?: Options,
-  ): Promise<EntityReactions[]> {
+  ): Promise<EntityReaction[]> {
     try {
       const limit =
         filter?.limit ??
