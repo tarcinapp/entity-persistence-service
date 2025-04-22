@@ -467,6 +467,8 @@ We can divide configurations into 9 categories:
 | **collection_entity**               | Name of the collection which generic entities are persisted                      | GenericEntities     |
 | **collection_list**                 | Name of the collection which generic lists are persisted                         | Lists               |
 | **collection_list_list_entity_rel** | Name of the collection which relationships between list and entity are persisted | ListEntityRelations |
+| **collection_entity_reactions**     | Name of the collection which entity reactions are persisted                      | EntityReactions     |
+| **collection_list_reactions**       | Name of the collection which list reactions are persisted                        | ListReactions       |
 
 ### Allowed Kinds
 
