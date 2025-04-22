@@ -1,5 +1,6 @@
 import { model, property } from '@loopback/repository';
 import { AccessControlBase } from './access-control-base.model';
+import { RelationMetadataType } from '../base-types/relation-metadata-under-entity.type';
 
 /**
  * Inherits:
@@ -50,6 +51,12 @@ export class ReactionsCommonBase extends AccessControlBase {
     hidden: true,
   })
   _parentsCount?: number;
+
+  @property({
+    type: 'object',
+    description: 'Contains the relation metadata for the record',
+  })
+  _relationMetadata?: RelationMetadataType;
 
   constructor(data?: Partial<ReactionsCommonBase>) {
     super(data);

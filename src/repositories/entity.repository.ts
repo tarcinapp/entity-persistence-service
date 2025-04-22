@@ -601,19 +601,6 @@ export class EntityRepository extends DefaultCrudRepository<
       });
   }
 
-  private async checkRecordLimits(_newData: DataObject<GenericEntity>) {
-    // This method is no longer needed as we're using the RecordLimitCheckerService
-    return;
-  }
-
-  private wouldRecordMatchFilter(
-    _record: DataObject<GenericEntity>,
-    _whereClause: Where<GenericEntity> | undefined,
-  ): boolean {
-    // This method is no longer needed as we're using the RecordLimitCheckerService
-    return true;
-  }
-
   private generateSlug(data: DataObject<GenericEntity>) {
     if (data._name && !data._slug) {
       data._slug = slugify(data._name ?? '', { lower: true, strict: true });
