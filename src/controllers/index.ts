@@ -6,3 +6,4 @@ export * from './reactions-through-lists.controller';
 export * from './list.controller';
 export * from './ping.controller';
 export * from './entity-reaction.controller';
+export * from './list-reaction.controller';
