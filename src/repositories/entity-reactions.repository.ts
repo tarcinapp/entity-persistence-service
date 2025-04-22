@@ -46,7 +46,68 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     super(EntityReactions, dataSource);
   }
 
-  async find(filter?: Filter<EntityReactions>, options?: Options) {
-    return super.find(filter, options);
+  private async processLookups(
+    reactions: EntityReactions[],
+    filter?: Filter<EntityReactions>,
+  ): Promise<EntityReactions[]> {
+    if (!filter?.lookup) {
+      return reactions;
+    }
+
+    // Since EntityReactions is a different type than GenericEntity or List,
+    // we need to handle the lookup processing differently
+    // For now, we'll return the reactions as is since lookup processing
+    // might not be applicable to reactions
+    return reactions;
+  }
+
+  private async processLookup(
+    reaction: EntityReactions,
+    filter?: Filter<EntityReactions>,
+  ): Promise<EntityReactions> {
+    if (!filter?.lookup) {
+      return reaction;
+    }
+
+    // Since EntityReactions is a different type than GenericEntity or List,
+    // we need to handle the lookup processing differently
+    // For now, we'll return the reaction as is since lookup processing
+    // might not be applicable to reactions
+    return reaction;
+  }
+
+  async find(
+    filter?: Filter<EntityReactions>,
+    options?: Options,
+  ): Promise<EntityReactions[]> {
+    try {
+      const limit =
+        filter?.limit ??
+        this.responseLimitConfigReader.getEntityReactionResponseLimit();
+
+      filter = {
+        ...filter,
+        limit: Math.min(
+          limit,
+          this.responseLimitConfigReader.getEntityReactionResponseLimit(),
+        ),
+      };
+
+      this.loggingService.info(
+        'EntityReactionsRepository.find - Modified filter:',
+        {
+          filter,
+        },
+      );
+
+      const reactions = await super.find(filter, options);
+
+      return await this.processLookups(reactions, filter);
+    } catch (error) {
+      this.loggingService.error('EntityReactionsRepository.find - Error:', {
+        error,
+      });
+      throw error;
+    }
   }
 }
