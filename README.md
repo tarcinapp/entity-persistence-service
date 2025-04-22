@@ -479,29 +479,130 @@ You can limit acceptable values for `kind` fields for the records.
 | **entity_kinds**          | Comma seperated list of allowed values for kind field of entities.                     |               |
 | **list_kinds**            | Comma seperated list of allowed values for kind field of lists.                        |               |
 | **list_entity_rel_kinds** | Comma seperated list of allowed values for kind field of list to entity relationships. | relation      |
+| **entity_reaction_kinds** | Comma seperated list of allowed values for kind field of entity reactions.             |               |
+| **list_reaction_kinds**   | Comma seperated list of allowed values for kind field of list reactions.               |               |
 
 ### Uniqueness
 
-Data uniqueness is configurable with giving the composite-index-like set of field names. Optionally, you can make uniqueness valid for a subset of records. To enforce uniqueness in a subset of record, you can configure "set" feature of the application. That is, uniqueness can be enforced only between valid or public records as well. You can combine multiple sets with logical operators.
+Data uniqueness is configurable using a query-like syntax that allows defining uniqueness rules based on field values and scopes. You can define multiple uniqueness rules by separating them with commas. Each rule consists of:
+- Field conditions using `where` clauses that specify which fields must match exactly
+- Optional scope conditions using either `where` clauses or predefined `set` expressions
+- Template variables that get replaced with actual field values using `${fieldName}` syntax
 
-Field types should be primitive types such as string or number.
+The configuration supports various uniqueness scenarios:
+- Global uniqueness based on specific fields
+- Uniqueness within a subset of records (e.g., only active records)
+- Uniqueness scoped by field values (e.g., within approved records)
+- Multiple uniqueness rules for different combinations
 
-Uniqueness configuration is implemented in application logic. MongoDB has composite unique index feature but this feature supports only one array. Thus, it cannot support ownerUsers and ownerGroups together. Furthermore, MongoDB's unique index on arrays cannot be used to implement 'unique per user' approach as it takes arrays contribute to unique index as a whole.
+| Configuration | Description | Default Value | Example Value |
+|--------------|-------------|---------------|---------------|
+| **ENTITY_UNIQUENESS** | Defines uniqueness rules for entities. Multiple rules can be specified by separating them with commas. | - | `where[_name]=${_name},where[_slug]=${_slug}&set[actives]` |
+| **LIST_UNIQUENESS** | Defines uniqueness rules for lists. Multiple rules can be specified by separating them with commas. | - | `where[_name]=${_name}&where[_kind]=${_kind},where[_slug]=${_slug}&set[publics]` |
 
-| Configration                                          | Description                                                                                                                                                                                 | Default Value | Example Value        |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | -------------------- |
-| **uniqueness_entity_fields**                          | Composite index-like comma seperated list of field names of generic entity. Note that the array fields are not supported. Consider using set feature to implement uniqueness per user.      | -             | slug,kind,ownerUsers |
-| **uniqueness_entity_scope**                           | Specify the scope where the uniqueness should be checked.                                                                                                                                   | -             | set[actives]         |
-| **uniqueness_entity_fields_for_{kind_name}**          | Composite index-like comma seperated list of field names of generic entity. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind. | -             | slug,kind,ownerUsers |
-| **uniqueness_entity_scope_for_{kind_name}**           | Specify the scope where the uniqueness should be checked. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.                   | -             | set[actives]         |
-| **uniqueness_list_fields**                            | Composite index-like comma seperated list of field names of list                                                                                                                            | -             | slug,kind,ownerUsers |
-| **uniqueness_list_scope**                             | Specify the scope where the uniqueness should be checked.                                                                                                                                   | false         | set[publics]         |
-| **uniqueness_list_fields_for_{kind_name}**            | Composite index-like comma seperated list of field names of list. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.           | -             | slug,kind,ownerUsers |
-| **uniqueness_list_scope_for_{kind_name}**             | Specify the scope where the uniqueness should be checked. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.                   | false         | set[publics]         |
-| **uniqueness_list_entity_rel_fields**                 | Composite index-like comma seperated list of field names of the relation                                                                                                                    | -             | slug,kind            |
-| **uniqueness_list_entity_rel_scope**                  | Specify the scope where the uniqueness should be checked.                                                                                                                                   | false         | set[publics]         |
-| **uniqueness_list_entity_rel_fields_for_{kind_name}** | Composite index-like comma seperated list of field names of the relation. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.   | -             | slug,kind            |
-| **uniqueness_list_entity_rel_scope_for_{kind_name}**  | Specify the scope where the uniqueness should be checked. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.                   | false         | set[publics]         |
+#### Configuration Syntax
+
+The uniqueness configuration uses a query-like syntax with these components:
+
+1. **Field Uniqueness** (using `where` clauses):
+   ```bash
+   where[field_name]=${field_name}
+   ```
+   This specifies which fields must be unique.
+
+2. **Scope Definition**:
+   - Using predefined sets:
+     ```bash
+     set[actives]  # Only check uniqueness among active records
+     set[publics]  # Only check uniqueness among public records
+     ```
+   - Using where clauses:
+     ```bash
+     where[status]=approved  # Only check uniqueness among approved records
+     ```
+
+3. **Template Variables**:
+   ```bash
+   ${_name}, ${_slug}, ${_kind}, etc.
+   ```
+   These get replaced with actual field values from the record.
+
+#### Examples
+
+1. **Simple Field Uniqueness**:
+   ```bash
+   # Only one record can exist with a given name
+   ENTITY_UNIQUENESS="where[_name]=${_name}"
+   ```
+
+2. **Multiple Field Uniqueness**:
+   ```bash
+   # Name must be unique within each kind
+   ENTITY_UNIQUENESS="where[_name]=${_name}&where[_kind]=${_kind}"
+   ```
+
+3. **Uniqueness Within Active Records**:
+   ```bash
+   # Only one active record can exist with a given name
+   ENTITY_UNIQUENESS="where[_name]=${_name}&set[actives]"
+   ```
+
+4. **Uniqueness Within Approved Records**:
+   ```bash
+   # Only one record with status=approved can exist with a given name
+   ENTITY_UNIQUENESS="where[_name]=${_name}&where[status]=approved"
+   ```
+
+5. **Multiple Uniqueness Rules**:
+   ```bash
+   # Rule 1: Name must be unique globally
+   # Rule 2: Slug must be unique among active records
+   ENTITY_UNIQUENESS="where[_name]=${_name},where[_slug]=${_slug}&set[actives]"
+   ```
+
+6. **Complex Scoping**:
+   ```bash
+   # Name must be unique among active and public records
+   ENTITY_UNIQUENESS="where[_name]=${_name}&set[actives]&set[publics]"
+   ```
+
+7. **Combined Where and Set Scoping**:
+   ```bash
+   # Name must be unique within each department among active records
+   ENTITY_UNIQUENESS="where[_name]=${_name}&where[department]=${department}&set[actives]"
+   ```
+
+For available sets and their behaviors that can be used in uniqueness rules, see the [Sets](#sets) section.
+
+#### Error Response
+
+When a uniqueness violation occurs, the API returns a detailed error response:
+
+```json
+{
+  "error": {
+    "statusCode": 409,
+    "name": "UniquenessViolationError",
+    "message": "Entity already exists",
+    "code": "ENTITY-UNIQUENESS-VIOLATION",
+    "status": 409,
+    "details": [
+      {
+        "code": "ENTITY-UNIQUENESS-VIOLATION",
+        "message": "Entity already exists",
+        "info": {
+          "scope": "where[_name]=example&set[actives]"
+        }
+      }
+    ]
+  }
+}
+```
+
+The error response includes:
+- The specific uniqueness rule that was violated
+- The scope where the violation occurred
+- The field values that caused the conflict
 
 ### Auto Approve
 
