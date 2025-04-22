@@ -6,6 +6,7 @@ import {
   FilterExcludingWhere,
   Where,
   Count,
+  DataObject,
 } from '@loopback/repository';
 import * as crypto from 'crypto';
 import _ from 'lodash';
@@ -122,7 +123,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     }
   }
 
-  async create(data: EntityReaction, options?: Options) {
+  async create(data: DataObject<EntityReaction>, options?: Options) {
     const idempotencyKey = this.calculateIdempotencyKey(data);
     const foundIdempotent = await this.findIdempotentReaction(idempotencyKey);
 
@@ -165,7 +166,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     return Promise.resolve(null);
   }
 
-  calculateIdempotencyKey(data: EntityReaction) {
+  calculateIdempotencyKey(data: DataObject<EntityReaction>) {
     const idempotencyFields =
       this.idempotencyConfigReader.getIdempotencyForEntityReactions(data._kind);
 
@@ -190,7 +191,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
   }
 
   private async createNewReactionFacade(
-    data: EntityReaction,
+    data: DataObject<EntityReaction>,
     options?: Options,
   ): Promise<EntityReaction> {
     return this.modifyIncomingReactionForCreation(data)
@@ -201,8 +202,8 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
   }
 
   private async validateIncomingReactionForCreation(
-    data: EntityReaction,
-  ): Promise<EntityReaction> {
+    data: DataObject<EntityReaction>,
+  ): Promise<DataObject<EntityReaction>> {
     this.checkDataKindFormat(data);
     this.checkDataKindValues(data);
 
@@ -215,8 +216,8 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
   }
 
   private async modifyIncomingReactionForCreation(
-    data: EntityReaction,
-  ): Promise<EntityReaction> {
+    data: DataObject<EntityReaction>,
+  ): Promise<DataObject<EntityReaction>> {
     data._kind =
       data._kind ??
       process.env.default_entity_reaction_kind ??
@@ -250,7 +251,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     return data;
   }
 
-  private async checkUniquenessForCreate(newData: EntityReaction) {
+  private async checkUniquenessForCreate(newData: DataObject<EntityReaction>) {
     await this.recordLimitChecker.checkUniqueness(
       EntityReaction,
       newData,
@@ -258,7 +259,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     );
   }
 
-  private checkDataKindFormat(data: EntityReaction) {
+  private checkDataKindFormat(data: DataObject<EntityReaction>) {
     if (data._kind) {
       const slugKind: string = slugify(data._kind, {
         lower: true,
@@ -277,7 +278,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     }
   }
 
-  private checkDataKindValues(data: EntityReaction) {
+  private checkDataKindValues(data: DataObject<EntityReaction>) {
     if (
       data._kind &&
       !this.kindConfigReader.isKindAcceptableForEntityReactions(data._kind)
@@ -294,13 +295,13 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     }
   }
 
-  private generateSlug(data: EntityReaction) {
+  private generateSlug(data: DataObject<EntityReaction>) {
     if (data._name && !data._slug) {
       data._slug = slugify(data._name ?? '', { lower: true, strict: true });
     }
   }
 
-  private setCountFields(data: EntityReaction) {
+  private setCountFields(data: DataObject<EntityReaction>) {
     data._ownerUsersCount = _.isArray(data._ownerUsers)
       ? data._ownerUsers.length
       : 0;
@@ -469,7 +470,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     }
   }
 
-  async replaceById(id: string, data: EntityReaction) {
+  async replaceById(id: string, data: DataObject<EntityReaction>) {
     const collection = await this.modifyIncomingReactionForUpdates(id, data);
 
     // Calculate idempotencyKey and assign it if present
@@ -488,7 +489,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
 
   private async modifyIncomingReactionForUpdates(
     id: string,
-    data: EntityReaction,
+    data: DataObject<EntityReaction>,
   ) {
     return this.findById(id)
       .then((existingData) => {
@@ -530,7 +531,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
 
   private async validateIncomingReactionForReplace(
     id: string,
-    data: EntityReaction,
+    data: DataObject<EntityReaction>,
   ) {
     // Get the existing reaction to check if _kind is being changed
     const existingReaction = await this.findById(id);
@@ -558,7 +559,10 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     return data;
   }
 
-  private async checkUniquenessForUpdate(id: string, newData: EntityReaction) {
+  private async checkUniquenessForUpdate(
+    id: string,
+    newData: DataObject<EntityReaction>,
+  ) {
     // we need to merge existing data with incoming data in order to check uniqueness
     const existingData = await this.findById(id);
     const mergedData = _.assign(
@@ -573,7 +577,11 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     );
   }
 
-  async updateById(id: string, data: EntityReaction, options?: Options) {
+  async updateById(
+    id: string,
+    data: DataObject<EntityReaction>,
+    options?: Options,
+  ) {
     const collection = await this.modifyIncomingReactionForUpdates(id, data);
 
     // Merge incoming data with existing reaction data to ensure completeness
@@ -599,7 +607,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
   private async validateIncomingDataForUpdate(
     id: string,
     existingData: EntityReaction,
-    data: EntityReaction,
+    data: DataObject<EntityReaction>,
   ) {
     // Check if user is trying to change the _kind field
     if (data._kind !== undefined && data._kind !== existingData._kind) {
@@ -634,7 +642,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
   }
 
   async updateAll(
-    data: EntityReaction,
+    data: DataObject<EntityReaction>,
     where?: Where<EntityReaction>,
     options?: Options,
   ) {
