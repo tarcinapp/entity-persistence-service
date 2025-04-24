@@ -74,7 +74,6 @@ describe('ListRepository', () => {
       Getter.fromValue(listReactionsRepoStub),
       Getter.fromValue(customListEntityRelRepoStub),
       Getter.fromValue(listRepoStub),
-      testSetup.configReaders.uniquenessConfigReader,
       testSetup.configReaders.kindConfigReader,
       testSetup.configReaders.visibilityConfigReader,
       testSetup.configReaders.validfromConfigReader,

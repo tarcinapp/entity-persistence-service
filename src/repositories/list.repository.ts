@@ -18,7 +18,6 @@ import { EntityDbDataSource } from '../datasources';
 import {
   IdempotencyConfigurationReader,
   KindConfigurationReader,
-  UniquenessConfigurationReader,
   ValidfromConfigurationReader,
   VisibilityConfigurationReader,
 } from '../extensions';
@@ -74,9 +73,6 @@ export class ListRepository extends DefaultCrudRepository<
 
     @repository.getter('ListRepository')
     protected listRepositoryGetter: Getter<ListRepository>,
-
-    @inject('extensions.uniqueness.configurationreader')
-    private uniquenessConfigReader: UniquenessConfigurationReader,
 
     @inject('extensions.kind.configurationreader')
     private kindConfigReader: KindConfigurationReader,
