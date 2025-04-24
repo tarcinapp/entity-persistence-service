@@ -499,6 +499,9 @@ The configuration supports various uniqueness scenarios:
 |--------------|-------------|---------------|---------------|
 | **ENTITY_UNIQUENESS** | Defines uniqueness rules for entities. Multiple rules can be specified by separating them with commas. | - | `where[_name]=${_name},where[_slug]=${_slug}&set[actives]` |
 | **LIST_UNIQUENESS** | Defines uniqueness rules for lists. Multiple rules can be specified by separating them with commas. | - | `where[_name]=${_name}&where[_kind]=${_kind},where[_slug]=${_slug}&set[publics]` |
+| **RELATION_UNIQUENESS** | Defines uniqueness rules for list-entity relations. Multiple rules can be specified by separating them with commas. | - | `where[_listId]=${_listId}&where[_entityId]=${_entityId}` |
+| **ENTITY_REACTION_UNIQUENESS** | Defines uniqueness rules for entity reactions. Multiple rules can be specified by separating them with commas. | - | `where[_entityId]=${_entityId}&where[type]=${type}&set[actives]` |
+| **LIST_REACTION_UNIQUENESS** | Defines uniqueness rules for list reactions. Multiple rules can be specified by separating them with commas. | - | `where[_listId]=${_listId}&where[type]=${type}&set[actives]` |
 
 #### Configuration Syntax
 
