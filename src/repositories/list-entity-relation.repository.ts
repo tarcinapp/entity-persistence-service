@@ -3,18 +3,15 @@ import {
   DataObject,
   DefaultCrudRepository,
   Filter,
-  FilterBuilder,
   FilterExcludingWhere,
   Options,
   repository,
   Where,
-  WhereBuilder,
   Count,
   Entity,
 } from '@loopback/repository';
 import * as crypto from 'crypto';
 import _ from 'lodash';
-import { parse } from 'qs';
 import slugify from 'slugify/slugify';
 import { EntityDbDataSource } from '../datasources';
 import {
@@ -24,7 +21,6 @@ import {
   ValidfromConfigurationReader,
 } from '../extensions';
 import { MongoPipelineHelper } from '../extensions/utils/mongo-pipeline-helper';
-import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
 import {
   ListEntityRelationRelations,
   ListToEntityRelation,
@@ -504,79 +500,11 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     id: string,
     newData: DataObject<ListToEntityRelation>,
   ) {
-    // return if no uniqueness is configured
-    if (
-      !process.env.uniqueness_list_entity_rel_fields &&
-      !process.env.uniqueness_list_entity_rel_set
-    ) {
-      return;
-    }
-
-    const whereBuilder: WhereBuilder<ListToEntityRelation> =
-      new WhereBuilder<ListToEntityRelation>();
-
-    // add uniqueness fields if configured
-    if (process.env.uniqueness_list_entity_rel_fields) {
-      const fields: string[] = process.env.uniqueness_list_entity_rel_fields
-        .replace(/\s/g, '')
-        .split(',');
-
-      // if there is at least single field in the fields array that does not present on new data, then we should find it from the db.
-      if (_.some(fields, _.negate(_.partial(_.has, newData)))) {
-        const existingRel = await super.findById(id);
-
-        _.forEach(fields, (field) => {
-          whereBuilder.and({
-            [field]: _.has(newData, field)
-              ? _.get(newData, field)
-              : _.get(existingRel, field),
-          });
-        });
-      } else {
-        _.forEach(fields, (field) => {
-          whereBuilder.and({
-            [field]: _.get(newData, field),
-          });
-        });
-      }
-    }
-
-    //
-    whereBuilder.and({
-      _id: {
-        neq: id,
-      },
-    });
-
-    let filter = new FilterBuilder<ListToEntityRelation>()
-      .where(whereBuilder.build())
-      .fields('_id')
-      .build();
-
-    // add set filter if configured
-    if (process.env.uniqueness_list_entity_set) {
-      const uniquenessStr = process.env.uniqueness_list_entity_set;
-      const uniquenessSet = parse(uniquenessStr).set as Set;
-
-      filter = new SetFilterBuilder<ListToEntityRelation>(uniquenessSet, {
-        filter: filter,
-      }).build();
-    }
-
-    // final uniqueness controlling filter
-    // console.log('Uniqueness Filter: ', JSON.stringify(filter));
-
-    const existingList = await super.findOne(filter);
-
-    if (existingList) {
-      throw new HttpErrorResponse({
-        statusCode: 409,
-        name: 'DataUniquenessViolationError',
-        message: 'List already exists.',
-        code: 'LIST-ALREADY-EXISTS',
-        status: 409,
-      });
-    }
+    await this.recordLimitChecker.checkUniqueness(
+      ListToEntityRelation,
+      newData,
+      this,
+    );
   }
 
   private async checkRecordLimits(newData: DataObject<ListToEntityRelation>) {
@@ -755,53 +683,10 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
   private async checkUniquenessForRelation(
     data: DataObject<ListToEntityRelation>,
   ) {
-    // Return if no uniqueness is configured
-    if (
-      !this.uniquenessConfigReader.isUniquenessConfiguredForListEntityRelations(
-        data._kind,
-      )
-    ) {
-      return;
-    }
-
-    const whereBuilder: WhereBuilder<ListToEntityRelation> =
-      new WhereBuilder<ListToEntityRelation>();
-
-    // Read the uniqueness fields for this kind
-    const fields: string[] =
-      this.uniquenessConfigReader.getFieldsForListEntityRelations(data._kind);
-    const set = this.uniquenessConfigReader.getSetForListEntityRelations(
-      data._kind,
+    await this.recordLimitChecker.checkUniqueness(
+      ListToEntityRelation,
+      data,
+      this,
     );
-
-    // Add uniqueness fields to the where builder
-    _.forEach(fields, (field) => {
-      whereBuilder.and({
-        [field]: _.get(data, field),
-      });
-    });
-
-    let filter = new FilterBuilder<ListToEntityRelation>()
-      .where(whereBuilder.build())
-      .build();
-
-    // Add set filter if configured
-    if (set) {
-      filter = new SetFilterBuilder<ListToEntityRelation>(set, {
-        filter: filter,
-      }).build();
-    }
-
-    const existingRelation = await this.findOne(filter);
-
-    if (existingRelation) {
-      throw new HttpErrorResponse({
-        statusCode: 409,
-        name: 'DataUniquenessViolationError',
-        message: 'Relation already exists.',
-        code: 'RELATION-ALREADY-EXISTS',
-        status: 409,
-      });
-    }
   }
 }

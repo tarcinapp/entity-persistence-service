@@ -613,4 +613,76 @@ describe('POST /list-entity-relations', () => {
       ],
     });
   });
+
+  it('enforces uniqueness constraint for quarter field', async () => {
+    appWithClient = await setupApplication({
+      autoapprove_list_entity_relations: 'true',
+      RELATION_UNIQUENESS: 'where[quarter]=${quarter}',
+    });
+    client = appWithClient.client;
+
+    // Create a list
+    const listResponse = await client.post('/lists').send({
+      _name: 'test list',
+    });
+    expect(listResponse.status).to.equal(200);
+    const list = listResponse.body;
+
+    // Create two entities
+    const entities = await Promise.all(
+      Array.from({ length: 2 }, (_, i) =>
+        client
+          .post('/entities')
+          .send({ _name: `test entity ${i + 1}` })
+          .then((res) => res.body),
+      ),
+    );
+
+    // Create first relation with quarter=q1 - should succeed
+    await client
+      .post('/list-entity-relations')
+      .send({
+        _listId: list._id,
+        _entityId: entities[0]._id,
+        quarter: 'q1',
+      })
+      .expect(200);
+
+    // Try to create second relation with quarter=q1 - should fail due to uniqueness constraint
+    const response = await client
+      .post('/list-entity-relations')
+      .send({
+        _listId: list._id,
+        _entityId: entities[1]._id,
+        quarter: 'q1',
+      })
+      .expect(409);
+
+    expect(response.body.error).to.containDeep({
+      statusCode: 409,
+      name: 'UniquenessViolationError',
+      message: 'Relation already exists',
+      code: 'RELATION-UNIQUENESS-VIOLATION',
+      status: 409,
+      details: [
+        {
+          code: 'RELATION-UNIQUENESS-VIOLATION',
+          message: 'Relation already exists',
+          info: {
+            scope: 'where[quarter]=q1',
+          },
+        },
+      ],
+    });
+
+    // Create relation with quarter=q2 - should succeed
+    await client
+      .post('/list-entity-relations')
+      .send({
+        _listId: list._id,
+        _entityId: entities[1]._id,
+        quarter: 'q2',
+      })
+      .expect(200);
+  });
 });
