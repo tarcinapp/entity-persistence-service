@@ -1,4 +1,4 @@
-import { inject } from '@loopback/core';
+import { inject, Getter } from '@loopback/core';
 import {
   DefaultCrudRepository,
   Filter,
@@ -7,6 +7,7 @@ import {
   Where,
   Count,
   DataObject,
+  repository,
 } from '@loopback/repository';
 import * as crypto from 'crypto';
 import _ from 'lodash';
@@ -19,6 +20,7 @@ import {
   IdempotencyConfigurationReader,
   ResponseLimitConfigurationReader,
 } from '../extensions';
+import { EntityRepository } from './entity.repository';
 import {
   LookupHelper,
   LookupBindings,
@@ -54,6 +56,8 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     private recordLimitChecker: RecordLimitCheckerService,
     @inject(LookupConstraintBindings.SERVICE)
     private lookupConstraintService: LookupConstraintService,
+    @repository.getter('EntityRepository')
+    protected entityRepositoryGetter: Getter<EntityRepository>,
   ) {
     super(EntityReaction, dataSource);
   }
@@ -201,6 +205,29 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
       .then((validEnrichedData) => super.create(validEnrichedData, options));
   }
 
+  private async checkEntityExistence(
+    data: DataObject<EntityReaction>,
+  ): Promise<void> {
+    if (data._entityId) {
+      try {
+        const entityRepository = await this.entityRepositoryGetter();
+        await entityRepository.findById(data._entityId);
+      } catch (error) {
+        if (error.code === 'ENTITY_NOT_FOUND') {
+          throw new HttpErrorResponse({
+            statusCode: 404,
+            name: 'NotFoundError',
+            message: `Entity with id '${data._entityId}' could not be found.`,
+            code: 'ENTITY-NOT-FOUND',
+            status: 404,
+          });
+        }
+
+        throw error;
+      }
+    }
+  }
+
   private async validateIncomingReactionForCreation(
     data: DataObject<EntityReaction>,
   ): Promise<DataObject<EntityReaction>> {
@@ -208,6 +235,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     this.checkDataKindValues(data);
 
     return Promise.all([
+      this.checkEntityExistence(data),
       this.checkUniquenessForCreate(data),
       this.recordLimitChecker.checkLimits(EntityReaction, data, this),
     ]).then(() => {

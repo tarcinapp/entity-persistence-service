@@ -3,7 +3,9 @@ import { expect, sinon } from '@loopback/testlab';
 import { GenericEntity } from '../../../models/entity.model';
 import { HttpErrorResponse } from '../../../models/http-error-response.model';
 import { List } from '../../../models/list.model';
+import { EntityReactionsRepository } from '../../../repositories/entity-reactions.repository';
 import { EntityRepository } from '../../../repositories/entity.repository';
+import { ListReactionsRepository } from '../../../repositories/list-reactions.repository';
 import { ListRepository } from '../../../repositories/list.repository';
 import type { LoggingService } from '../../../services/logging.service';
 import { LookupConstraintService } from '../../../services/lookup-constraint.service';
@@ -13,6 +15,8 @@ describe('Utilities: LookupConstraint', () => {
   let mockLoggingService: Partial<LoggingService>;
   let mockEntityRepository: sinon.SinonStubbedInstance<EntityRepository>;
   let mockListRepository: sinon.SinonStubbedInstance<ListRepository>;
+  let mockEntityReactionsRepository: sinon.SinonStubbedInstance<EntityReactionsRepository>;
+  let mockListReactionsRepository: sinon.SinonStubbedInstance<ListReactionsRepository>;
   let processEnvBackup: NodeJS.ProcessEnv;
 
   beforeEach(() => {
@@ -32,12 +36,20 @@ describe('Utilities: LookupConstraint', () => {
     // Create mock repositories
     mockEntityRepository = sinon.createStubInstance(EntityRepository);
     mockListRepository = sinon.createStubInstance(ListRepository);
+    mockEntityReactionsRepository = sinon.createStubInstance(
+      EntityReactionsRepository,
+    );
+    mockListReactionsRepository = sinon.createStubInstance(
+      ListReactionsRepository,
+    );
 
     // Create service instance with repository getters
     service = new LookupConstraintService(
       mockLoggingService as LoggingService,
       Getter.fromValue(mockEntityRepository),
       Getter.fromValue(mockListRepository),
+      Getter.fromValue(mockEntityReactionsRepository),
+      Getter.fromValue(mockListReactionsRepository),
     );
   });
 
@@ -48,6 +60,8 @@ describe('Utilities: LookupConstraint', () => {
     service = null as any;
     mockEntityRepository = null as any;
     mockListRepository = null as any;
+    mockEntityReactionsRepository = null as any;
+    mockListReactionsRepository = null as any;
     mockLoggingService = null as any;
   });
 
@@ -69,6 +83,8 @@ describe('Utilities: LookupConstraint', () => {
         mockLoggingService as LoggingService,
         Getter.fromValue(mockEntityRepository),
         Getter.fromValue(mockListRepository),
+        Getter.fromValue(mockEntityReactionsRepository),
+        Getter.fromValue(mockListReactionsRepository),
       );
 
       // Verify the constraints were loaded
@@ -92,6 +108,8 @@ describe('Utilities: LookupConstraint', () => {
         mockLoggingService as LoggingService,
         Getter.fromValue(mockEntityRepository),
         Getter.fromValue(mockListRepository),
+        Getter.fromValue(mockEntityReactionsRepository),
+        Getter.fromValue(mockListReactionsRepository),
       );
 
       // Verify the constraints were loaded
@@ -107,6 +125,8 @@ describe('Utilities: LookupConstraint', () => {
           mockLoggingService as LoggingService,
           Getter.fromValue(mockEntityRepository),
           Getter.fromValue(mockListRepository),
+          Getter.fromValue(mockEntityReactionsRepository),
+          Getter.fromValue(mockListReactionsRepository),
         );
       }).to.not.throw();
     });
@@ -127,6 +147,8 @@ describe('Utilities: LookupConstraint', () => {
           mockLoggingService as LoggingService,
           Getter.fromValue(mockEntityRepository),
           Getter.fromValue(mockListRepository),
+          Getter.fromValue(mockEntityReactionsRepository),
+          Getter.fromValue(mockListReactionsRepository),
         );
 
         const entity = new GenericEntity({
@@ -154,6 +176,8 @@ describe('Utilities: LookupConstraint', () => {
           mockLoggingService as LoggingService,
           Getter.fromValue(mockEntityRepository),
           Getter.fromValue(mockListRepository),
+          Getter.fromValue(mockEntityReactionsRepository),
+          Getter.fromValue(mockListReactionsRepository),
         );
 
         const entity = new GenericEntity({
@@ -184,6 +208,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const entity = new GenericEntity({
@@ -216,6 +242,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const entity = new GenericEntity({
@@ -254,6 +282,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const entity = new GenericEntity({
@@ -306,6 +336,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const entity = new GenericEntity({
@@ -335,6 +367,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const entity = new GenericEntity({
@@ -362,6 +396,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const entity = new GenericEntity({
@@ -393,6 +429,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const entity = new GenericEntity({
@@ -431,6 +469,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const entity = new GenericEntity({
@@ -477,6 +517,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const entity = new GenericEntity({
@@ -532,6 +574,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const entity = new GenericEntity({
@@ -580,6 +624,8 @@ describe('Utilities: LookupConstraint', () => {
           mockLoggingService as LoggingService,
           Getter.fromValue(mockEntityRepository),
           Getter.fromValue(mockListRepository),
+          Getter.fromValue(mockEntityReactionsRepository),
+          Getter.fromValue(mockListReactionsRepository),
         );
 
         const entity = new GenericEntity({
@@ -610,6 +656,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const entity = new GenericEntity({
@@ -642,6 +690,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const entity = new GenericEntity({
@@ -671,6 +721,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const entity = new GenericEntity({
@@ -698,6 +750,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const entity = new GenericEntity({
@@ -729,6 +783,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const entity = new GenericEntity({
@@ -767,6 +823,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const entity = new GenericEntity({
@@ -813,6 +871,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const entity = new GenericEntity({
@@ -868,6 +928,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const entity = new GenericEntity({
@@ -916,6 +978,8 @@ describe('Utilities: LookupConstraint', () => {
           mockLoggingService as LoggingService,
           Getter.fromValue(mockEntityRepository),
           Getter.fromValue(mockListRepository),
+          Getter.fromValue(mockEntityReactionsRepository),
+          Getter.fromValue(mockListReactionsRepository),
         );
 
         const entity = new GenericEntity({
@@ -946,6 +1010,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const list = new List({
@@ -978,6 +1044,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const list = new List({
@@ -1007,6 +1075,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const list = new List({
@@ -1034,6 +1104,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const list = new List({
@@ -1065,6 +1137,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const list = new List({
@@ -1103,6 +1177,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const list = new List({
@@ -1141,6 +1217,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const list = new List({
@@ -1201,6 +1279,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const list = new List({
@@ -1256,6 +1336,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const list = new List({
@@ -1307,6 +1389,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const list = new List({
@@ -1336,6 +1420,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const list = new List({
@@ -1365,6 +1451,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const list = new List({
@@ -1392,6 +1480,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const list = new List({
@@ -1423,6 +1513,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const list = new List({
@@ -1461,6 +1553,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const list = new List({
@@ -1499,6 +1593,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const list = new List({
@@ -1559,6 +1655,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const list = new List({
@@ -1614,6 +1712,8 @@ describe('Utilities: LookupConstraint', () => {
             mockLoggingService as LoggingService,
             Getter.fromValue(mockEntityRepository),
             Getter.fromValue(mockListRepository),
+            Getter.fromValue(mockEntityReactionsRepository),
+            Getter.fromValue(mockListReactionsRepository),
           );
 
           const list = new List({

@@ -30,7 +30,7 @@ import {
   LookupBindings,
   LookupHelper,
 } from '../../extensions/utils/lookup-helper';
-import type { GenericEntity, List } from '../../models';
+import type { GenericEntity, List, EntityReaction } from '../../models';
 import { LookupConstraintBindings } from '../../services/lookup-constraint.bindings';
 import { LookupConstraintService } from '../../services/lookup-constraint.service';
 import { RecordLimitCheckerBindings } from '../../services/record-limit-checker.bindings';
@@ -531,4 +531,27 @@ export async function cleanupCreatedEntities(client: Client): Promise<void> {
   }
 
   createdEntityIds = [];
+}
+
+export async function createTestEntityReaction(
+  client: Client,
+  entityReaction: Partial<EntityReaction>,
+): Promise<string> {
+  const response = await client
+    .post('/entity-reactions')
+    .send(entityReaction)
+    .expect(200);
+
+  return response.body._id;
+}
+
+export async function cleanupCreatedEntityReactions(
+  client: Client,
+): Promise<void> {
+  const response = await client.get('/entity-reactions').expect(200);
+  const entityReactions = response.body;
+
+  for (const entityReaction of entityReactions) {
+    await client.delete(`/entity-reactions/${entityReaction._id}`).expect(204);
+  }
 }

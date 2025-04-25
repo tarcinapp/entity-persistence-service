@@ -2,22 +2,30 @@ import { inject, injectable, Getter } from '@loopback/core';
 import { get, every, isString } from 'lodash';
 import { LoggingService } from './logging.service';
 import { ListEntityCommonBase } from '../models/base-models/list-entity-common-base.model';
+import { EntityReaction } from '../models/entity-reactions.model';
 import { HttpErrorResponse } from '../models/http-error-response.model';
+import { ListReaction } from '../models/list-reactions.model';
 import { List } from '../models/list.model';
+import { EntityReactionsRepository } from '../repositories/entity-reactions.repository';
 import { EntityRepository } from '../repositories/entity.repository';
+import { ListReactionsRepository } from '../repositories/list-reactions.repository';
 import { ListRepository } from '../repositories/list.repository';
 
 interface LookupConstraint {
   propertyPath: string;
-  record?: 'entity' | 'list';
+  record?: 'entity' | 'list' | 'entity-reaction' | 'list-reaction';
   sourceKind?: string;
   targetKind?: string;
 }
+
+type RecordType = 'entity' | 'list' | 'entity-reaction' | 'list-reaction';
 
 @injectable()
 export class LookupConstraintService {
   private entityConstraints: LookupConstraint[] = [];
   private listConstraints: LookupConstraint[] = [];
+  private entityReactionConstraints: LookupConstraint[] = [];
+  private listReactionConstraints: LookupConstraint[] = [];
 
   constructor(
     @inject('services.LoggingService')
@@ -26,6 +34,10 @@ export class LookupConstraintService {
     private getEntityRepository: Getter<EntityRepository>,
     @inject.getter('repositories.ListRepository')
     private getListRepository: Getter<ListRepository>,
+    @inject.getter('repositories.EntityReactionsRepository')
+    private getEntityReactionsRepository: Getter<EntityReactionsRepository>,
+    @inject.getter('repositories.ListReactionsRepository')
+    private getListReactionsRepository: Getter<ListReactionsRepository>,
   ) {
     this.loadConstraints();
   }
@@ -33,6 +45,10 @@ export class LookupConstraintService {
   private loadConstraints() {
     const entityConstraintsJson = process.env.ENTITY_LOOKUP_CONSTRAINT;
     const listConstraintsJson = process.env.LIST_LOOKUP_CONSTRAINT;
+    const entityReactionConstraintsJson =
+      process.env.ENTITY_REACTION_LOOKUP_CONSTRAINT;
+    const listReactionConstraintsJson =
+      process.env.LIST_REACTION_LOOKUP_CONSTRAINT;
 
     if (entityConstraintsJson) {
       try {
@@ -55,13 +71,77 @@ export class LookupConstraintService {
         );
       }
     }
+
+    if (entityReactionConstraintsJson) {
+      try {
+        this.entityReactionConstraints = JSON.parse(
+          entityReactionConstraintsJson,
+        );
+      } catch (error) {
+        this.loggingService.warn(
+          'Failed to parse ENTITY_REACTION_LOOKUP_CONSTRAINT environment variable',
+          error,
+        );
+      }
+    }
+
+    if (listReactionConstraintsJson) {
+      try {
+        this.listReactionConstraints = JSON.parse(listReactionConstraintsJson);
+      } catch (error) {
+        this.loggingService.warn(
+          'Failed to parse LIST_REACTION_LOOKUP_CONSTRAINT environment variable',
+          error,
+        );
+      }
+    }
+  }
+
+  private getRecordType(item: ListEntityCommonBase): RecordType {
+    if (item instanceof List) {
+      return 'list';
+    }
+
+    if (item instanceof EntityReaction) {
+      return 'entity-reaction';
+    }
+
+    if (item instanceof ListReaction) {
+      return 'list-reaction';
+    }
+
+    return 'entity';
+  }
+
+  private getConstraintsForType(recordType: RecordType): LookupConstraint[] {
+    switch (recordType) {
+      case 'list':
+        return this.listConstraints;
+      case 'entity-reaction':
+        return this.entityReactionConstraints;
+      case 'list-reaction':
+        return this.listReactionConstraints;
+      default:
+        return this.entityConstraints;
+    }
+  }
+
+  private getErrorCodePrefix(recordType: RecordType): string {
+    switch (recordType) {
+      case 'list':
+        return 'LIST';
+      case 'entity-reaction':
+        return 'ENTITY-REACTION';
+      case 'list-reaction':
+        return 'LIST-REACTION';
+      default:
+        return 'ENTITY';
+    }
   }
 
   async validateLookupConstraints(item: ListEntityCommonBase) {
-    const isList = item instanceof List;
-    const applicableConstraints = (
-      isList ? this.listConstraints : this.entityConstraints
-    ).filter(
+    const recordType = this.getRecordType(item);
+    const applicableConstraints = this.getConstraintsForType(recordType).filter(
       (constraint) =>
         // Apply constraint if:
         // 1. No sourceKind specified (applies to all)
@@ -75,7 +155,7 @@ export class LookupConstraintService {
 
     await Promise.all(
       applicableConstraints.map((constraint) =>
-        this.validateConstraint(item, constraint, isList),
+        this.validateConstraint(item, constraint, recordType),
       ),
     );
   }
@@ -83,7 +163,7 @@ export class LookupConstraintService {
   private async validateConstraint(
     item: ListEntityCommonBase,
     constraint: LookupConstraint,
-    isList: boolean,
+    recordType: RecordType,
   ) {
     const references = get(item, constraint.propertyPath);
     if (!references || references.length === 0) {
@@ -101,10 +181,8 @@ export class LookupConstraintService {
         throw new HttpErrorResponse({
           statusCode: 422,
           name: 'InvalidLookupReferenceError',
-          message: `Invalid reference format in property '${constraint.propertyPath}'. Expected format: 'tapp://localhost/${constraint.record === 'entity' ? 'entities' : 'lists'}/{id}'`,
-          code: isList
-            ? 'LIST-INVALID-LOOKUP-REFERENCE'
-            : 'ENTITY-INVALID-LOOKUP-REFERENCE',
+          message: `Invalid reference format in property '${constraint.propertyPath}'. Expected format: 'tapp://localhost/${this.getReferencePath(constraint.record)}/{id}'`,
+          code: `${this.getErrorCodePrefix(recordType)}-INVALID-LOOKUP-REFERENCE`,
           status: 422,
         });
       }
@@ -115,10 +193,7 @@ export class LookupConstraintService {
       const extractedIds = ids.map((id) => this.extractIdFromReference(id));
 
       // Get the appropriate repository based on the record type
-      const repository =
-        constraint.record === 'list'
-          ? await this.getListRepository()
-          : await this.getEntityRepository();
+      const repository = await this.getRepositoryForType(constraint.record!);
 
       const items = (await repository.find({
         where: { _id: { inq: extractedIds } },
@@ -134,28 +209,50 @@ export class LookupConstraintService {
           statusCode: 422,
           name: 'InvalidLookupConstraintError',
           message: `One or more lookup references in property '${constraint.propertyPath}' do not meet the constraint: expected targetKind='${constraint.targetKind}'.`,
-          code: isList
-            ? 'LIST-INVALID-LOOKUP-KIND'
-            : 'ENTITY-INVALID-LOOKUP-KIND',
+          code: `${this.getErrorCodePrefix(recordType)}-INVALID-LOOKUP-KIND`,
           status: 422,
         });
       }
     }
   }
 
+  private async getRepositoryForType(recordType: RecordType) {
+    switch (recordType) {
+      case 'list':
+        return this.getListRepository();
+      case 'entity-reaction':
+        return this.getEntityReactionsRepository();
+      case 'list-reaction':
+        return this.getListReactionsRepository();
+      default:
+        return this.getEntityRepository();
+    }
+  }
+
+  private getReferencePath(recordType: RecordType): string {
+    switch (recordType) {
+      case 'list':
+        return 'lists';
+      case 'entity-reaction':
+        return 'entity-reactions';
+      case 'list-reaction':
+        return 'list-reactions';
+      default:
+        return 'entities';
+    }
+  }
+
   private validateReferenceFormat(
     reference: string,
-    expectedType: 'entity' | 'list',
+    expectedType: RecordType,
   ): boolean {
     if (!isString(reference)) {
       return false;
     }
 
-    if (expectedType === 'entity') {
-      return reference.startsWith('tapp://localhost/entities/');
-    }
-
-    return reference.startsWith('tapp://localhost/lists/');
+    return reference.startsWith(
+      `tapp://localhost/${this.getReferencePath(expectedType)}/`,
+    );
   }
 
   private extractIdFromReference(reference: string): string {

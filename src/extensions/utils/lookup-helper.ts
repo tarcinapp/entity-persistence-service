@@ -6,8 +6,12 @@ import {
   GenericEntityRelations,
   List,
   ListRelations,
+  EntityReaction,
+  ListReaction,
 } from '../../models';
+import { EntityReactionsRepository } from '../../repositories/entity-reactions.repository';
 import { EntityRepository } from '../../repositories/entity.repository';
+import { ListReactionsRepository } from '../../repositories/list-reactions.repository';
 import { ListRepository } from '../../repositories/list.repository';
 import { LookupScope } from '../types/filter-augmentation';
 
@@ -23,7 +27,7 @@ const isValidGuid = (id: string): boolean => {
   return guidRegex.test(id);
 };
 
-type ReferenceType = 'entity' | 'list';
+type ReferenceType = 'entity' | 'list' | 'entity-reaction' | 'list-reaction';
 
 interface ReferenceInfo {
   type: ReferenceType;
@@ -33,7 +37,9 @@ interface ReferenceInfo {
 
 type ResolvedReference =
   | (GenericEntity & GenericEntityRelations)
-  | (List & ListRelations);
+  | (List & ListRelations)
+  | EntityReaction
+  | ListReaction;
 
 /**
  * Parse a reference URI and return reference type and ID
@@ -54,6 +60,16 @@ const parseReferenceUri = (uri: string): ReferenceInfo | null => {
     const id = uri.split('/').pop();
     if (id && isValidGuid(id)) {
       return { type: 'list', id, uri };
+    }
+  } else if (uri.startsWith('tapp://localhost/entity-reactions/')) {
+    const id = uri.split('/').pop();
+    if (id && isValidGuid(id)) {
+      return { type: 'entity-reaction', id, uri };
+    }
+  } else if (uri.startsWith('tapp://localhost/list-reactions/')) {
+    const id = uri.split('/').pop();
+    if (id && isValidGuid(id)) {
+      return { type: 'list-reaction', id, uri };
     }
   }
 
@@ -81,6 +97,10 @@ export class LookupHelper {
     private entityRepositoryGetter: Getter<EntityRepository>,
     @repository.getter('ListRepository')
     private listRepositoryGetter: Getter<ListRepository>,
+    @repository.getter('EntityReactionsRepository')
+    private entityReactionsRepositoryGetter: Getter<EntityReactionsRepository>,
+    @repository.getter('ListReactionsRepository')
+    private listReactionsRepositoryGetter: Getter<ListReactionsRepository>,
   ) {}
 
   /**
@@ -149,9 +169,11 @@ export class LookupHelper {
   ): Promise<(T & (GenericEntityRelations | ListRelations))[]> {
     const { prop, scope } = lookup;
 
-    // Group references by type (entity or list)
+    // Group references by type
     const entityReferences = new Map<string, Set<string>>();
     const listReferences = new Map<string, Set<string>>();
+    const entityReactionReferences = new Map<string, Set<string>>();
+    const listReactionReferences = new Map<string, Set<string>>();
     const referenceMap = new Map<
       string,
       {
@@ -169,7 +191,6 @@ export class LookupHelper {
         continue;
       }
 
-      // Handle both array and single reference cases
       const refArray = (
         Array.isArray(references) ? references : [references]
       ) as string[];
@@ -178,7 +199,6 @@ export class LookupHelper {
         .filter((ref): ref is ReferenceInfo => ref !== null);
 
       if (validRefs.length > 0) {
-        // Store reference information
         referenceMap.set(item._id, {
           item,
           isArray: Array.isArray(references),
@@ -186,31 +206,48 @@ export class LookupHelper {
           references: validRefs,
         });
 
-        // Categorize references by type
         for (const ref of validRefs) {
-          if (ref.type === 'entity') {
-            if (!entityReferences.has(item._id)) {
-              entityReferences.set(item._id, new Set());
-            }
-
-            entityReferences.get(item._id)!.add(ref.id);
-          } else {
-            if (!listReferences.has(item._id)) {
-              listReferences.set(item._id, new Set());
-            }
-
-            listReferences.get(item._id)!.add(ref.id);
+          let targetMap: Map<string, Set<string>>;
+          switch (ref.type) {
+            case 'entity':
+              targetMap = entityReferences;
+              break;
+            case 'list':
+              targetMap = listReferences;
+              break;
+            case 'entity-reaction':
+              targetMap = entityReactionReferences;
+              break;
+            case 'list-reaction':
+              targetMap = listReactionReferences;
+              break;
           }
+
+          if (!targetMap.has(item._id)) {
+            targetMap.set(item._id, new Set());
+          }
+
+          targetMap.get(item._id)!.add(ref.id);
         }
       }
     }
 
-    if (entityReferences.size === 0 && listReferences.size === 0) {
+    if (
+      entityReferences.size === 0 &&
+      listReferences.size === 0 &&
+      entityReactionReferences.size === 0 &&
+      listReactionReferences.size === 0
+    ) {
       return items;
     }
 
-    // Fetch referenced entities and lists in parallel
-    const [resolvedEntities, resolvedLists] = await Promise.all([
+    // Fetch referenced items in parallel
+    const [
+      resolvedEntities,
+      resolvedLists,
+      resolvedEntityReactions,
+      resolvedListReactions,
+    ] = await Promise.all([
       this.fetchReferencedEntities(
         Array.from(
           new Set(
@@ -231,14 +268,40 @@ export class LookupHelper {
         ),
         scope,
       ),
+      this.fetchReferencedEntityReactions(
+        Array.from(
+          new Set(
+            Array.from(entityReactionReferences.values()).flatMap((values) =>
+              Array.from(values),
+            ),
+          ),
+        ),
+        scope,
+      ),
+      this.fetchReferencedListReactions(
+        Array.from(
+          new Set(
+            Array.from(listReactionReferences.values()).flatMap((values) =>
+              Array.from(values),
+            ),
+          ),
+        ),
+        scope,
+      ),
     ]);
 
-    // Create lookup maps for both entities and lists
+    // Create lookup maps for all types
     const resolvedEntitiesMap = new Map(
       resolvedEntities.map((entity) => [entity._id, entity]),
     );
     const resolvedListsMap = new Map(
       resolvedLists.map((list) => [list._id, list]),
+    );
+    const resolvedEntityReactionsMap = new Map(
+      resolvedEntityReactions.map((reaction) => [reaction._id, reaction]),
+    );
+    const resolvedListReactionsMap = new Map(
+      resolvedListReactions.map((reaction) => [reaction._id, reaction]),
     );
 
     // Replace references with resolved objects
@@ -250,47 +313,51 @@ export class LookupHelper {
 
       const { isArray, path, references } = referenceInfo;
 
-      // Get all valid references in the order they appear in resolvedEntities/resolvedLists
+      // Get all valid references
       const validRefs = references.filter((ref) => {
-        if (ref.type === 'entity') {
-          return resolvedEntitiesMap.has(ref.id);
-        } else {
-          return resolvedListsMap.has(ref.id);
+        switch (ref.type) {
+          case 'entity':
+            return resolvedEntitiesMap.has(ref.id);
+          case 'list':
+            return resolvedListsMap.has(ref.id);
+          case 'entity-reaction':
+            return resolvedEntityReactionsMap.has(ref.id);
+          case 'list-reaction':
+            return resolvedListReactionsMap.has(ref.id);
         }
       });
 
-      // Create ordered arrays of resolved references by filtering the original arrays
-      const orderedEntityRefs = resolvedEntities.filter((entity) =>
-        validRefs.some((ref) => ref.type === 'entity' && ref.id === entity._id),
-      );
+      // Create ordered arrays of resolved references
+      const orderedRefs = validRefs.map((ref) => {
+        switch (ref.type) {
+          case 'entity':
+            return resolvedEntitiesMap.get(ref.id);
+          case 'list':
+            return resolvedListsMap.get(ref.id);
+          case 'entity-reaction':
+            return resolvedEntityReactionsMap.get(ref.id);
+          case 'list-reaction':
+            return resolvedListReactionsMap.get(ref.id);
+        }
+      });
 
-      const orderedListRefs = resolvedLists.filter((list) =>
-        validRefs.some((ref) => ref.type === 'list' && ref.id === list._id),
-      );
-
-      // Combine the ordered arrays
-      const orderedRefs = [...orderedEntityRefs, ...orderedListRefs];
-
-      // Apply field filtering to resolved references if fields are specified
+      // Apply field filtering if specified
       const filteredRefs = scope?.fields
         ? orderedRefs.map((ref) => {
-            const result = { ...ref };
+            const result = { ...ref } as Record<string, unknown>;
             const fields = scope.fields ?? {};
 
-            // Handle inclusion fields (true)
             const inclusionFields = Object.entries(fields)
               .filter(([_, value]) => value === true)
               .map(([key]) => key);
 
             if (inclusionFields.length > 0) {
-              // If we have inclusion fields, only keep those fields
               Object.keys(result).forEach((key) => {
                 if (!inclusionFields.includes(key)) {
                   delete result[key];
                 }
               });
             } else {
-              // If we have exclusion fields, remove those fields
               Object.entries(fields)
                 .filter(([_, value]) => value === false)
                 .forEach(([key]) => {
@@ -406,6 +473,95 @@ export class LookupHelper {
       },
     });
   }
+
+  /**
+   * Fetch referenced entity reactions from the repository
+   */
+  private async fetchReferencedEntityReactions(
+    reactionIds: string[],
+    scope?: any,
+  ): Promise<EntityReaction[]> {
+    if (reactionIds.length === 0) {
+      return [];
+    }
+
+    const entityReactionsRepository =
+      await this.entityReactionsRepositoryGetter();
+
+    // Handle field selection
+    const fields = scope?.fields;
+    let adjustedFields = fields;
+
+    if (fields) {
+      const hasInclusionFields = Object.values(fields).some(
+        (value) => value === true,
+      );
+
+      if (hasInclusionFields) {
+        adjustedFields = {
+          ...fields,
+          _id: true,
+        };
+      } else {
+        adjustedFields = Object.fromEntries(
+          Object.entries(fields).filter(([key]) => key !== '_id'),
+        );
+      }
+    }
+
+    return entityReactionsRepository.find({
+      ...scope,
+      fields: adjustedFields,
+      where: {
+        _id: { inq: reactionIds },
+        ...(scope?.where ?? {}),
+      },
+    });
+  }
+
+  /**
+   * Fetch referenced list reactions from the repository
+   */
+  private async fetchReferencedListReactions(
+    reactionIds: string[],
+    scope?: any,
+  ): Promise<ListReaction[]> {
+    if (reactionIds.length === 0) {
+      return [];
+    }
+
+    const listReactionsRepository = await this.listReactionsRepositoryGetter();
+
+    // Handle field selection
+    const fields = scope?.fields;
+    let adjustedFields = fields;
+
+    if (fields) {
+      const hasInclusionFields = Object.values(fields).some(
+        (value) => value === true,
+      );
+
+      if (hasInclusionFields) {
+        adjustedFields = {
+          ...fields,
+          _id: true,
+        };
+      } else {
+        adjustedFields = Object.fromEntries(
+          Object.entries(fields).filter(([key]) => key !== '_id'),
+        );
+      }
+    }
+
+    return listReactionsRepository.find({
+      ...scope,
+      fields: adjustedFields,
+      where: {
+        _id: { inq: reactionIds },
+        ...(scope?.where ?? {}),
+      },
+    });
+  }
 }
 
 /**
@@ -413,11 +569,20 @@ export class LookupHelper {
  *
  * @param entityRepositoryGetter - Getter function for the EntityRepository
  * @param listRepositoryGetter - Getter function for the ListRepository
+ * @param entityReactionsRepositoryGetter - Getter function for the EntityReactionsRepository
+ * @param listReactionsRepositoryGetter - Getter function for the ListReactionsRepository
  * @returns A new instance of LookupHelper
  */
 export function createLookupHelper(
   entityRepositoryGetter: Getter<EntityRepository>,
   listRepositoryGetter: Getter<ListRepository>,
+  entityReactionsRepositoryGetter: Getter<EntityReactionsRepository>,
+  listReactionsRepositoryGetter: Getter<ListReactionsRepository>,
 ): LookupHelper {
-  return new LookupHelper(entityRepositoryGetter, listRepositoryGetter);
+  return new LookupHelper(
+    entityRepositoryGetter,
+    listRepositoryGetter,
+    entityReactionsRepositoryGetter,
+    listReactionsRepositoryGetter,
+  );
 }
