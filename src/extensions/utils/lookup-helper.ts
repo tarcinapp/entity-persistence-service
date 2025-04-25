@@ -290,19 +290,38 @@ export class LookupHelper {
       ),
     ]);
 
-    // Create lookup maps for all types
-    const resolvedEntitiesMap = new Map(
-      resolvedEntities.map((entity) => [entity._id, entity]),
-    );
-    const resolvedListsMap = new Map(
-      resolvedLists.map((list) => [list._id, list]),
-    );
-    const resolvedEntityReactionsMap = new Map(
-      resolvedEntityReactions.map((reaction) => [reaction._id, reaction]),
-    );
-    const resolvedListReactionsMap = new Map(
-      resolvedListReactions.map((reaction) => [reaction._id, reaction]),
-    );
+    // Create lookup maps for all types while preserving order
+    const resolvedEntitiesMap = new Map<
+      string,
+      { index: number; value: GenericEntity & GenericEntityRelations }
+    >();
+    resolvedEntities.forEach((entity, index) => {
+      resolvedEntitiesMap.set(entity._id, { index, value: entity });
+    });
+
+    const resolvedListsMap = new Map<
+      string,
+      { index: number; value: List & ListRelations }
+    >();
+    resolvedLists.forEach((list, index) => {
+      resolvedListsMap.set(list._id, { index, value: list });
+    });
+
+    const resolvedEntityReactionsMap = new Map<
+      string,
+      { index: number; value: EntityReaction }
+    >();
+    resolvedEntityReactions.forEach((reaction, index) => {
+      resolvedEntityReactionsMap.set(reaction._id, { index, value: reaction });
+    });
+
+    const resolvedListReactionsMap = new Map<
+      string,
+      { index: number; value: ListReaction }
+    >();
+    resolvedListReactions.forEach((reaction, index) => {
+      resolvedListReactionsMap.set(reaction._id, { index, value: reaction });
+    });
 
     // Replace references with resolved objects
     return items.map((item) => {
@@ -313,33 +332,58 @@ export class LookupHelper {
 
       const { isArray, path, references } = referenceInfo;
 
-      // Get all valid references
-      const validRefs = references.filter((ref) => {
-        switch (ref.type) {
-          case 'entity':
-            return resolvedEntitiesMap.has(ref.id);
-          case 'list':
-            return resolvedListsMap.has(ref.id);
-          case 'entity-reaction':
-            return resolvedEntityReactionsMap.has(ref.id);
-          case 'list-reaction':
-            return resolvedListReactionsMap.has(ref.id);
-        }
-      });
+      // Get all valid references with their original order information
+      const validRefsWithOrder = references
+        .map((ref) => {
+          let resolvedRef:
+            | { index: number; value: ResolvedReference }
+            | undefined;
+          switch (ref.type) {
+            case 'entity':
+              resolvedRef = resolvedEntitiesMap.get(ref.id);
+              break;
+            case 'list':
+              resolvedRef = resolvedListsMap.get(ref.id);
+              break;
+            case 'entity-reaction':
+              resolvedRef = resolvedEntityReactionsMap.get(ref.id);
+              break;
+            case 'list-reaction':
+              resolvedRef = resolvedListReactionsMap.get(ref.id);
+              break;
+          }
 
-      // Create ordered arrays of resolved references
-      const orderedRefs = validRefs.map((ref) => {
-        switch (ref.type) {
-          case 'entity':
-            return resolvedEntitiesMap.get(ref.id);
-          case 'list':
-            return resolvedListsMap.get(ref.id);
-          case 'entity-reaction':
-            return resolvedEntityReactionsMap.get(ref.id);
-          case 'list-reaction':
-            return resolvedListReactionsMap.get(ref.id);
-        }
-      });
+          return resolvedRef ? { type: ref.type, ...resolvedRef } : undefined;
+        })
+        .filter(
+          (
+            ref,
+          ): ref is {
+            type: ReferenceType;
+            index: number;
+            value: ResolvedReference;
+          } => ref !== undefined,
+        );
+
+      // Sort by the order they were returned from their respective repositories
+      const orderedRefs = validRefsWithOrder
+        .sort((a, b) => {
+          // If they're the same type, sort by index
+          if (a.type === b.type) {
+            return a.index - b.index;
+          }
+
+          // If different types, preserve the original reference order
+          return (
+            references.findIndex(
+              (ref) => ref.type === a.type && ref.id === a.value._id,
+            ) -
+            references.findIndex(
+              (ref) => ref.type === b.type && ref.id === b.value._id,
+            )
+          );
+        })
+        .map((ref) => ref.value);
 
       // Apply field filtering if specified
       const filteredRefs = scope?.fields
