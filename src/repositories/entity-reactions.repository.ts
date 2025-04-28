@@ -70,11 +70,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
       return reactions;
     }
 
-    // Since EntityReactions is a different type than GenericEntity or List,
-    // we need to handle the lookup processing differently
-    // For now, we'll return the reactions as is since lookup processing
-    // might not be applicable to reactions
-    return reactions;
+    return this.lookupHelper.processLookupForArray(reactions, filter);
   }
 
   private async processLookup(
@@ -85,11 +81,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
       return reaction;
     }
 
-    // Since EntityReactions is a different type than GenericEntity or List,
-    // we need to handle the lookup processing differently
-    // For now, we'll return the reaction as is since lookup processing
-    // might not be applicable to reactions
-    return reaction;
+    return this.lookupHelper.processLookupForOne(reaction, filter);
   }
 
   async find(

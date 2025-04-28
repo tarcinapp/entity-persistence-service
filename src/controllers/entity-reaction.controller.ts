@@ -26,6 +26,7 @@ import {
   UNMODIFIABLE_COMMON_FIELDS,
   UnmodifiableCommonFields,
 } from '../models/base-types/unmodifiable-common-fields';
+import { getFilterSchemaFor } from '../openapi/filter-schemas';
 import { EntityReactionsRepository } from '../repositories';
 import { LoggingService } from '../services/logging.service';
 
@@ -150,7 +151,8 @@ export class EntityReactionController {
   })
   async find(
     @param.query.object('set') set?: Set,
-    @param.filter(EntityReaction) filter?: Filter<EntityReaction>,
+    @param.query.object('filter', getFilterSchemaFor(EntityReaction))
+    filter?: Filter<EntityReaction>,
   ): Promise<EntityReaction[]> {
     if (set) {
       filter = new SetFilterBuilder<EntityReaction>(set, {
@@ -239,7 +241,7 @@ export class EntityReactionController {
   })
   async findById(
     @param.path.string('id') id: string,
-    @param.filter(EntityReaction, { exclude: 'where' })
+    @param.query.object('filter', getFilterSchemaFor(EntityReaction))
     filter?: FilterExcludingWhere<EntityReaction>,
   ): Promise<EntityReaction> {
     sanitizeFilterFields(filter);
@@ -402,7 +404,8 @@ export class EntityReactionController {
   async findParents(
     @param.path.string('id') id: string,
     @param.query.object('set') set?: Set,
-    @param.filter(EntityReaction) filter?: Filter<EntityReaction>,
+    @param.query.object('filter', getFilterSchemaFor(EntityReaction))
+    filter?: Filter<EntityReaction>,
   ): Promise<EntityReaction[]> {
     if (set) {
       filter = new SetFilterBuilder<EntityReaction>(set, {
@@ -447,7 +450,8 @@ export class EntityReactionController {
   async findChildren(
     @param.path.string('id') id: string,
     @param.query.object('set') set?: Set,
-    @param.filter(EntityReaction) filter?: Filter<EntityReaction>,
+    @param.query.object('filter', getFilterSchemaFor(EntityReaction))
+    filter?: Filter<EntityReaction>,
   ): Promise<EntityReaction[]> {
     if (set) {
       filter = new SetFilterBuilder<EntityReaction>(set, {

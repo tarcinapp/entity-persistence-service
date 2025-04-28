@@ -111,7 +111,9 @@ export class LookupHelper {
    * @param filter - Filter containing lookup definitions
    * @returns Promise resolving to processed items with resolved references
    */
-  async processLookupForArray<T extends GenericEntity | List>(
+  async processLookupForArray<
+    T extends GenericEntity | List | EntityReaction | ListReaction,
+  >(
     items: (T & (GenericEntityRelations | ListRelations))[],
     filter?: Filter<T>,
   ): Promise<(T & (GenericEntityRelations | ListRelations))[]> {
@@ -136,7 +138,9 @@ export class LookupHelper {
    * @param filter - Filter containing lookup definitions
    * @returns Promise resolving to processed item with resolved references
    */
-  async processLookupForOne<T extends GenericEntity | List>(
+  async processLookupForOne<
+    T extends GenericEntity | List | EntityReaction | ListReaction,
+  >(
     item: T & (GenericEntityRelations | ListRelations),
     filter?: Filter<T>,
   ): Promise<T & (GenericEntityRelations | ListRelations)> {
@@ -163,7 +167,9 @@ export class LookupHelper {
    * @param lookup - Lookup configuration defining what and how to resolve
    * @returns Promise resolving to processed items
    */
-  private async processLookupBatch<T extends GenericEntity | List>(
+  private async processLookupBatch<
+    T extends GenericEntity | List | EntityReaction | ListReaction,
+  >(
     items: (T & (GenericEntityRelations | ListRelations))[],
     lookup: LookupScope<T>,
   ): Promise<(T & (GenericEntityRelations | ListRelations))[]> {

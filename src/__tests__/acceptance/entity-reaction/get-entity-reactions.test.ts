@@ -1269,5 +1269,55 @@ describe('GET /entity-reactions', () => {
   });
 
   // Continue with lookup tests...
-  // ... rest of the test file ...
+  it('lookup: resolves entity-reactions references through lookup', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+    });
+    ({ client } = appWithClient);
+
+    // Create a test entity
+    const entityId = await createTestEntity(client, {
+      _name: 'Book 1',
+      _kind: 'book',
+    });
+
+    // Create a parent entity-reaction
+    const parentReactionId = await createTestEntityReaction(client, {
+      _name: 'Parent Reaction',
+      _entityId: entityId,
+      _kind: 'like',
+      sentiment: 'positive',
+    });
+
+    // Create a child entity-reaction that references the parent via an arbitrary property
+    await createTestEntityReaction(client, {
+      _name: 'Child Reaction',
+      _entityId: entityId,
+      _kind: 'like',
+      relatedReaction: `tapp://localhost/entity-reactions/${parentReactionId}`,
+      sentiment: 'positive',
+    });
+
+    // Get the reactions with lookup on relatedReaction
+    const filterStr = 'filter[lookup][0][prop]=relatedReaction';
+    const response = await client
+      .get('/entity-reactions')
+      .query(filterStr)
+      .expect(200);
+
+    // Should return both reactions
+    expect(response.body).to.be.Array().and.have.length(2);
+
+    // Find the child reaction in the response
+    const child = response.body.find(
+      (r: EntityReaction) => r._name === 'Child Reaction',
+    );
+    expect(child).to.not.be.undefined();
+    expect(child.relatedReaction).to.be.an.Object();
+    expect(child.relatedReaction._id).to.equal(parentReactionId);
+    expect(child.relatedReaction._name).to.equal('Parent Reaction');
+    expect(child.relatedReaction._kind).to.equal('like');
+    expect(child.relatedReaction.sentiment).to.equal('positive');
+  });
 });

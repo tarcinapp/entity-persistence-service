@@ -11,6 +11,8 @@ import type {
   GenericEntityRelations,
   List,
   ListRelations,
+  EntityReaction,
+  ListReaction,
 } from '../../../models';
 import { HttpErrorResponse, SingleError } from '../../../models';
 import {
@@ -52,13 +54,14 @@ describe('EntityRepository', () => {
     const mockLookupHelper = sinon.createStubInstance(LookupHelper);
     mockLookupHelper.processLookupForArray.callsFake(
       async (
-        items: ((List | GenericEntity) &
-          (ListRelations | GenericEntityRelations))[],
+        items: ((GenericEntity | List | EntityReaction | ListReaction) &
+          (GenericEntityRelations | ListRelations))[],
       ) => Promise.resolve(items),
     );
     mockLookupHelper.processLookupForOne.callsFake(
       async (
-        item: (List | GenericEntity) & (ListRelations | GenericEntityRelations),
+        item: (GenericEntity | List | EntityReaction | ListReaction) &
+          (GenericEntityRelations | ListRelations),
       ) => Promise.resolve(item),
     );
 
