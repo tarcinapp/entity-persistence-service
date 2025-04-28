@@ -86,12 +86,15 @@ export interface TestEnvironmentVariables {
   entity_kinds?: string;
   list_kinds?: string;
   list_entity_rel_kinds?: string;
+  entity_reaction_kinds?: string;
+  list_reaction_kinds?: string;
 
   // Default Values Configuration
   default_entity_kind?: string;
   default_list_kind?: string;
   default_relation_kind?: string;
-
+  default_entity_reaction_kind?: string;
+  default_list_reaction_kind?: string;
   // Uniqueness Configuration
   uniqueness_entity_fields?: string;
   uniqueness_list_fields?: string;
@@ -212,6 +215,7 @@ export async function setupApplication(
     default_entity_kind: process.env.default_entity_kind,
     default_list_kind: process.env.default_list_kind,
     default_relation_kind: process.env.default_relation_kind,
+    default_entity_reaction_kind: process.env.default_entity_reaction_kind,
 
     // Uniqueness Configuration
     uniqueness_entity_fields: process.env.uniqueness_entity_fields,
