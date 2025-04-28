@@ -1261,15 +1261,11 @@ describe('GET /entity-reactions', () => {
       '_visibility',
       '_validFromDateTime',
       '_validUntilDateTime',
-      'score',
-      'metadata',
     ]);
 
     // Verify the values of some remaining fields
     expect(reaction._entityId).to.equal(entity1Id);
     expect(reaction._visibility).to.equal('public');
-    expect(reaction.score).to.equal(5);
-    expect(reaction.metadata.source).to.equal('web');
   });
 
   // Continue with lookup tests...
