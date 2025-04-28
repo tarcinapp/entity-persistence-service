@@ -275,9 +275,15 @@ export class EntityRepository extends DefaultCrudRepository<
   async deleteById(id: string, options?: Options): Promise<void> {
     const listEntityRelationRepo =
       await this.listEntityRelationRepositoryGetter();
+    const reactionsRepo = await this.reactionsRepositoryGetter();
 
     // Delete all relations associated with the entity
     await listEntityRelationRepo.deleteAll({
+      _entityId: id,
+    });
+
+    // Delete all reactions associated with the entity
+    await reactionsRepo.deleteAll({
       _entityId: id,
     });
 
@@ -290,6 +296,7 @@ export class EntityRepository extends DefaultCrudRepository<
   ): Promise<Count> {
     const listEntityRelationRepo =
       await this.listEntityRelationRepositoryGetter();
+    const reactionsRepo = await this.reactionsRepositoryGetter();
 
     this.loggingService.info('EntityRepository.deleteAll - Where condition:', {
       where,
@@ -304,6 +311,11 @@ export class EntityRepository extends DefaultCrudRepository<
     ).map((entity) => entity._id);
 
     await listEntityRelationRepo.deleteAll({
+      _entityId: { inq: idsToDelete },
+    });
+
+    // Delete all reactions associated with the entities
+    await reactionsRepo.deleteAll({
       _entityId: { inq: idsToDelete },
     });
 
