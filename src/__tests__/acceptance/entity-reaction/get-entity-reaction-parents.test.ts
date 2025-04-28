@@ -11,10 +11,28 @@ describe('GET /entity-reactions/{id}/parents', () => {
   let client: Client;
   let appWithClient: AppWithClient | undefined;
 
+  beforeEach(async () => {
+    if (appWithClient) {
+      await appWithClient.app.stop();
+    }
+
+    appWithClient = undefined;
+  });
+
   afterEach(async () => {
     if (appWithClient) {
       await appWithClient.app.stop();
     }
+
+    appWithClient = undefined;
+  });
+
+  after(async () => {
+    if (appWithClient) {
+      await appWithClient.app.stop();
+    }
+
+    appWithClient = undefined;
   });
 
   it('basic: returns parent reactions for a given reaction', async () => {
