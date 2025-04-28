@@ -27,6 +27,29 @@ export class LookupConstraintService {
   private entityReactionConstraints: LookupConstraint[] = [];
   private listReactionConstraints: LookupConstraint[] = [];
 
+  // Default parent constraints for each record type
+  private readonly defaultParentConstraints: Record<
+    RecordType,
+    LookupConstraint
+  > = {
+    entity: {
+      propertyPath: '_parents',
+      record: 'entity',
+    },
+    list: {
+      propertyPath: '_parents',
+      record: 'list',
+    },
+    'entity-reaction': {
+      propertyPath: '_parents',
+      record: 'entity-reaction',
+    },
+    'list-reaction': {
+      propertyPath: '_parents',
+      record: 'list-reaction',
+    },
+  };
+
   constructor(
     @inject('services.LoggingService')
     private loggingService: LoggingService,
@@ -50,9 +73,15 @@ export class LookupConstraintService {
     const listReactionConstraintsJson =
       process.env.LIST_REACTION_LOOKUP_CONSTRAINT;
 
+    // Load user-configured constraints
+    let userEntityConstraints: LookupConstraint[] = [];
+    let userListConstraints: LookupConstraint[] = [];
+    let userEntityReactionConstraints: LookupConstraint[] = [];
+    let userListReactionConstraints: LookupConstraint[] = [];
+
     if (entityConstraintsJson) {
       try {
-        this.entityConstraints = JSON.parse(entityConstraintsJson);
+        userEntityConstraints = JSON.parse(entityConstraintsJson);
       } catch (error) {
         this.loggingService.warn(
           'Failed to parse ENTITY_LOOKUP_CONSTRAINT environment variable',
@@ -63,7 +92,7 @@ export class LookupConstraintService {
 
     if (listConstraintsJson) {
       try {
-        this.listConstraints = JSON.parse(listConstraintsJson);
+        userListConstraints = JSON.parse(listConstraintsJson);
       } catch (error) {
         this.loggingService.warn(
           'Failed to parse LIST_LOOKUP_CONSTRAINT environment variable',
@@ -74,7 +103,7 @@ export class LookupConstraintService {
 
     if (entityReactionConstraintsJson) {
       try {
-        this.entityReactionConstraints = JSON.parse(
+        userEntityReactionConstraints = JSON.parse(
           entityReactionConstraintsJson,
         );
       } catch (error) {
@@ -87,7 +116,7 @@ export class LookupConstraintService {
 
     if (listReactionConstraintsJson) {
       try {
-        this.listReactionConstraints = JSON.parse(listReactionConstraintsJson);
+        userListReactionConstraints = JSON.parse(listReactionConstraintsJson);
       } catch (error) {
         this.loggingService.warn(
           'Failed to parse LIST_REACTION_LOOKUP_CONSTRAINT environment variable',
@@ -95,6 +124,42 @@ export class LookupConstraintService {
         );
       }
     }
+
+    // Merge default constraints with user-configured ones
+    // Default constraint is only added if there's no user-configured constraint for _parents
+    this.entityConstraints = this.mergeConstraints(
+      userEntityConstraints,
+      this.defaultParentConstraints.entity,
+    );
+    this.listConstraints = this.mergeConstraints(
+      userListConstraints,
+      this.defaultParentConstraints.list,
+    );
+    this.entityReactionConstraints = this.mergeConstraints(
+      userEntityReactionConstraints,
+      this.defaultParentConstraints['entity-reaction'],
+    );
+    this.listReactionConstraints = this.mergeConstraints(
+      userListReactionConstraints,
+      this.defaultParentConstraints['list-reaction'],
+    );
+  }
+
+  private mergeConstraints(
+    userConstraints: LookupConstraint[],
+    defaultParentConstraint: LookupConstraint,
+  ): LookupConstraint[] {
+    // Check if there's a user-configured constraint for _parents
+    const hasParentConstraint = userConstraints.some(
+      (c) => c.propertyPath === '_parents',
+    );
+
+    // If no user-configured parent constraint, add the default one
+    if (!hasParentConstraint) {
+      return [...userConstraints, defaultParentConstraint];
+    }
+
+    return userConstraints;
   }
 
   private getRecordType(item: ListEntityCommonBase): RecordType {
