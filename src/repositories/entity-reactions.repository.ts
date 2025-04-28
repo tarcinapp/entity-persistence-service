@@ -567,6 +567,20 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
       });
     }
 
+    // Check if user is trying to change the _entityId field
+    if (
+      data._entityId !== undefined &&
+      data._entityId !== existingReaction._entityId
+    ) {
+      throw new HttpErrorResponse({
+        statusCode: 422,
+        name: 'ImmutableEntityIdError',
+        message: `Entity reaction entity ID cannot be changed after creation. Current entity ID is '${existingReaction._entityId}'.`,
+        code: 'IMMUTABLE-ENTITY-ID',
+        status: 422,
+      });
+    }
+
     const uniquenessCheck = this.checkUniquenessForUpdate(id, data);
     const limitCheck = this.recordLimitChecker.checkLimits(
       EntityReaction,
@@ -640,6 +654,20 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
       });
     }
 
+    // Check if user is trying to change the _entityId field
+    if (
+      data._entityId !== undefined &&
+      data._entityId !== existingData._entityId
+    ) {
+      throw new HttpErrorResponse({
+        statusCode: 422,
+        name: 'ImmutableEntityIdError',
+        message: `Entity reaction entity ID cannot be changed after creation. Current entity ID is '${existingData._entityId}'.`,
+        code: 'IMMUTABLE-ENTITY-ID',
+        status: 422,
+      });
+    }
+
     // we need to merge existing data with incoming data in order to check limits and uniquenesses
     const mergedData = _.assign(
       {},
@@ -673,6 +701,17 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
         name: 'ImmutableKindError',
         message: 'Entity reaction kind cannot be changed after creation.',
         code: 'IMMUTABLE-ENTITY-REACTION-KIND',
+        status: 422,
+      });
+    }
+
+    // Check if user is trying to change the _entityId field, which is immutable
+    if (data._entityId !== undefined) {
+      throw new HttpErrorResponse({
+        statusCode: 422,
+        name: 'ImmutableEntityIdError',
+        message: 'Entity reaction entity ID cannot be changed after creation.',
+        code: 'IMMUTABLE-ENTITY-ID',
         status: 422,
       });
     }
