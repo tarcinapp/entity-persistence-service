@@ -95,6 +95,7 @@ export interface TestEnvironmentVariables {
   default_relation_kind?: string;
   default_entity_reaction_kind?: string;
   default_list_reaction_kind?: string;
+
   // Uniqueness Configuration
   uniqueness_entity_fields?: string;
   uniqueness_list_fields?: string;
@@ -112,6 +113,8 @@ export interface TestEnvironmentVariables {
   autoapprove_entity?: string;
   autoapprove_list?: string;
   autoapprove_list_entity_relations?: string;
+  autoapprove_entity_reaction?: string;
+  autoapprove_list_reaction?: string;
 
   // Visibility Configuration
   visibility_entity?: string;

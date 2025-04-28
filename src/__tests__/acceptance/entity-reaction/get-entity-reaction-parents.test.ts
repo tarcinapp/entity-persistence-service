@@ -453,7 +453,10 @@ describe('GET /entity-reactions/{id}/parents', () => {
   });
 
   it('set-filter: filters reactions by audience', async () => {
-    appWithClient = await setupApplication({ entity_kinds: 'book' });
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      autoapprove_entity_reaction: 'true',
+    });
     ({ client } = appWithClient);
     const owner = 'user-123';
     const viewer = 'user-456';
@@ -505,5 +508,278 @@ describe('GET /entity-reactions/{id}/parents', () => {
       .query(otherFilterStr)
       .expect(200);
     expect(otherResponse.body).to.be.Array().and.have.length(0);
+  });
+
+  it('set-filter: filters active reactions', async () => {
+    appWithClient = await setupApplication({ entity_kinds: 'book' });
+    ({ client } = appWithClient);
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 7);
+    const entityId = await createTestEntity(client, {
+      _name: 'Book 12',
+      _kind: 'book',
+    });
+    const activeParentId = await createTestEntityReaction(client, {
+      _entityId: entityId,
+      _kind: 'like',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+    const inactiveParentId = await createTestEntityReaction(client, {
+      _entityId: entityId,
+      _kind: 'like',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(),
+    });
+    const futureParentId = await createTestEntityReaction(client, {
+      _entityId: entityId,
+      _kind: 'like',
+      _validFromDateTime: futureDate.toISOString(),
+      _validUntilDateTime: null,
+    });
+    const childId = await createTestEntityReaction(client, {
+      _entityId: entityId,
+      _kind: 'like',
+      _parents: [
+        `tapp://localhost/entity-reactions/${activeParentId}`,
+        `tapp://localhost/entity-reactions/${inactiveParentId}`,
+        `tapp://localhost/entity-reactions/${futureParentId}`,
+      ],
+    });
+    const filterStr = 'set[actives]=true';
+    const response = await client
+      .get(`/entity-reactions/${childId}/parents`)
+      .query(filterStr)
+      .expect(200);
+    expect(response.body).to.be.Array().and.have.length(1);
+    expect(response.body[0]._id).to.equal(activeParentId);
+  });
+
+  it('set-filter: filters public reactions', async () => {
+    appWithClient = await setupApplication({ entity_kinds: 'book' });
+    ({ client } = appWithClient);
+    const entityId = await createTestEntity(client, {
+      _name: 'Book 13',
+      _kind: 'book',
+    });
+    const publicParentId = await createTestEntityReaction(client, {
+      _entityId: entityId,
+      _kind: 'like',
+      _visibility: 'public',
+    });
+    const protectedParentId = await createTestEntityReaction(client, {
+      _entityId: entityId,
+      _kind: 'like',
+      _visibility: 'protected',
+    });
+    const privateParentId = await createTestEntityReaction(client, {
+      _entityId: entityId,
+      _kind: 'like',
+      _visibility: 'private',
+    });
+    const childId = await createTestEntityReaction(client, {
+      _entityId: entityId,
+      _kind: 'like',
+      _parents: [
+        `tapp://localhost/entity-reactions/${publicParentId}`,
+        `tapp://localhost/entity-reactions/${protectedParentId}`,
+        `tapp://localhost/entity-reactions/${privateParentId}`,
+      ],
+    });
+    const filterStr = 'set[publics]=true';
+    const response = await client
+      .get(`/entity-reactions/${childId}/parents`)
+      .query(filterStr)
+      .expect(200);
+    expect(response.body).to.be.Array().and.have.length(1);
+    expect(response.body[0]._visibility).to.equal('public');
+  });
+
+  it('set-filter: combines multiple sets with AND operator', async () => {
+    appWithClient = await setupApplication({ entity_kinds: 'book' });
+    ({ client } = appWithClient);
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 7);
+    const entityId = await createTestEntity(client, {
+      _name: 'Book 14',
+      _kind: 'book',
+    });
+    const activePublicParentId = await createTestEntityReaction(client, {
+      _entityId: entityId,
+      _kind: 'like',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+    const activePrivateParentId = await createTestEntityReaction(client, {
+      _entityId: entityId,
+      _kind: 'like',
+      _visibility: 'private',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+    const inactivePublicParentId = await createTestEntityReaction(client, {
+      _entityId: entityId,
+      _kind: 'like',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(),
+    });
+    const inactivePrivateParentId = await createTestEntityReaction(client, {
+      _entityId: entityId,
+      _kind: 'like',
+      _visibility: 'private',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(),
+    });
+    const childId = await createTestEntityReaction(client, {
+      _entityId: entityId,
+      _kind: 'like',
+      _parents: [
+        `tapp://localhost/entity-reactions/${activePublicParentId}`,
+        `tapp://localhost/entity-reactions/${activePrivateParentId}`,
+        `tapp://localhost/entity-reactions/${inactivePublicParentId}`,
+        `tapp://localhost/entity-reactions/${inactivePrivateParentId}`,
+      ],
+    });
+    const filterStr = 'set[and][0][actives]=true&set[and][1][publics]=true';
+    const response = await client
+      .get(`/entity-reactions/${childId}/parents`)
+      .query(filterStr)
+      .expect(200);
+    expect(response.body).to.be.Array().and.have.length(1);
+    expect(response.body[0]._visibility).to.equal('public');
+    expect(response.body[0]._validUntilDateTime).to.equal(
+      futureDate.toISOString(),
+    );
+  });
+
+  it('set-filter: combines multiple sets with OR operator', async () => {
+    appWithClient = await setupApplication({ entity_kinds: 'book' });
+    ({ client } = appWithClient);
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 7);
+    const entityId = await createTestEntity(client, {
+      _name: 'Book 15',
+      _kind: 'book',
+    });
+    const activeParentId = await createTestEntityReaction(client, {
+      _entityId: entityId,
+      _kind: 'like',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      _visibility: 'private',
+    });
+    const publicParentId = await createTestEntityReaction(client, {
+      _entityId: entityId,
+      _kind: 'like',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(),
+    });
+    const inactivePrivateParentId = await createTestEntityReaction(client, {
+      _entityId: entityId,
+      _kind: 'like',
+      _visibility: 'private',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(),
+    });
+    const childId = await createTestEntityReaction(client, {
+      _entityId: entityId,
+      _kind: 'like',
+      _parents: [
+        `tapp://localhost/entity-reactions/${activeParentId}`,
+        `tapp://localhost/entity-reactions/${publicParentId}`,
+        `tapp://localhost/entity-reactions/${inactivePrivateParentId}`,
+      ],
+    });
+    const filterStr = 'set[or][0][actives]=true&set[or][1][publics]=true';
+    const response = await client
+      .get(`/entity-reactions/${childId}/parents`)
+      .query(filterStr)
+      .expect(200);
+    expect(response.body).to.be.Array().and.have.length(2);
+    expect(response.body.map((p: any) => p._visibility).sort()).to.eql([
+      'private',
+      'public',
+    ]);
+  });
+
+  it('set-filter: filters reactions by audience groups', async () => {
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      visibility_entity_reaction: 'protected',
+      autoapprove_entity_reaction: 'true',
+    });
+    ({ client } = appWithClient);
+    const ownerGroup = 'group-123';
+    const viewerGroup = 'group-456';
+    const otherGroup = 'group-789';
+    const entityId = await createTestEntity(client, {
+      _name: 'Book 16',
+      _kind: 'book',
+    });
+    const ownerGroupParentId = await createTestEntityReaction(client, {
+      _entityId: entityId,
+      _kind: 'like',
+      _ownerGroups: [ownerGroup],
+    });
+    const viewerGroupParentId = await createTestEntityReaction(client, {
+      _entityId: entityId,
+      _kind: 'like',
+      _viewerGroups: [viewerGroup],
+    });
+    const otherParentId = await createTestEntityReaction(client, {
+      _entityId: entityId,
+      _kind: 'like',
+    });
+    const childId = await createTestEntityReaction(client, {
+      _entityId: entityId,
+      _kind: 'like',
+      _parents: [
+        `tapp://localhost/entity-reactions/${ownerGroupParentId}`,
+        `tapp://localhost/entity-reactions/${viewerGroupParentId}`,
+        `tapp://localhost/entity-reactions/${otherParentId}`,
+      ],
+    });
+    const ownerFilterStr = `set[audience][groupIds]=${ownerGroup}`;
+    const ownerResponse = await client
+      .get(`/entity-reactions/${childId}/parents`)
+      .query(ownerFilterStr)
+      .expect(200);
+    expect(ownerResponse.body).to.be.Array().and.have.length(1);
+    expect(ownerResponse.body[0]._ownerGroups).to.containDeep([ownerGroup]);
+    const viewerFilterStr = `set[audience][groupIds]=${viewerGroup}`;
+    const viewerResponse = await client
+      .get(`/entity-reactions/${childId}/parents`)
+      .query(viewerFilterStr)
+      .expect(200);
+    expect(viewerResponse.body).to.be.Array().and.have.length(1);
+    expect(viewerResponse.body[0]._viewerGroups).to.containDeep([viewerGroup]);
+    const otherFilterStr = `set[audience][groupIds]=${otherGroup}`;
+    const otherResponse = await client
+      .get(`/entity-reactions/${childId}/parents`)
+      .query(otherFilterStr)
+      .expect(200);
+    expect(otherResponse.body).to.be.Array().and.have.length(0);
+    // Test combined user and group audience filtering
+    const combinedFilterStr = `set[audience][userIds]=user-999&set[audience][groupIds]=${viewerGroup}`;
+    const combinedResponse = await client
+      .get(`/entity-reactions/${childId}/parents`)
+      .query(combinedFilterStr)
+      .expect(200);
+    expect(combinedResponse.body).to.be.Array().and.have.length(1);
+    expect(combinedResponse.body[0]._viewerGroups).to.containDeep([
+      viewerGroup,
+    ]);
   });
 });
