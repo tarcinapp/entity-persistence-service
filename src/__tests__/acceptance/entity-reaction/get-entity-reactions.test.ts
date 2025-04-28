@@ -1320,4 +1320,310 @@ describe('GET /entity-reactions', () => {
     expect(child.relatedReaction._kind).to.equal('like');
     expect(child.relatedReaction.sentiment).to.equal('positive');
   });
+
+  it('lookup: resolves multiple lookups including nested property references', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+    });
+    ({ client } = appWithClient);
+
+    // Create a test entity
+    const entityId = await createTestEntity(client, {
+      _name: 'Book 1',
+      _kind: 'book',
+    });
+
+    // Create a "grandparent" entity-reaction
+    const grandparentId = await createTestEntityReaction(client, {
+      _name: 'Grandparent Reaction',
+      _entityId: entityId,
+      _kind: 'like',
+      sentiment: 'positive',
+    });
+
+    // Create a "parent" entity-reaction that references the grandparent
+    const parentId = await createTestEntityReaction(client, {
+      _name: 'Parent Reaction',
+      _entityId: entityId,
+      _kind: 'like',
+      sentiment: 'positive',
+      relatedReaction: `tapp://localhost/entity-reactions/${grandparentId}`,
+    });
+
+    // Create a "child" entity-reaction that references the parent
+    await createTestEntityReaction(client, {
+      _name: 'Child Reaction',
+      _entityId: entityId,
+      _kind: 'like',
+      nested: {
+        parent: `tapp://localhost/entity-reactions/${parentId}`,
+      },
+      sentiment: 'positive',
+    });
+
+    // Get the reactions with lookup on nested.parent and nested lookup on relatedReaction
+    const filterStr =
+      'filter[lookup][0][prop]=nested.parent&' +
+      'filter[lookup][0][scope][lookup][0][prop]=relatedReaction';
+    const response = await client
+      .get('/entity-reactions')
+      .query(filterStr)
+      .expect(200);
+
+    // Should return all three reactions
+    expect(response.body).to.be.Array().and.have.length(3);
+
+    // Find the child reaction in the response
+    const child = response.body.find(
+      (r: EntityReaction) => r._name === 'Child Reaction',
+    );
+    expect(child).to.not.be.undefined();
+    expect(child.nested.parent).to.be.an.Object();
+    expect(child.nested.parent._id).to.equal(parentId);
+    expect(child.nested.parent._name).to.equal('Parent Reaction');
+    expect(child.nested.parent.relatedReaction).to.be.an.Object();
+    expect(child.nested.parent.relatedReaction._id).to.equal(grandparentId);
+    expect(child.nested.parent.relatedReaction._name).to.equal(
+      'Grandparent Reaction',
+    );
+  });
+
+  it('lookup: resolves lookups from nested property paths', async () => {
+    appWithClient = await setupApplication({ entity_kinds: 'book' });
+    ({ client } = appWithClient);
+    const entityId = await createTestEntity(client, {
+      _name: 'Book 1',
+      _kind: 'book',
+    });
+    const parentId = await createTestEntityReaction(client, {
+      _name: 'Parent Reaction',
+      _entityId: entityId,
+      _kind: 'like',
+    });
+    await createTestEntityReaction(client, {
+      _name: 'Child Reaction',
+      _entityId: entityId,
+      _kind: 'like',
+      nested: { related: `tapp://localhost/entity-reactions/${parentId}` },
+    });
+    const filterStr = 'filter[lookup][0][prop]=nested.related';
+    const response = await client
+      .get('/entity-reactions')
+      .query(filterStr)
+      .expect(200);
+    expect(response.body).to.be.Array().and.have.length(2);
+    const child = response.body.find(
+      (r: EntityReaction) => r._name === 'Child Reaction',
+    );
+    expect(child.nested.related).to.be.an.Object();
+    expect(child.nested.related._id).to.equal(parentId);
+    expect(child.nested.related._name).to.equal('Parent Reaction');
+  });
+
+  it('lookup: selects specific fields from looked-up entity-reactions using scope', async () => {
+    appWithClient = await setupApplication({ entity_kinds: 'book' });
+    ({ client } = appWithClient);
+    const entityId = await createTestEntity(client, {
+      _name: 'Book 1',
+      _kind: 'book',
+    });
+    const parentId = await createTestEntityReaction(client, {
+      _name: 'Parent Reaction',
+      _entityId: entityId,
+      _kind: 'like',
+      sentiment: 'positive',
+      score: 10,
+      extra: 'should not appear',
+    });
+    await createTestEntityReaction(client, {
+      _name: 'Child Reaction',
+      _entityId: entityId,
+      _kind: 'like',
+      relatedReaction: `tapp://localhost/entity-reactions/${parentId}`,
+    });
+    const filterStr =
+      'filter[lookup][0][prop]=relatedReaction&' +
+      'filter[lookup][0][scope][fields][_name]=true&' +
+      'filter[lookup][0][scope][fields][sentiment]=true';
+    const response = await client
+      .get('/entity-reactions')
+      .query(filterStr)
+      .expect(200);
+    expect(response.body).to.be.Array().and.have.length(2);
+    const child = response.body.find(
+      (r: EntityReaction) => r._name === 'Child Reaction',
+    );
+    expect(child.relatedReaction).to.be.an.Object();
+    expect(child.relatedReaction._name).to.equal('Parent Reaction');
+    expect(child.relatedReaction.sentiment).to.equal('positive');
+    expect(child.relatedReaction).to.not.have.property('score');
+    expect(child.relatedReaction).to.not.have.property('extra');
+  });
+
+  it('lookup: resolves lookups from array properties containing entity-reaction references', async () => {
+    appWithClient = await setupApplication({ entity_kinds: 'book' });
+    ({ client } = appWithClient);
+    const entityId = await createTestEntity(client, {
+      _name: 'Book 1',
+      _kind: 'book',
+    });
+    const parent1Id = await createTestEntityReaction(client, {
+      _name: 'Parent 1',
+      _entityId: entityId,
+      _kind: 'like',
+    });
+    const parent2Id = await createTestEntityReaction(client, {
+      _name: 'Parent 2',
+      _entityId: entityId,
+      _kind: 'like',
+    });
+    await createTestEntityReaction(client, {
+      _name: 'Child Reaction',
+      _entityId: entityId,
+      _kind: 'like',
+      relatedReactions: [
+        `tapp://localhost/entity-reactions/${parent1Id}`,
+        `tapp://localhost/entity-reactions/${parent2Id}`,
+      ],
+    });
+    const filterStr = 'filter[lookup][0][prop]=relatedReactions';
+    const response = await client
+      .get('/entity-reactions')
+      .query(filterStr)
+      .expect(200);
+    expect(response.body).to.be.Array().and.have.length(3);
+    const child = response.body.find(
+      (r: EntityReaction) => r._name === 'Child Reaction',
+    );
+    expect(child.relatedReactions).to.be.an.Array().and.have.length(2);
+    const ids = child.relatedReactions.map((r: any) => r._id);
+    expect(ids).to.containEql(parent1Id);
+    expect(ids).to.containEql(parent2Id);
+  });
+
+  it('lookup: applies skip and limit in scope when looking up array references', async () => {
+    appWithClient = await setupApplication({ entity_kinds: 'book' });
+    ({ client } = appWithClient);
+    const entityId = await createTestEntity(client, {
+      _name: 'Book 1',
+      _kind: 'book',
+    });
+    const ids = [];
+    for (let i = 1; i <= 4; i++) {
+      ids.push(
+        await createTestEntityReaction(client, {
+          _name: `Parent ${i}`,
+          _entityId: entityId,
+          _kind: 'like',
+        }),
+      );
+    }
+
+    await createTestEntityReaction(client, {
+      _name: 'Child Reaction',
+      _entityId: entityId,
+      _kind: 'like',
+      relatedReactions: ids.map(
+        (id) => `tapp://localhost/entity-reactions/${id}`,
+      ),
+    });
+    const filterStr =
+      'filter[lookup][0][prop]=relatedReactions&' +
+      'filter[lookup][0][scope][skip]=1&' +
+      'filter[lookup][0][scope][limit]=2&' +
+      'filter[lookup][0][scope][order][0]=_name ASC';
+    const response = await client
+      .get('/entity-reactions')
+      .query(filterStr)
+      .expect(200);
+    expect(response.body).to.be.Array().and.have.length(5);
+    const child = response.body.find(
+      (r: EntityReaction) => r._name === 'Child Reaction',
+    );
+    expect(child.relatedReactions).to.be.an.Array().and.have.length(2);
+    // After ordering by name ASC: Parent 1, Parent 2, Parent 3, Parent 4
+    // After skip=1: Parent 2, Parent 3
+    expect(child.relatedReactions[0]._name).to.equal('Parent 2');
+    expect(child.relatedReactions[1]._name).to.equal('Parent 3');
+  });
+
+  it('lookup: handles invalid references and not-found entity-reactions with skip and limit', async () => {
+    appWithClient = await setupApplication({ entity_kinds: 'book' });
+    ({ client } = appWithClient);
+    const entityId = await createTestEntity(client, {
+      _name: 'Book 1',
+      _kind: 'book',
+    });
+    const parent1Id = await createTestEntityReaction(client, {
+      _name: 'Parent 1',
+      _entityId: entityId,
+      _kind: 'like',
+    });
+    const parent2Id = await createTestEntityReaction(client, {
+      _name: 'Parent 2',
+      _entityId: entityId,
+      _kind: 'like',
+    });
+    await createTestEntityReaction(client, {
+      _name: 'Child Reaction',
+      _entityId: entityId,
+      _kind: 'like',
+      relatedReactions: [
+        'invalid-reference',
+        `tapp://localhost/entity-reactions/${parent1Id}`,
+        'tapp://localhost/entity-reactions/invalid-guid',
+        `tapp://localhost/entity-reactions/${parent2Id}`,
+        'tapp://localhost/entity-reactions/00000000-0000-0000-0000-000000000000',
+      ],
+    });
+    const filterStr =
+      'filter[lookup][0][prop]=relatedReactions&' +
+      'filter[lookup][0][scope][skip]=1&' +
+      'filter[lookup][0][scope][limit]=2&' +
+      'filter[lookup][0][scope][order][0]=_name ASC';
+    const response = await client
+      .get('/entity-reactions')
+      .query(filterStr)
+      .expect(200);
+    expect(response.body).to.be.Array().and.have.length(3);
+    const child = response.body.find(
+      (r: EntityReaction) => r._name === 'Child Reaction',
+    );
+    expect(child.relatedReactions).to.be.an.Array().and.have.length(1);
+    expect(child.relatedReactions[0]._id).to.equal(parent2Id);
+    expect(child.relatedReactions[0]._name).to.equal('Parent 2');
+  });
+
+  it('lookup: handles not-found entity-reactions with skip and limit', async () => {
+    appWithClient = await setupApplication({ entity_kinds: 'book' });
+    ({ client } = appWithClient);
+    const entityId = await createTestEntity(client, {
+      _name: 'Book 1',
+      _kind: 'book',
+    });
+    await createTestEntityReaction(client, {
+      _name: 'Child Reaction',
+      _entityId: entityId,
+      _kind: 'like',
+      relatedReactions: [
+        'tapp://localhost/entity-reactions/00000000-0000-0000-0000-000000000000',
+        'tapp://localhost/entity-reactions/11111111-1111-1111-1111-111111111111',
+        'tapp://localhost/entity-reactions/22222222-2222-2222-2222-222222222222',
+      ],
+    });
+    const filterStr =
+      'filter[lookup][0][prop]=relatedReactions&' +
+      'filter[lookup][0][scope][skip]=1&' +
+      'filter[lookup][0][scope][limit]=1';
+    const response = await client
+      .get('/entity-reactions')
+      .query(filterStr)
+      .expect(200);
+    expect(response.body).to.be.Array().and.have.length(1);
+    const child = response.body.find(
+      (r: EntityReaction) => r._name === 'Child Reaction',
+    );
+    expect(child.relatedReactions).to.be.Array().and.have.length(0);
+  });
 });
