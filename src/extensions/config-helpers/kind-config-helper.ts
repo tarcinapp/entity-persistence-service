@@ -32,8 +32,8 @@ export class KindConfigurationReader {
   private readonly defaultEntityKindValue: string = 'entity';
   private readonly defaultListKindValue: string = 'list';
   private readonly defaultRelationKindValue: string = 'relation';
-  private readonly defaultEntityReactionKindValue: string = 'reaction';
-  private readonly defaultListReactionKindValue: string = 'reaction';
+  private readonly defaultEntityReactionKindValue: string = 'entity-reaction';
+  private readonly defaultListReactionKindValue: string = 'list-reaction';
 
   constructor() {
     this.initKindConfigurations();
