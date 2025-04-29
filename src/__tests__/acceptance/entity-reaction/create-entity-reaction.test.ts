@@ -1139,6 +1139,30 @@ describe('POST /entity-reactions', () => {
     expect(secondResponse.body._id).to.equal(firstResponse.body._id);
   });
 
+  it('should return 404 if entity specified by _entityId does not exist', async () => {
+    appWithClient = await setupApplication({
+      entity_reaction_kinds: 'like',
+    });
+    ({ client } = appWithClient);
+
+    const nonExistentEntityId = 'non-existent-entity-id';
+    const newReaction: Partial<EntityReaction> = {
+      _entityId: nonExistentEntityId,
+      _kind: 'like',
+      description: 'Reaction to non-existent entity',
+    };
+    const errorResponse = await client
+      .post('/entity-reactions')
+      .send(newReaction)
+      .expect(404);
+    expect(errorResponse.body.error).to.containDeep({
+      statusCode: 404,
+      name: 'NotFoundError',
+      code: 'ENTITY-NOT-FOUND',
+      status: 404,
+    });
+  });
+
   describe('lookup constraint validation', () => {
     it('should reject entity reaction with invalid entity reference when record=entity is configured', async () => {
       appWithClient = await setupApplication({
