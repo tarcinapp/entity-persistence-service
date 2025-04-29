@@ -5,6 +5,7 @@ import {
   setupApplication,
   createTestEntity,
   createTestEntityReaction,
+  teardownApplication,
 } from '../test-helper';
 
 describe('GET /entity-reactions/{id}/parents', () => {
@@ -13,7 +14,7 @@ describe('GET /entity-reactions/{id}/parents', () => {
 
   beforeEach(async () => {
     if (appWithClient) {
-      await appWithClient.app.stop();
+      await teardownApplication(appWithClient);
     }
 
     appWithClient = undefined;
@@ -21,7 +22,7 @@ describe('GET /entity-reactions/{id}/parents', () => {
 
   afterEach(async () => {
     if (appWithClient) {
-      await appWithClient.app.stop();
+      await teardownApplication(appWithClient);
     }
 
     appWithClient = undefined;
@@ -29,7 +30,7 @@ describe('GET /entity-reactions/{id}/parents', () => {
 
   after(async () => {
     if (appWithClient) {
-      await appWithClient.app.stop();
+      await teardownApplication(appWithClient);
     }
 
     appWithClient = undefined;
