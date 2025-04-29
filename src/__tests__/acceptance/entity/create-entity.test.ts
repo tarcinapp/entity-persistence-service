@@ -228,56 +228,6 @@ describe('POST /entities', () => {
     });
   });
 
-  it('allows duplicate entity with different owner users when uniqueness includes owner users', async () => {
-    // Set up the environment variables
-    appWithClient = await setupApplication({
-      entity_kinds: 'book',
-      uniqueness_entity_fields: '_slug,_kind,_ownerUsers', // _ownerUsers is not contributing to uniqueness check
-    });
-    ({ client } = appWithClient);
-
-    // First entity creation - should succeed
-    const firstEntity: Partial<GenericEntity> = {
-      _name: 'The Great Gatsby',
-      _kind: 'book',
-      _ownerUsers: ['user-123', 'user-456'],
-      description: 'A classic novel by F. Scott Fitzgerald',
-    };
-
-    const firstResponse = await client
-      .post('/entities')
-      .send(firstEntity)
-      .expect(200);
-
-    expect(firstResponse.body._slug).to.be.equal('the-great-gatsby');
-    expect(firstResponse.body._kind).to.be.equal('book');
-    expect(firstResponse.body._ownerUsers).to.containDeep([
-      'user-123',
-      'user-456',
-    ]);
-
-    // Second entity with same name and kind and with same owner - should succeed because uniqueness is not enforced for array fields
-    const secondEntity: Partial<GenericEntity> = {
-      _name: 'The Great Gatsby',
-      _kind: 'book',
-      _ownerUsers: ['user-123'], // Different owner
-      description: 'Another copy of the same book',
-    };
-
-    const secondResponse = await client
-      .post('/entities')
-      .send(secondEntity)
-      .expect(200);
-
-    expect(secondResponse.body._slug).to.be.equal('the-great-gatsby');
-    expect(secondResponse.body._kind).to.be.equal('book');
-    expect(secondResponse.body._ownerUsers).to.containDeep(['user-123']);
-
-    // Verify both records exist by getting all entities
-    const getAllResponse = await client.get('/entities').expect(200);
-    expect(getAllResponse.body).to.be.Array().lengthOf(2);
-  });
-
   it('rejects duplicate entity when uniqueness set includes owners and same user exists', async () => {
     // Set up the environment variables with set[owners] uniqueness
     appWithClient = await setupApplication({

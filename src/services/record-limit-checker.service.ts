@@ -304,9 +304,9 @@ export class RecordLimitCheckerService {
         return this.config.listUniqueness;
       case 'listtoentityrelation':
         return this.config.relationUniqueness;
-      case 'entityreactions':
+      case 'entityreaction':
         return this.config.entityReactionUniqueness;
-      case 'listreactions':
+      case 'listreaction':
         return this.config.listReactionUniqueness;
       default:
         return undefined;
