@@ -280,9 +280,9 @@ export class RecordLimitCheckerService {
         return this.config.listLimits;
       case 'listtoentityrelation':
         return this.config.relationLimits;
-      case 'entityreactions':
+      case 'entityreaction':
         return this.config.entityReactionLimits;
-      case 'listreactions':
+      case 'listreaction':
         return this.config.listReactionLimits;
       default:
         this.loggingService.warn(
