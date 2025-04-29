@@ -1,7 +1,9 @@
+import { inject } from '@loopback/context';
 import {
   Count,
   CountSchema,
   Filter,
+  FilterBuilder,
   repository,
   Where,
 } from '@loopback/repository';
@@ -9,30 +11,52 @@ import {
   del,
   get,
   getModelSchemaRef,
-  getWhereSchemaFor,
   param,
   patch,
   post,
   requestBody,
 } from '@loopback/rest';
-import { EntityReaction, GenericEntity } from '../models';
-import { EntityRepository } from '../repositories';
+import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
+import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
+import { EntityReaction, HttpErrorResponse } from '../models';
+import {
+  UNMODIFIABLE_COMMON_FIELDS,
+  UnmodifiableCommonFields,
+} from '../models/base-types/unmodifiable-common-fields';
+import { CustomReactionThroughEntityRepository } from '../repositories/custom-reaction-through-entity.repository';
+import { LoggingService } from '../services/logging.service';
 
 export class ReactionsThroughEntitiesController {
   constructor(
-    @repository(EntityRepository)
-    protected entityRepo: EntityRepository,
+    @repository(CustomReactionThroughEntityRepository)
+    protected reactionRepository: CustomReactionThroughEntityRepository,
+    @inject('services.LoggingService')
+    private logger: LoggingService,
   ) {}
 
   @get('/entities/{id}/reactions', {
     responses: {
       '200': {
-        description: 'Array of Entity has many Reactions',
+        description: 'Array of EntityReaction model instances',
         content: {
           'application/json': {
             schema: {
               type: 'array',
-              items: getModelSchemaRef(EntityReaction),
+              items: getModelSchemaRef(EntityReaction, {
+                includeRelations: true,
+              }),
+            },
+          },
+        },
+      },
+      '404': {
+        description: 'Entity not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
             },
           },
         },
@@ -41,76 +65,218 @@ export class ReactionsThroughEntitiesController {
   })
   async find(
     @param.path.string('id') id: string,
+    @param.query.object('set') set?: Set,
     @param.query.object('filter') filter?: Filter<EntityReaction>,
   ): Promise<EntityReaction[]> {
-    return this.entityRepo.reactions(id).find(filter);
+    // Set the source entity ID in the repository
+    this.reactionRepository.sourceEntityId = id;
+
+    if (set) {
+      filter = new SetFilterBuilder<EntityReaction>(set, {
+        filter: filter,
+      }).build();
+    }
+
+    sanitizeFilterFields(filter);
+
+    return this.reactionRepository.find(filter);
   }
 
   @post('/entities/{id}/reactions', {
     responses: {
       '200': {
-        description: 'Entity model instance',
+        description: 'EntityReaction model instance',
         content: {
           'application/json': { schema: getModelSchemaRef(EntityReaction) },
+        },
+      },
+      '429': {
+        description: 'Reaction limit is exceeded',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '409': {
+        description: 'Reaction already exists.',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '422': {
+        description: 'Unprocessable entity',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '404': {
+        description: 'Entity not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
         },
       },
     },
   })
   async create(
-    @param.path.string('id') id: typeof GenericEntity.prototype._id,
+    @param.path.string('id') id: string,
     @requestBody({
       content: {
         'application/json': {
           schema: getModelSchemaRef(EntityReaction, {
-            title: 'NewReactionsInEntity',
-            exclude: ['_id'],
-            optional: ['entityId'],
+            title: 'NewReactionInEntity',
+            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof EntityReaction)[],
+            includeRelations: false,
           }),
         },
       },
     })
-    reactions: Omit<EntityReaction, 'id'>,
+    reaction: Omit<EntityReaction, UnmodifiableCommonFields>,
   ): Promise<EntityReaction> {
-    return this.entityRepo.reactions(id).create(reactions);
+    // Set the source entity ID in the repository
+    this.reactionRepository.sourceEntityId = id;
+
+    return this.reactionRepository.create(reaction);
   }
 
   @patch('/entities/{id}/reactions', {
     responses: {
       '200': {
-        description: 'Entity.Reactions PATCH success count',
+        description: 'Entity.Reaction PATCH success count',
         content: { 'application/json': { schema: CountSchema } },
+      },
+      '404': {
+        description: 'Entity not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '422': {
+        description: 'Unprocessable entity',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
+        },
       },
     },
   })
-  async patch(
+  async updateAll(
     @param.path.string('id') id: string,
     @requestBody({
       content: {
         'application/json': {
-          schema: getModelSchemaRef(EntityReaction, { partial: true }),
+          schema: getModelSchemaRef(EntityReaction, {
+            title: 'PatchReactionInEntity',
+            partial: true,
+            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof EntityReaction)[],
+            includeRelations: false,
+          }),
         },
       },
     })
-    reactions: Partial<EntityReaction>,
-    @param.query.object('where', getWhereSchemaFor(EntityReaction))
-    where?: Where<EntityReaction>,
+    reaction: Partial<EntityReaction>,
+    @param.query.object('set') set?: Set,
+    @param.query.object('where') where?: Where<EntityReaction>,
   ): Promise<Count> {
-    return this.entityRepo.reactions(id).patch(reactions, where);
+    // Set the source entity ID in the repository
+    this.reactionRepository.sourceEntityId = id;
+
+    const filterBuilder = new FilterBuilder<EntityReaction>();
+
+    if (where) {
+      filterBuilder.where(where);
+    }
+
+    let filter = filterBuilder.build();
+
+    if (set) {
+      filter = new SetFilterBuilder<EntityReaction>(set, {
+        filter: filter,
+      }).build();
+    }
+
+    sanitizeFilterFields(filter);
+
+    return this.reactionRepository.updateAll(reaction, filter.where);
   }
 
   @del('/entities/{id}/reactions', {
     responses: {
       '200': {
-        description: 'Entity.Reactions DELETE success count',
+        description: 'Entity.Reaction DELETE success count',
         content: { 'application/json': { schema: CountSchema } },
+      },
+      '404': {
+        description: 'Entity not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
+        },
       },
     },
   })
-  async delete(
+  async deleteAll(
     @param.path.string('id') id: string,
-    @param.query.object('where', getWhereSchemaFor(EntityReaction))
-    where?: Where<EntityReaction>,
+    @param.query.object('set') set?: Set,
+    @param.query.object('where') where?: Where<EntityReaction>,
   ): Promise<Count> {
-    return this.entityRepo.reactions(id).delete(where);
+    // Set the source entity ID in the repository
+    this.reactionRepository.sourceEntityId = id;
+
+    const filterBuilder = new FilterBuilder<EntityReaction>();
+
+    if (where) {
+      filterBuilder.where(where);
+    }
+
+    let filter = filterBuilder.build();
+
+    if (set) {
+      filter = new SetFilterBuilder<EntityReaction>(set, {
+        filter: filter,
+      }).build();
+    }
+
+    sanitizeFilterFields(filter);
+
+    return this.reactionRepository.deleteAll(filter.where);
   }
 }
