@@ -159,7 +159,7 @@ describe('Utilities: LookupConstraint', () => {
         });
 
         await expect(
-          service.validateLookupConstraints(entity),
+          service.validateLookupConstraints(entity, GenericEntity),
         ).to.be.rejectedWith(HttpErrorResponse);
       });
 
@@ -188,7 +188,7 @@ describe('Utilities: LookupConstraint', () => {
         });
 
         await expect(
-          service.validateLookupConstraints(entity),
+          service.validateLookupConstraints(entity, GenericEntity),
         ).to.be.rejectedWith(HttpErrorResponse);
       });
     });
@@ -223,7 +223,7 @@ describe('Utilities: LookupConstraint', () => {
           });
 
           await expect(
-            service.validateLookupConstraints(entity),
+            service.validateLookupConstraints(entity, GenericEntity),
           ).to.not.be.rejected();
         });
 
@@ -263,7 +263,7 @@ describe('Utilities: LookupConstraint', () => {
           ]);
 
           await expect(
-            service.validateLookupConstraints(entity),
+            service.validateLookupConstraints(entity, GenericEntity),
           ).to.be.rejectedWith(HttpErrorResponse);
         });
 
@@ -317,7 +317,7 @@ describe('Utilities: LookupConstraint', () => {
           ]);
 
           await expect(
-            service.validateLookupConstraints(entity),
+            service.validateLookupConstraints(entity, GenericEntity),
           ).to.be.rejectedWith(HttpErrorResponse);
         });
       });
@@ -348,7 +348,7 @@ describe('Utilities: LookupConstraint', () => {
           });
 
           await expect(
-            service.validateLookupConstraints(entity),
+            service.validateLookupConstraints(entity, GenericEntity),
           ).to.not.be.rejected();
         });
       });
@@ -379,7 +379,7 @@ describe('Utilities: LookupConstraint', () => {
           });
 
           await expect(
-            service.validateLookupConstraints(entity),
+            service.validateLookupConstraints(entity, GenericEntity),
           ).to.not.be.rejected();
         });
 
@@ -408,7 +408,7 @@ describe('Utilities: LookupConstraint', () => {
           });
 
           await expect(
-            service.validateLookupConstraints(entity),
+            service.validateLookupConstraints(entity, GenericEntity),
           ).to.be.rejectedWith(HttpErrorResponse);
         });
       });
@@ -450,7 +450,7 @@ describe('Utilities: LookupConstraint', () => {
           ]);
 
           await expect(
-            service.validateLookupConstraints(entity),
+            service.validateLookupConstraints(entity, GenericEntity),
           ).to.not.be.rejected();
         });
 
@@ -490,7 +490,7 @@ describe('Utilities: LookupConstraint', () => {
           ]);
 
           await expect(
-            service.validateLookupConstraints(entity),
+            service.validateLookupConstraints(entity, GenericEntity),
           ).to.be.rejectedWith(HttpErrorResponse);
         });
       });
@@ -549,7 +549,7 @@ describe('Utilities: LookupConstraint', () => {
             ]);
 
           await expect(
-            service.validateLookupConstraints(entity),
+            service.validateLookupConstraints(entity, GenericEntity),
           ).to.not.be.rejected();
         });
 
@@ -606,7 +606,7 @@ describe('Utilities: LookupConstraint', () => {
             ]);
 
           await expect(
-            service.validateLookupConstraints(entity),
+            service.validateLookupConstraints(entity, GenericEntity),
           ).to.be.rejectedWith(HttpErrorResponse);
         });
       });
@@ -636,7 +636,7 @@ describe('Utilities: LookupConstraint', () => {
         });
 
         await expect(
-          service.validateLookupConstraints(entity),
+          service.validateLookupConstraints(entity, GenericEntity),
         ).to.be.rejectedWith(HttpErrorResponse);
       });
     });
@@ -671,7 +671,7 @@ describe('Utilities: LookupConstraint', () => {
           });
 
           await expect(
-            service.validateLookupConstraints(entity),
+            service.validateLookupConstraints(entity, GenericEntity),
           ).to.not.be.rejected();
         });
       });
@@ -702,7 +702,7 @@ describe('Utilities: LookupConstraint', () => {
           });
 
           await expect(
-            service.validateLookupConstraints(entity),
+            service.validateLookupConstraints(entity, GenericEntity),
           ).to.not.be.rejected();
         });
       });
@@ -733,7 +733,7 @@ describe('Utilities: LookupConstraint', () => {
           });
 
           await expect(
-            service.validateLookupConstraints(entity),
+            service.validateLookupConstraints(entity, GenericEntity),
           ).to.not.be.rejected();
         });
 
@@ -762,7 +762,7 @@ describe('Utilities: LookupConstraint', () => {
           });
 
           await expect(
-            service.validateLookupConstraints(entity),
+            service.validateLookupConstraints(entity, GenericEntity),
           ).to.be.rejectedWith(HttpErrorResponse);
         });
       });
@@ -804,7 +804,7 @@ describe('Utilities: LookupConstraint', () => {
           ]);
 
           await expect(
-            service.validateLookupConstraints(entity),
+            service.validateLookupConstraints(entity, GenericEntity),
           ).to.not.be.rejected();
         });
 
@@ -844,7 +844,7 @@ describe('Utilities: LookupConstraint', () => {
           ]);
 
           await expect(
-            service.validateLookupConstraints(entity),
+            service.validateLookupConstraints(entity, GenericEntity),
           ).to.be.rejectedWith(HttpErrorResponse);
         });
       });
@@ -903,7 +903,7 @@ describe('Utilities: LookupConstraint', () => {
             ]);
 
           await expect(
-            service.validateLookupConstraints(entity),
+            service.validateLookupConstraints(entity, GenericEntity),
           ).to.not.be.rejected();
         });
 
@@ -960,7 +960,7 @@ describe('Utilities: LookupConstraint', () => {
             ]);
 
           await expect(
-            service.validateLookupConstraints(entity),
+            service.validateLookupConstraints(entity, GenericEntity),
           ).to.be.rejectedWith(HttpErrorResponse);
         });
       });
@@ -990,7 +990,7 @@ describe('Utilities: LookupConstraint', () => {
         });
 
         await expect(
-          service.validateLookupConstraints(entity),
+          service.validateLookupConstraints(entity, GenericEntity),
         ).to.be.rejectedWith(HttpErrorResponse);
       });
     });
@@ -1025,7 +1025,7 @@ describe('Utilities: LookupConstraint', () => {
           });
 
           await expect(
-            service.validateLookupConstraints(list),
+            service.validateLookupConstraints(list, List),
           ).to.not.be.rejected();
         });
       });
@@ -1056,7 +1056,7 @@ describe('Utilities: LookupConstraint', () => {
           });
 
           await expect(
-            service.validateLookupConstraints(list),
+            service.validateLookupConstraints(list, List),
           ).to.not.be.rejected();
         });
       });
@@ -1087,7 +1087,7 @@ describe('Utilities: LookupConstraint', () => {
           });
 
           await expect(
-            service.validateLookupConstraints(list),
+            service.validateLookupConstraints(list, List),
           ).to.not.be.rejected();
         });
 
@@ -1116,7 +1116,7 @@ describe('Utilities: LookupConstraint', () => {
           });
 
           await expect(
-            service.validateLookupConstraints(list),
+            service.validateLookupConstraints(list, List),
           ).to.be.rejectedWith(HttpErrorResponse);
         });
       });
@@ -1158,7 +1158,7 @@ describe('Utilities: LookupConstraint', () => {
           ]);
 
           await expect(
-            service.validateLookupConstraints(list),
+            service.validateLookupConstraints(list, List),
           ).to.not.be.rejected();
         });
 
@@ -1198,7 +1198,7 @@ describe('Utilities: LookupConstraint', () => {
           ]);
 
           await expect(
-            service.validateLookupConstraints(list),
+            service.validateLookupConstraints(list, List),
           ).to.be.rejectedWith(HttpErrorResponse);
         });
 
@@ -1252,7 +1252,7 @@ describe('Utilities: LookupConstraint', () => {
           ]);
 
           await expect(
-            service.validateLookupConstraints(list),
+            service.validateLookupConstraints(list, List),
           ).to.be.rejectedWith(HttpErrorResponse);
         });
       });
@@ -1311,7 +1311,7 @@ describe('Utilities: LookupConstraint', () => {
             ]);
 
           await expect(
-            service.validateLookupConstraints(list),
+            service.validateLookupConstraints(list, List),
           ).to.not.be.rejected();
         });
 
@@ -1368,7 +1368,7 @@ describe('Utilities: LookupConstraint', () => {
             ]);
 
           await expect(
-            service.validateLookupConstraints(list),
+            service.validateLookupConstraints(list, List),
           ).to.be.rejectedWith(HttpErrorResponse);
         });
       });
@@ -1401,7 +1401,7 @@ describe('Utilities: LookupConstraint', () => {
           });
 
           await expect(
-            service.validateLookupConstraints(list),
+            service.validateLookupConstraints(list, List),
           ).to.not.be.rejected();
         });
       });
@@ -1432,7 +1432,7 @@ describe('Utilities: LookupConstraint', () => {
           });
 
           await expect(
-            service.validateLookupConstraints(list),
+            service.validateLookupConstraints(list, List),
           ).to.not.be.rejected();
         });
       });
@@ -1463,7 +1463,7 @@ describe('Utilities: LookupConstraint', () => {
           });
 
           await expect(
-            service.validateLookupConstraints(list),
+            service.validateLookupConstraints(list, List),
           ).to.not.be.rejected();
         });
 
@@ -1492,7 +1492,7 @@ describe('Utilities: LookupConstraint', () => {
           });
 
           await expect(
-            service.validateLookupConstraints(list),
+            service.validateLookupConstraints(list, List),
           ).to.be.rejectedWith(HttpErrorResponse);
         });
       });
@@ -1534,7 +1534,7 @@ describe('Utilities: LookupConstraint', () => {
           ]);
 
           await expect(
-            service.validateLookupConstraints(list),
+            service.validateLookupConstraints(list, List),
           ).to.not.be.rejected();
         });
 
@@ -1574,7 +1574,7 @@ describe('Utilities: LookupConstraint', () => {
           ]);
 
           await expect(
-            service.validateLookupConstraints(list),
+            service.validateLookupConstraints(list, List),
           ).to.be.rejectedWith(HttpErrorResponse);
         });
 
@@ -1628,7 +1628,7 @@ describe('Utilities: LookupConstraint', () => {
           ]);
 
           await expect(
-            service.validateLookupConstraints(list),
+            service.validateLookupConstraints(list, List),
           ).to.be.rejectedWith(HttpErrorResponse);
         });
       });
@@ -1687,7 +1687,7 @@ describe('Utilities: LookupConstraint', () => {
             ]);
 
           await expect(
-            service.validateLookupConstraints(list),
+            service.validateLookupConstraints(list, List),
           ).to.not.be.rejected();
         });
 
@@ -1744,7 +1744,7 @@ describe('Utilities: LookupConstraint', () => {
             ]);
 
           await expect(
-            service.validateLookupConstraints(list),
+            service.validateLookupConstraints(list, List),
           ).to.be.rejectedWith(HttpErrorResponse);
         });
       });

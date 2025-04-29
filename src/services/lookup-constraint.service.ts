@@ -1,11 +1,8 @@
 import { inject, injectable, Getter } from '@loopback/core';
 import { get, every, isString } from 'lodash';
 import { LoggingService } from './logging.service';
-import { ListEntityCommonBase } from '../models/base-models/list-entity-common-base.model';
-import { EntityReaction } from '../models/entity-reactions.model';
+import { RecordsCommonBase } from '../models/base-models/records-common-base.model';
 import { HttpErrorResponse } from '../models/http-error-response.model';
-import { ListReaction } from '../models/list-reactions.model';
-import { List } from '../models/list.model';
 import { EntityReactionsRepository } from '../repositories/entity-reactions.repository';
 import { EntityRepository } from '../repositories/entity.repository';
 import { ListReactionsRepository } from '../repositories/list-reactions.repository';
@@ -162,20 +159,18 @@ export class LookupConstraintService {
     return userConstraints;
   }
 
-  private getRecordType(item: ListEntityCommonBase): RecordType {
-    if (item instanceof List) {
-      return 'list';
+  private getRecordType(model: typeof RecordsCommonBase): RecordType {
+    const modelName = model.name.toLowerCase();
+    switch (modelName) {
+      case 'entityreaction':
+        return 'entity-reaction';
+      case 'listreaction':
+        return 'list-reaction';
+      case 'list':
+        return 'list';
+      default:
+        return 'entity';
     }
-
-    if (item instanceof EntityReaction) {
-      return 'entity-reaction';
-    }
-
-    if (item instanceof ListReaction) {
-      return 'list-reaction';
-    }
-
-    return 'entity';
   }
 
   private getConstraintsForType(recordType: RecordType): LookupConstraint[] {
@@ -204,8 +199,11 @@ export class LookupConstraintService {
     }
   }
 
-  async validateLookupConstraints(item: ListEntityCommonBase) {
-    const recordType = this.getRecordType(item);
+  async validateLookupConstraints(
+    item: RecordsCommonBase,
+    model: typeof RecordsCommonBase,
+  ) {
+    const recordType = this.getRecordType(model);
     const applicableConstraints = this.getConstraintsForType(recordType).filter(
       (constraint) =>
         // Apply constraint if:
@@ -226,7 +224,7 @@ export class LookupConstraintService {
   }
 
   private async validateConstraint(
-    item: ListEntityCommonBase,
+    item: RecordsCommonBase,
     constraint: LookupConstraint,
     recordType: RecordType,
   ) {

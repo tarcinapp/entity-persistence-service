@@ -1171,7 +1171,7 @@ describe('POST /entity-reactions', () => {
       expect(errorResponse.body.error).to.containDeep({
         statusCode: 422,
         name: 'InvalidLookupReferenceError',
-        code: 'ENTITYREACTION-INVALID-LOOKUP-REFERENCE',
+        code: 'ENTITY-REACTION-INVALID-LOOKUP-REFERENCE',
         status: 422,
       });
     });
@@ -1207,7 +1207,7 @@ describe('POST /entity-reactions', () => {
       expect(errorResponse.body.error).to.containDeep({
         statusCode: 422,
         name: 'InvalidLookupReferenceError',
-        code: 'ENTITYREACTION-INVALID-LOOKUP-REFERENCE',
+        code: 'ENTITY-REACTION-INVALID-LOOKUP-REFERENCE',
         status: 422,
       });
     });
@@ -1249,7 +1249,7 @@ describe('POST /entity-reactions', () => {
       expect(errorResponse.body.error).to.containDeep({
         statusCode: 422,
         name: 'InvalidLookupConstraintError',
-        code: 'ENTITYREACTION-INVALID-LOOKUP-KIND',
+        code: 'ENTITY-REACTION-INVALID-LOOKUP-KIND',
         status: 422,
       });
     });

@@ -230,6 +230,10 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
       this.checkEntityExistence(data),
       this.checkUniquenessForCreate(data),
       this.recordLimitChecker.checkLimits(EntityReaction, data, this),
+      this.lookupConstraintService.validateLookupConstraints(
+        data as EntityReaction,
+        EntityReaction,
+      ),
     ]).then(() => {
       return data;
     });
@@ -587,8 +591,13 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
       data,
       this,
     );
+    const lookupConstraintCheck =
+      this.lookupConstraintService.validateLookupConstraints(
+        data as EntityReaction,
+        EntityReaction,
+      );
 
-    await Promise.all([uniquenessCheck, limitCheck]);
+    await Promise.all([uniquenessCheck, limitCheck, lookupConstraintCheck]);
 
     return data;
   }
@@ -680,11 +689,16 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
       mergedData,
       this,
     );
+    const lookupConstraintCheck =
+      this.lookupConstraintService.validateLookupConstraints(
+        mergedData as EntityReaction,
+        EntityReaction,
+      );
 
     this.generateSlug(data);
     this.setCountFields(data);
 
-    await Promise.all([uniquenessCheck, limitCheck]);
+    await Promise.all([uniquenessCheck, limitCheck, lookupConstraintCheck]);
 
     return data;
   }

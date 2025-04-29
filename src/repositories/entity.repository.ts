@@ -409,6 +409,7 @@ export class EntityRepository extends DefaultCrudRepository<
       this.recordLimitChecker.checkLimits(GenericEntity, data, this),
       this.lookupConstraintService.validateLookupConstraints(
         data as GenericEntity,
+        GenericEntity,
       ),
     ]).then(() => {
       return data;
@@ -442,6 +443,7 @@ export class EntityRepository extends DefaultCrudRepository<
     const lookupConstraintCheck =
       this.lookupConstraintService.validateLookupConstraints(
         data as GenericEntity,
+        GenericEntity,
       );
 
     await Promise.all([uniquenessCheck, limitCheck, lookupConstraintCheck]);
@@ -480,6 +482,7 @@ export class EntityRepository extends DefaultCrudRepository<
     const lookupConstraintCheck =
       this.lookupConstraintService.validateLookupConstraints(
         mergedData as GenericEntity,
+        GenericEntity,
       );
 
     this.generateSlug(data);
