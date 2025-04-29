@@ -1342,5 +1342,165 @@ describe('POST /entity-reactions', () => {
         references: validReferences,
       });
     });
+
+    it('should reject entity reaction with invalid entity-reaction reference when record=entity-reaction is configured', async () => {
+      appWithClient = await setupApplication({
+        entity_reaction_kinds: 'like,dislike',
+        ENTITY_REACTION_LOOKUP_CONSTRAINT: JSON.stringify([
+          {
+            propertyPath: 'references',
+            record: 'entity-reaction',
+          },
+        ]),
+      });
+      ({ client } = appWithClient);
+
+      const entityId = await createTestEntity(client, {
+        _name: 'Book',
+        _kind: 'book',
+      });
+      // Try to create a reaction referencing an entity (invalid for entity-reaction constraint)
+      const invalidReference = `tapp://localhost/entities/${entityId}`;
+      const newReaction = {
+        _entityId: entityId,
+        _kind: 'like',
+        references: [invalidReference],
+      };
+      const errorResponse = await client
+        .post('/entity-reactions')
+        .send(newReaction)
+        .expect(422);
+      expect(errorResponse.body.error).to.containDeep({
+        statusCode: 422,
+        name: 'InvalidLookupReferenceError',
+        code: 'ENTITY-REACTION-INVALID-LOOKUP-REFERENCE',
+        status: 422,
+      });
+    });
+
+    it('should reject entity reaction with invalid target kind for entity-reaction reference when targetKind is configured', async () => {
+      appWithClient = await setupApplication({
+        entity_reaction_kinds: 'like,dislike,comment',
+        ENTITY_REACTION_LOOKUP_CONSTRAINT: JSON.stringify([
+          {
+            propertyPath: 'references',
+            record: 'entity-reaction',
+            targetKind: 'comment',
+          },
+        ]),
+      });
+      ({ client } = appWithClient);
+
+      const entityId = await createTestEntity(client, {
+        _name: 'Book',
+        _kind: 'book',
+      });
+      // Create a like reaction to reference (invalid kind)
+      const likeReactionId = await client
+        .post('/entity-reactions')
+        .send({ _entityId: entityId, _kind: 'like' })
+        .then((res) => res.body._id);
+      const invalidReference = `tapp://localhost/entity-reactions/${likeReactionId}`;
+      const newReaction = {
+        _entityId: entityId,
+        _kind: 'dislike',
+        references: [invalidReference],
+      };
+      const errorResponse = await client
+        .post('/entity-reactions')
+        .send(newReaction)
+        .expect(422);
+      expect(errorResponse.body.error).to.containDeep({
+        statusCode: 422,
+        name: 'InvalidLookupConstraintError',
+        code: 'ENTITY-REACTION-INVALID-LOOKUP-KIND',
+        status: 422,
+      });
+    });
+
+    it('should accept entity reaction with valid entity-reaction reference when all constraints are satisfied', async () => {
+      appWithClient = await setupApplication({
+        entity_reaction_kinds: 'like,comment',
+        ENTITY_REACTION_LOOKUP_CONSTRAINT: JSON.stringify([
+          {
+            propertyPath: 'references',
+            record: 'entity-reaction',
+            targetKind: 'comment',
+          },
+        ]),
+      });
+      ({ client } = appWithClient);
+
+      const entityId = await createTestEntity(client, {
+        _name: 'Book',
+        _kind: 'book',
+      });
+      // Create a comment reaction to reference (valid kind)
+      const commentReactionId = await client
+        .post('/entity-reactions')
+        .send({ _entityId: entityId, _kind: 'comment' })
+        .then((res) => res.body._id);
+      const validReference = `tapp://localhost/entity-reactions/${commentReactionId}`;
+      const newReaction = {
+        _entityId: entityId,
+        _kind: 'like',
+        references: [validReference],
+      };
+      const response = await client
+        .post('/entity-reactions')
+        .send(newReaction)
+        .expect(200);
+      expect(response.body).to.containDeep({
+        _entityId: entityId,
+        _kind: 'like',
+        references: [validReference],
+      });
+    });
+
+    it('should accept entity reaction with multiple valid entity-reaction references when all constraints are satisfied', async () => {
+      appWithClient = await setupApplication({
+        entity_reaction_kinds: 'like,comment',
+        ENTITY_REACTION_LOOKUP_CONSTRAINT: JSON.stringify([
+          {
+            propertyPath: 'references',
+            record: 'entity-reaction',
+            targetKind: 'comment',
+          },
+        ]),
+      });
+      ({ client } = appWithClient);
+
+      const entityId = await createTestEntity(client, {
+        _name: 'Book',
+        _kind: 'book',
+      });
+      // Create multiple comment reactions to reference
+      const comment1Id = await client
+        .post('/entity-reactions')
+        .send({ _entityId: entityId, _kind: 'comment' })
+        .then((res) => res.body._id);
+      const comment2Id = await client
+        .post('/entity-reactions')
+        .send({ _entityId: entityId, _kind: 'comment' })
+        .then((res) => res.body._id);
+      const validReferences = [
+        `tapp://localhost/entity-reactions/${comment1Id}`,
+        `tapp://localhost/entity-reactions/${comment2Id}`,
+      ];
+      const newReaction = {
+        _entityId: entityId,
+        _kind: 'like',
+        references: validReferences,
+      };
+      const response = await client
+        .post('/entity-reactions')
+        .send(newReaction)
+        .expect(200);
+      expect(response.body).to.containDeep({
+        _entityId: entityId,
+        _kind: 'like',
+        references: validReferences,
+      });
+    });
   });
 });
