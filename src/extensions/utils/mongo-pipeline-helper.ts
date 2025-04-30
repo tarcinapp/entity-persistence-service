@@ -383,8 +383,8 @@ export class MongoPipelineHelper {
       // Add metadata fields while preserving all existing fields
       {
         $addFields: {
-          // Create _relationMetadata from entity fields
-          _relationMetadata: {
+          // Create _fromMeta from entity fields
+          _fromMeta: {
             _kind: '$entity._kind',
             _name: '$entity._name',
             _slug: '$entity._slug',
@@ -430,8 +430,8 @@ export class MongoPipelineHelper {
           projection[field] = 1;
         });
 
-        // Always include _relationMetadata when using inclusion
-        projection['_relationMetadata'] = 1;
+        // Always include _fromMeta when using inclusion
+        projection['_fromMeta'] = 1;
 
         // If _id is explicitly requested, include it
         if (trueFields.includes('_id')) {
@@ -439,10 +439,10 @@ export class MongoPipelineHelper {
         }
       } else if (falseFields.length > 0) {
         // If only false fields, we need to handle this differently
-        // First, add a stage to rename _relationMetadata to a temporary field
+        // First, add a stage to rename _fromMeta to a temporary field
         pipeline.push({
           $addFields: {
-            _tempRelationMetadata: '$_relationMetadata',
+            _tempFromMeta: '$_fromMeta',
           },
         });
 
@@ -454,17 +454,17 @@ export class MongoPipelineHelper {
         // Add the projection stage
         pipeline.push({ $project: projection });
 
-        // Finally, restore _relationMetadata from the temporary field
+        // Finally, restore _fromMeta from the temporary field
         pipeline.push({
           $addFields: {
-            _relationMetadata: '$_tempRelationMetadata',
+            _fromMeta: '$_tempFromMeta',
           },
         });
 
         // Clean up the temporary field
         pipeline.push({
           $project: {
-            _tempRelationMetadata: 0,
+            _tempFromMeta: 0,
           },
         });
 
