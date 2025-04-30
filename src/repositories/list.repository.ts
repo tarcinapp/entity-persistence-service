@@ -690,14 +690,9 @@ export class ListRepository extends DefaultCrudRepository<
   }
 
   private checkDataKindFormat(data: DataObject<List>) {
-    // make sure data kind is slug format
     if (data._kind) {
-      const slugKind: string = slugify(data._kind, {
-        lower: true,
-        strict: true,
-      });
-
-      if (slugKind !== data._kind) {
+      const slugKind = this.kindConfigReader.validateKindFormat(data._kind);
+      if (slugKind) {
         throw new HttpErrorResponse({
           statusCode: 422,
           name: 'InvalidKindError',
@@ -710,17 +705,11 @@ export class ListRepository extends DefaultCrudRepository<
   }
 
   private checkDataKindValues(data: DataObject<List>) {
-    /**
-     * This function checks if the 'kind' field in the 'data' object is valid
-     * for the list. Although 'kind' is required, we ensure it has a value by
-     * this point. If it's not valid, we raise an error with the allowed valid
-     * values for 'kind'.
-     */
-    const kind = data._kind ?? '';
-
-    if (!this.kindConfigReader.isKindAcceptableForList(kind)) {
+    if (
+      data._kind &&
+      !this.kindConfigReader.isKindAcceptableForList(data._kind)
+    ) {
       const validValues = this.kindConfigReader.allowedKindsForLists;
-
       throw new HttpErrorResponse({
         statusCode: 422,
         name: 'InvalidKindError',

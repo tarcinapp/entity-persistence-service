@@ -172,6 +172,7 @@ describe('POST /list-entity-relations', () => {
     await client
       .post('/list-entity-relations')
       .send({
+        _kind: 'consists',
         _listId: list._id,
         _entityId: entities[0]._id,
       })
@@ -181,6 +182,7 @@ describe('POST /list-entity-relations', () => {
     await client
       .post('/list-entity-relations')
       .send({
+        _kind: 'consists',
         _listId: list._id,
         _entityId: entities[1]._id,
       })
@@ -192,6 +194,7 @@ describe('POST /list-entity-relations', () => {
       .send({
         _listId: list._id,
         _entityId: entities[2]._id,
+        _kind: 'consists',
       })
       .expect(429);
 
@@ -451,6 +454,7 @@ describe('POST /list-entity-relations', () => {
     await client
       .post('/list-entity-relations')
       .send({
+        _kind: 'consists',
         _listId: list._id,
         _entityId: entities[0]._id,
       })
@@ -460,6 +464,7 @@ describe('POST /list-entity-relations', () => {
     await client
       .post('/list-entity-relations')
       .send({
+        _kind: 'consists',
         _listId: list._id,
         _entityId: entities[1]._id,
       })
@@ -471,6 +476,7 @@ describe('POST /list-entity-relations', () => {
       .send({
         _listId: list._id,
         _entityId: entities[2]._id,
+        _kind: 'consists',
       })
       .expect(429);
 

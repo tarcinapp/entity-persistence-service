@@ -323,12 +323,8 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
 
   private checkDataKindFormat(data: DataObject<EntityReaction>) {
     if (data._kind) {
-      const slugKind: string = slugify(data._kind, {
-        lower: true,
-        strict: true,
-      });
-
-      if (slugKind !== data._kind) {
+      const slugKind = this.kindConfigReader.validateKindFormat(data._kind);
+      if (slugKind) {
         throw new HttpErrorResponse({
           statusCode: 422,
           name: 'InvalidKindError',
@@ -346,7 +342,6 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
       !this.kindConfigReader.isKindAcceptableForEntityReactions(data._kind)
     ) {
       const validValues = this.kindConfigReader.allowedKindsForEntityReactions;
-
       throw new HttpErrorResponse({
         statusCode: 422,
         name: 'InvalidKindError',

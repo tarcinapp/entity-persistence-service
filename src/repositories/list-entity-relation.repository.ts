@@ -12,7 +12,6 @@ import {
 } from '@loopback/repository';
 import * as crypto from 'crypto';
 import _ from 'lodash';
-import slugify from 'slugify/slugify';
 import { EntityDbDataSource } from '../datasources';
 import {
   IdempotencyConfigurationReader,
@@ -630,18 +629,13 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
    * Ensure data kind is properly formatted.
    */
   private checkDataKindFormat(data: DataObject<ListToEntityRelation>) {
-    // make sure data kind is slug format
     if (data._kind) {
-      const slugKind: string = slugify(data._kind, {
-        lower: true,
-        strict: true,
-      });
-
-      if (slugKind !== data._kind) {
+      const slugKind = this.kindConfigReader.validateKindFormat(data._kind);
+      if (slugKind) {
         throw new HttpErrorResponse({
           statusCode: 422,
           name: 'InvalidKindError',
-          message: `Relation kind '${data._kind}' is not valid. Use '${slugKind}' instead.`,
+          message: `Relation kind cannot contain special or uppercase characters. Use '${slugKind}' instead.`,
           code: 'INVALID-RELATION-KIND',
           status: 422,
         });
@@ -653,20 +647,12 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
    * Ensure data kind values are valid.
    */
   private checkDataKindValues(data: DataObject<ListToEntityRelation>) {
-    /**
-     * This function checks if the 'kind' field in the 'data' object is valid
-     * for the list. Although 'kind' is required, we ensure it has a value by
-     * this point. If it's not valid, we raise an error with the allowed valid
-     * values for 'kind'.
-     */
-
     if (
       data._kind &&
       !this.kindConfigReader.isKindAcceptableForListEntityRelations(data._kind)
     ) {
       const validValues =
         this.kindConfigReader.allowedKindsForEntityListRelations;
-
       throw new HttpErrorResponse({
         statusCode: 422,
         name: 'InvalidKindError',

@@ -519,10 +519,7 @@ export class EntityRepository extends DefaultCrudRepository<
   private async modifyIncomingEntityForCreation(
     data: DataObject<GenericEntity>,
   ): Promise<DataObject<GenericEntity>> {
-    data._kind =
-      data._kind ??
-      process.env.default_entity_kind ??
-      this.kindConfigReader.defaultEntityKind;
+    data._kind = data._kind ?? this.kindConfigReader.defaultEntityKind;
 
     // take the date of now to make sure we have exactly the same date in all date fields
     const now = new Date().toISOString();
@@ -636,14 +633,9 @@ export class EntityRepository extends DefaultCrudRepository<
   }
 
   private checkDataKindFormat(data: DataObject<GenericEntity>) {
-    // make sure data kind is slug format
     if (data._kind) {
-      const slugKind: string = slugify(data._kind, {
-        lower: true,
-        strict: true,
-      });
-
-      if (slugKind !== data._kind) {
+      const slugKind = this.kindConfigReader.validateKindFormat(data._kind);
+      if (slugKind) {
         throw new HttpErrorResponse({
           statusCode: 422,
           name: 'InvalidKindError',
@@ -661,7 +653,6 @@ export class EntityRepository extends DefaultCrudRepository<
       !this.kindConfigReader.isKindAcceptableForEntity(data._kind)
     ) {
       const validValues = this.kindConfigReader.allowedKindsForEntities;
-
       throw new HttpErrorResponse({
         statusCode: 422,
         name: 'InvalidKindError',
