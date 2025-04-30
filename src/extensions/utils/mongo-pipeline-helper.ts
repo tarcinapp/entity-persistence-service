@@ -176,8 +176,8 @@ export class MongoPipelineHelper {
       // Add metadata fields while preserving all existing fields
       {
         $addFields: {
-          // Create _relationMetadata from list fields
-          _relationMetadata: {
+          // Create _fromMetadata from list fields
+          _fromMetadata: {
             _kind: '$list._kind',
             _name: '$list._name',
             _slug: '$list._slug',
@@ -237,9 +237,9 @@ export class MongoPipelineHelper {
           projection[field] = 1;
         });
 
-        // Handle metadata field selection if _relationMetadata or _toMetadata is included
-        if (trueFields.includes('_relationMetadata')) {
-          projection['_relationMetadata'] = 1;
+        // Handle metadata field selection if _fromMetadata or _toMetadata is included
+        if (trueFields.includes('_fromMetadata')) {
+          projection['_fromMetadata'] = 1;
         }
 
         if (trueFields.includes('_toMetadata')) {
@@ -257,8 +257,8 @@ export class MongoPipelineHelper {
         });
 
         // Handle metadata field exclusion
-        if (falseFields.includes('_relationMetadata')) {
-          projection['_relationMetadata'] = 0;
+        if (falseFields.includes('_fromMetadata')) {
+          projection['_fromMetadata'] = 0;
         }
 
         if (falseFields.includes('_toMetadata')) {
