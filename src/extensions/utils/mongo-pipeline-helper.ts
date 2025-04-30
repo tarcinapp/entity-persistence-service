@@ -383,8 +383,8 @@ export class MongoPipelineHelper {
       // Add metadata fields while preserving all existing fields
       {
         $addFields: {
-          // Create _fromMeta from entity fields
-          _fromMeta: {
+          // Create _fromMetadata from entity fields
+          _fromMetadata: {
             _kind: '$entity._kind',
             _name: '$entity._name',
             _slug: '$entity._slug',
@@ -430,8 +430,8 @@ export class MongoPipelineHelper {
           projection[field] = 1;
         });
 
-        // Always include _fromMeta when using inclusion
-        projection['_fromMeta'] = 1;
+        // Always include _fromMetadata when using inclusion
+        projection['_fromMetadata'] = 1;
 
         // If _id is explicitly requested, include it
         if (trueFields.includes('_id')) {
@@ -442,7 +442,7 @@ export class MongoPipelineHelper {
         // First, add a stage to rename _fromMeta to a temporary field
         pipeline.push({
           $addFields: {
-            _tempFromMeta: '$_fromMeta',
+            _tempFromMetadata: '$_fromMetadata',
           },
         });
 
@@ -457,14 +457,14 @@ export class MongoPipelineHelper {
         // Finally, restore _fromMeta from the temporary field
         pipeline.push({
           $addFields: {
-            _fromMeta: '$_tempFromMeta',
+            _fromMetadata: '$_tempFromMetadata',
           },
         });
 
         // Clean up the temporary field
         pipeline.push({
           $project: {
-            _tempFromMeta: 0,
+            _tempFromMetadata: 0,
           },
         });
 

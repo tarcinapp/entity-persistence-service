@@ -56,7 +56,7 @@ export class ReactionsCommonBase extends AccessControlBase {
     type: 'object',
     description: 'Contains the relation metadata for the record',
   })
-  _fromMeta?: SourceAndTargetMetadata;
+  _fromMetadata?: SourceAndTargetMetadata;
 
   constructor(data?: Partial<ReactionsCommonBase>) {
     super(data);
