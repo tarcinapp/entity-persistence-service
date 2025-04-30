@@ -92,66 +92,69 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
   async find(
     filter?: Filter<EntityReaction>,
     entityFilter?: Filter<EntityReaction>,
+    options?: Options & { usePipeline?: boolean },
   ): Promise<EntityReaction[]> {
-    try {
-      const limit =
-        filter?.limit ??
-        this.responseLimitConfigReader.getEntityReactionResponseLimit();
+    const limit =
+      filter?.limit ??
+      this.responseLimitConfigReader.getEntityReactionResponseLimit();
 
-      filter = {
-        ...filter,
-        limit: Math.min(
-          limit,
-          this.responseLimitConfigReader.getEntityReactionResponseLimit(),
-        ),
-      };
+    filter = {
+      ...filter,
+      limit: Math.min(
+        limit,
+        this.responseLimitConfigReader.getEntityReactionResponseLimit(),
+      ),
+    };
 
-      this.loggingService.info(
-        'EntityReactionsRepository.find - Modified filter:',
-        {
-          filter,
-          entityFilter,
-        },
-      );
-
-      // Get entity repository to get collection name
-      const entityRepo = await this.entityRepositoryGetter();
-      const entityCollectionName =
-        entityRepo.modelClass.definition.settings?.mongodb?.collection;
-
-      if (!entityCollectionName) {
-        throw new Error('Entity collection name not configured');
-      }
-
-      // Build pipeline using helper
-      const pipeline = this.mongoPipelineHelper.buildEntityReactionPipeline(
-        entityCollectionName,
-        filter?.limit ??
-          this.responseLimitConfigReader.getEntityReactionResponseLimit(),
+    this.loggingService.info(
+      'EntityReactionsRepository.find - Modified filter:',
+      {
         filter,
         entityFilter,
-      );
+        usePipeline: options?.usePipeline,
+      },
+    );
 
-      // Execute pipeline
-      const collection = this.dataSource.connector?.collection(
-        this.modelClass.definition.settings?.mongodb?.collection,
-      );
+    // If usePipeline is explicitly set to false, use repository approach
+    if (options?.usePipeline === false) {
+      const reactions = await super.find(filter);
 
-      if (!collection) {
-        throw new Error('Collection not found');
-      }
-
-      const cursor = collection.aggregate(pipeline);
-      const result = await cursor.toArray();
-
-      // Process lookups if needed
-      return await this.processLookups(result as EntityReaction[], filter);
-    } catch (error) {
-      this.loggingService.error('EntityReactionsRepository.find - Error:', {
-        error,
-      });
-      throw error;
+      return this.processLookups(reactions, filter);
     }
+
+    // Default pipeline approach
+    // Get entity repository to get collection name
+    const entityRepo = await this.entityRepositoryGetter();
+    const entityCollectionName =
+      entityRepo.modelClass.definition.settings?.mongodb?.collection;
+
+    if (!entityCollectionName) {
+      throw new Error('Entity collection name not configured');
+    }
+
+    // Build pipeline using helper
+    const pipeline = this.mongoPipelineHelper.buildEntityReactionPipeline(
+      entityCollectionName,
+      filter?.limit ??
+        this.responseLimitConfigReader.getEntityReactionResponseLimit(),
+      filter,
+      entityFilter,
+    );
+
+    // Execute pipeline
+    const collection = this.dataSource.connector?.collection(
+      this.modelClass.definition.settings?.mongodb?.collection,
+    );
+
+    if (!collection) {
+      throw new Error('Collection not found');
+    }
+
+    const cursor = collection.aggregate(pipeline);
+    const result = await cursor.toArray();
+
+    // Process lookups if needed
+    return this.processLookups(result as EntityReaction[], filter);
   }
 
   async create(data: DataObject<EntityReaction>, options?: Options) {
@@ -827,93 +830,79 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
   async findParents(
     reactionId: string,
     filter?: Filter<EntityReaction>,
+    entityFilter?: Filter<EntityReaction>,
     options?: Options,
   ): Promise<EntityReaction[]> {
-    try {
-      // First, get the reaction's parent references
-      const reaction = await this.findById(reactionId, {
-        fields: { _parents: true },
-      });
+    // First, get the reaction's parent references
+    const reaction = await this.findById(reactionId, {
+      fields: { _parents: true },
+    });
 
-      if (!reaction._parents || reaction._parents.length === 0) {
-        return [];
-      }
-
-      // Extract parent IDs from the URIs
-      const parentIds = reaction._parents.map((uri: string) =>
-        uri.split('/').pop(),
-      );
-
-      // Create a new filter that includes the parent IDs
-      const parentFilter: Filter<EntityReaction> = {
-        ...filter,
-        where: {
-          and: [
-            { _id: { inq: parentIds } },
-            ...(filter?.where ? [filter.where] : []),
-          ],
-        },
-      };
-
-      this.loggingService.info(
-        'EntityReactionsRepository.findParents - Parent filter:',
-        {
-          parentFilter,
-        },
-      );
-
-      return await this.find(parentFilter, options);
-    } catch (error) {
-      this.loggingService.error(
-        'EntityReactionsRepository.findParents - Error:',
-        {
-          error,
-          reactionId,
-        },
-      );
-      throw error;
+    if (!reaction._parents || reaction._parents.length === 0) {
+      return [];
     }
+
+    // Extract parent IDs from the URIs
+    const parentIds = reaction._parents.map((uri: string) =>
+      uri.split('/').pop(),
+    );
+
+    // Create a new filter that includes the parent IDs
+    const parentFilter: Filter<EntityReaction> = {
+      ...filter,
+      where: {
+        and: [
+          { _id: { inq: parentIds } },
+          ...(filter?.where ? [filter.where] : []),
+        ],
+      },
+    };
+
+    this.loggingService.info(
+      'EntityReactionsRepository.findParents - Parent filter:',
+      {
+        parentFilter,
+      },
+    );
+
+    return this.find(parentFilter, entityFilter, {
+      usePipeline: false,
+      ...options,
+    });
   }
 
   async findChildren(
     reactionId: string,
     filter?: Filter<EntityReaction>,
+    entityFilter?: Filter<EntityReaction>,
     options?: Options,
   ): Promise<EntityReaction[]> {
-    try {
-      // First verify that the reaction exists, throw error if not
-      await this.findById(reactionId, {
-        fields: { _id: true },
-      });
+    // First verify that the reaction exists, throw error if not
+    await this.findById(reactionId, {
+      fields: { _id: true },
+    });
 
-      const uri = `tapp://localhost/entity-reactions/${reactionId}`;
+    const uri = `tapp://localhost/entity-reactions/${reactionId}`;
 
-      // Create a filter to find reactions where _parents contains the given reactionId
-      const childFilter: Filter<EntityReaction> = {
-        ...filter,
-        where: {
-          and: [{ _parents: uri }, ...(filter?.where ? [filter.where] : [])],
-        },
-      };
+    // Create a filter to find reactions where _parents contains the given reactionId
+    const childFilter: Filter<EntityReaction> = {
+      ...filter,
+      where: {
+        and: [{ _parents: uri }, ...(filter?.where ? [filter.where] : [])],
+      },
+    };
 
-      this.loggingService.info(
-        'EntityReactionsRepository.findChildren - Child filter:',
-        {
-          childFilter,
-        },
-      );
+    this.loggingService.info(
+      'EntityReactionsRepository.findChildren - Child filter:',
+      {
+        childFilter,
+      },
+    );
 
-      return await this.find(childFilter, options);
-    } catch (error) {
-      this.loggingService.error(
-        'EntityReactionsRepository.findChildren - Error:',
-        {
-          error,
-          reactionId,
-        },
-      );
-      throw error;
-    }
+    return this.find(childFilter, entityFilter, {
+      usePipeline: false,
+      ...options,
+    });
   }
 
   async createChild(

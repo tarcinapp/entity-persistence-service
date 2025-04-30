@@ -452,6 +452,9 @@ export class EntityReactionController {
     @param.query.object('set') set?: Set,
     @param.query.object('filter', getFilterSchemaFor(EntityReaction))
     filter?: Filter<EntityReaction>,
+    @param.query.object('entitySet') entitySet?: Set,
+    @param.query.object('entityFilter', getFilterSchemaFor(EntityReaction))
+    entityFilter?: Filter<EntityReaction>,
   ): Promise<EntityReaction[]> {
     if (set) {
       filter = new SetFilterBuilder<EntityReaction>(set, {
@@ -459,9 +462,16 @@ export class EntityReactionController {
       }).build();
     }
 
-    sanitizeFilterFields(filter);
+    if (entitySet) {
+      entityFilter = new SetFilterBuilder<EntityReaction>(entitySet, {
+        filter: entityFilter,
+      }).build();
+    }
 
-    return this.entityReactionsRepository.findParents(id, filter);
+    sanitizeFilterFields(filter);
+    sanitizeFilterFields(entityFilter);
+
+    return this.entityReactionsRepository.findParents(id, filter, entityFilter);
   }
 
   @get('/entity-reactions/{id}/children', {
@@ -498,6 +508,9 @@ export class EntityReactionController {
     @param.query.object('set') set?: Set,
     @param.query.object('filter', getFilterSchemaFor(EntityReaction))
     filter?: Filter<EntityReaction>,
+    @param.query.object('entitySet') entitySet?: Set,
+    @param.query.object('entityFilter', getFilterSchemaFor(EntityReaction))
+    entityFilter?: Filter<EntityReaction>,
   ): Promise<EntityReaction[]> {
     if (set) {
       filter = new SetFilterBuilder<EntityReaction>(set, {
@@ -505,9 +518,20 @@ export class EntityReactionController {
       }).build();
     }
 
-    sanitizeFilterFields(filter);
+    if (entitySet) {
+      entityFilter = new SetFilterBuilder<EntityReaction>(entitySet, {
+        filter: entityFilter,
+      }).build();
+    }
 
-    return this.entityReactionsRepository.findChildren(id, filter);
+    sanitizeFilterFields(filter);
+    sanitizeFilterFields(entityFilter);
+
+    return this.entityReactionsRepository.findChildren(
+      id,
+      filter,
+      entityFilter,
+    );
   }
 
   @post('/entity-reactions/{id}/children', {

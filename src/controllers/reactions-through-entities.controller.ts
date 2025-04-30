@@ -44,6 +44,7 @@ export class ReactionsThroughEntitiesController {
               type: 'array',
               items: getModelSchemaRef(EntityReaction, {
                 includeRelations: true,
+                exclude: ['_relationMetadata'],
               }),
             },
           },
@@ -87,7 +88,11 @@ export class ReactionsThroughEntitiesController {
       '200': {
         description: 'EntityReaction model instance',
         content: {
-          'application/json': { schema: getModelSchemaRef(EntityReaction) },
+          'application/json': {
+            schema: getModelSchemaRef(EntityReaction, {
+              exclude: ['_relationMetadata'],
+            }),
+          },
         },
       },
       '429': {
