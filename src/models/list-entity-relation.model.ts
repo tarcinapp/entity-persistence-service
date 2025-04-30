@@ -1,13 +1,14 @@
 import { model, property } from '@loopback/repository';
 import { RecordsCommonBase } from './base-models/records-common-base.model';
 import { SourceAndTargetMetadata } from './base-types/source-and-target-metadata.type';
+import { CollectionConfig } from '../extensions/config-helpers/collection-config';
 
 @model({
   settings: {
     strict: false,
     mongodb: {
       collection:
-        process.env.collection_list_list_entity_rel ?? 'ListToEntityRelation',
+        CollectionConfig.getInstance().getListEntityRelationCollectionName(),
     },
   },
 })
