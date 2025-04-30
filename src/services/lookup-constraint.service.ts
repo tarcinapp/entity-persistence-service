@@ -258,10 +258,20 @@ export class LookupConstraintService {
       // Get the appropriate repository based on the record type
       const repository = await this.getRepositoryForType(constraint.record!);
 
+      // Special handling for _parents property path
+      const fields: Record<string, boolean> = { _kind: true };
+      if (constraint.propertyPath === '_parents') {
+        if (recordType === 'entity-reaction') {
+          fields._entityId = true;
+        } else if (recordType === 'list-reaction') {
+          fields._listId = true;
+        }
+      }
+
       const items = (await repository.find({
         where: { _id: { inq: extractedIds } },
-        fields: { _kind: true },
-      })) as Array<{ _kind: string }>;
+        fields,
+      })) as Array<{ _kind: string; _entityId?: string; _listId?: string }>;
 
       const allValidKind = every(
         items,
@@ -275,6 +285,41 @@ export class LookupConstraintService {
           code: `${this.getErrorCodePrefix(recordType)}-INVALID-LOOKUP-KIND`,
           status: 422,
         });
+      }
+
+      // Validate matching entityId/listId for _parents property path
+      if (constraint.propertyPath === '_parents') {
+        if (recordType === 'entity-reaction') {
+          const itemEntityId = (item as any)._entityId;
+          const allValidEntityId = every(
+            items,
+            (target) => (target as any)._entityId === itemEntityId,
+          );
+          if (!allValidEntityId) {
+            throw new HttpErrorResponse({
+              statusCode: 422,
+              name: 'InvalidParentEntityIdError',
+              message: `One or more parent reactions in property '_parents' do not have matching entity ID. Expected entity ID: '${itemEntityId}'.`,
+              code: `${this.getErrorCodePrefix(recordType)}-INVALID-PARENT-ENTITY-ID`,
+              status: 422,
+            });
+          }
+        } else if (recordType === 'list-reaction') {
+          const itemListId = (item as any)._listId;
+          const allValidListId = every(
+            items,
+            (target) => (target as any)._listId === itemListId,
+          );
+          if (!allValidListId) {
+            throw new HttpErrorResponse({
+              statusCode: 422,
+              name: 'InvalidParentListIdError',
+              message: `One or more parent reactions in property '_parents' do not have matching list ID. Expected list ID: '${itemListId}'.`,
+              code: `${this.getErrorCodePrefix(recordType)}-INVALID-PARENT-LIST-ID`,
+              status: 422,
+            });
+          }
+        }
       }
     }
   }

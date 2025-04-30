@@ -30,7 +30,6 @@ import {
   MongoPipelineHelperBindings,
 } from '../extensions/utils/mongo-pipeline-helper';
 import { EntityReaction, HttpErrorResponse } from '../models';
-import { UnmodifiableCommonFields } from '../models/base-types/unmodifiable-common-fields';
 import { LoggingService } from '../services/logging.service';
 import { LookupConstraintBindings } from '../services/lookup-constraint.bindings';
 import { LookupConstraintService } from '../services/lookup-constraint.service';
@@ -762,7 +761,6 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
   async findById(
     id: string,
     filter?: FilterExcludingWhere<EntityReaction>,
-    options?: Options,
   ): Promise<EntityReaction> {
     try {
       // Get entity repository to get collection name
@@ -920,11 +918,22 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
 
   async createChild(
     parentId: string,
-    reaction: Omit<EntityReaction, UnmodifiableCommonFields | '_parents'>,
+    reaction: DataObject<EntityReaction>,
   ): Promise<EntityReaction> {
     try {
-      // First verify that the parent exists
-      await this.findById(parentId);
+      // First verify that the parent exists and get its entity ID
+      const parentReaction = await this.findById(parentId);
+
+      // Check if the child reaction has the same entity ID as the parent
+      if (reaction._entityId !== parentReaction._entityId) {
+        throw new HttpErrorResponse({
+          statusCode: 422,
+          name: 'InvalidParentEntityIdError',
+          message: `Child reaction must have the same entity ID as its parent. Parent entity ID is '${parentReaction._entityId}', but child entity ID is '${reaction._entityId}'.`,
+          code: 'ENTITY-REACTION-INVALID-PARENT-ENTITY-ID',
+          status: 422,
+        });
+      }
 
       // Add the parent reference to the reaction
       const childReaction: EntityReaction = {
