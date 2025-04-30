@@ -306,7 +306,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     this.generateSlug(data);
     this.setCountFields(data);
 
-    _.unset(data, '_relationMetadata');
+    _.unset(data, '_fromMeta');
 
     return data;
   }
@@ -377,9 +377,392 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     data._parentsCount = _.isArray(data._parents) ? data._parents.length : 0;
   }
 
+  private async findByIdRaw(
+    id: string,
+    filter?: FilterExcludingWhere<EntityReaction>,
+  ): Promise<EntityReaction> {
+    try {
+      const reaction = await super.findById(id, filter);
+
+      return reaction;
+    } catch (error) {
+      if (error.code === 'ENTITY_NOT_FOUND') {
+        this.loggingService.warn(`Entity reaction with id '${id}' not found.`);
+        throw new HttpErrorResponse({
+          statusCode: 404,
+          name: 'NotFoundError',
+          message: `Entity reaction with id '${id}' could not be found.`,
+          code: 'ENTITY-REACTION-NOT-FOUND',
+          status: 404,
+        });
+      }
+
+      throw error;
+    }
+  }
+
+  private async modifyIncomingReactionForUpdates(
+    id: string,
+    data: DataObject<EntityReaction>,
+  ) {
+    return this.findByIdRaw(id)
+      .then((existingData) => {
+        // check if we have this record in db
+        if (!existingData) {
+          throw new HttpErrorResponse({
+            statusCode: 404,
+            name: 'NotFoundError',
+            message: "Entity reaction with id '" + id + "' could not be found.",
+            code: 'ENTITY-REACTION-NOT-FOUND',
+            status: 404,
+          });
+        }
+
+        return existingData;
+      })
+      .then((existingData) => {
+        const now = new Date().toISOString();
+
+        // set new version
+        data._version = (existingData._version ?? 1) + 1;
+
+        // we may use current date, if it does not exist in the given data
+        data._lastUpdatedDateTime = data._lastUpdatedDateTime
+          ? data._lastUpdatedDateTime
+          : now;
+
+        this.generateSlug(data);
+        this.setCountFields(data);
+
+        _.unset(data, '_fromMeta');
+
+        return {
+          data: data,
+          existingData: existingData,
+        };
+      });
+  }
+
+  private async validateIncomingReactionForReplace(
+    id: string,
+    data: DataObject<EntityReaction>,
+  ) {
+    // Get the existing reaction to check if _kind is being changed
+    const existingReaction = await this.findById(id);
+
+    // Check if user is trying to change the _kind field
+    if (data._kind !== undefined && data._kind !== existingReaction._kind) {
+      throw new HttpErrorResponse({
+        statusCode: 422,
+        name: 'ImmutableKindError',
+        message: `Entity reaction kind cannot be changed after creation. Current kind is '${existingReaction._kind}'.`,
+        code: 'IMMUTABLE-ENTITY-REACTION-KIND',
+        status: 422,
+      });
+    }
+
+    // Check if user is trying to change the _entityId field
+    if (
+      data._entityId !== undefined &&
+      data._entityId !== existingReaction._entityId
+    ) {
+      throw new HttpErrorResponse({
+        statusCode: 422,
+        name: 'ImmutableEntityIdError',
+        message: `Entity reaction entity ID cannot be changed after creation. Current entity ID is '${existingReaction._entityId}'.`,
+        code: 'IMMUTABLE-ENTITY-ID',
+        status: 422,
+      });
+    }
+
+    const uniquenessCheck = this.checkUniquenessForUpdate(id, data);
+    const limitCheck = this.recordLimitChecker.checkLimits(
+      EntityReaction,
+      data,
+      this,
+    );
+    const lookupConstraintCheck =
+      this.lookupConstraintService.validateLookupConstraints(
+        data as EntityReaction,
+        EntityReaction,
+      );
+
+    await Promise.all([uniquenessCheck, limitCheck, lookupConstraintCheck]);
+
+    return data;
+  }
+
+  private async checkUniquenessForUpdate(
+    id: string,
+    newData: DataObject<EntityReaction>,
+  ) {
+    // we need to merge existing data with incoming data in order to check uniqueness
+    const existingData = await this.findById(id);
+    const mergedData = _.assign(
+      {},
+      existingData && _.pickBy(existingData, (value) => value !== null),
+      newData,
+    );
+    await this.recordLimitChecker.checkUniqueness(
+      EntityReaction,
+      mergedData,
+      this,
+    );
+  }
+
+  async updateAll(
+    data: DataObject<EntityReaction>,
+    where?: Where<EntityReaction>,
+    entityWhere?: Where<EntityReaction>,
+  ): Promise<Count> {
+    // Check if user is trying to change the _kind field, which is immutable
+    if (data._kind !== undefined) {
+      throw new HttpErrorResponse({
+        statusCode: 422,
+        name: 'ImmutableKindError',
+        message: 'Entity reaction kind cannot be changed after creation.',
+        code: 'IMMUTABLE-ENTITY-REACTION-KIND',
+        status: 422,
+      });
+    }
+
+    // Check if user is trying to change the _entityId field, which is immutable
+    if (data._entityId !== undefined) {
+      throw new HttpErrorResponse({
+        statusCode: 422,
+        name: 'ImmutableEntityIdError',
+        message: 'Entity reaction entity ID cannot be changed after creation.',
+        code: 'IMMUTABLE-ENTITY-ID',
+        status: 422,
+      });
+    }
+
+    const now = new Date().toISOString();
+    data._lastUpdatedDateTime = now;
+
+    // Generate slug and set count fields
+    this.generateSlug(data);
+    this.setCountFields(data);
+
+    this.loggingService.info(
+      'EntityReactionsRepository.updateAll - Modified data:',
+      {
+        data,
+        where,
+        entityWhere,
+      },
+    );
+
+    // Convert where to filter for pipeline generation
+    const filter = where ? { where } : undefined;
+    const entityFilter = entityWhere ? { where: entityWhere } : undefined;
+
+    // Get entity repository to get collection name
+    const entityRepo = await this.entityRepositoryGetter();
+    const entityCollectionName =
+      entityRepo.modelClass.definition.settings?.mongodb?.collection;
+
+    if (!entityCollectionName) {
+      throw new Error('Entity collection name not configured');
+    }
+
+    // Build pipeline to get the IDs of documents to update
+    const pipeline = this.mongoPipelineHelper.buildEntityReactionPipeline(
+      entityCollectionName,
+      0, // No limit needed
+      filter,
+      entityFilter,
+    );
+
+    // Add projection to get only _id
+    pipeline.push({
+      $project: {
+        _id: 1,
+      },
+    });
+
+    // Execute pipeline to get IDs
+    const collection = this.dataSource.connector?.collection(
+      this.modelClass.definition.settings?.mongodb?.collection,
+    );
+
+    if (!collection) {
+      throw new Error('Collection not found');
+    }
+
+    const cursor = collection.aggregate(pipeline);
+    const documentsToUpdate = await cursor.toArray();
+
+    if (documentsToUpdate.length === 0) {
+      return { count: 0 };
+    }
+
+    // Update the documents using updateMany
+    const updateResult = await collection.updateMany(
+      {
+        _id: { $in: documentsToUpdate.map((doc: { _id: string }) => doc._id) },
+      },
+      { $set: data },
+    );
+
+    return { count: updateResult.modifiedCount };
+  }
+
+  async updateById(id: string, data: DataObject<EntityReaction>) {
+    const collection = await this.modifyIncomingReactionForUpdates(id, data);
+
+    // Merge incoming data with existing reaction data to ensure completeness
+    const mergedData = _.defaults({}, collection.data, collection.existingData);
+
+    // Calculate idempotencyKey based on the fully merged reaction
+    const idempotencyKey = this.calculateIdempotencyKey(mergedData);
+
+    // Store the idempotencyKey in the data being updated
+    if (idempotencyKey) {
+      collection.data._idempotencyKey = idempotencyKey;
+    }
+
+    const validEnrichedData = await this.validateIncomingDataForUpdate(
+      id,
+      collection.existingData,
+      collection.data,
+    );
+
+    return super.updateById(id, validEnrichedData);
+  }
+
+  private async validateIncomingDataForUpdate(
+    id: string,
+    existingData: EntityReaction,
+    data: DataObject<EntityReaction>,
+  ) {
+    // Check if user is trying to change the _kind field
+    if (data._kind !== undefined && data._kind !== existingData._kind) {
+      throw new HttpErrorResponse({
+        statusCode: 422,
+        name: 'ImmutableKindError',
+        message: `Entity reaction kind cannot be changed after creation. Current kind is '${existingData._kind}'.`,
+        code: 'IMMUTABLE-ENTITY-REACTION-KIND',
+        status: 422,
+      });
+    }
+
+    // Check if user is trying to change the _entityId field
+    if (
+      data._entityId !== undefined &&
+      data._entityId !== existingData._entityId
+    ) {
+      throw new HttpErrorResponse({
+        statusCode: 422,
+        name: 'ImmutableEntityIdError',
+        message: `Entity reaction entity ID cannot be changed after creation. Current entity ID is '${existingData._entityId}'.`,
+        code: 'IMMUTABLE-ENTITY-ID',
+        status: 422,
+      });
+    }
+
+    // we need to merge existing data with incoming data in order to check limits and uniquenesses
+    const mergedData = _.assign(
+      {},
+      existingData && _.pickBy(existingData, (value) => value !== null),
+      data,
+    );
+    const uniquenessCheck = this.checkUniquenessForUpdate(id, mergedData);
+    const limitCheck = this.recordLimitChecker.checkLimits(
+      EntityReaction,
+      mergedData,
+      this,
+    );
+    const lookupConstraintCheck =
+      this.lookupConstraintService.validateLookupConstraints(
+        mergedData as EntityReaction,
+        EntityReaction,
+      );
+
+    this.generateSlug(data);
+    this.setCountFields(data);
+
+    await Promise.all([uniquenessCheck, limitCheck, lookupConstraintCheck]);
+
+    return data;
+  }
+
+  async deleteById(id: string, options?: Options): Promise<void> {
+    // First verify that the reaction exists
+    await this.findById(id);
+
+    // Delete the reaction
+    return super.deleteById(id, options);
+  }
+
+  async deleteAll(
+    where?: Where<EntityReaction>,
+    options?: Options,
+  ): Promise<Count> {
+    this.loggingService.info(
+      'EntityReactionsRepository.deleteAll - Where condition:',
+      {
+        where,
+      },
+    );
+
+    return super.deleteAll(where, options);
+  }
+
+  async count(
+    where?: Where<EntityReaction>,
+    entityWhere?: Where<EntityReaction>,
+  ): Promise<Count> {
+    try {
+      // Convert where to filter for pipeline generation
+      const filter = where ? { where } : undefined;
+      const entityFilter = entityWhere ? { where: entityWhere } : undefined;
+
+      // Get entity repository to get collection name
+      const entityRepo = await this.entityRepositoryGetter();
+      const entityCollectionName =
+        entityRepo.modelClass.definition.settings?.mongodb?.collection;
+
+      if (!entityCollectionName) {
+        throw new Error('Entity collection name not configured');
+      }
+
+      // Build pipeline using helper
+      const pipeline = this.mongoPipelineHelper.buildEntityReactionPipeline(
+        entityCollectionName,
+        0, // No limit needed for counting
+        filter,
+        entityFilter,
+      );
+
+      // Add count stage
+      pipeline.push({ $count: 'count' });
+
+      // Execute pipeline
+      const collection = this.dataSource.connector?.collection(
+        this.modelClass.definition.settings?.mongodb?.collection,
+      );
+
+      if (!collection) {
+        throw new Error('Collection not found');
+      }
+
+      const cursor = collection.aggregate(pipeline);
+      const result = await cursor.toArray();
+
+      return { count: result.length > 0 ? result[0].count : 0 };
+    } catch (error) {
+      this.loggingService.error('EntityReactionsRepository.count - Error:', {
+        error,
+      });
+      throw error;
+    }
+  }
+
   async findById(
     id: string,
     filter?: FilterExcludingWhere<EntityReaction>,
+    options?: Options,
   ): Promise<EntityReaction> {
     try {
       // Get entity repository to get collection name
@@ -578,353 +961,5 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     );
 
     return super.replaceById(id, validEnrichedData);
-  }
-
-  private async modifyIncomingReactionForUpdates(
-    id: string,
-    data: DataObject<EntityReaction>,
-  ) {
-    return this.findById(id)
-      .then((existingData) => {
-        // check if we have this record in db
-        if (!existingData) {
-          throw new HttpErrorResponse({
-            statusCode: 404,
-            name: 'NotFoundError',
-            message: "Entity reaction with id '" + id + "' could not be found.",
-            code: 'ENTITY-REACTION-NOT-FOUND',
-            status: 404,
-          });
-        }
-
-        return existingData;
-      })
-      .then((existingData) => {
-        const now = new Date().toISOString();
-
-        // set new version
-        data._version = (existingData._version ?? 1) + 1;
-
-        // we may use current date, if it does not exist in the given data
-        data._lastUpdatedDateTime = data._lastUpdatedDateTime
-          ? data._lastUpdatedDateTime
-          : now;
-
-        this.generateSlug(data);
-        this.setCountFields(data);
-
-        _.unset(data, '_relationMetadata');
-
-        return {
-          data: data,
-          existingData: existingData,
-        };
-      });
-  }
-
-  private async validateIncomingReactionForReplace(
-    id: string,
-    data: DataObject<EntityReaction>,
-  ) {
-    // Get the existing reaction to check if _kind is being changed
-    const existingReaction = await this.findById(id);
-
-    // Check if user is trying to change the _kind field
-    if (data._kind !== undefined && data._kind !== existingReaction._kind) {
-      throw new HttpErrorResponse({
-        statusCode: 422,
-        name: 'ImmutableKindError',
-        message: `Entity reaction kind cannot be changed after creation. Current kind is '${existingReaction._kind}'.`,
-        code: 'IMMUTABLE-ENTITY-REACTION-KIND',
-        status: 422,
-      });
-    }
-
-    // Check if user is trying to change the _entityId field
-    if (
-      data._entityId !== undefined &&
-      data._entityId !== existingReaction._entityId
-    ) {
-      throw new HttpErrorResponse({
-        statusCode: 422,
-        name: 'ImmutableEntityIdError',
-        message: `Entity reaction entity ID cannot be changed after creation. Current entity ID is '${existingReaction._entityId}'.`,
-        code: 'IMMUTABLE-ENTITY-ID',
-        status: 422,
-      });
-    }
-
-    const uniquenessCheck = this.checkUniquenessForUpdate(id, data);
-    const limitCheck = this.recordLimitChecker.checkLimits(
-      EntityReaction,
-      data,
-      this,
-    );
-    const lookupConstraintCheck =
-      this.lookupConstraintService.validateLookupConstraints(
-        data as EntityReaction,
-        EntityReaction,
-      );
-
-    await Promise.all([uniquenessCheck, limitCheck, lookupConstraintCheck]);
-
-    return data;
-  }
-
-  private async checkUniquenessForUpdate(
-    id: string,
-    newData: DataObject<EntityReaction>,
-  ) {
-    // we need to merge existing data with incoming data in order to check uniqueness
-    const existingData = await this.findById(id);
-    const mergedData = _.assign(
-      {},
-      existingData && _.pickBy(existingData, (value) => value !== null),
-      newData,
-    );
-    await this.recordLimitChecker.checkUniqueness(
-      EntityReaction,
-      mergedData,
-      this,
-    );
-  }
-
-  async updateById(
-    id: string,
-    data: DataObject<EntityReaction>,
-    options?: Options,
-  ) {
-    const collection = await this.modifyIncomingReactionForUpdates(id, data);
-
-    // Merge incoming data with existing reaction data to ensure completeness
-    const mergedData = _.defaults({}, collection.data, collection.existingData);
-
-    // Calculate idempotencyKey based on the fully merged reaction
-    const idempotencyKey = this.calculateIdempotencyKey(mergedData);
-
-    // Store the idempotencyKey in the data being updated
-    if (idempotencyKey) {
-      collection.data._idempotencyKey = idempotencyKey;
-    }
-
-    const validEnrichedData = await this.validateIncomingDataForUpdate(
-      id,
-      collection.existingData,
-      collection.data,
-    );
-
-    return super.updateById(id, validEnrichedData, options);
-  }
-
-  private async validateIncomingDataForUpdate(
-    id: string,
-    existingData: EntityReaction,
-    data: DataObject<EntityReaction>,
-  ) {
-    // Check if user is trying to change the _kind field
-    if (data._kind !== undefined && data._kind !== existingData._kind) {
-      throw new HttpErrorResponse({
-        statusCode: 422,
-        name: 'ImmutableKindError',
-        message: `Entity reaction kind cannot be changed after creation. Current kind is '${existingData._kind}'.`,
-        code: 'IMMUTABLE-ENTITY-REACTION-KIND',
-        status: 422,
-      });
-    }
-
-    // Check if user is trying to change the _entityId field
-    if (
-      data._entityId !== undefined &&
-      data._entityId !== existingData._entityId
-    ) {
-      throw new HttpErrorResponse({
-        statusCode: 422,
-        name: 'ImmutableEntityIdError',
-        message: `Entity reaction entity ID cannot be changed after creation. Current entity ID is '${existingData._entityId}'.`,
-        code: 'IMMUTABLE-ENTITY-ID',
-        status: 422,
-      });
-    }
-
-    // we need to merge existing data with incoming data in order to check limits and uniquenesses
-    const mergedData = _.assign(
-      {},
-      existingData && _.pickBy(existingData, (value) => value !== null),
-      data,
-    );
-    const uniquenessCheck = this.checkUniquenessForUpdate(id, mergedData);
-    const limitCheck = this.recordLimitChecker.checkLimits(
-      EntityReaction,
-      mergedData,
-      this,
-    );
-    const lookupConstraintCheck =
-      this.lookupConstraintService.validateLookupConstraints(
-        mergedData as EntityReaction,
-        EntityReaction,
-      );
-
-    this.generateSlug(data);
-    this.setCountFields(data);
-
-    await Promise.all([uniquenessCheck, limitCheck, lookupConstraintCheck]);
-
-    return data;
-  }
-
-  async updateAll(
-    data: DataObject<EntityReaction>,
-    where?: Where<EntityReaction>,
-    entityWhere?: Where<EntityReaction>,
-  ): Promise<Count> {
-    // Check if user is trying to change the _kind field, which is immutable
-    if (data._kind !== undefined) {
-      throw new HttpErrorResponse({
-        statusCode: 422,
-        name: 'ImmutableKindError',
-        message: 'Entity reaction kind cannot be changed after creation.',
-        code: 'IMMUTABLE-ENTITY-REACTION-KIND',
-        status: 422,
-      });
-    }
-
-    // Check if user is trying to change the _entityId field, which is immutable
-    if (data._entityId !== undefined) {
-      throw new HttpErrorResponse({
-        statusCode: 422,
-        name: 'ImmutableEntityIdError',
-        message: 'Entity reaction entity ID cannot be changed after creation.',
-        code: 'IMMUTABLE-ENTITY-ID',
-        status: 422,
-      });
-    }
-
-    const now = new Date().toISOString();
-    data._lastUpdatedDateTime = now;
-
-    // Generate slug and set count fields
-    this.generateSlug(data);
-    this.setCountFields(data);
-
-    this.loggingService.info(
-      'EntityReactionsRepository.updateAll - Modified data:',
-      {
-        data,
-        where,
-        entityWhere,
-      },
-    );
-
-    // Convert where to filter for pipeline generation
-    const filter = where ? { where } : undefined;
-    const entityFilter = entityWhere ? { where: entityWhere } : undefined;
-
-    // Get entity repository to get collection name
-    const entityRepo = await this.entityRepositoryGetter();
-    const entityCollectionName =
-      entityRepo.modelClass.definition.settings?.mongodb?.collection;
-
-    if (!entityCollectionName) {
-      throw new Error('Entity collection name not configured');
-    }
-
-    // Build pipeline using helper
-    const pipeline = this.mongoPipelineHelper.buildEntityReactionPipeline(
-      entityCollectionName,
-      0, // No limit needed for update
-      filter,
-      entityFilter,
-    );
-
-    // Add update stage
-    pipeline.push({
-      $addFields: data,
-    });
-
-    // Execute pipeline
-    const collection = this.dataSource.connector?.collection(
-      this.modelClass.definition.settings?.mongodb?.collection,
-    );
-
-    if (!collection) {
-      throw new Error('Collection not found');
-    }
-
-    const cursor = collection.aggregate(pipeline);
-    const result = await cursor.toArray();
-
-    return { count: result.length };
-  }
-
-  async deleteById(id: string, options?: Options): Promise<void> {
-    // First verify that the reaction exists
-    await this.findById(id);
-
-    // Delete the reaction
-    return super.deleteById(id, options);
-  }
-
-  async deleteAll(
-    where?: Where<EntityReaction>,
-    options?: Options,
-  ): Promise<Count> {
-    this.loggingService.info(
-      'EntityReactionsRepository.deleteAll - Where condition:',
-      {
-        where,
-      },
-    );
-
-    return super.deleteAll(where, options);
-  }
-
-  async count(
-    where?: Where<EntityReaction>,
-    entityWhere?: Where<EntityReaction>,
-  ): Promise<Count> {
-    try {
-      // Convert where to filter for pipeline generation
-      const filter = where ? { where } : undefined;
-      const entityFilter = entityWhere ? { where: entityWhere } : undefined;
-
-      // Get entity repository to get collection name
-      const entityRepo = await this.entityRepositoryGetter();
-      const entityCollectionName =
-        entityRepo.modelClass.definition.settings?.mongodb?.collection;
-
-      if (!entityCollectionName) {
-        throw new Error('Entity collection name not configured');
-      }
-
-      // Build pipeline using helper
-      const pipeline = this.mongoPipelineHelper.buildEntityReactionPipeline(
-        entityCollectionName,
-        0, // No limit needed for counting
-        filter,
-        entityFilter,
-      );
-
-      // Add count stage
-      pipeline.push({ $count: 'count' });
-
-      // Execute pipeline
-      const collection = this.dataSource.connector?.collection(
-        this.modelClass.definition.settings?.mongodb?.collection,
-      );
-
-      if (!collection) {
-        throw new Error('Collection not found');
-      }
-
-      const cursor = collection.aggregate(pipeline);
-      const result = await cursor.toArray();
-
-      return { count: result.length > 0 ? result[0].count : 0 };
-    } catch (error) {
-      this.loggingService.error('EntityReactionsRepository.count - Error:', {
-        error,
-      });
-      throw error;
-    }
   }
 }
