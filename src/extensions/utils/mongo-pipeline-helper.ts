@@ -176,8 +176,8 @@ export class MongoPipelineHelper {
       // Add metadata fields while preserving all existing fields
       {
         $addFields: {
-          // Create _fromMetadata from list fields
-          _fromMetadata: {
+          // Create _relationMetadata from list fields
+          _relationMetadata: {
             _kind: '$list._kind',
             _name: '$list._name',
             _slug: '$list._slug',
@@ -237,9 +237,9 @@ export class MongoPipelineHelper {
           projection[field] = 1;
         });
 
-        // Handle metadata field selection if _fromMetadata or _toMetadata is included
-        if (trueFields.includes('_fromMetadata')) {
-          projection['_fromMetadata'] = 1;
+        // Handle metadata field selection if _relationMetadata or _toMetadata is included
+        if (trueFields.includes('_relationMetadata')) {
+          projection['_relationMetadata'] = 1;
         }
 
         if (trueFields.includes('_toMetadata')) {
@@ -257,8 +257,8 @@ export class MongoPipelineHelper {
         });
 
         // Handle metadata field exclusion
-        if (falseFields.includes('_fromMetadata')) {
-          projection['_fromMetadata'] = 0;
+        if (falseFields.includes('_relationMetadata')) {
+          projection['_relationMetadata'] = 0;
         }
 
         if (falseFields.includes('_toMetadata')) {
@@ -383,8 +383,8 @@ export class MongoPipelineHelper {
       // Add metadata fields while preserving all existing fields
       {
         $addFields: {
-          // Create _fromMetadata from entity fields
-          _fromMetadata: {
+          // Create _relationMetadata from entity fields
+          _relationMetadata: {
             _kind: '$entity._kind',
             _name: '$entity._name',
             _slug: '$entity._slug',
@@ -430,8 +430,8 @@ export class MongoPipelineHelper {
           projection[field] = 1;
         });
 
-        // Always include _fromMetadata when using inclusion
-        projection['_fromMetadata'] = 1;
+        // Always include _relationMetadata when using inclusion
+        projection['_relationMetadata'] = 1;
 
         // If _id is explicitly requested, include it
         if (trueFields.includes('_id')) {
@@ -442,7 +442,7 @@ export class MongoPipelineHelper {
         // First, add a stage to rename _fromMeta to a temporary field
         pipeline.push({
           $addFields: {
-            _tempFromMetadata: '$_fromMetadata',
+            _tempRelationMetadata: '$_relationMetadata',
           },
         });
 
@@ -457,14 +457,14 @@ export class MongoPipelineHelper {
         // Finally, restore _fromMeta from the temporary field
         pipeline.push({
           $addFields: {
-            _fromMetadata: '$_tempFromMetadata',
+            _relationMetadata: '$_tempRelationMetadata',
           },
         });
 
         // Clean up the temporary field
         pipeline.push({
           $project: {
-            _tempFromMetadata: 0,
+            _tempRelationMetadata: 0,
           },
         });
 
@@ -521,6 +521,17 @@ export class MongoPipelineHelper {
     if (finalLimit > 0) {
       pipeline.push({ $limit: finalLimit });
     }
+
+    // Always exclude count fields at the end of the pipeline
+    pipeline.push({
+      $project: {
+        _ownerUsersCount: 0,
+        _ownerGroupsCount: 0,
+        _viewerUsersCount: 0,
+        _viewerGroupsCount: 0,
+        _parentsCount: 0,
+      },
+    });
 
     return pipeline;
   }
