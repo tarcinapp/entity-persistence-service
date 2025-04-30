@@ -921,20 +921,6 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     reaction: DataObject<EntityReaction>,
   ): Promise<EntityReaction> {
     try {
-      // First verify that the parent exists and get its entity ID
-      const parentReaction = await this.findById(parentId);
-
-      // Check if the child reaction has the same entity ID as the parent
-      if (reaction._entityId !== parentReaction._entityId) {
-        throw new HttpErrorResponse({
-          statusCode: 422,
-          name: 'InvalidParentEntityIdError',
-          message: `Child reaction must have the same entity ID as its parent. Parent entity ID is '${parentReaction._entityId}', but child entity ID is '${reaction._entityId}'.`,
-          code: 'ENTITY-REACTION-INVALID-PARENT-ENTITY-ID',
-          status: 422,
-        });
-      }
-
       // Add the parent reference to the reaction
       const childReaction: EntityReaction = {
         ...reaction,
