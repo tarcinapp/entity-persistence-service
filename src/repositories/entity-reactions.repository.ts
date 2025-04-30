@@ -25,6 +25,10 @@ import {
   LookupHelper,
   LookupBindings,
 } from '../extensions/utils/lookup-helper';
+import {
+  MongoPipelineHelper,
+  MongoPipelineHelperBindings,
+} from '../extensions/utils/mongo-pipeline-helper';
 import { EntityReaction, HttpErrorResponse } from '../models';
 import { UnmodifiableCommonFields } from '../models/base-types/unmodifiable-common-fields';
 import { LoggingService } from '../services/logging.service';
@@ -58,6 +62,8 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     private lookupConstraintService: LookupConstraintService,
     @repository.getter('EntityRepository')
     protected entityRepositoryGetter: Getter<EntityRepository>,
+    @inject(MongoPipelineHelperBindings.HELPER)
+    private mongoPipelineHelper: MongoPipelineHelper,
   ) {
     super(EntityReaction, dataSource);
   }
@@ -86,7 +92,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
 
   async find(
     filter?: Filter<EntityReaction>,
-    options?: Options,
+    entityFilter?: Filter<EntityReaction>,
   ): Promise<EntityReaction[]> {
     try {
       const limit =
@@ -105,12 +111,42 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
         'EntityReactionsRepository.find - Modified filter:',
         {
           filter,
+          entityFilter,
         },
       );
 
-      const reactions = await super.find(filter, options);
+      // Get entity repository to get collection name
+      const entityRepo = await this.entityRepositoryGetter();
+      const entityCollectionName =
+        entityRepo.modelClass.definition.settings?.mongodb?.collection;
 
-      return await this.processLookups(reactions, filter);
+      if (!entityCollectionName) {
+        throw new Error('Entity collection name not configured');
+      }
+
+      // Build pipeline using helper
+      const pipeline = this.mongoPipelineHelper.buildEntityReactionPipeline(
+        entityCollectionName,
+        filter?.limit ??
+          this.responseLimitConfigReader.getEntityReactionResponseLimit(),
+        filter,
+        entityFilter,
+      );
+
+      // Execute pipeline
+      const collection = this.dataSource.connector?.collection(
+        this.modelClass.definition.settings?.mongodb?.collection,
+      );
+
+      if (!collection) {
+        throw new Error('Collection not found');
+      }
+
+      const cursor = collection.aggregate(pipeline);
+      const result = await cursor.toArray();
+
+      // Process lookups if needed
+      return await this.processLookups(result as EntityReaction[], filter);
     } catch (error) {
       this.loggingService.error('EntityReactionsRepository.find - Error:', {
         error,
@@ -344,14 +380,40 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
   async findById(
     id: string,
     filter?: FilterExcludingWhere<EntityReaction>,
-    options?: Options,
   ): Promise<EntityReaction> {
     try {
-      const reaction = await super.findById(id, filter, options);
+      // Get entity repository to get collection name
+      const entityRepo = await this.entityRepositoryGetter();
+      const entityCollectionName =
+        entityRepo.modelClass.definition.settings?.mongodb?.collection;
 
-      return await this.processLookup(reaction, filter);
-    } catch (error) {
-      if (error.code === 'ENTITY_NOT_FOUND') {
+      if (!entityCollectionName) {
+        throw new Error('Entity collection name not configured');
+      }
+
+      // Build pipeline using helper
+      const pipeline = this.mongoPipelineHelper.buildEntityReactionPipeline(
+        entityCollectionName,
+        1, // Limit to 1 since we're looking for a specific ID
+        {
+          ...filter,
+          where: { _id: id },
+        },
+      );
+
+      // Execute pipeline
+      const collection = this.dataSource.connector?.collection(
+        this.modelClass.definition.settings?.mongodb?.collection,
+      );
+
+      if (!collection) {
+        throw new Error('Collection not found');
+      }
+
+      const cursor = collection.aggregate(pipeline);
+      const result = await cursor.toArray();
+
+      if (result.length === 0) {
         this.loggingService.warn(`Entity reaction with id '${id}' not found.`);
         throw new HttpErrorResponse({
           statusCode: 404,
@@ -362,6 +424,13 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
         });
       }
 
+      // Process lookups if needed
+      return await this.processLookup(result[0] as EntityReaction, filter);
+    } catch (error) {
+      if (error.code === 'ENTITY-REACTION-NOT-FOUND') {
+        throw error;
+      }
+
       this.loggingService.error(
         'EntityReactionsRepository.findById - Unexpected Error:',
         {
@@ -370,7 +439,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
         },
       );
 
-      throw error; // Rethrow unexpected errors
+      throw error;
     }
   }
 
@@ -706,8 +775,8 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
   async updateAll(
     data: DataObject<EntityReaction>,
     where?: Where<EntityReaction>,
-    options?: Options,
-  ) {
+    entityWhere?: Where<EntityReaction>,
+  ): Promise<Count> {
     // Check if user is trying to change the _kind field, which is immutable
     if (data._kind !== undefined) {
       throw new HttpErrorResponse({
@@ -742,10 +811,49 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
       {
         data,
         where,
+        entityWhere,
       },
     );
 
-    return super.updateAll(data, where, options);
+    // Convert where to filter for pipeline generation
+    const filter = where ? { where } : undefined;
+    const entityFilter = entityWhere ? { where: entityWhere } : undefined;
+
+    // Get entity repository to get collection name
+    const entityRepo = await this.entityRepositoryGetter();
+    const entityCollectionName =
+      entityRepo.modelClass.definition.settings?.mongodb?.collection;
+
+    if (!entityCollectionName) {
+      throw new Error('Entity collection name not configured');
+    }
+
+    // Build pipeline using helper
+    const pipeline = this.mongoPipelineHelper.buildEntityReactionPipeline(
+      entityCollectionName,
+      0, // No limit needed for update
+      filter,
+      entityFilter,
+    );
+
+    // Add update stage
+    pipeline.push({
+      $addFields: data,
+    });
+
+    // Execute pipeline
+    const collection = this.dataSource.connector?.collection(
+      this.modelClass.definition.settings?.mongodb?.collection,
+    );
+
+    if (!collection) {
+      throw new Error('Collection not found');
+    }
+
+    const cursor = collection.aggregate(pipeline);
+    const result = await cursor.toArray();
+
+    return { count: result.length };
   }
 
   async deleteById(id: string, options?: Options): Promise<void> {
@@ -770,7 +878,53 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     return super.deleteAll(where, options);
   }
 
-  async count(where?: Where<EntityReaction>): Promise<Count> {
-    return super.count(where);
+  async count(
+    where?: Where<EntityReaction>,
+    entityWhere?: Where<EntityReaction>,
+  ): Promise<Count> {
+    try {
+      // Convert where to filter for pipeline generation
+      const filter = where ? { where } : undefined;
+      const entityFilter = entityWhere ? { where: entityWhere } : undefined;
+
+      // Get entity repository to get collection name
+      const entityRepo = await this.entityRepositoryGetter();
+      const entityCollectionName =
+        entityRepo.modelClass.definition.settings?.mongodb?.collection;
+
+      if (!entityCollectionName) {
+        throw new Error('Entity collection name not configured');
+      }
+
+      // Build pipeline using helper
+      const pipeline = this.mongoPipelineHelper.buildEntityReactionPipeline(
+        entityCollectionName,
+        0, // No limit needed for counting
+        filter,
+        entityFilter,
+      );
+
+      // Add count stage
+      pipeline.push({ $count: 'count' });
+
+      // Execute pipeline
+      const collection = this.dataSource.connector?.collection(
+        this.modelClass.definition.settings?.mongodb?.collection,
+      );
+
+      if (!collection) {
+        throw new Error('Collection not found');
+      }
+
+      const cursor = collection.aggregate(pipeline);
+      const result = await cursor.toArray();
+
+      return { count: result.length > 0 ? result[0].count : 0 };
+    } catch (error) {
+      this.loggingService.error('EntityReactionsRepository.count - Error:', {
+        error,
+      });
+      throw error;
+    }
   }
 }

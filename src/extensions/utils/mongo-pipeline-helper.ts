@@ -320,6 +320,212 @@ export class MongoPipelineHelper {
   }
 
   /**
+   * Build a complete MongoDB aggregation pipeline for entity reactions
+   */
+  buildEntityReactionPipeline(
+    entityCollectionName: string,
+    finalLimit: number,
+    filter?: Filter<any>,
+    entityFilter?: Filter<any>,
+  ): PipelineStage[] {
+    const pipeline: PipelineStage[] = [];
+
+    // Add where conditions if they exist
+    if (filter?.where) {
+      const mongoQuery = this.buildMongoQuery(filter.where);
+      pipeline.push({
+        $match: mongoQuery,
+      });
+    }
+
+    // Add lookups and metadata enrichment
+    pipeline.push(
+      // Lookup the entity
+      {
+        $lookup: {
+          from: entityCollectionName,
+          localField: '_entityId',
+          foreignField: '_id',
+          as: 'entity',
+        },
+      },
+    );
+
+    // Add entity filter if specified
+    if (entityFilter?.where) {
+      // Convert entity filter to MongoDB query
+      const entityMongoQuery = this.buildMongoQuery(entityFilter.where);
+
+      // Prefix all fields with "entity." since we're filtering on the joined entity documents
+      const prefixedEntityQuery = this.prefixQueryFields(
+        entityMongoQuery,
+        'entity',
+      );
+
+      // Add a match stage to filter based on entity properties
+      pipeline.push({
+        $match: {
+          // Ensure at least one entity document exists in the entity array
+          'entity.0': { $exists: true },
+          ...prefixedEntityQuery,
+        },
+      });
+    }
+
+    pipeline.push(
+      // Unwind the entity array
+      {
+        $unwind: {
+          path: '$entity',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      // Add metadata fields while preserving all existing fields
+      {
+        $addFields: {
+          // Create _relationMetadata from entity fields
+          _relationMetadata: {
+            _kind: '$entity._kind',
+            _name: '$entity._name',
+            _slug: '$entity._slug',
+            _validFromDateTime: '$entity._validFromDateTime',
+            _validUntilDateTime: '$entity._validUntilDateTime',
+            _visibility: '$entity._visibility',
+            _ownerUsers: '$entity._ownerUsers',
+            _ownerGroups: '$entity._ownerGroups',
+            _viewerUsers: '$entity._viewerUsers',
+            _viewerGroups: '$entity._viewerGroups',
+          },
+        },
+      },
+      // Project stage to exclude entity fields
+      {
+        $project: {
+          entity: 0,
+        },
+      },
+    );
+
+    // Handle field selection
+    if (filter?.fields) {
+      const fields = filter.fields;
+      const trueFields = Object.entries(fields)
+        .filter(([, value]) => value === true)
+        .map(([key]) => key);
+
+      const falseFields = Object.entries(fields)
+        .filter(([, value]) => value === false)
+        .map(([key]) => key);
+
+      // Create projection object
+      const projection: Record<string, 1 | 0> = {};
+
+      if (trueFields.length > 0) {
+        // If there are true fields, only include those fields
+        // First set _id to 0 to exclude it by default
+        projection['_id'] = 0;
+
+        // Then include only the specified fields
+        trueFields.forEach((field) => {
+          projection[field] = 1;
+        });
+
+        // Always include _relationMetadata when using inclusion
+        projection['_relationMetadata'] = 1;
+
+        // If _id is explicitly requested, include it
+        if (trueFields.includes('_id')) {
+          projection['_id'] = 1;
+        }
+      } else if (falseFields.length > 0) {
+        // If only false fields, we need to handle this differently
+        // First, add a stage to rename _relationMetadata to a temporary field
+        pipeline.push({
+          $addFields: {
+            _tempRelationMetadata: '$_relationMetadata',
+          },
+        });
+
+        // Then exclude the specified fields
+        falseFields.forEach((field) => {
+          projection[field] = 0;
+        });
+
+        // Add the projection stage
+        pipeline.push({ $project: projection });
+
+        // Finally, restore _relationMetadata from the temporary field
+        pipeline.push({
+          $addFields: {
+            _relationMetadata: '$_tempRelationMetadata',
+          },
+        });
+
+        // Clean up the temporary field
+        pipeline.push({
+          $project: {
+            _tempRelationMetadata: 0,
+          },
+        });
+
+        // Skip adding another projection stage
+        return pipeline;
+      }
+
+      // Add projection stage if there are fields to project
+      if (Object.keys(projection).length > 0) {
+        pipeline.push({
+          $project: projection,
+        });
+      }
+    }
+
+    // Add order if specified
+    if (filter?.order) {
+      const sort: Record<string, 1 | -1> = {};
+      const orderItems = Array.isArray(filter.order)
+        ? filter.order
+        : [filter.order];
+
+      for (const orderItem of orderItems) {
+        if (typeof orderItem === 'string') {
+          // Handle format like "field ASC" or "field DESC"
+          const [field, direction] = orderItem.split(' ');
+          if (!field) {
+            continue;
+          } // Skip if field is empty
+
+          sort[field] = direction === 'DESC' ? -1 : 1;
+        } else if (typeof orderItem === 'object' && orderItem !== null) {
+          // Handle format like { field: "ASC" } or { field: "DESC" }
+          const [field, direction] = Object.entries(orderItem)[0];
+          if (!field) {
+            continue;
+          } // Skip if field is empty
+
+          sort[field] = direction === 'DESC' ? -1 : 1;
+        }
+      }
+
+      if (Object.keys(sort).length > 0) {
+        pipeline.push({ $sort: sort });
+      }
+    }
+
+    // Add skip if specified
+    if (filter?.skip) {
+      pipeline.push({ $skip: filter.skip });
+    }
+
+    // Add limit stage if needed
+    if (finalLimit > 0) {
+      pipeline.push({ $limit: finalLimit });
+    }
+
+    return pipeline;
+  }
+
+  /**
    * Convert LoopBack where filter to MongoDB query format
    */
   private buildMongoQuery(

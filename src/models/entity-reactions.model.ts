@@ -6,7 +6,7 @@ import { GenericEntityWithRelations } from './entity.model';
   settings: {
     strict: false,
     mongodb: {
-      collection: process.env.collection_entity_reactions ?? 'EntityReactions',
+      collection: process.env.collection_entity_reactions ?? 'EntityReaction',
     },
   },
 })

@@ -30,6 +30,10 @@ import {
   LookupBindings,
   LookupHelper,
 } from '../../extensions/utils/lookup-helper';
+import {
+  MongoPipelineHelperBindings,
+  MongoPipelineHelper,
+} from '../../extensions/utils/mongo-pipeline-helper';
 import type { GenericEntity, List, EntityReaction } from '../../models';
 import { LookupConstraintBindings } from '../../services/lookup-constraint.bindings';
 import { LookupConstraintService } from '../../services/lookup-constraint.service';
@@ -453,6 +457,9 @@ export async function setupApplication(
 
   // add lookup constraint service to context
   app.bind(LookupConstraintBindings.SERVICE).toClass(LookupConstraintService);
+
+  // add mongo pipeline helper to context
+  app.bind(MongoPipelineHelperBindings.HELPER).toClass(MongoPipelineHelper);
 
   await app.boot();
   await app.start();

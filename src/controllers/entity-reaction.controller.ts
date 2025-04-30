@@ -112,6 +112,8 @@ export class EntityReactionController {
   async count(
     @param.query.object('set') set?: Set,
     @param.where(EntityReaction) where?: Where<EntityReaction>,
+    @param.query.object('entitySet') entitySet?: Set,
+    @param.where(EntityReaction) entityWhere?: Where<EntityReaction>,
   ): Promise<Count> {
     const filterBuilder = new FilterBuilder<EntityReaction>();
 
@@ -127,9 +129,26 @@ export class EntityReactionController {
       }).build();
     }
 
-    sanitizeFilterFields(filter);
+    // Build entity filter
+    const entityFilterBuilder = new FilterBuilder<EntityReaction>();
+    if (entityWhere) {
+      entityFilterBuilder.where(entityWhere);
+    }
 
-    return this.entityReactionsRepository.count(filter.where);
+    let entityFilter = entityFilterBuilder.build();
+    if (entitySet) {
+      entityFilter = new SetFilterBuilder<EntityReaction>(entitySet, {
+        filter: entityFilter,
+      }).build();
+    }
+
+    sanitizeFilterFields(filter);
+    sanitizeFilterFields(entityFilter);
+
+    return this.entityReactionsRepository.count(
+      filter.where,
+      entityFilter.where,
+    );
   }
 
   @get('/entity-reactions', {
@@ -153,6 +172,9 @@ export class EntityReactionController {
     @param.query.object('set') set?: Set,
     @param.query.object('filter', getFilterSchemaFor(EntityReaction))
     filter?: Filter<EntityReaction>,
+    @param.query.object('entitySet') entitySet?: Set,
+    @param.query.object('entityFilter', getFilterSchemaFor(EntityReaction))
+    entityFilter?: Filter<EntityReaction>,
   ): Promise<EntityReaction[]> {
     if (set) {
       filter = new SetFilterBuilder<EntityReaction>(set, {
@@ -160,9 +182,16 @@ export class EntityReactionController {
       }).build();
     }
 
-    sanitizeFilterFields(filter);
+    if (entitySet) {
+      entityFilter = new SetFilterBuilder<EntityReaction>(entitySet, {
+        filter: entityFilter,
+      }).build();
+    }
 
-    return this.entityReactionsRepository.find(filter);
+    sanitizeFilterFields(filter);
+    sanitizeFilterFields(entityFilter);
+
+    return this.entityReactionsRepository.find(filter, entityFilter);
   }
 
   @patch('/entity-reactions', {
@@ -190,6 +219,8 @@ export class EntityReactionController {
     entityReaction: Omit<EntityReaction, UnmodifiableCommonFields>,
     @param.query.object('set') set?: Set,
     @param.where(EntityReaction) where?: Where<EntityReaction>,
+    @param.query.object('entitySet') entitySet?: Set,
+    @param.where(EntityReaction) entityWhere?: Where<EntityReaction>,
   ): Promise<Count> {
     const filterBuilder = new FilterBuilder<EntityReaction>();
 
@@ -205,11 +236,26 @@ export class EntityReactionController {
       }).build();
     }
 
+    // Build entity filter
+    const entityFilterBuilder = new FilterBuilder<EntityReaction>();
+    if (entityWhere) {
+      entityFilterBuilder.where(entityWhere);
+    }
+
+    let entityFilter = entityFilterBuilder.build();
+    if (entitySet) {
+      entityFilter = new SetFilterBuilder<EntityReaction>(entitySet, {
+        filter: entityFilter,
+      }).build();
+    }
+
     sanitizeFilterFields(filter);
+    sanitizeFilterFields(entityFilter);
 
     return this.entityReactionsRepository.updateAll(
       entityReaction,
       filter.where,
+      entityFilter.where,
     );
   }
 
