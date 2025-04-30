@@ -191,7 +191,9 @@ export class EntityReactionController {
     sanitizeFilterFields(filter);
     sanitizeFilterFields(entityFilter);
 
-    return this.entityReactionsRepository.find(filter, entityFilter);
+    return this.entityReactionsRepository.find(filter, entityFilter, {
+      useMongoPipeline: true,
+    });
   }
 
   @patch('/entity-reactions', {
@@ -471,7 +473,12 @@ export class EntityReactionController {
     sanitizeFilterFields(filter);
     sanitizeFilterFields(entityFilter);
 
-    return this.entityReactionsRepository.findParents(id, filter, entityFilter);
+    return this.entityReactionsRepository.findParents(
+      id,
+      filter,
+      entityFilter,
+      { useMongoPipeline: true },
+    );
   }
 
   @get('/entity-reactions/{id}/children', {
@@ -531,6 +538,7 @@ export class EntityReactionController {
       id,
       filter,
       entityFilter,
+      { useMongoPipeline: true },
     );
   }
 

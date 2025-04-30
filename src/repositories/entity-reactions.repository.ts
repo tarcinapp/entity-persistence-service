@@ -92,7 +92,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
   async find(
     filter?: Filter<EntityReaction>,
     entityFilter?: Filter<EntityReaction>,
-    options?: Options & { usePipeline?: boolean },
+    options?: Options & { useMongoPipeline?: boolean },
   ): Promise<EntityReaction[]> {
     const limit =
       filter?.limit ??
@@ -111,18 +111,18 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
       {
         filter,
         entityFilter,
-        usePipeline: options?.usePipeline,
+        useMongoPipeline: options?.useMongoPipeline,
       },
     );
 
-    // If usePipeline is explicitly set to false, use repository approach
-    if (options?.usePipeline === false) {
+    // If useMongoPipeline is not explicitly set to true, use repository approach
+    if (options?.useMongoPipeline !== true) {
       const reactions = await super.find(filter);
 
       return this.processLookups(reactions, filter);
     }
 
-    // Default pipeline approach
+    // MongoDB pipeline approach
     // Get entity repository to get collection name
     const entityRepo = await this.entityRepositoryGetter();
     const entityCollectionName =
@@ -866,7 +866,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     );
 
     return this.find(parentFilter, entityFilter, {
-      usePipeline: false,
+      useMongoPipeline: false,
       ...options,
     });
   }
@@ -900,7 +900,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     );
 
     return this.find(childFilter, entityFilter, {
-      usePipeline: false,
+      useMongoPipeline: false,
       ...options,
     });
   }
