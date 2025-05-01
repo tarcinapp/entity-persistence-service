@@ -390,8 +390,20 @@ class SetToFilterTransformer {
   }
 
   produceWhereClauseForPendings(): Where<AnyObject> {
+    const now = new Date();
+    const nowISOString = now.toISOString();
+
     return {
-      _validFromDateTime: null,
+      or: [
+        {
+          _validFromDateTime: null,
+        },
+        {
+          _validFromDateTime: {
+            gt: nowISOString,
+          },
+        },
+      ],
     };
   }
 

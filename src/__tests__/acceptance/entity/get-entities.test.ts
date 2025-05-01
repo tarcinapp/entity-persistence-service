@@ -2693,7 +2693,7 @@ describe('GET /entities', () => {
     const response = await client
       .get('/entities')
       .query(
-        'filter[include][0][relation]=_reactions&filter[include][0][set][actives]=true',
+        'filter[include][0][relation]=_reactions&filter[include][0][set][and][0][actives]=true&filter[include][0][set][and][1][publics]=true',
       )
       .expect(200);
 
@@ -2736,5 +2736,487 @@ describe('GET /entities', () => {
     expect(
       entity3._reactions.map((r: any) => r._validUntilDateTime),
     ).to.containDeep([futureDate.toISOString(), null]);
+  });
+
+  it('include: includes reactions in entity response without filtering', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      entity_reaction_kinds: 'like,love,wow,haha',
+    });
+    ({ client } = appWithClient);
+
+    // Create 3 test entities
+    const entity1Id = await createTestEntity(client, {
+      _name: 'Book 1',
+      _kind: 'book',
+      description: 'First book',
+    });
+
+    const entity2Id = await createTestEntity(client, {
+      _name: 'Book 2',
+      _kind: 'book',
+      description: 'Second book',
+    });
+
+    const entity3Id = await createTestEntity(client, {
+      _name: 'Book 3',
+      _kind: 'book',
+      description: 'Third book',
+    });
+
+    // Create reactions for each entity
+    // Entity 1 reactions
+    await client.post('/entity-reactions').send({
+      _entityId: entity1Id,
+      _name: 'Like',
+      _kind: 'like',
+      _ownerUsers: ['user-1'],
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity1Id,
+      _name: 'Love',
+      _kind: 'love',
+      _ownerUsers: ['user-2'],
+    });
+
+    // Entity 2 reactions
+    await client.post('/entity-reactions').send({
+      _entityId: entity2Id,
+      _name: 'Like',
+      _kind: 'like',
+      _ownerUsers: ['user-1'],
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity2Id,
+      _name: 'Love',
+      _kind: 'love',
+      _ownerUsers: ['user-2'],
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity2Id,
+      _name: 'Wow',
+      _kind: 'wow',
+      _ownerUsers: ['user-3'],
+    });
+
+    // Entity 3 reactions
+    await client.post('/entity-reactions').send({
+      _entityId: entity3Id,
+      _name: 'Like',
+      _kind: 'like',
+      _ownerUsers: ['user-1'],
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity3Id,
+      _name: 'Love',
+      _kind: 'love',
+      _ownerUsers: ['user-2'],
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity3Id,
+      _name: 'Wow',
+      _kind: 'wow',
+      _ownerUsers: ['user-3'],
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity3Id,
+      _name: 'Haha',
+      _kind: 'haha',
+      _ownerUsers: ['user-4'],
+    });
+
+    // Get entities with included reactions without any filtering
+    const response = await client
+      .get('/entities')
+      .query('filter[include][0][relation]=_reactions')
+      .expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(3);
+
+    // Verify each entity has its reactions included
+    const entity1 = response.body.find((e: any) => e._id === entity1Id);
+    expect(entity1).to.not.be.undefined();
+    expect(entity1._reactions).to.be.Array().and.have.length(2);
+    expect(entity1._reactions.map((r: any) => r._name)).to.containDeep([
+      'Like',
+      'Love',
+    ]);
+
+    const entity2 = response.body.find((e: any) => e._id === entity2Id);
+    expect(entity2).to.not.be.undefined();
+    expect(entity2._reactions).to.be.Array().and.have.length(3);
+    expect(entity2._reactions.map((r: any) => r._name)).to.containDeep([
+      'Like',
+      'Love',
+      'Wow',
+    ]);
+
+    const entity3 = response.body.find((e: any) => e._id === entity3Id);
+    expect(entity3).to.not.be.undefined();
+    expect(entity3._reactions).to.be.Array().and.have.length(4);
+    expect(entity3._reactions.map((r: any) => r._name)).to.containDeep([
+      'Like',
+      'Love',
+      'Wow',
+      'Haha',
+    ]);
+  });
+
+  it('include: includes reactions in entity response with set filters for active and public reactions', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      entity_reaction_kinds: 'like,love,wow,haha',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 1);
+
+    // Create 3 test entities
+    const entity1Id = await createTestEntity(client, {
+      _name: 'Book 1',
+      _kind: 'book',
+      description: 'First book',
+    });
+
+    const entity2Id = await createTestEntity(client, {
+      _name: 'Book 2',
+      _kind: 'book',
+      description: 'Second book',
+    });
+
+    const entity3Id = await createTestEntity(client, {
+      _name: 'Book 3',
+      _kind: 'book',
+      description: 'Third book',
+    });
+
+    // Create reactions for each entity with different visibility and active status
+    // Entity 1 reactions
+    await client.post('/entity-reactions').send({
+      _entityId: entity1Id,
+      _name: 'Public Active Like',
+      _kind: 'like',
+      _ownerUsers: ['user-1'],
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity1Id,
+      _name: 'Private Active Love',
+      _kind: 'love',
+      _ownerUsers: ['user-2'],
+      _visibility: 'private',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    // Entity 2 reactions
+    await client.post('/entity-reactions').send({
+      _entityId: entity2Id,
+      _name: 'Public Inactive Like',
+      _kind: 'like',
+      _ownerUsers: ['user-1'],
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(),
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity2Id,
+      _name: 'Protected Active Love',
+      _kind: 'love',
+      _ownerUsers: ['user-2'],
+      _visibility: 'protected',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity2Id,
+      _name: 'Public Active Wow',
+      _kind: 'wow',
+      _ownerUsers: ['user-3'],
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    // Entity 3 reactions
+    await client.post('/entity-reactions').send({
+      _entityId: entity3Id,
+      _name: 'Public Active Like',
+      _kind: 'like',
+      _ownerUsers: ['user-1'],
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity3Id,
+      _name: 'Private Active Love',
+      _kind: 'love',
+      _ownerUsers: ['user-2'],
+      _visibility: 'private',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity3Id,
+      _name: 'Public Active Wow',
+      _kind: 'wow',
+      _ownerUsers: ['user-3'],
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity3Id,
+      _name: 'Protected Inactive Haha',
+      _kind: 'haha',
+      _ownerUsers: ['user-4'],
+      _visibility: 'protected',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(),
+    });
+
+    // Get entities with included reactions filtered by set[actives] and set[publics]
+    const response = await client
+      .get('/entities')
+      .query(
+        'filter[include][0][relation]=_reactions&filter[include][0][set][and][0][actives]=true&filter[include][0][set][and][1][publics]=true',
+      )
+      .expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(3);
+
+    // Verify each entity has its reactions included and filtered
+    const entity1 = response.body.find((e: any) => e._id === entity1Id);
+    expect(entity1).to.not.be.undefined();
+    expect(entity1._reactions).to.be.Array().and.have.length(1);
+    expect(entity1._reactions[0]._name).to.equal('Public Active Like');
+    expect(entity1._reactions[0]._visibility).to.equal('public');
+    expect(entity1._reactions[0]._validFromDateTime).to.equal(
+      pastDate.toISOString(),
+    );
+    expect(entity1._reactions[0]._validUntilDateTime).to.equal(
+      futureDate.toISOString(),
+    );
+
+    const entity2 = response.body.find((e: any) => e._id === entity2Id);
+    expect(entity2).to.not.be.undefined();
+    expect(entity2._reactions).to.be.Array().and.have.length(2);
+    expect(entity2._reactions.map((r: any) => r._name)).to.containDeep([
+      'Public Active Like',
+      'Public Active Wow',
+    ]);
+    expect(entity2._reactions.map((r: any) => r._visibility)).to.containDeep([
+      'public',
+      'public',
+    ]);
+    expect(
+      entity2._reactions.map((r: any) => r._validFromDateTime),
+    ).to.containDeep([pastDate.toISOString(), pastDate.toISOString()]);
+    expect(
+      entity2._reactions.map((r: any) => r._validUntilDateTime),
+    ).to.containDeep([futureDate.toISOString(), futureDate.toISOString()]);
+
+    const entity3 = response.body.find((e: any) => e._id === entity3Id);
+    expect(entity3).to.not.be.undefined();
+    expect(entity3._reactions).to.be.Array().and.have.length(2);
+    expect(entity3._reactions.map((r: any) => r._name)).to.containDeep([
+      'Public Active Like',
+      'Public Active Wow',
+    ]);
+    expect(entity3._reactions.map((r: any) => r._visibility)).to.containDeep([
+      'public',
+      'public',
+    ]);
+    expect(
+      entity3._reactions.map((r: any) => r._validFromDateTime),
+    ).to.containDeep([pastDate.toISOString(), pastDate.toISOString()]);
+    expect(
+      entity3._reactions.map((r: any) => r._validUntilDateTime),
+    ).to.containDeep([futureDate.toISOString(), futureDate.toISOString()]);
+  });
+
+  it('include: includes reactions in entity response with set[audience] filter', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      entity_reaction_kinds: 'like,love,wow,haha',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 10);
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 10);
+
+    // Create 3 test entities
+    const entity1Id = await createTestEntity(client, {
+      _name: 'Book 1',
+      _kind: 'book',
+      description: 'First book',
+    });
+
+    const entity2Id = await createTestEntity(client, {
+      _name: 'Book 2',
+      _kind: 'book',
+      description: 'Second book',
+    });
+
+    const entity3Id = await createTestEntity(client, {
+      _name: 'Book 3',
+      _kind: 'book',
+      description: 'Third book',
+    });
+
+    // Create reactions for each entity with different visibility and ownership
+    // Entity 1 reactions
+    await client.post('/entity-reactions').send({
+      _entityId: entity1Id,
+      _name: 'Public Active Like',
+      _kind: 'like',
+      _ownerUsers: ['user-1'],
+      _ownerGroups: ['group-1'],
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: null, // Never expires
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity1Id,
+      _name: 'Private Active Love',
+      _kind: 'love',
+      _ownerUsers: ['user-2'],
+      _ownerGroups: ['group-2'],
+      _visibility: 'private',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: null, // Never expires
+    });
+
+    // Entity 2 reactions
+    await client.post('/entity-reactions').send({
+      _entityId: entity2Id,
+      _name: 'Public Active Like',
+      _kind: 'like',
+      _ownerUsers: ['user-1'],
+      _ownerGroups: ['group-1'],
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: null, // Never expires
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity2Id,
+      _name: 'Protected Pending Love',
+      _kind: 'love',
+      _ownerUsers: ['user-2'],
+      _ownerGroups: ['group-2'],
+      _visibility: 'protected',
+      _validFromDateTime: futureDate.toISOString(), // Not started yet
+      _validUntilDateTime: null,
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity2Id,
+      _name: 'Public Active Wow',
+      _kind: 'wow',
+      _ownerUsers: ['user-3'],
+      _ownerGroups: ['group-3'],
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: null, // Never expires
+    });
+
+    // Entity 3 reactions
+    await client.post('/entity-reactions').send({
+      _entityId: entity3Id,
+      _name: 'Private Active Like',
+      _kind: 'like',
+      _ownerUsers: ['user-1'],
+      _ownerGroups: ['group-1'],
+      _visibility: 'private',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: null, // Never expires
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity3Id,
+      _name: 'Protected Active Love',
+      _kind: 'love',
+      _ownerUsers: ['user-2'],
+      _ownerGroups: ['group-2'],
+      _visibility: 'protected',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: null, // Never expires
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity3Id,
+      _name: 'Public Active Wow',
+      _kind: 'wow',
+      _ownerUsers: ['user-3'],
+      _ownerGroups: ['group-3'],
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: null, // Never expires
+    });
+
+    // Get entities with included reactions filtered by set[audience]
+    const response = await client
+      .get('/entities')
+      .query(
+        'filter[include][0][relation]=_reactions&filter[include][0][set][audience][userIds]=user-1,user-2&filter[include][0][set][audience][groupIds]=group-1,group-2',
+      )
+      .expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(3);
+
+    // Verify each entity has its reactions included and filtered
+    const entity1 = response.body.find((e: any) => e._id === entity1Id);
+    expect(entity1).to.not.be.undefined();
+    expect(entity1._reactions).to.be.Array().and.have.length(2);
+    expect(entity1._reactions.map((r: any) => r._name)).to.containDeep([
+      'Public Active Like',
+      'Private Active Love',
+    ]);
+
+    const entity2 = response.body.find((e: any) => e._id === entity2Id);
+    expect(entity2).to.not.be.undefined();
+    expect(entity2._reactions).to.be.Array().and.have.length(3);
+    expect(entity2._reactions.map((r: any) => r._name)).to.containDeep([
+      'Public Active Like',
+      'Protected Pending Love',
+      'Public Active Wow',
+    ]);
+
+    const entity3 = response.body.find((e: any) => e._id === entity3Id);
+    expect(entity3).to.not.be.undefined();
+    expect(entity3._reactions).to.be.Array().and.have.length(3);
+    expect(entity3._reactions.map((r: any) => r._name)).to.containDeep([
+      'Private Active Like',
+      'Protected Active Love',
+      'Public Active Wow',
+    ]);
   });
 });
