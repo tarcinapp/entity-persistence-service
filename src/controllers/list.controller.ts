@@ -495,6 +495,7 @@ export class ListController {
     }
 
     sanitizeFilterFields(filter);
+    processIncludes<List>(filter);
 
     return this.listRepository.findParents(id, filter);
   }
@@ -541,6 +542,7 @@ export class ListController {
     }
 
     sanitizeFilterFields(filter);
+    processIncludes<List>(filter);
 
     return this.listRepository.findChildren(id, filter);
   }

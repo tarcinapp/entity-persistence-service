@@ -21,6 +21,7 @@ import {
   RestBindings,
   Request,
 } from '@loopback/rest';
+import { processIncludes } from '../extensions/types/sets-in-inclusions';
 import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
 import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
 import { GenericEntity, HttpErrorResponse } from '../models';
@@ -163,6 +164,7 @@ export class EntityController {
     }
 
     sanitizeFilterFields(filter);
+    processIncludes<GenericEntity>(filter);
 
     return this.entityRepository.find(filter);
   }
@@ -244,6 +246,7 @@ export class EntityController {
     filter?: FilterExcludingWhere<GenericEntity>,
   ): Promise<GenericEntity> {
     sanitizeFilterFields(filter);
+    processIncludes<GenericEntity>(filter);
 
     return this.entityRepository.findById(id, filter);
   }
@@ -413,6 +416,7 @@ export class EntityController {
     }
 
     sanitizeFilterFields(filter);
+    processIncludes<GenericEntity>(filter);
 
     return this.entityRepository.findParents(id, filter);
   }
@@ -459,6 +463,7 @@ export class EntityController {
     }
 
     sanitizeFilterFields(filter);
+    processIncludes<GenericEntity>(filter);
 
     return this.entityRepository.findChildren(id, filter);
   }
