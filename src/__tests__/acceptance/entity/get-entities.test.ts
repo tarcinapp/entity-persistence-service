@@ -2048,4 +2048,526 @@ describe('GET /entities', () => {
     // Verify the lists array is empty since all references were not found
     expect(book.readingLists).to.be.Array().and.have.length(0);
   });
+
+  it('include: includes reactions in entity response', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      entity_reaction_kinds: 'like,love,wow,haha',
+    });
+    ({ client } = appWithClient);
+
+    // Create 3 test entities
+    const entity1Id = await createTestEntity(client, {
+      _name: 'Book 1',
+      _kind: 'book',
+      description: 'First book',
+    });
+
+    const entity2Id = await createTestEntity(client, {
+      _name: 'Book 2',
+      _kind: 'book',
+      description: 'Second book',
+    });
+
+    const entity3Id = await createTestEntity(client, {
+      _name: 'Book 3',
+      _kind: 'book',
+      description: 'Third book',
+    });
+
+    // Create reactions for each entity
+    // Entity 1 reactions
+    await client.post('/entity-reactions').send({
+      _entityId: entity1Id,
+      _name: 'Like',
+      _kind: 'like',
+      _ownerUsers: ['user-1'],
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity1Id,
+      _name: 'Love',
+      _kind: 'love',
+      _ownerUsers: ['user-2'],
+    });
+
+    // Entity 2 reactions
+    await client.post('/entity-reactions').send({
+      _entityId: entity2Id,
+      _name: 'Like',
+      _kind: 'like',
+      _ownerUsers: ['user-1'],
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity2Id,
+      _name: 'Love',
+      _kind: 'love',
+      _ownerUsers: ['user-2'],
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity2Id,
+      _name: 'Wow',
+      _kind: 'wow',
+      _ownerUsers: ['user-3'],
+    });
+
+    // Entity 3 reactions
+    await client.post('/entity-reactions').send({
+      _entityId: entity3Id,
+      _name: 'Like',
+      _kind: 'like',
+      _ownerUsers: ['user-1'],
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity3Id,
+      _name: 'Love',
+      _kind: 'love',
+      _ownerUsers: ['user-2'],
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity3Id,
+      _name: 'Wow',
+      _kind: 'wow',
+      _ownerUsers: ['user-3'],
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity3Id,
+      _name: 'Haha',
+      _kind: 'haha',
+      _ownerUsers: ['user-4'],
+    });
+
+    // Get entities with included reactions
+    const response = await client
+      .get('/entities')
+      .query('filter[include][0][relation]=_reactions')
+      .expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(3);
+
+    // Verify each entity has its reactions included
+    const entity1 = response.body.find((e: any) => e._id === entity1Id);
+    expect(entity1).to.not.be.undefined();
+    expect(entity1).to.not.have.property('_reactions');
+
+    const entity2 = response.body.find((e: any) => e._id === entity2Id);
+    expect(entity2).to.not.be.undefined();
+    expect(entity2._reactions).to.be.Array().and.have.length(2);
+    expect(entity2._reactions.map((r: any) => r.count)).to.containDeep([
+      15, 20,
+    ]);
+
+    const entity3 = response.body.find((e: any) => e._id === entity3Id);
+    expect(entity3).to.not.be.undefined();
+    expect(entity3._reactions).to.be.Array().and.have.length(2);
+    expect(entity3._reactions.map((r: any) => r.count)).to.containDeep([
+      15, 20,
+    ]);
+  });
+
+  it('include: includes reactions in entity response with scope filtering', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      entity_reaction_kinds: 'like,love,wow,haha',
+    });
+    ({ client } = appWithClient);
+
+    // Create 3 test entities
+    const entity1Id = await createTestEntity(client, {
+      _name: 'Book 1',
+      _kind: 'book',
+      description: 'First book',
+    });
+
+    const entity2Id = await createTestEntity(client, {
+      _name: 'Book 2',
+      _kind: 'book',
+      description: 'Second book',
+    });
+
+    const entity3Id = await createTestEntity(client, {
+      _name: 'Book 3',
+      _kind: 'book',
+      description: 'Third book',
+    });
+
+    // Create reactions for each entity
+    // Entity 1 reactions
+    await client.post('/entity-reactions').send({
+      _entityId: entity1Id,
+      _name: 'Like Reaction',
+      _kind: 'like',
+      _ownerUsers: ['user-1'],
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity1Id,
+      _name: 'Love Reaction',
+      _kind: 'love',
+      _ownerUsers: ['user-2'],
+    });
+
+    // Entity 2 reactions
+    await client.post('/entity-reactions').send({
+      _entityId: entity2Id,
+      _name: 'Like Reaction',
+      _kind: 'like',
+      _ownerUsers: ['user-1'],
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity2Id,
+      _name: 'Love Reaction',
+      _kind: 'love',
+      _ownerUsers: ['user-2'],
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity2Id,
+      _name: 'Wow Reaction',
+      _kind: 'wow',
+      _ownerUsers: ['user-3'],
+    });
+
+    // Entity 3 reactions
+    await client.post('/entity-reactions').send({
+      _entityId: entity3Id,
+      _name: 'Like Reaction',
+      _kind: 'like',
+      _ownerUsers: ['user-1'],
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity3Id,
+      _name: 'Love Reaction',
+      _kind: 'love',
+      _ownerUsers: ['user-2'],
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity3Id,
+      _name: 'Wow Reaction',
+      _kind: 'wow',
+      _ownerUsers: ['user-3'],
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity3Id,
+      _name: 'Haha Reaction',
+      _kind: 'haha',
+      _ownerUsers: ['user-4'],
+    });
+
+    // Get entities with included reactions filtered by name
+    const response = await client
+      .get('/entities')
+      .query(
+        'filter[include][0][relation]=_reactions&filter[include][0][scope][where][_name]=Like%20Reaction',
+      )
+      .expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(3);
+
+    // Verify each entity has its reactions included and filtered
+    const entity1 = response.body.find((e: any) => e._id === entity1Id);
+    expect(entity1).to.not.be.undefined();
+    expect(entity1).to.not.have.property('_reactions');
+
+    const entity2 = response.body.find((e: any) => e._id === entity2Id);
+    expect(entity2).to.not.be.undefined();
+    expect(entity2._reactions).to.be.Array().and.have.length(2);
+    expect(entity2._reactions.map((r: any) => r.count)).to.containDeep([
+      15, 20,
+    ]);
+
+    const entity3 = response.body.find((e: any) => e._id === entity3Id);
+    expect(entity3).to.not.be.undefined();
+    expect(entity3._reactions).to.be.Array().and.have.length(2);
+    expect(entity3._reactions.map((r: any) => r.count)).to.containDeep([
+      15, 20,
+    ]);
+  });
+
+  it('include: includes reactions in entity response with scope filtering by numeric property', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      entity_reaction_kinds: 'like,love,wow,haha',
+    });
+    ({ client } = appWithClient);
+
+    // Create 3 test entities
+    const entity1Id = await createTestEntity(client, {
+      _name: 'Book 1',
+      _kind: 'book',
+      description: 'First book',
+    });
+
+    const entity2Id = await createTestEntity(client, {
+      _name: 'Book 2',
+      _kind: 'book',
+      description: 'Second book',
+    });
+
+    const entity3Id = await createTestEntity(client, {
+      _name: 'Book 3',
+      _kind: 'book',
+      description: 'Third book',
+    });
+
+    // Create reactions for each entity with count property
+    // Entity 1 reactions
+    await client.post('/entity-reactions').send({
+      _entityId: entity1Id,
+      _name: 'Like Reaction',
+      _kind: 'like',
+      _ownerUsers: ['user-1'],
+      count: 5,
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity1Id,
+      _name: 'Love Reaction',
+      _kind: 'love',
+      _ownerUsers: ['user-2'],
+      count: 10,
+    });
+
+    // Entity 2 reactions
+    await client.post('/entity-reactions').send({
+      _entityId: entity2Id,
+      _name: 'Like Reaction',
+      _kind: 'like',
+      _ownerUsers: ['user-1'],
+      count: 5,
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity2Id,
+      _name: 'Love Reaction',
+      _kind: 'love',
+      _ownerUsers: ['user-2'],
+      count: 15,
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity2Id,
+      _name: 'Wow Reaction',
+      _kind: 'wow',
+      _ownerUsers: ['user-3'],
+      count: 20,
+    });
+
+    // Entity 3 reactions
+    await client.post('/entity-reactions').send({
+      _entityId: entity3Id,
+      _name: 'Like Reaction',
+      _kind: 'like',
+      _ownerUsers: ['user-1'],
+      count: 5,
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity3Id,
+      _name: 'Love Reaction',
+      _kind: 'love',
+      _ownerUsers: ['user-2'],
+      count: 10,
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity3Id,
+      _name: 'Wow Reaction',
+      _kind: 'wow',
+      _ownerUsers: ['user-3'],
+      count: 15,
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity3Id,
+      _name: 'Haha Reaction',
+      _kind: 'haha',
+      _ownerUsers: ['user-4'],
+      count: 20,
+    });
+
+    // Get entities with included reactions filtered by count > 10
+    const response = await client
+      .get('/entities')
+      .query(
+        'filter[include][0][relation]=_reactions&filter[include][0][scope][where][count][gt]=10&filter[include][0][scope][where][count][type]=number',
+      )
+      .expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(3);
+
+    // Verify each entity has its reactions included and filtered
+    const entity1 = response.body.find((e: any) => e._id === entity1Id);
+    expect(entity1).to.not.be.undefined();
+    expect(entity1).to.not.have.property('_reactions');
+
+    const entity2 = response.body.find((e: any) => e._id === entity2Id);
+    expect(entity2).to.not.be.undefined();
+    expect(entity2._reactions).to.be.Array().and.have.length(2);
+    expect(entity2._reactions.map((r: any) => r.count)).to.containDeep([
+      15, 20,
+    ]);
+
+    const entity3 = response.body.find((e: any) => e._id === entity3Id);
+    expect(entity3).to.not.be.undefined();
+    expect(entity3._reactions).to.be.Array().and.have.length(2);
+    expect(entity3._reactions.map((r: any) => r.count)).to.containDeep([
+      15, 20,
+    ]);
+  });
+
+  it('include: includes reactions in entity response with scope filtering by date property', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book',
+      entity_reaction_kinds: 'like,love,wow,haha',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // Create 3 test entities
+    const entity1Id = await createTestEntity(client, {
+      _name: 'Book 1',
+      _kind: 'book',
+      description: 'First book',
+    });
+
+    const entity2Id = await createTestEntity(client, {
+      _name: 'Book 2',
+      _kind: 'book',
+      description: 'Second book',
+    });
+
+    const entity3Id = await createTestEntity(client, {
+      _name: 'Book 3',
+      _kind: 'book',
+      description: 'Third book',
+    });
+
+    // Create reactions for each entity with reactionDate property
+    // Entity 1 reactions
+    await client.post('/entity-reactions').send({
+      _entityId: entity1Id,
+      _name: 'Like Reaction',
+      _kind: 'like',
+      _ownerUsers: ['user-1'],
+      reactionDate: yesterday.toISOString(),
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity1Id,
+      _name: 'Love Reaction',
+      _kind: 'love',
+      _ownerUsers: ['user-2'],
+      reactionDate: now.toISOString(),
+    });
+
+    // Entity 2 reactions
+    await client.post('/entity-reactions').send({
+      _entityId: entity2Id,
+      _name: 'Like Reaction',
+      _kind: 'like',
+      _ownerUsers: ['user-1'],
+      reactionDate: yesterday.toISOString(),
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity2Id,
+      _name: 'Love Reaction',
+      _kind: 'love',
+      _ownerUsers: ['user-2'],
+      reactionDate: now.toISOString(),
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity2Id,
+      _name: 'Wow Reaction',
+      _kind: 'wow',
+      _ownerUsers: ['user-3'],
+      reactionDate: tomorrow.toISOString(),
+    });
+
+    // Entity 3 reactions
+    await client.post('/entity-reactions').send({
+      _entityId: entity3Id,
+      _name: 'Like Reaction',
+      _kind: 'like',
+      _ownerUsers: ['user-1'],
+      reactionDate: yesterday.toISOString(),
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity3Id,
+      _name: 'Love Reaction',
+      _kind: 'love',
+      _ownerUsers: ['user-2'],
+      reactionDate: now.toISOString(),
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity3Id,
+      _name: 'Wow Reaction',
+      _kind: 'wow',
+      _ownerUsers: ['user-3'],
+      reactionDate: tomorrow.toISOString(),
+    });
+
+    await client.post('/entity-reactions').send({
+      _entityId: entity3Id,
+      _name: 'Haha Reaction',
+      _kind: 'haha',
+      _ownerUsers: ['user-4'],
+      reactionDate: tomorrow.toISOString(),
+    });
+
+    // Get entities with included reactions filtered by reactionDate > now
+    const response = await client
+      .get('/entities')
+      .query(
+        `filter[include][0][relation]=_reactions&filter[include][0][scope][where][reactionDate][gt]=${encodeURIComponent(now.toISOString())}`,
+      )
+      .expect(200);
+
+    expect(response.body).to.be.Array().and.have.length(3);
+
+    // Verify each entity has its reactions included and filtered
+    const entity1 = response.body.find((e: any) => e._id === entity1Id);
+    expect(entity1).to.not.be.undefined();
+    expect(entity1).to.not.have.property('_reactions');
+
+    const entity2 = response.body.find((e: any) => e._id === entity2Id);
+    expect(entity2).to.not.be.undefined();
+    expect(entity2._reactions).to.be.Array().and.have.length(1);
+    expect(entity2._reactions[0]._name).to.equal('Wow Reaction');
+    expect(entity2._reactions[0].reactionDate).to.equal(tomorrow.toISOString());
+
+    const entity3 = response.body.find((e: any) => e._id === entity3Id);
+    expect(entity3).to.not.be.undefined();
+    expect(entity3._reactions).to.be.Array().and.have.length(2);
+    expect(entity3._reactions.map((r: any) => r._name)).to.containDeep([
+      'Wow Reaction',
+      'Haha Reaction',
+    ]);
+    expect(entity3._reactions.map((r: any) => r.reactionDate)).to.containDeep([
+      tomorrow.toISOString(),
+      tomorrow.toISOString(),
+    ]);
+  });
 });
