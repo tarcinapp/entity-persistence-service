@@ -21,6 +21,7 @@ import {
   ResponseLimitConfigurationReader,
 } from '../extensions';
 import { EntityRepository } from './entity.repository';
+import { CollectionConfigHelper } from '../extensions/config-helpers/collection-config-helper';
 import {
   LookupHelper,
   LookupBindings,
@@ -123,14 +124,11 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     }
 
     // MongoDB pipeline approach
-    // Get entity repository to get collection name
-    const entityRepo = await this.entityRepositoryGetter();
+    // Get collection names from configuration
     const entityCollectionName =
-      entityRepo.modelClass.definition.settings?.mongodb?.collection;
-
-    if (!entityCollectionName) {
-      throw new Error('Entity collection name not configured');
-    }
+      CollectionConfigHelper.getInstance().getEntityCollectionName();
+    const reactionCollectionName =
+      CollectionConfigHelper.getInstance().getEntityReactionsCollectionName();
 
     // Build pipeline using helper
     const pipeline = this.mongoPipelineHelper.buildEntityReactionPipeline(
@@ -143,7 +141,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
 
     // Execute pipeline
     const collection = this.dataSource.connector?.collection(
-      this.modelClass.definition.settings?.mongodb?.collection,
+      reactionCollectionName,
     );
 
     if (!collection) {
@@ -554,14 +552,11 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     const filter = where ? { where } : undefined;
     const entityFilter = entityWhere ? { where: entityWhere } : undefined;
 
-    // Get entity repository to get collection name
-    const entityRepo = await this.entityRepositoryGetter();
+    // Get collection names from configuration
     const entityCollectionName =
-      entityRepo.modelClass.definition.settings?.mongodb?.collection;
-
-    if (!entityCollectionName) {
-      throw new Error('Entity collection name not configured');
-    }
+      CollectionConfigHelper.getInstance().getEntityCollectionName();
+    const reactionCollectionName =
+      CollectionConfigHelper.getInstance().getEntityReactionsCollectionName();
 
     // Build pipeline to get the IDs of documents to update
     const pipeline = this.mongoPipelineHelper.buildEntityReactionPipeline(
@@ -580,7 +575,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
 
     // Execute pipeline to get IDs
     const collection = this.dataSource.connector?.collection(
-      this.modelClass.definition.settings?.mongodb?.collection,
+      reactionCollectionName,
     );
 
     if (!collection) {
@@ -715,14 +710,11 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
       const filter = where ? { where } : undefined;
       const entityFilter = entityWhere ? { where: entityWhere } : undefined;
 
-      // Get entity repository to get collection name
-      const entityRepo = await this.entityRepositoryGetter();
+      // Get collection names from configuration
       const entityCollectionName =
-        entityRepo.modelClass.definition.settings?.mongodb?.collection;
-
-      if (!entityCollectionName) {
-        throw new Error('Entity collection name not configured');
-      }
+        CollectionConfigHelper.getInstance().getEntityCollectionName();
+      const reactionCollectionName =
+        CollectionConfigHelper.getInstance().getEntityReactionsCollectionName();
 
       // Build pipeline using helper
       const pipeline = this.mongoPipelineHelper.buildEntityReactionPipeline(
@@ -737,7 +729,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
 
       // Execute pipeline
       const collection = this.dataSource.connector?.collection(
-        this.modelClass.definition.settings?.mongodb?.collection,
+        reactionCollectionName,
       );
 
       if (!collection) {
@@ -761,14 +753,11 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     filter?: FilterExcludingWhere<EntityReaction>,
   ): Promise<EntityReaction> {
     try {
-      // Get entity repository to get collection name
-      const entityRepo = await this.entityRepositoryGetter();
+      // Get collection names from configuration
       const entityCollectionName =
-        entityRepo.modelClass.definition.settings?.mongodb?.collection;
-
-      if (!entityCollectionName) {
-        throw new Error('Entity collection name not configured');
-      }
+        CollectionConfigHelper.getInstance().getEntityCollectionName();
+      const reactionCollectionName =
+        CollectionConfigHelper.getInstance().getEntityReactionsCollectionName();
 
       // Build pipeline using helper
       const pipeline = this.mongoPipelineHelper.buildEntityReactionPipeline(
@@ -782,7 +771,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
 
       // Execute pipeline
       const collection = this.dataSource.connector?.collection(
-        this.modelClass.definition.settings?.mongodb?.collection,
+        reactionCollectionName,
       );
 
       if (!collection) {

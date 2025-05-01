@@ -28,6 +28,7 @@ import {
 } from '../models';
 import { EntityRepository } from './entity.repository';
 import { ListRepository } from './list.repository';
+import { CollectionConfigHelper } from '../extensions/config-helpers/collection-config-helper';
 import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
 import { LoggingService } from '../services/logging.service';
 import { RecordLimitCheckerBindings } from '../services/record-limit-checker.bindings';
@@ -80,29 +81,13 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     entityFilter?: Filter<ListToEntityRelation>,
     listFilter?: Filter<ListToEntityRelation>,
   ): Promise<(ListToEntityRelation & ListEntityRelationRelations)[]> {
-    // Get collection names from repositories
-    const [listRepo, entityRepo] = await Promise.all([
-      this.listRepositoryGetter(),
-      this.entityRepositoryGetter(),
-    ]);
-
-    // Get collection names from mongodb settings
+    // Get collection names from configuration
     const listCollectionName =
-      listRepo.modelClass.definition.settings?.mongodb?.collection;
+      CollectionConfigHelper.getInstance().getListCollectionName();
     const entityCollectionName =
-      entityRepo.modelClass.definition.settings?.mongodb?.collection;
+      CollectionConfigHelper.getInstance().getEntityCollectionName();
     const relationCollectionName =
-      this.modelClass.definition.settings?.mongodb?.collection;
-
-    if (
-      !listCollectionName ||
-      !entityCollectionName ||
-      !relationCollectionName
-    ) {
-      throw new Error(
-        'Required MongoDB collection names not configured in model settings',
-      );
-    }
+      CollectionConfigHelper.getInstance().getListEntityRelationCollectionName();
 
     // Get the MongoDB collection for executing the aggregation
     const relationCollection = this.dataSource.connector?.collection(
@@ -159,29 +144,13 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     const listFilter = listWhere ? { where: listWhere } : undefined;
     const entityFilter = entityWhere ? { where: entityWhere } : undefined;
 
-    // Get collection names from repositories
-    const [listRepo, entityRepo] = await Promise.all([
-      this.listRepositoryGetter(),
-      this.entityRepositoryGetter(),
-    ]);
-
-    // Get collection names from mongodb settings
+    // Get collection names from configuration
     const listCollectionName =
-      listRepo.modelClass.definition.settings?.mongodb?.collection;
+      CollectionConfigHelper.getInstance().getListCollectionName();
     const entityCollectionName =
-      entityRepo.modelClass.definition.settings?.mongodb?.collection;
+      CollectionConfigHelper.getInstance().getEntityCollectionName();
     const relationCollectionName =
-      this.modelClass.definition.settings?.mongodb?.collection;
-
-    if (
-      !listCollectionName ||
-      !entityCollectionName ||
-      !relationCollectionName
-    ) {
-      throw new Error(
-        'Required MongoDB collection names not configured in model settings',
-      );
-    }
+      CollectionConfigHelper.getInstance().getListEntityRelationCollectionName();
 
     // Get the MongoDB collection for executing the aggregation
     const relationCollection = this.dataSource.connector?.collection(
