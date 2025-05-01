@@ -1,14 +1,14 @@
 import { model, property } from '@loopback/repository';
 import { ReactionsCommonBase } from './base-models/reactions-common-base.model';
 import { GenericEntityWithRelations } from './entity.model';
-import { CollectionConfig } from '../extensions/config-helpers/collection-config';
+import { CollectionConfigHelper } from '../extensions/config-helpers/collection-config-helper';
 
 @model({
   settings: {
     strict: false,
     mongodb: {
       collection:
-        CollectionConfig.getInstance().getEntityReactionsCollectionName(),
+        CollectionConfigHelper.getInstance().getEntityReactionsCollectionName(),
     },
   },
 })

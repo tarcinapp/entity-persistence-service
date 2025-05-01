@@ -1,17 +1,17 @@
-export class CollectionConfig {
-  private static instance: CollectionConfig;
+export class CollectionConfigHelper {
+  private static instance: CollectionConfigHelper;
   private collectionNames: { [key: string]: string } = {};
 
   private constructor() {
     this.initializeCollectionNames();
   }
 
-  public static getInstance(): CollectionConfig {
-    if (!CollectionConfig.instance) {
-      CollectionConfig.instance = new CollectionConfig();
+  public static getInstance(): CollectionConfigHelper {
+    if (!CollectionConfigHelper.instance) {
+      CollectionConfigHelper.instance = new CollectionConfigHelper();
     }
 
-    return CollectionConfig.instance;
+    return CollectionConfigHelper.instance;
   }
 
   private initializeCollectionNames(): void {

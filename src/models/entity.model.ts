@@ -1,13 +1,14 @@
 import { hasMany, model, property } from '@loopback/repository';
 import { ListEntityCommonBase } from './base-models/list-entity-common-base.model';
 import { EntityReaction } from './entity-reactions.model';
-import { CollectionConfig } from '../extensions/config-helpers/collection-config';
+import { CollectionConfigHelper } from '../extensions/config-helpers/collection-config-helper';
 
 @model({
   settings: {
     strict: false,
     mongodb: {
-      collection: CollectionConfig.getInstance().getEntityCollectionName(),
+      collection:
+        CollectionConfigHelper.getInstance().getEntityCollectionName(),
     },
   },
 })

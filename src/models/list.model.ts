@@ -3,13 +3,13 @@ import { ListEntityCommonBase } from './base-models/list-entity-common-base.mode
 import { GenericEntity, GenericEntityWithRelations } from './entity.model';
 import { ListToEntityRelation } from './list-entity-relation.model';
 import { ListReaction } from './list-reactions.model';
-import { CollectionConfig } from '../extensions/config-helpers/collection-config';
+import { CollectionConfigHelper } from '../extensions/config-helpers/collection-config-helper';
 
 @model({
   settings: {
     strict: false,
     mongodb: {
-      collection: CollectionConfig.getInstance().getListCollectionName(),
+      collection: CollectionConfigHelper.getInstance().getListCollectionName(),
     },
   },
 })
