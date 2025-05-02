@@ -2619,6 +2619,7 @@ describe('GET /entities', () => {
       _name: 'Like Reaction',
       _kind: 'like',
       _ownerUsers: ['user-1'],
+      _visibility: 'public',
       _validFromDateTime: pastDate.toISOString(),
       _validUntilDateTime: null, // Never expires
     });
@@ -2628,6 +2629,7 @@ describe('GET /entities', () => {
       _name: 'Love Reaction',
       _kind: 'love',
       _ownerUsers: ['user-2'],
+      _visibility: 'private',
       _validFromDateTime: pastDate.toISOString(),
       _validUntilDateTime: pastDate.toISOString(), // Expired
     });
@@ -2638,6 +2640,7 @@ describe('GET /entities', () => {
       _name: 'Like Reaction',
       _kind: 'like',
       _ownerUsers: ['user-1'],
+      _visibility: 'public',
       _validFromDateTime: pastDate.toISOString(),
       _validUntilDateTime: futureDate.toISOString(), // Active
     });
@@ -2647,6 +2650,7 @@ describe('GET /entities', () => {
       _name: 'Love Reaction',
       _kind: 'love',
       _ownerUsers: ['user-2'],
+      _visibility: 'private',
       _validFromDateTime: futureDate.toISOString(), // Not started yet
       _validUntilDateTime: null,
     });
@@ -2656,6 +2660,7 @@ describe('GET /entities', () => {
       _name: 'Wow Reaction',
       _kind: 'wow',
       _ownerUsers: ['user-3'],
+      _visibility: 'public',
       _validFromDateTime: pastDate.toISOString(),
       _validUntilDateTime: null, // Never expires
     });
@@ -2666,6 +2671,7 @@ describe('GET /entities', () => {
       _name: 'Like Reaction',
       _kind: 'like',
       _ownerUsers: ['user-1'],
+      _visibility: 'private',
       _validFromDateTime: pastDate.toISOString(),
       _validUntilDateTime: pastDate.toISOString(), // Expired
     });
@@ -2675,6 +2681,7 @@ describe('GET /entities', () => {
       _name: 'Love Reaction',
       _kind: 'love',
       _ownerUsers: ['user-2'],
+      _visibility: 'public',
       _validFromDateTime: pastDate.toISOString(),
       _validUntilDateTime: futureDate.toISOString(), // Active
     });
@@ -2684,6 +2691,7 @@ describe('GET /entities', () => {
       _name: 'Wow Reaction',
       _kind: 'wow',
       _ownerUsers: ['user-3'],
+      _visibility: 'public',
       _validFromDateTime: pastDate.toISOString(),
       _validUntilDateTime: null, // Never expires
     });
@@ -2693,6 +2701,7 @@ describe('GET /entities', () => {
       _name: 'Haha Reaction',
       _kind: 'haha',
       _ownerUsers: ['user-4'],
+      _visibility: 'private',
       _validFromDateTime: futureDate.toISOString(), // Not started yet
       _validUntilDateTime: null,
     });
