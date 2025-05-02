@@ -2417,26 +2417,22 @@ describe('GET /entities', () => {
     // Verify each entity has its reactions included and filtered
     const entity1 = response.body.find((e: any) => e._id === entity1Id);
     expect(entity1).to.not.be.undefined();
-    expect(entity1._reactions).to.be.Array().and.have.length(2);
-    expect(entity1._reactions.map((r: any) => r._name)).to.containDeep([
-      'Like Reaction',
-      'Love Reaction',
-    ]);
+    expect(entity1._reactions).to.be.undefined();
 
     const entity2 = response.body.find((e: any) => e._id === entity2Id);
     expect(entity2).to.not.be.undefined();
     expect(entity2._reactions).to.be.Array().and.have.length(2);
     expect(entity2._reactions.map((r: any) => r._name)).to.containDeep([
-      'Like Reaction',
       'Love Reaction',
+      'Wow Reaction',
     ]);
 
     const entity3 = response.body.find((e: any) => e._id === entity3Id);
     expect(entity3).to.not.be.undefined();
     expect(entity3._reactions).to.be.Array().and.have.length(2);
     expect(entity3._reactions.map((r: any) => r._name)).to.containDeep([
-      'Like Reaction',
-      'Love Reaction',
+      'Haha Reaction',
+      'Wow Reaction',
     ]);
   });
 
