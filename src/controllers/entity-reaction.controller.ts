@@ -17,7 +17,6 @@ import {
   put,
   del,
   requestBody,
-  getJsonSchema,
 } from '@loopback/rest';
 import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
 import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
@@ -50,11 +49,7 @@ export class EntityReactionController {
         description: 'Entity reaction limit is exceeded',
         content: {
           'application/json': {
-            schema: {
-              properties: {
-                error: getJsonSchema(HttpErrorResponse),
-              },
-            },
+            schema: getModelSchemaRef(HttpErrorResponse),
           },
         },
       },
@@ -62,11 +57,7 @@ export class EntityReactionController {
         description: 'Entity reaction already exists.',
         content: {
           'application/json': {
-            schema: {
-              properties: {
-                error: getJsonSchema(HttpErrorResponse),
-              },
-            },
+            schema: getModelSchemaRef(HttpErrorResponse),
           },
         },
       },
@@ -74,11 +65,7 @@ export class EntityReactionController {
         description: 'Unprocessable entity',
         content: {
           'application/json': {
-            schema: {
-              properties: {
-                error: getJsonSchema(HttpErrorResponse),
-              },
-            },
+            schema: getModelSchemaRef(HttpErrorResponse),
           },
         },
       },
@@ -277,11 +264,7 @@ export class EntityReactionController {
         description: 'Entity reaction not found',
         content: {
           'application/json': {
-            schema: {
-              properties: {
-                error: getJsonSchema(HttpErrorResponse),
-              },
-            },
+            schema: getModelSchemaRef(HttpErrorResponse),
           },
         },
       },
@@ -306,11 +289,7 @@ export class EntityReactionController {
         description: 'Entity reaction not found',
         content: {
           'application/json': {
-            schema: {
-              properties: {
-                error: getJsonSchema(HttpErrorResponse),
-              },
-            },
+            schema: getModelSchemaRef(HttpErrorResponse),
           },
         },
       },
@@ -318,11 +297,7 @@ export class EntityReactionController {
         description: 'Unprocessable entity',
         content: {
           'application/json': {
-            schema: {
-              properties: {
-                error: getJsonSchema(HttpErrorResponse),
-              },
-            },
+            schema: getModelSchemaRef(HttpErrorResponse),
           },
         },
       },
@@ -357,11 +332,7 @@ export class EntityReactionController {
         description: 'Entity reaction not found',
         content: {
           'application/json': {
-            schema: {
-              properties: {
-                error: getJsonSchema(HttpErrorResponse),
-              },
-            },
+            schema: getModelSchemaRef(HttpErrorResponse),
           },
         },
       },
@@ -369,11 +340,7 @@ export class EntityReactionController {
         description: 'Unprocessable entity',
         content: {
           'application/json': {
-            schema: {
-              properties: {
-                error: getJsonSchema(HttpErrorResponse),
-              },
-            },
+            schema: getModelSchemaRef(HttpErrorResponse),
           },
         },
       },
@@ -406,11 +373,7 @@ export class EntityReactionController {
         description: 'Entity reaction not found',
         content: {
           'application/json': {
-            schema: {
-              properties: {
-                error: getJsonSchema(HttpErrorResponse),
-              },
-            },
+            schema: getModelSchemaRef(HttpErrorResponse),
           },
         },
       },
@@ -439,11 +402,7 @@ export class EntityReactionController {
         description: 'Entity reaction not found',
         content: {
           'application/json': {
-            schema: {
-              properties: {
-                error: getJsonSchema(HttpErrorResponse),
-              },
-            },
+            schema: getModelSchemaRef(HttpErrorResponse),
           },
         },
       },
@@ -500,11 +459,7 @@ export class EntityReactionController {
         description: 'Entity reaction not found',
         content: {
           'application/json': {
-            schema: {
-              properties: {
-                error: getJsonSchema(HttpErrorResponse),
-              },
-            },
+            schema: getModelSchemaRef(HttpErrorResponse),
           },
         },
       },
@@ -554,11 +509,7 @@ export class EntityReactionController {
         description: 'Entity reaction limit is exceeded',
         content: {
           'application/json': {
-            schema: {
-              properties: {
-                error: getJsonSchema(HttpErrorResponse),
-              },
-            },
+            schema: getModelSchemaRef(HttpErrorResponse),
           },
         },
       },
@@ -566,11 +517,7 @@ export class EntityReactionController {
         description: 'Entity reaction already exists.',
         content: {
           'application/json': {
-            schema: {
-              properties: {
-                error: getJsonSchema(HttpErrorResponse),
-              },
-            },
+            schema: getModelSchemaRef(HttpErrorResponse),
           },
         },
       },
@@ -578,11 +525,7 @@ export class EntityReactionController {
         description: 'Unprocessable entity',
         content: {
           'application/json': {
-            schema: {
-              properties: {
-                error: getJsonSchema(HttpErrorResponse),
-              },
-            },
+            schema: getModelSchemaRef(HttpErrorResponse),
           },
         },
       },
@@ -590,11 +533,7 @@ export class EntityReactionController {
         description: 'Parent entity reaction not found',
         content: {
           'application/json': {
-            schema: {
-              properties: {
-                error: getJsonSchema(HttpErrorResponse),
-              },
-            },
+            schema: getModelSchemaRef(HttpErrorResponse),
           },
         },
       },
