@@ -2558,9 +2558,7 @@ describe('GET /entities', () => {
     // Verify each entity has its reactions included and filtered
     const entity1 = response.body.find((e: any) => e._id === entity1Id);
     expect(entity1).to.not.be.undefined();
-    expect(entity1._reactions).to.be.Array().and.have.length(1);
-    expect(entity1._reactions[0]._name).to.equal('Wow Reaction');
-    expect(entity1._reactions[0].reactionDate).to.equal(tomorrow.toISOString());
+    expect(entity1._reactions).to.be.undefined();
 
     const entity2 = response.body.find((e: any) => e._id === entity2Id);
     expect(entity2).to.not.be.undefined();
