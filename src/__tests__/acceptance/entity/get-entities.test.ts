@@ -2154,20 +2154,29 @@ describe('GET /entities', () => {
     // Verify each entity has its reactions included
     const entity1 = response.body.find((e: any) => e._id === entity1Id);
     expect(entity1).to.not.be.undefined();
-    expect(entity1).to.not.have.property('_reactions');
+    expect(entity1._reactions).to.be.Array().and.have.length(2);
+    expect(entity1._reactions.map((r: any) => r._name)).to.containDeep([
+      'Like',
+      'Love',
+    ]);
 
     const entity2 = response.body.find((e: any) => e._id === entity2Id);
     expect(entity2).to.not.be.undefined();
-    expect(entity2._reactions).to.be.Array().and.have.length(2);
-    expect(entity2._reactions.map((r: any) => r.count)).to.containDeep([
-      15, 20,
+    expect(entity2._reactions).to.be.Array().and.have.length(3);
+    expect(entity2._reactions.map((r: any) => r._name)).to.containDeep([
+      'Like',
+      'Love',
+      'Wow',
     ]);
 
     const entity3 = response.body.find((e: any) => e._id === entity3Id);
     expect(entity3).to.not.be.undefined();
-    expect(entity3._reactions).to.be.Array().and.have.length(2);
-    expect(entity3._reactions.map((r: any) => r.count)).to.containDeep([
-      15, 20,
+    expect(entity3._reactions).to.be.Array().and.have.length(4);
+    expect(entity3._reactions.map((r: any) => r._name)).to.containDeep([
+      'Like',
+      'Love',
+      'Wow',
+      'Haha',
     ]);
   });
 
@@ -2411,20 +2420,26 @@ describe('GET /entities', () => {
     // Verify each entity has its reactions included and filtered
     const entity1 = response.body.find((e: any) => e._id === entity1Id);
     expect(entity1).to.not.be.undefined();
-    expect(entity1).to.not.have.property('_reactions');
+    expect(entity1._reactions).to.be.Array().and.have.length(2);
+    expect(entity1._reactions.map((r: any) => r._name)).to.containDeep([
+      'Like Reaction',
+      'Love Reaction',
+    ]);
 
     const entity2 = response.body.find((e: any) => e._id === entity2Id);
     expect(entity2).to.not.be.undefined();
     expect(entity2._reactions).to.be.Array().and.have.length(2);
-    expect(entity2._reactions.map((r: any) => r.count)).to.containDeep([
-      15, 20,
+    expect(entity2._reactions.map((r: any) => r._name)).to.containDeep([
+      'Like Reaction',
+      'Love Reaction',
     ]);
 
     const entity3 = response.body.find((e: any) => e._id === entity3Id);
     expect(entity3).to.not.be.undefined();
     expect(entity3._reactions).to.be.Array().and.have.length(2);
-    expect(entity3._reactions.map((r: any) => r.count)).to.containDeep([
-      15, 20,
+    expect(entity3._reactions.map((r: any) => r._name)).to.containDeep([
+      'Like Reaction',
+      'Love Reaction',
     ]);
   });
 
@@ -2550,7 +2565,9 @@ describe('GET /entities', () => {
     // Verify each entity has its reactions included and filtered
     const entity1 = response.body.find((e: any) => e._id === entity1Id);
     expect(entity1).to.not.be.undefined();
-    expect(entity1).to.not.have.property('_reactions');
+    expect(entity1._reactions).to.be.Array().and.have.length(1);
+    expect(entity1._reactions[0]._name).to.equal('Wow Reaction');
+    expect(entity1._reactions[0].reactionDate).to.equal(tomorrow.toISOString());
 
     const entity2 = response.body.find((e: any) => e._id === entity2Id);
     expect(entity2).to.not.be.undefined();
