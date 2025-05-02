@@ -65,6 +65,10 @@ export interface Condition {
   audience?: UserAndGroupInfo;
   /** Selects data viewable by specific users/groups */
   viewers?: UserAndGroupInfo;
+  /** Selects root-level records (records with no parents) */
+  roots?: string;
+  /** Selects records that expired within the last 30 days */
+  expired30?: string;
 }
 
 /**
@@ -300,6 +304,14 @@ class SetToFilterTransformer {
 
     if (setName === 'audience' && _.isObject(setValue)) {
       return this.produceWhereClauseForAudience(setValue);
+    }
+
+    if (setName === 'roots') {
+      return this.produceWhereClauseForRoots();
+    }
+
+    if (setName === 'expired30') {
+      return this.produceWhereClauseForExpired30();
     }
 
     return {};
@@ -647,5 +659,31 @@ class SetToFilterTransformer {
     ];
 
     return viewerGroupsClause;
+  }
+
+  produceWhereClauseForRoots(): Where<AnyObject> {
+    return {
+      _parentsCount: 0,
+    };
+  }
+
+  produceWhereClauseForExpired30(): Where<AnyObject> {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    return {
+      and: [
+        {
+          _validUntilDateTime: {
+            neq: null,
+          },
+        },
+        {
+          _validUntilDateTime: {
+            between: [thirtyDaysAgo.toISOString(), now.toISOString()],
+          },
+        },
+      ],
+    };
   }
 }
