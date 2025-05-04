@@ -1,12 +1,50 @@
-# Overview
+# Entity Persistence Service
+🚨 **Entity Persistence Service** is a REST-based backend microservice and a core part of Tarcinapp. It’s built around a simple but powerful data model of *entities*, *lists*, and *reactions*, each treated as JSON resources stored in MongoDB.
 
-The **Entity Persistence Service** is a flexible REST-based backend powered by the Loopback 4 framework. It utilizes schemaless MongoDB storage and offers adaptable data modeling, making it ideal for fast, secure, efficient REST API development.
+Depending on the use case, an entity can represent a user profile, a configuration object, a product, a blog post, a doctor, a document, a campaign, or even an IoT device. Lists can be used for favorites, playlists, wishlists, shopping carts, collections, watchlists, or saved searches. Reactions capture interactions such as likes, ratings, flags, reviews, bookmarks, follow actions, or measurement signals from IoT devices. Imagination is the limit in the samples.
 
-Loopback 4 addresses various aspects of REST API development, yet many real-use case considerations remain unaddressed. These include but are not limited to authentication, granular authorization (RBAC), rate limiting, field masking, distributed locking, and more.
+Each entity, list, or reaction, for every JSON record is decorated with various properties name starting with underscore like createdDateTime, createdBy, lastUpdatedDateTime, lastUpdatedBy, version, and 10+ more. Application can configure a lot of aspects when managing data in these models:
+Application enables advanced mechanisms to query data in each record, pagination, and limits
+Can configure:
+Record limits
+Response limits
+Uniqueness
+Version property 
+Ownership Viewership properties
+Idempotency
+default visibility
+soft deletion (validUntil)
+approval (validFrom)
 
-The Entity Persistence Service serves as a fundamental component within the **Tarcinapp Suite**, which encompasses a gateway and additional layers. Collectively, the Tarcinapp Suite effectively addresses these real-use case challenges, reducing the time to value for REST-based applications, and making development more efficient and productive.
 
-## What is Tarcinapp Suite?
+
+This service manages certain metadata automatically—such as resource ownership, viewership, creation and update timestamps, and visibility—referred to as **managed fields**. These fields enable the surrounding gateway layer to enforce ownership, viewership, and role-based access control (RBAC) policies effectively.
+
+**Key features include:**
+
+🌟 **Advanced Data Querying :** Advanced querying capabilities, pagination, short query aliases, field selection and response size controls for optimized data access.
+
+🌟 **Uniqueness & Idempotency:** Configurable constraints to ensure record uniqueness and deduplication across defined scopes.
+
+🌟 **Creation Limits:** Support for enforcing the maximum number of records per user, group, or global scope.
+
+
+Although the service is generic by design, it is extensible and can be customized through JSON schema validation, role-based constraints, and integrations with higher-level gateway logic. When used together with other Tarcinapp components (such as the entity-persistence-gateway and entity-persistence-gateway-policies engine), it supports secure, scalable, and maintainable backend solutions.
+
+## What is Tarcinapp Post-Login Solution?
+
+Suppose you want to build a system to manage support tickets of your application.
+
+With Tarcinapp you can effortlessly handle support tickets using the full suite of REST operations—GET, POST, PUT, PATCH, and DELETE—alongside hierarchical record-management features.
+
+<p align="left">
+  <img src="./doc/img/support-tickets-api.png" alt="Tarcinapp Suite Overview">
+</p>
+
+
+When you POST a support ticket data, the service automatically adds managed fields (such as ownership, timestamps, and visibility). Your stored record will include both your original data and these additional fields, making it ready for secure and controlled access.
+
+
 
 The Tarcinapp suite is a comprehensive and flexible application framework, harmoniously blending a suite of interconnected components designed to deliver a seamless and secure microservices architecture. It also provides the flexibility for users to leverage it as an upstream project for their own REST API-based backend implementations, allowing for easy adaptation to their specific requirements and use cases.
 
@@ -32,12 +70,14 @@ The service provides several endpoints for managing your data:
 
 * `/entities`: Handle your primary data models with this endpoint, facilitating CRUD (Create, Read, Update, Delete) operations.
 * `/lists`: Create, organize, and manage lists, enabling you to associate related data effortlessly.
+* `/list-entity-relations`
 * `/lists/{listId}/entities`: Create, organize, and manage lists, enabling you to associate related data effortlessly.
+* `/entity-reactions`
+* `/list-reactions`
 * `/entities/{id}/lists`: Query lists associated with a specific entity.
 * `/entities/{id}/reactions`: Capture user reactions, comments, likes, and more on specific entities.
-* `/lists/{id}/list-reactions`: Manage reactions, comments, likes, and other interactions associated with your lists.
-* `/entities/{id}/tags`: Add, modify, or remove tags associated with specific entities for efficient data categorization.
-* `/lists/{id}/tags`: Employ tags to categorize and organize your lists efficiently, ensuring effective data management.
+* `/lists/{id}/reactions`: Manage reactions, comments, likes, and other interactions associated with your lists.
+
 
 ## Data Model
 
