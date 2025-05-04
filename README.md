@@ -72,6 +72,10 @@ The service provides several endpoints for managing your data:
 * `/lists`: Create, organize, and manage lists, enabling you to associate related data effortlessly.
 * `/list-entity-relations`
 * `/lists/{listId}/entities`: Create, organize, and manage lists, enabling you to associate related data effortlessly.
+* `/entities/{id}/parents`
+* `/entities/{id}/children`
+* `/lists/{id}/parents`
+* `/lists/{id}/children`
 * `/entity-reactions`
 * `/list-reactions`
 * `/entities/{id}/lists`: Query lists associated with a specific entity.
