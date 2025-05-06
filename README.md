@@ -1,37 +1,30 @@
 # Entity Persistence Service
-🚨 **Entity Persistence Service** is a REST-based backend microservice and a core part of Tarcinapp. It’s built around a simple but powerful data model of *entities*, *lists*, and *reactions*, each treated as JSON resources stored in MongoDB.
+🚨 **Entity Persistence Service** is a REST-based backend microservice and a core component of Tarcinapp Suite ([What is Tarcinapp?](#what-is-tarcinapp-post-login-solution)). It’s built around a simple yet powerful data model consisting of entities, lists, and reactions — all stored as JSON documents in MongoDB.
 
-Depending on the use case, an entity can represent a user profile, a configuration object, a product, a blog post, a doctor, a document, a campaign, or even an IoT device. Lists can be used for favorites, playlists, wishlists, shopping carts, collections, watchlists, or saved searches. Reactions capture interactions such as likes, ratings, flags, reviews, bookmarks, follow actions, or measurement signals from IoT devices. Imagination is the limit in the samples.
+Depending on the use case, an entity can represent a user profile, configuration object, product, blog post, document, campaign, doctor, or even an IoT device. Lists serve flexible purposes like wishlists, playlists, shopping carts, saved searches, or collections. Reactions model can capture interactions such as likes, ratings, reviews, flags, bookmarks, follows, or IoT measurement signals.
 
-Each entity, list, or reaction, for every JSON record is decorated with various properties name starting with underscore like createdDateTime, createdBy, lastUpdatedDateTime, lastUpdatedBy, version, and 10+ more. Application can configure a lot of aspects when managing data in these models:
-Application enables advanced mechanisms to query data in each record, pagination, and limits
-Can configure:
-Record limits
-Response limits
-Uniqueness
-Version property 
-Ownership Viewership properties
-Idempotency
-default visibility
-soft deletion (validUntil)
-approval (validFrom)
+<p align="left">
+  <img src="./doc/img/models.png" alt="Tarcinapp Data Model">
+</p>
 
+Each record (entity, list, or reaction) is automatically enriched with a consistent set of system-managed fields (e.g. `_createdBy`, `_createdDateTime`, `_lastUpdatedBy`, `_lastUpdatedDateTime`, `_version`, etc.). These fields support traceability, access control, and automation.
 
+Features:
 
-This service manages certain metadata automatically—such as resource ownership, viewership, creation and update timestamps, and visibility—referred to as **managed fields**. These fields enable the surrounding gateway layer to enforce ownership, viewership, and role-based access control (RBAC) policies effectively.
-
-**Key features include:**
-
-🌟 **Advanced Data Querying :** Advanced querying capabilities, pagination, short query aliases, field selection and response size controls for optimized data access.
-
-🌟 **Uniqueness & Idempotency:** Configurable constraints to ensure record uniqueness and deduplication across defined scopes.
-
-🌟 **Creation Limits:** Support for enforcing the maximum number of records per user, group, or global scope.
-
-
-Although the service is generic by design, it is extensible and can be customized through JSON schema validation, role-based constraints, and integrations with higher-level gateway logic. When used together with other Tarcinapp components (such as the entity-persistence-gateway and entity-persistence-gateway-policies engine), it supports secure, scalable, and maintainable backend solutions.
+* **Querying data** with advanced and flexible query string notation
+* **Record limits** global, or per user, or context (number of reactions of an entity, or number of entities in a list, or any record having a specific value in a specific property)
+* **Uniqueness enforcement** global, or per user or context
+* **Response limits** with pagination
+* **Ownership and viewership metadata** to allow gateway application to enforce authorization
+* **Idempotency** behavior
+* **Visibility configuration** with default visibility settings (e.g., public/protected/private)
+* **Approval** gating via `validFromDateTme` with default approval configuration
+* **Soft deletion** via `_validUntilDateTime` 
+* **Metadata tracking** with `_createdDateTime`, `_createdBy`, `_lastUpdatedDateTime`, `_lastUpdatedBy`, `_version`
 
 ## What is Tarcinapp Post-Login Solution?
+
+Tarcinapp is a generic backend microservices suite developed to address common issues when building a web application, aiming to reduce Time-to-Value from idea to value.
 
 Suppose you want to build a system to manage support tickets of your application.
 
