@@ -1,26 +1,45 @@
 # Entity Persistence Service
-🚨 **Entity Persistence Service** is a REST-based backend microservice and a core component of Tarcinapp Suite ([What is Tarcinapp?](#what-is-tarcinapp-post-login-solution)). It’s built around a simple yet powerful data model consisting of entities, lists, and reactions — all stored as JSON documents in MongoDB.
 
-Depending on the use case, an entity can represent a user profile, configuration object, product, blog post, document, campaign, doctor, or even an IoT device. Lists serve flexible purposes like wishlists, playlists, shopping carts, saved searches, or collections. Reactions model can capture interactions such as likes, ratings, reviews, flags, bookmarks, follows, or IoT measurement signals.
+📌 **Entity Persistence Service** is a REST-based backend microservice and a core component of the **Tarcinapp Suite** ([What is Tarcinapp?](#what-is-tarcinapp-post-login-solution)).
+
+📌 It is built on a simple yet powerful data model composed of **entities**, **lists**, and **reactions**, each represented as JSON documents stored in MongoDB.
+
+📌 This generic, extensible model allows developers to represent a wide variety of use cases across different domains by reusing and configuring the same foundational components.
+
+📌 For example:
+- **Entities** can represent user profiles, configuration objects, blog posts, products, campaigns, documents, or even IoT devices.
+- **Lists** can model playlists, wishlists, saved searches, shopping carts, or collections.
+- **Reactions** can track likes, ratings, flags, reviews, bookmarks, follows, or measurement signals from IoT devices.
+
+📌 The service significantly reduces **Time-To-Value** for digital products, internal tools, and early-stage startups by solving key backend concerns out-of-the-box.
 
 <p align="left">
   <img src="./doc/img/models.png" alt="Tarcinapp Data Model">
 </p>
 
-Each record (entity, list, or reaction) is automatically enriched with a consistent set of system-managed fields (e.g. `_createdBy`, `_createdDateTime`, `_lastUpdatedBy`, `_lastUpdatedDateTime`, `_version`, etc.). These fields support traceability, access control, and automation.
+📌 Each record — whether an entity, list, or reaction — is automatically enriched with a consistent set of **managed fields**, including:
+- `_createdBy`
+- `_createdDateTime`
+- `_lastUpdatedBy`
+- `_lastUpdatedDateTime`
+- `_version`
+- and more...
 
-Features:
+These fields support essential functionality like traceability, access control, and automation logic.
 
-* **Querying data** with advanced and flexible query string notation
-* **Record limits** global, or per user, or context (number of reactions of an entity, or number of entities in a list, or any record having a specific value in a specific property)
-* **Uniqueness enforcement** global, or per user or context
-* **Response limits** with pagination
-* **Ownership and viewership metadata** to allow gateway application to enforce authorization
-* **Idempotency** behavior
-* **Visibility configuration** with default visibility settings (e.g., public/protected/private)
-* **Approval** gating via `validFromDateTme` with default approval configuration
-* **Soft deletion** via `_validUntilDateTime` 
-* **Metadata tracking** with `_createdDateTime`, `_createdBy`, `_lastUpdatedDateTime`, `_lastUpdatedBy`, `_version`
+## Features
+
+- 🔍 **Advanced querying** via flexible query string notation
+- 📈 **Record limits** by user, type, or custom context (e.g., number of entities in a list)
+- 🔒 **Uniqueness constraints** across user or global scopes
+- 📦 **Paginated responses** with configurable limits
+- 👥 **Ownership & viewership metadata** to support role-based access enforcement via gateway
+- 🌀 **Idempotent operations**, configurable per use case
+- 🌐 **Visibility levels** (`public`, `protected`, `private`) with default enforcement
+- ✅ **Approval gating** using `validFromDateTime`
+- 🗑️ **Soft deletion** via `validUntilDateTime`
+- 🕓 **Full audit metadata tracking** (created/updated timestamps and users)
+
 
 ## What is Tarcinapp Post-Login Solution?
 
@@ -42,7 +61,7 @@ When you POST a support ticket data, the service automatically adds managed fiel
 The Tarcinapp suite is a comprehensive and flexible application framework, harmoniously blending a suite of interconnected components designed to deliver a seamless and secure microservices architecture. It also provides the flexibility for users to leverage it as an upstream project for their own REST API-based backend implementations, allowing for easy adaptation to their specific requirements and use cases.
 
 <p align="center">
-  <img src="./doc/img/tarcinapp.png" alt="Tarcinapp Suite Overview">
+  <img src="./doc/img/high-level-arch.png" alt="Tarcinapp Suite Overview">
 </p>
 
 At its core is the **Entity Persistence Service**, an easily adaptable REST-based backend application built on the [Loopback 4](https://loopback.io) framework. This service utilizes on a schemaless MongoDB database to provide a scalable and highly adaptable data persistence layer. Offering a generic data model with predefined fields such as `_id`, `_name`,  `_kind`, `_lastUpdatedDateTime`, `_creationDateTime`, `_ ownerUsers` and [more](#programming-conventions), it effortlessly adapts to diverse use cases.  
