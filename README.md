@@ -78,22 +78,25 @@ Here is an example request and response to the one of the most basic endpoint: `
 
 # Entity Persistence Service Application in Detail
 
-The service provides several endpoints for managing your data:
+Once you run the application,
+* Starts listening port 3000 for HTTP requests
+* Following endpoints are exposed
+* * `/entities`: Handle your primary data models with this endpoint, facilitating CRUD (Create, Read, Update, Delete) operations.
+* * `/lists`: Create, organize, and manage lists, enabling you to associate related data effortlessly.
+* * `/list-entity-relations`
+* * `/lists/{listId}/entities`: Create, organize, and manage lists, enabling you to associate related data effortlessly.
+* * `/entities/{id}/lists`: Query lists associated with a specific entity.
+* * `/entities/{id}/parents`
+* * `/entities/{id}/children`
+* * `/lists/{id}/parents`
+* * `/lists/{id}/children`
+* * `/entity-reactions`
+* * `/list-reactions`
+* * `/entities/{id}/reactions`: Capture user reactions, comments, likes, and more on specific entities.
+* * `/lists/{id}/reactions`: Manage reactions, comments, likes, and other interactions associated with your lists.
+* Uses in-memory MongoDB as a storage
 
-* `/entities`: Handle your primary data models with this endpoint, facilitating CRUD (Create, Read, Update, Delete) operations.
-* `/lists`: Create, organize, and manage lists, enabling you to associate related data effortlessly.
-* `/list-entity-relations`
-* `/lists/{listId}/entities`: Create, organize, and manage lists, enabling you to associate related data effortlessly.
-* `/entities/{id}/parents`
-* `/entities/{id}/children`
-* `/lists/{id}/parents`
-* `/lists/{id}/children`
-* `/entity-reactions`
-* `/list-reactions`
-* `/entities/{id}/lists`: Query lists associated with a specific entity.
-* `/entities/{id}/reactions`: Capture user reactions, comments, likes, and more on specific entities.
-* `/lists/{id}/reactions`: Manage reactions, comments, likes, and other interactions associated with your lists.
-
+## Use Cases
 
 ## Data Model
 
@@ -103,15 +106,15 @@ The Entity Persistence Service is coming with a set of data models, each serving
   <img src="./doc/img/model-overview.png" alt="Tarcinapp Suite Overview">
 </p>
 
-### Generic Entity
+### Entities
 
 The Generic Entity is the core data model that represents objects in your application. It uses a schemaless structure to support any data type. Each entity has a '_kind' field (like 'book' or 'author') to identify its type. This flexible model adapts easily to different use cases while providing consistent organization.
 
-### List
+### Lists
 
 The List model organizes collections of entities. Lists can be categorized by kind, just like entities (e.g. 'favorites' or 'science_fiction') and can contain multiple entities. List objects provide a simple way to group and manage related data.
 
-#### List-Entity Relation
+#### List-Entity Relations
 
 Lists and entities are connected through the `ListEntityRelation` model. Having a seperated model for the relation helps user to store arbitrary data about the relation with the relation object. Relation objects have a dedicated endpoint, just like lists and entities. To interact with relation objects you can call `/list-entity-relations` endpoint.
 
@@ -200,17 +203,13 @@ A sample response of the `GET` call to the `/lists/{listId}/entities` endpoint i
 
 Similarly, you can retrieve all lists associated with a specific entity using the `/entities/{id}/lists` endpoint. This endpoint allows you to find all lists that contain a particular entity, with support for filtering both the lists and the relationship data using `filter`, `filterThrough`, `set` and `setThrough` parameters respectively.
 
-### Entity Reaction
+### Entity Reactions
 
 The Entity Reaction data model is responsible for capturing and managing a broad spectrum of events related to objects within your application. It offers the flexibility to represent a wide range of actions and interactions, including comments, likes, measurements, and emotional responses. With this model, your application can handle diverse reactions and interactions associated with entities effectively, enriching user engagement and data interactivity.
 
-### List Reaction
+### List Reactions
 
 Similar to the Entity Reaction model, the List Reaction data model is tailored to manage events associated with lists. It empowers your application to capture actions like comments, likes, measurements, and reactions linked to lists. This versatility ensures that your application can effectively handle a variety of reactions and interactions related to lists, enhancing user participation and interaction.
-
-### Tags
-
-The Tags data model offers a structured approach to categorizing and organizing entities and lists. Tags act as valuable tools for data classification and grouping. For instance, a book can be assigned tags such as 'science_fiction' or 'fantasy,' simplifying the process of data categorization and organization within your application. This feature is instrumental in streamlining data retrieval and management, making it easier for users to locate and engage with specific content.
 
 ## Features of Entity Persistence Service
 
