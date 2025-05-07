@@ -78,25 +78,32 @@ Here is an example request and response to the one of the most basic endpoint: `
 
 # Entity Persistence Service Application in Detail
 
-Once you run the application,
-* Starts listening port 3000 for HTTP requests
-* Following endpoints are exposed
-* * `/entities`: Handle your primary data models with this endpoint, facilitating CRUD (Create, Read, Update, Delete) operations.
-* * `/lists`: Create, organize, and manage lists, enabling you to associate related data effortlessly.
-* * `/list-entity-relations`
-* * `/lists/{listId}/entities`: Create, organize, and manage lists, enabling you to associate related data effortlessly.
-* * `/entities/{id}/lists`: Query lists associated with a specific entity.
-* * `/entities/{id}/parents`
-* * `/entities/{id}/children`
-* * `/lists/{id}/parents`
-* * `/lists/{id}/children`
-* * `/entity-reactions`
-* * `/list-reactions`
-* * `/entities/{id}/reactions`: Capture user reactions, comments, likes, and more on specific entities.
-* * `/lists/{id}/reactions`: Manage reactions, comments, likes, and other interactions associated with your lists.
-* Uses in-memory MongoDB as a storage
+Once the application is up and running:
 
-## Use Cases
+- It starts listening on **port 3000** for HTTP requests.
+- The following REST endpoints are exposed:
+
+  ### Core Endpoints
+  - `GET /entities`, `POST /entities`: Manage your primary data models — supports full CRUD operations.
+  - `GET /lists`, `POST /lists`: Organize related entities with user-defined lists.
+
+  ### Relationships
+  - `GET /lists/{listId}/entities`, `POST /lists/{listId}/entities`: Add or retrieve entities within a specific list.
+  - `GET /entities/{id}/lists`: Fetch lists that a given entity belongs to.
+  - `GET /entities/{id}/parents`, `POST /entities/{id}/parents`: Retrieve or assign parent entities.
+  - `GET /entities/{id}/children`: List child entities of a specific entity.
+  - `GET /lists/{id}/parents`, `POST /lists/{id}/parents`: Handle list hierarchies by linking to parent lists.
+  - `GET /lists/{id}/children`: Retrieve child lists of a specific list.
+
+  ### Reactions
+  - `GET /entity-reactions`, `POST /entity-reactions`: Manage reactions (likes, ratings, etc.) on entities.
+  - `GET /list-reactions`, `POST /list-reactions`: Capture interactions on lists.
+  - `GET /entities/{id}/reactions`: Get all reactions associated with an entity.
+  - `GET /lists/{id}/reactions`: Retrieve reactions on a list.
+
+- By default, the app uses an **in-memory MongoDB** instance as the backing store (can be customized for production).
+
+## Use Cases & Themes & Benefits
 
 ## Data Model
 
