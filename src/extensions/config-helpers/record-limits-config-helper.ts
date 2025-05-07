@@ -44,12 +44,18 @@ export class RecordLimitsConfigurationReader {
     ownerGroups?: (string | undefined)[],
     kind?: string,
   ): Set | undefined {
-    let setStr: string | undefined;
+    let setStr = '';
+    // Check if there is a kind specific configuration
+    if (_.has(process.env, `record_limit_entity_scope_for_${kind}`)) {
+      const value = _.get(process.env, `record_limit_entity_scope_for_${kind}`);
+      if (value) {
+        setStr = value;
+      }
+    }
 
-    setStr = _.get(process.env, `record_limit_entity_set_for_${kind}`);
-
-    if (!setStr) {
-      setStr = _.get(process.env, 'record_limit_entity_set');
+    // If there is no kind specific configuration, check if there is a general configuration
+    if (!setStr && process.env.record_limit_entity_scope) {
+      setStr = process.env.record_limit_entity_scope;
     }
 
     if (setStr) {
@@ -105,12 +111,18 @@ export class RecordLimitsConfigurationReader {
     ownerGroups?: (string | undefined)[],
     kind?: string,
   ): Set | undefined {
-    let setStr: string | undefined;
+    let setStr = '';
+    // Check if there is a kind specific configuration
+    if (_.has(process.env, `record_limit_list_scope_for_${kind}`)) {
+      const value = _.get(process.env, `record_limit_list_scope_for_${kind}`);
+      if (value) {
+        setStr = value;
+      }
+    }
 
-    setStr = _.get(process.env, `record_limit_list_set_for_${kind}`);
-
-    if (!setStr) {
-      setStr = _.get(process.env, 'record_limit_list_set');
+    // If there is no kind specific configuration, check if there is a general configuration
+    if (!setStr && process.env.record_limit_list_scope) {
+      setStr = process.env.record_limit_list_scope;
     }
 
     if (setStr) {
@@ -133,6 +145,30 @@ export class RecordLimitsConfigurationReader {
       });
 
       return updatedSet as Set;
+    }
+  }
+
+  ///
+  public isRecordLimitsConfiguredForListEntityCount(kind?: string) {
+    return (
+      _.has(process.env, 'record_limit_list_entity_count') ||
+      this.isLimitConfiguredForKindForListEntityCount(kind)
+    );
+  }
+
+  public isLimitConfiguredForKindForListEntityCount(kind?: string) {
+    return _.has(process.env, `record_limit_list_entity_count_for_${kind}`);
+  }
+
+  public getRecordLimitsCountForListEntityCount(kind?: string) {
+    if (_.has(process.env, `record_limit_list_entity_count_for_${kind}`)) {
+      return _.toInteger(
+        _.get(process.env, `record_limit_list_entity_count_for_${kind}`),
+      );
+    }
+
+    if (_.has(process.env, `record_limit_list_entity_count`)) {
+      return _.toInteger(_.get(process.env, `record_limit_list_entity_count`));
     }
   }
 
@@ -165,12 +201,21 @@ export class RecordLimitsConfigurationReader {
   public getRecordLimitsSetForListEntityRelations(
     kind?: string,
   ): Set | undefined {
-    let setStr: string | undefined;
+    let setStr = '';
+    // Check if there is a kind specific configuration
+    if (_.has(process.env, `record_limit_list_entity_rel_scope_for_${kind}`)) {
+      const value = _.get(
+        process.env,
+        `record_limit_list_entity_rel_scope_for_${kind}`,
+      );
+      if (value) {
+        setStr = value;
+      }
+    }
 
-    setStr = _.get(process.env, `record_limit_list_entity_rel_set_for_${kind}`);
-
-    if (!setStr) {
-      setStr = _.get(process.env, 'record_limit_list_entity_rel_set');
+    // If there is no kind specific configuration, check if there is a general configuration
+    if (!setStr && process.env.record_limit_list_entity_rel_scope) {
+      setStr = process.env.record_limit_list_entity_rel_scope;
     }
 
     if (setStr) {

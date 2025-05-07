@@ -65,14 +65,7 @@ export class ListEntityCommonBase extends AccessControlBase {
     default: 0,
     hidden: true,
   })
-  _parentCount?: number;
-
-  @property({
-    type: 'number',
-    default: 0,
-    hidden: true,
-  })
-  _childCount?: number;
+  _parentsCount?: number;
 
   @property({
     type: 'object',

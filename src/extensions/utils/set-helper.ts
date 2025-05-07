@@ -7,34 +7,103 @@ import { FilterBuilder, WhereBuilder } from '@loopback/repository';
 import type { AnyObject } from '@loopback/repository/dist/common-types';
 import _ from 'lodash';
 
+/**
+ * Sets are a powerful feature for streamlining data filtering and selection.
+ * They provide a convenient way to retrieve specific subsets of data based on
+ * predefined conditions or custom logical combinations.
+ *
+ * Key Features:
+ * 1. Sets - Filter the main records (lists/entities) using predefined conditions
+ *    Example: ?set[actives] - Returns only active lists/entities
+ *
+ * 2. Combining Sets - Use logical operators (AND, OR) to combine multiple conditions
+ *    Example: ?set[and][0][actives]&set[and][1][publics]
+ *
+ * 3. Sets with Filters - Combine sets with standard filters
+ *    Example: ?set[actives]&filter[where][_kind]=config
+ *
+ * 4. SetThrough - Filter the relation records themselves (not the related entities/lists)
+ *    Example: /lists/{listId}/entities?setThrough[actives]
+ *    This filters the relation records between lists and entities
+ *
+ * 5. WhereThrough - Apply where conditions to filter relation records
+ *    Example: /lists/{listId}/entities?whereThrough[foo]=bar
+ *    This filters the relation records, not the entities or lists
+ *
+ * 6. Sets with Include - Apply sets/where conditions to included relations
+ *    Example: ?filter[include][0][relation]=_entities
+ *             &filter[include][0][setThrough][actives]
+ *             &filter[include][0][whereThrough][foo]=bar
+ *
+ * Note: setThrough and whereThrough operate on the relation records themselves,
+ * not on the related entities or lists. This is different from regular sets
+ * which filter the main records.
+ */
+
+/**
+ * Interface defining all available predefined set conditions.
+ * Each condition represents a specific data subset based on predefined rules.
+ */
 export interface Condition {
+  /** Selects all data where validFromDateTime is valid and not expired */
   actives?: string;
+  /** Selects data where validUntilDateTime is in the past */
   inactives?: string;
+  /** Selects data where validFromDateTime is empty */
   pendings?: string;
+  /** Selects all data with public visibility */
   publics?: string;
+  /** Selects data owned by specific users/groups */
   owners?: UserAndGroupInfo;
+  /** Selects data from the last 24 hours */
   day?: string;
+  /** Selects data from the last 7 days */
   week?: string;
+  /** Selects data from the last 30 days */
   month?: string;
+  /** Combines active & public records with user's own active/pending records */
   audience?: UserAndGroupInfo;
+  /** Selects data viewable by specific users/groups */
   viewers?: UserAndGroupInfo;
+  /** Selects root-level records (records with no parents) */
+  roots?: string;
+  /** Selects records that expired within the last 30 days */
+  expired30?: string;
 }
 
+/**
+ * Interface for specifying user and group IDs in owner/viewer sets
+ * Used in format: set[owners][userIds]=userId1,userId2&set[owners][groupIds]=groupId1,groupId2
+ */
 export interface UserAndGroupInfo {
+  /** Comma-separated list of user IDs */
   userIds?: string;
+  /** Comma-separated list of group IDs */
   groupIds?: string;
 }
 
+/**
+ * Interface for combining multiple sets with AND operator
+ * Example: ?set[and][0][actives]&set[and][1][publics]
+ */
 export interface AndClause {
   and?: Set[];
 }
 
+/**
+ * Interface for combining multiple sets with OR operator
+ * Example: ?set[or][0][actives]&set[or][1][publics]
+ */
 export interface OrClause {
   or?: Set[];
 }
 
 /**
- * This interface defines the structure of the 'set' query parameter.
+ * Main Set interface that combines all possible set operations
+ * Can be used for:
+ * 1. Simple conditions: ?set[actives]
+ * 2. Logical combinations: ?set[and][0][actives]&set[and][1][publics]
+ * 3. Owner/viewer filters: ?set[owners][userIds]=user1,user2
  */
 export interface Set extends Condition, AndClause, OrClause {}
 
@@ -82,8 +151,12 @@ export class SetFilterBuilder<T extends object = AnyObject> {
      * generated from the set.
      */
     if (this.options?.filter?.where) {
-      whereBuilder = new WhereBuilder<T>(this.options?.filter?.where);
-      whereBuilder.and(setWhere);
+      whereBuilder = new WhereBuilder<T>();
+      if (Array.isArray(setWhere)) {
+        whereBuilder.and([this.options.filter.where, ...setWhere]);
+      } else {
+        whereBuilder.and([this.options.filter.where, setWhere]);
+      }
     } else {
       if (Array.isArray(setWhere)) {
         whereBuilder = new WhereBuilder<T>();
@@ -233,6 +306,14 @@ class SetToFilterTransformer {
       return this.produceWhereClauseForAudience(setValue);
     }
 
+    if (setName === 'roots') {
+      return this.produceWhereClauseForRoots();
+    }
+
+    if (setName === 'expired30') {
+      return this.produceWhereClauseForExpired30();
+    }
+
     return {};
   }
 
@@ -269,6 +350,9 @@ class SetToFilterTransformer {
   }
 
   produceWhereClauseForActives(): Where<AnyObject> {
+    const now = new Date();
+    const nowISOString = now.toISOString();
+
     return {
       and: [
         {
@@ -278,7 +362,7 @@ class SetToFilterTransformer {
             },
             {
               _validUntilDateTime: {
-                gt: Date.now(),
+                gt: nowISOString,
               },
             },
           ],
@@ -290,7 +374,7 @@ class SetToFilterTransformer {
         },
         {
           _validFromDateTime: {
-            lt: Date.now(),
+            lt: nowISOString,
           },
         },
       ],
@@ -298,6 +382,9 @@ class SetToFilterTransformer {
   }
 
   produceWhereClauseForInactives(): Where<AnyObject> {
+    const now = new Date();
+    const nowISOString = now.toISOString();
+
     return {
       and: [
         {
@@ -307,7 +394,7 @@ class SetToFilterTransformer {
         },
         {
           _validUntilDateTime: {
-            lt: Date.now(),
+            lt: nowISOString,
           },
         },
       ],
@@ -315,8 +402,20 @@ class SetToFilterTransformer {
   }
 
   produceWhereClauseForPendings(): Where<AnyObject> {
+    const now = new Date();
+    const nowISOString = now.toISOString();
+
     return {
-      _validFromDateTime: null,
+      or: [
+        {
+          _validFromDateTime: null,
+        },
+        {
+          _validFromDateTime: {
+            gt: nowISOString,
+          },
+        },
+      ],
     };
   }
 
@@ -437,25 +536,51 @@ class SetToFilterTransformer {
   }
 
   produceWhereClauseForDay(): Where<AnyObject> {
+    const now = new Date();
+    // Create start of day by using UTC methods to avoid timezone issues
+    const startOfDay = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+    );
+
     return {
       _creationDateTime: {
-        between: [Date.now() - 1, Date.now()],
+        between: [startOfDay.toISOString(), now.toISOString()],
       },
     };
   }
 
   produceWhereClauseForWeek(): Where<AnyObject> {
+    const now = new Date();
+    // Create start of week using UTC methods
+    const startOfWeek = new Date(
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate() - now.getUTCDay(), // Subtract days to get to Sunday
+      ),
+    );
+
     return {
       _creationDateTime: {
-        between: [Date.now() - 7, Date.now()],
+        between: [startOfWeek.toISOString(), now.toISOString()],
       },
     };
   }
 
   produceWhereClauseForMonth(): Where<AnyObject> {
+    const now = new Date();
+    // Create start of month using UTC methods
+    const startOfMonth = new Date(
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        1, // First day of the month
+      ),
+    );
+
     return {
       _creationDateTime: {
-        between: [Date.now() - 30, Date.now()],
+        between: [startOfMonth.toISOString(), now.toISOString()],
       },
     };
   }
@@ -534,5 +659,31 @@ class SetToFilterTransformer {
     ];
 
     return viewerGroupsClause;
+  }
+
+  produceWhereClauseForRoots(): Where<AnyObject> {
+    return {
+      _parentsCount: 0,
+    };
+  }
+
+  produceWhereClauseForExpired30(): Where<AnyObject> {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    return {
+      and: [
+        {
+          _validUntilDateTime: {
+            neq: null,
+          },
+        },
+        {
+          _validUntilDateTime: {
+            between: [thirtyDaysAgo.toISOString(), now.toISOString()],
+          },
+        },
+      ],
+    };
   }
 }

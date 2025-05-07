@@ -12,6 +12,8 @@ export class ResponseLimitConfigurationReader {
   private entityResponseLimit: number;
   private listResponseLimit: number;
   private listEntityRelResponseLimit: number;
+  private entityReactionResponseLimit: number;
+  private listReactionResponseLimit: number;
 
   constructor() {
     this.initResponseLimits();
@@ -21,6 +23,8 @@ export class ResponseLimitConfigurationReader {
     const envEntityLimit = process.env.response_limit_entity;
     const envListLimit = process.env.response_limit_list;
     const envListEntityRelLimit = process.env.response_limit_list_entity_rel;
+    const envEntityReactionLimit = process.env.response_limit_entity_reaction;
+    const envListReactionLimit = process.env.response_limit_list_reaction;
 
     this.entityResponseLimit = envEntityLimit
       ? _.parseInt(envEntityLimit)
@@ -30,6 +34,12 @@ export class ResponseLimitConfigurationReader {
       : this.defaultResponseLimit;
     this.listEntityRelResponseLimit = envListEntityRelLimit
       ? _.parseInt(envListEntityRelLimit)
+      : this.defaultResponseLimit;
+    this.entityReactionResponseLimit = envEntityReactionLimit
+      ? _.parseInt(envEntityReactionLimit)
+      : this.defaultResponseLimit;
+    this.listReactionResponseLimit = envListReactionLimit
+      ? _.parseInt(envListReactionLimit)
       : this.defaultResponseLimit;
   }
 
@@ -43,5 +53,13 @@ export class ResponseLimitConfigurationReader {
 
   public getListEntityRelResponseLimit(): number {
     return this.listEntityRelResponseLimit;
+  }
+
+  public getEntityReactionResponseLimit(): number {
+    return this.entityReactionResponseLimit;
+  }
+
+  public getListReactionResponseLimit(): number {
+    return this.listReactionResponseLimit;
   }
 }

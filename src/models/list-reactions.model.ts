@@ -1,69 +1,46 @@
-import { Entity, hasMany, model, property } from '@loopback/repository';
+import { model, property } from '@loopback/repository';
+import { ReactionsCommonBase } from './base-models/reactions-common-base.model';
+import { ListWithRelations } from './list.model';
 
-import { SubReactions } from './sub-reactions.model';
-
-@model({ settings: { strict: false } })
-export class ListReactions extends Entity {
-  @property({
-    type: 'string',
-    id: true,
-    generated: false,
-    defaultFn: 'uuidv4',
-  })
-  id?: string;
-
+@model({
+  settings: {
+    strict: false,
+    mongodb: {
+      collection: process.env.collection_list_reactions ?? 'ListReactions',
+    },
+  },
+})
+export class ListReaction extends ReactionsCommonBase {
   @property({
     type: 'string',
     required: true,
   })
-  kind: string;
-
-  @property({
-    type: 'date',
-    defaultFn: 'now',
-  })
-  creationDateTime?: string;
-
-  @property({
-    type: 'date',
-    defaultFn: process.env.autoapprove_list_reaction ? 'now' : undefined,
-  })
-  validFromDateTime?: string;
-
-  @property({
-    type: 'date',
-    default: null,
-    jsonSchema: { nullable: true },
-  })
-  validUntilDateTime?: string | null;
+  _listId: string;
 
   @property({
     type: 'array',
     itemType: 'string',
-    default: [],
+    jsonSchema: {
+      pattern:
+        '^tapp://localhost/list-reactions/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+      uniqueItems: true,
+    },
   })
-  ownerUsers?: string[];
+  _parents?: string[];
 
-  @property({
-    type: 'string',
-  })
-  listId?: string;
-
-  @hasMany(() => SubReactions, { keyTo: 'listReactionId' })
-  subReactions: SubReactions[];
   // Define well-known properties here
 
   // Indexer property to allow additional data
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [prop: string]: any;
 
-  constructor(data?: Partial<ListReactions>) {
+  constructor(data?: Partial<ListReaction>) {
     super(data);
   }
 }
 
-export interface ListReactionsRelations {
-  // describe navigational properties here
+export interface ListReactionRelations {
+  list?: ListWithRelations;
 }
 
-export type ListReactionsWithRelations = ListReactions & ListReactionsRelations;
+export type ListReactionWithRelations = ListReaction & ListReactionRelations;

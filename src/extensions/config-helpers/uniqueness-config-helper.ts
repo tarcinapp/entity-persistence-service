@@ -101,14 +101,18 @@ export class UniquenessConfigurationReader {
     ownerGroups?: (string | undefined)[],
     kind?: string,
   ): Set | undefined {
-    let setStr: string | undefined;
-
-    if (process.env.uniqueness_entity_set) {
-      setStr = process.env.uniqueness_entity_set;
+    let setStr = '';
+    // Check if there is a kind specific configuration
+    if (_.has(process.env, `uniqueness_entity_scope_for_${kind}`)) {
+      const value = _.get(process.env, `uniqueness_entity_scope_for_${kind}`);
+      if (value) {
+        setStr = value;
+      }
     }
 
-    if (_.has(process.env, `uniqueness_entity_set_for_${kind}`)) {
-      setStr = _.get(process.env, `uniqueness_entity_set_for_${kind}`);
+    // If there is no kind specific configuration, check if there is a general configuration
+    if (!setStr && process.env.uniqueness_entity_scope) {
+      setStr = process.env.uniqueness_entity_scope;
     }
 
     if (setStr) {
@@ -167,14 +171,18 @@ export class UniquenessConfigurationReader {
     ownerGroups?: (string | undefined)[],
     kind?: string,
   ): Set | undefined {
-    let setStr: string | undefined;
-
-    if (process.env.uniqueness_list_set) {
-      setStr = process.env.uniqueness_list_set;
+    let setStr = '';
+    // Check if there is a kind specific configuration
+    if (_.has(process.env, `uniqueness_list_scope_for_${kind}`)) {
+      const value = _.get(process.env, `uniqueness_list_scope_for_${kind}`);
+      if (value) {
+        setStr = value;
+      }
     }
 
-    if (_.has(process.env, `uniqueness_list_set_for_${kind}`)) {
-      setStr = _.get(process.env, `uniqueness_list_set_for_${kind}`);
+    // If there is no kind specific configuration, check if there is a general configuration
+    if (!setStr && process.env.uniqueness_list_scope) {
+      setStr = process.env.uniqueness_list_scope;
     }
 
     if (setStr) {
@@ -232,14 +240,21 @@ export class UniquenessConfigurationReader {
   }
 
   public getSetForListEntityRelations(kind?: string): Set | undefined {
-    let setStr: string | undefined;
-
-    if (_.has(process.env, `uniqueness_list_entity_rel_set_for_${kind}`)) {
-      setStr = _.get(process.env, `uniqueness_list_entity_rel_set_for_${kind}`);
+    let setStr = '';
+    // Check if there is a kind specific configuration
+    if (_.has(process.env, `uniqueness_list_entity_rel_scope_for_${kind}`)) {
+      const value = _.get(
+        process.env,
+        `uniqueness_list_entity_rel_scope_for_${kind}`,
+      );
+      if (value) {
+        setStr = value;
+      }
     }
 
-    if (!setStr && process.env.uniqueness_list_entity_rel_set) {
-      setStr = process.env.uniqueness_list_entity_rel_set;
+    // If there is no kind specific configuration, check if there is a general configuration
+    if (!setStr && process.env.uniqueness_list_entity_rel_scope) {
+      setStr = process.env.uniqueness_list_entity_rel_scope;
     }
 
     if (setStr) {

@@ -1,63 +1,129 @@
-# Overview
+# Entity Persistence Service
 
-The **Entity Persistence Service** is a flexible REST-based backend powered by the Loopback 4 framework. It utilizes schemaless MongoDB storage and offers adaptable data modeling, making it ideal for fast, secure, efficient REST API development.
+📌 **Entity Persistence Service** is a REST-based backend microservice and a core component of the **Tarcinapp Suite** ([What is Tarcinapp?](#what-is-tarcinapp-post-login-solution)).
 
-Loopback 4 addresses various aspects of REST API development, yet many real-use case considerations remain unaddressed. These include but are not limited to authentication, granular authorization (RBAC), rate limiting, field masking, distributed locking, and more.
+📌 It is built on a simple yet powerful data model composed of **entities**, **lists**, and **reactions**, each represented as JSON documents stored in MongoDB.
 
-The Entity Persistence Service serves as a fundamental component within the **Tarcinapp Suite**, which encompasses a gateway and additional layers. Collectively, the Tarcinapp Suite effectively addresses these real-use case challenges, reducing the time to value for REST-based applications, and making development more efficient and productive.
+📌 This generic, extensible model allows developers to represent a wide variety of use cases across different domains by reusing and configuring the same foundational components ([Use Cases]())
 
-## What is Tarcinapp Suite?
+📌 For example:
+- **Entities** can represent user profiles, configuration objects, notification, blog posts, products, campaigns, documents, or even IoT devices.
+- **Lists** can model playlists, wishlists, saved searches, shopping carts, or collections.
+- **Reactions** can track likes, ratings, flags, reviews, bookmarks, follows, or measurement signals from IoT devices.
+
+📌 The service significantly reduces **Time-To-Value** for digital products, internal tools, and early-stage startups by solving key backend concerns out-of-the-box.
+
+<p align="left">
+  <img src="./doc/img/models.png" alt="Tarcinapp Data Model">
+</p>
+
+📌 Each record — whether an entity, list, or reaction — is automatically enriched with a consistent set of **managed fields**, including:
+- `_ownerUsers`, `_ownerGroups`
+- `_viewerUsers`, `_viewerGroups`
+- `_visibility`
+- `_parents`
+- `_createdBy`
+- `_createdDateTime`
+- `_lastUpdatedBy`
+- `_lastUpdatedDateTime`
+- `_version`
+- `_idempotencyKey`
+- and more...
+
+These fields support essential functionality like traceability, access control, and automation logic.
+
+## Features
+
+- 🔍 **Advanced querying** via flexible query string notation
+- 📈 **Record limits** by user, type, or custom context (e.g., number of entities in a list)
+- 🔒 **Uniqueness constraints** across user or global scopes
+- 📦 **Paginated responses** with configurable limits
+- 👥 **Ownership & viewership metadata** to support role-based access enforcement via gateway
+- 🌀 **Idempotent operations**, configurable per use case
+- 🌐 **Visibility levels** (`public`, `protected`, `private`) with default enforcement
+- ✅ **Approval gating** using `validFromDateTime`
+- 🗑️ **Soft deletion** via `validUntilDateTime`
+- 🕓 **Full audit metadata tracking** (created/updated timestamps and users)
+
+
+## What is Tarcinapp Post-Login Solution?
+
+Tarcinapp is a generic backend microservices suite developed to address common issues when building a web application, aiming to reduce Time-to-Value from idea to value.
+
+Suppose you want to build a system to manage support tickets of your application.
+
+With Tarcinapp you can effortlessly handle support tickets using the full suite of REST operations—GET, POST, PUT, PATCH, and DELETE—alongside hierarchical record-management features.
+
+When you POST a support ticket data, the service automatically adds managed fields (such as ownership, timestamps, and visibility). Your stored record will include both your original data and these additional fields, making it ready for secure and controlled access.
+
+
 
 The Tarcinapp suite is a comprehensive and flexible application framework, harmoniously blending a suite of interconnected components designed to deliver a seamless and secure microservices architecture. It also provides the flexibility for users to leverage it as an upstream project for their own REST API-based backend implementations, allowing for easy adaptation to their specific requirements and use cases.
 
 <p align="center">
-  <img src="./doc/img/tarcinapp.png" alt="Tarcinapp Suite Overview">
+  <img src="./doc/img/high-level-arch.png" alt="Tarcinapp Suite Overview">
 </p>
 
-At its core is the **Entity Persistence Service**, an easily adaptable REST-based backend application built on the [Loopback 4](https://loopback.io) framework. This service utilizes on a schemaless MongoDB database to provide a scalable and highly adaptable data persistence layer. Offering a generic data model with predefined fields such as `id`, `name`,  `kind`, `lastUpdateDateTime`, `creationDateTime`, `ownerUsers` and [more](#programming-conventions), it effortlessly adapts to diverse use cases.  
+At its core is the **Entity Persistence Service**, an easily adaptable REST-based backend application built on the [Loopback 4](https://loopback.io) framework. This service utilizes on a schemaless MongoDB database to provide a scalable and highly adaptable data persistence layer. Offering a generic data model with predefined fields such as `_id`, `_name`,  `_kind`, `_lastUpdatedDateTime`, `_creationDateTime`, `_ ownerUsers` and [more](#programming-conventions), it effortlessly adapts to diverse use cases.  
 
 The integration with the **Entity Persistence Gateway** empowers users to implement enhanced validation, authentication, authorization, and rate-limiting functionalities, ensuring a secure and efficient environment. Leveraging the power of **Redis**, the application seamlessly manages distributed locks, enabling robust data synchronization and rate limiting. Furthermore, the ecosystem includes the **Open Policy Agent (OPA)** to enforce policies, safeguarding your application against unauthorized access and ensuring compliance with your security and operational requirements. These policies, combined with the entire suite of components, form a cohesive and powerful ecosystem, paving the way for efficient and secure microservice development.  
-Here is an example request and response to the one of the most basic endpoint: `/generic-entities`:
+Here is an example request and response to the one of the most basic endpoint: `/entities`:
 <p align="left">
   <img src="./doc/img/request-response.png" alt="Sample request and response">
 </p>  
 
-**Note:** The client's authorization to create an entity, the fields that user can specify, and the fields returned in the response body may vary based on the user's role. The values of managed fields such as `visibility`, `idempotencyKey`, `validFromDateTime`, and `validUntilDateTime` can also be adjusted according to the user's role and the system's configuration.  
+**Note:** The client's authorization to create an entity, the fields that user can specify, and the fields returned in the response body may vary based on the user's role. The values of managed fields such as `_visibility`, `_idempotencyKey`, `_validFromDateTime`, and `_validUntilDateTime` can also be adjusted according to the user's role and the system's configuration.  
   
 **Note**: Endpoints can be configured with arbitrary values within the gateway component. For example, `/books` can be used for records with `kind: book`, and the field `kind` can be completely omitted from the API interaction.
 
 # Entity Persistence Service Application in Detail
 
-This service is equipped with a versatile set of endpoints, each serving a specific purpose in managing and interacting with your data:
+Once the application is up and running:
 
-* `/generic-entities`: Handle your primary data models with this endpoint, facilitating CRUD (Create, Read, Update, Delete) operations.
-* `/generic-lists`: Create, organize, and manage lists, enabling you to associate related data effortlessly.
-* `/generic-lists/{listId}/generic-entities`: Create, organize, and manage lists, enabling you to associate related data effortlessly.
-* `/generic-entities/{id}/reactions`: Capture user reactions, comments, likes, and more on specific entities.
-* `/generic-lists/{id}/list-reactions`: Manage reactions, comments, likes, and other interactions associated with your lists.
-* `/generic-entities/{id}/tags`: Add, modify, or remove tags associated with specific entities for efficient data categorization.
-* `/generic-lists/{id}/tags`: Employ tags to categorize and organize your lists efficiently, ensuring effective data management.
+- It starts listening on **port 3000** for HTTP requests.
+- The following REST endpoints are exposed:
+
+  ### Core Endpoints
+  - `GET /entities`, `POST /entities`: Manage your primary data models — supports full CRUD operations.
+  - `GET /lists`, `POST /lists`: Organize related entities with user-defined lists.
+
+  ### Relationships
+  - `GET /lists/{listId}/entities`, `POST /lists/{listId}/entities`: Add or retrieve entities within a specific list.
+  - `GET /entities/{id}/lists`: Fetch lists that a given entity belongs to.
+  - `GET /entities/{id}/parents`, `POST /entities/{id}/parents`: Retrieve or assign parent entities.
+  - `GET /entities/{id}/children`: List child entities of a specific entity.
+  - `GET /lists/{id}/parents`, `POST /lists/{id}/parents`: Handle list hierarchies by linking to parent lists.
+  - `GET /lists/{id}/children`: Retrieve child lists of a specific list.
+
+  ### Reactions
+  - `GET /entity-reactions`, `POST /entity-reactions`: Manage reactions (likes, ratings, etc.) on entities.
+  - `GET /list-reactions`, `POST /list-reactions`: Capture interactions on lists.
+  - `GET /entities/{id}/reactions`: Get all reactions associated with an entity.
+  - `GET /lists/{id}/reactions`: Retrieve reactions on a list.
+
+- By default, the app uses an **in-memory MongoDB** instance as the backing store (can be customized for production).
+
+## Use Cases & Themes & Benefits
 
 ## Data Model
 
-The Entity Persistence Service is coming with a set of data models, each serving a unique purpose in organizing and managing your data. These data models lay the foundation for creating and categorizing entities and lists, handling user interactions, and facilitating effective data organization.
-Combined with the diverse capabilities of the Entity Persistence Service, enable you to efficiently manage, categorize, and interact with your data, fostering a dynamic and user-friendly environment.
+The Entity Persistence Service is coming with a set of data models, each serving a unique purpose in organizing and managing your data. These data models lay the foundation for creating and categorizing entities and lists, handling user interactions, and facilitating data organization.
   
 <p align="center">
   <img src="./doc/img/model-overview.png" alt="Tarcinapp Suite Overview">
 </p>
 
-### Generic Entity
+### Entities
 
-The Generic Entity data model is at the heart of the Entity Persistence Service, representing fundamental objects within your application. These entities can encompass a wide range of data types, thanks to their schemaless nature. The key distinguishing feature of the Generic Entity is the kind field, which allows for straightforward differentiation between different types of objects. For instance, an entity can be categorized as a 'book' or 'author,' enabling easy data classification and organization. This versatile model serves as the basis for the majority of your data, offering a flexible structure that adapts to various use cases.
+The Generic Entity is the core data model that represents objects in your application. It uses a schemaless structure to support any data type. Each entity has a '_kind' field (like 'book' or 'author') to identify its type. This flexible model adapts easily to different use cases while providing consistent organization.
 
-### List
+### Lists
 
-The List data model is designed to efficiently organize collections of generic entities. A list can establish relationships with multiple entities, providing a mechanism for grouping and categorizing related data. Lists can be categorized using the kind field, allowing for logical organization based on content type or purpose. For example, a list could have a kind value of 'favorites' or 'science_fiction,' streamlining the management and categorization of lists within your application. This model simplifies the task of aggregating data and managing relationships, enhancing the user experience.
+The List model organizes collections of entities. Lists can be categorized by kind, just like entities (e.g. 'favorites' or 'science_fiction') and can contain multiple entities. List objects provide a simple way to group and manage related data.
 
-#### List-Entity Relation
+#### List-Entity Relations
 
-Lists and entities are connected through the `GenericListGenericEntityRel` model. Having a seperated model for the relation helps user to store arbitrary data about the relation with the relation object. Relation objects have a dedicated endpoint, just like lists and entities. To interact with relation objects you can call `/generic-list-entity-relations` endpoint.
+Lists and entities are connected through the `ListEntityRelation` model. Having a seperated model for the relation helps user to store arbitrary data about the relation with the relation object. Relation objects have a dedicated endpoint, just like lists and entities. To interact with relation objects you can call `/list-entity-relations` endpoint.
 
 Model of the relation object is as follows:
 
@@ -80,11 +146,13 @@ Model of the relation object is as follows:
 }
 ```
 
-* You can query (get), create (post), replace (put), update (patch), delete (delete) entities through lists calling the endpoint: `/generic-list-entity-relations`.
-* This endpoint supports `sets` just like other endpoints like `/generic-lists` and `/generic-entities`.
-* Uniqueness, default visibility, idempotency, auto-approve, record-limit, response-limit settings can be configured for individual relationship records.
+* You can query (get), create (post), replace (put), update (patch), delete (delete) entities through lists calling the endpoint: `/list-entity-relations`.
+* This endpoint supports filtering capabilities with `sets` just like other endpoints like `/lists` and `/entities`. See [Sets](#sets) for more information about the Set feature.
+* Uniqueness, idempotency, auto-approve, record-limit, response-limit settings can be configured for individual relationship records.
+* ownership (_ownerUsers, _ownerGroups), viewership (_viewerUsers, _viewerGroups) and _visibility controls are not defined in the `ListEntityRelation` model. Instead, these properties are returned under the _fromMetadata and _toMetadata fields from the connected List and Entity. Authorization is enforced under "Anyone can see the list and the entity, can see the relation" principle.
+* `listFilter`, `listSet`, `entityFilter` and `entitySet` can be passed as query parameter while querying the `/list-entity-relations` endpoint.
 
-A sample response to the `/generic-list-entity-relations` endpoint is as follows:
+A sample response to the `GET /list-entity-relations` endpoint is as follows:
 
 ```json
 [
@@ -117,7 +185,6 @@ A sample response to the `/generic-list-entity-relations` endpoint is as follows
             "_viewerUsers": [],
             "_viewerGroups": []
         },
-        "_idempotencyKey": "8e2a163a534476cd85db0a59dc5300ea2ee4f2494d4788ee77357cb30f8ef15c",
         "_version": 4,
         "_arbitraryProperty": "foo"
     }
@@ -129,36 +196,36 @@ Notice fields like `_fromMetadata` and `_toMetadata` fields are are added to the
 `_fromMetadata`: This field includes metadata (managed fields) of the source object, which is the list in this case.
 `_toMetadata`: This field includes metadata (managed fields) of the target objcet, which is the entity in this case.  
 
+
+
 **Note:** Creation or update operations always require existence of the list and entity specified by the ids.
 
-With the help of the relationship between lists and entities users can interact with entities under a specific list calling this endpoint: `/generic-lists/{listId}/generic-entities`.
+With the help of the relationship between lists and entities users can interact with entities under a specific list calling this endpoint: `/lists/{listId}/entities`.
 
-A sample response of the `GET` call to the `/generic-lists/{listId}/generic-entities` endpoint is as follows:
+A sample response of the `GET` call to the `/lists/{listId}/entities` endpoint is as follows:
 
 ```json
 
 ```
 
-### Entity Reaction
+Similarly, you can retrieve all lists associated with a specific entity using the `/entities/{id}/lists` endpoint. This endpoint allows you to find all lists that contain a particular entity, with support for filtering both the lists and the relationship data using `filter`, `filterThrough`, `set` and `setThrough` parameters respectively.
+
+### Entity Reactions
 
 The Entity Reaction data model is responsible for capturing and managing a broad spectrum of events related to objects within your application. It offers the flexibility to represent a wide range of actions and interactions, including comments, likes, measurements, and emotional responses. With this model, your application can handle diverse reactions and interactions associated with entities effectively, enriching user engagement and data interactivity.
 
-### List Reaction
+### List Reactions
 
 Similar to the Entity Reaction model, the List Reaction data model is tailored to manage events associated with lists. It empowers your application to capture actions like comments, likes, measurements, and reactions linked to lists. This versatility ensures that your application can effectively handle a variety of reactions and interactions related to lists, enhancing user participation and interaction.
-
-### Tags
-
-The Tags data model offers a structured approach to categorizing and organizing entities and lists. Tags act as valuable tools for data classification and grouping. For instance, a book can be assigned tags such as 'science_fiction' or 'fantasy,' simplifying the process of data categorization and organization within your application. This feature is instrumental in streamlining data retrieval and management, making it easier for users to locate and engage with specific content.
 
 ## Features of Entity Persistence Service
 
 ### Essential Data Management
 
-**Entity CRUD operations**: Perform Create, Read, Update, and Delete operations on entities for fundamental data management.  
-**Entity approval**: Manage data approval processes, ensuring quality control.  
-**Entity uniqueness**: Guarantee data integrity through unique entity constraints.  
-**Entity ownership**: Control data access with well-defined ownership and permissions.  
+**CRUD operations**: Perform Create, Read, Update, and Delete operations on entities for fundamental data management.  
+**Approval**: Manage data approval processes, ensuring quality control.  
+**Uniqueness**: Guarantee data integrity through unique entity constraints.  
+**Ownership**: Control data access with well-defined ownership and permissions.  
 
 ### Data Organization
 
@@ -189,6 +256,44 @@ The Tags data model offers a structured approach to categorizing and organizing 
 
 **Special gateway application**: Access enhanced features and secure access control through a dedicated gateway: **entity-persistence-gateway**
 
+## Authentication and Authorization
+
+The Entity Persistence Service is designed with a clear separation of concerns regarding authentication and authorization. While the service includes rich data structures and fields to support complex authorization scenarios, it does not enforce any authentication or authorization rules itself. This responsibility is fully delegated to the **entity-persistence-gateway**.
+
+### Authentication
+
+- The service operates in a **stateless** manner and does not perform any user authentication
+- All endpoints are accessible without requiring authentication tokens or credentials
+- User identity information (like user IDs in `_createdBy` or `_ownerUsers`) is accepted as-is without validation
+- The actual authentication process is handled by the entity-persistence-gateway
+
+### Authorization
+
+While the service includes several authorization-related fields, it does not enforce any access control rules:
+
+**Authorization Fields**:
+- `_visibility`: Can be 'private', 'protected', or 'public'
+- `_ownerUsers`: Array of user IDs who own the record
+- `_ownerGroups`: Array of group IDs with ownership rights
+- `_viewerUsers`: Array of user IDs with view access
+- `_viewerGroups`: Array of group IDs with view access
+
+**Behavior**:
+- All records are returned regardless of their visibility settings
+- No validation is performed against the caller's identity
+- Owner and viewer lists are not enforced
+- Records with 'private' visibility are still accessible
+
+### Gateway-Based Security
+
+The actual security implementation is handled by the **entity-persistence-gateway**, which:
+- Authenticates users and validates their identity
+- Enforces visibility rules based on the caller's context
+- Validates ownership and viewing rights
+- Applies role-based access control (RBAC)
+- Controls field-level access based on user roles
+- Enforces security policies for data operations
+
 ## Sample Use Cases
 
 1. **User Configuration Storage**  
@@ -212,11 +317,11 @@ The Tags data model offers a structured approach to categorizing and organizing 
 
 ### Relations
 
-Relations are individual records just like generic-entities and lists. Relations can hold arbitrary data along with the managed fields. Each time a relation is queried existence of the source and the target record is always checked. With the help of the relations entities under specific list, or reactions under specific list or entity can be queried.  
-`/generic-lists/{listId}/generic-entities`  
-`/generic-entities/{entityId}/reactions`  
+Relations are individual records just like entities and lists. Relations can hold arbitrary data along with the managed fields. Each time a relation is queried existence of the source and the target record is always checked. With the help of the relations entities under specific list, or reactions under specific list or entity can be queried.  
+`/lists/{listId}/entities`  
+`/entities/{entityId}/reactions`  
 While querying the target record with the notation above, users can filter by the relation object using the `filterThrough` extension. For instance:  
-`/generic-lists/{listId}/generic-entities?filterThrough[where][kind]=consists`  
+`/lists/{listId}/entities?filterThrough[where][kind]=consists`  
 
 ### Sets
 
@@ -226,11 +331,11 @@ Sets are a powerful feature introduced in the application, designed to streamlin
 
 1. **Combining Sets with Logical Operators:** Sets can be combined using logical operators such as AND, OR, and NOT, enabling users to construct complex queries tailored to their specific needs.
 `?set[and][0][actives]&set[and][1][publics]`
-2. **Default Filtering with Sets:** Users can still apply default filtering to sets. For example, using the query parameter **`set[actives]&filter[where][kind]=config`** allows users to select all active data with a **`kind`** value of **`config`**.
-3. **setThrough:** Users can apply `setThrough` query parameter while querying a data through relationship such as `/generic-lists/{listId}/generic-entities?setThrough[actives]`. This query will retrieve entities under the list specified by `{listId}` and relation record is active.
+2. **Default Filtering with Sets:** Users can still apply default filtering to sets. For example, using the query parameter **`set[actives]&filter[where][_kind]=config`** allows users to select all active data with a **`_kind`** value of **`config`**.
+3. **setThrough:** Users can apply `setThrough` query parameter while querying a data through relationship such as `/lists/{listId}/entities?setThrough[actives]`. This query will retrieve entities under the list specified by `{listId}` and relation record is active.
 4. **Enforced Sets for Role-Based Access Control:** Sets can be enforced, ensuring that users work on specific predefined sets. The Gateway application facilitates the creation of sets according to role-based access control policies, enhancing data security and access control.
-5. **whereThrough**: Users can apply `whereThrough` query parameter while performing delete or updateAll on the generic-entities through relationship such as `PATCH /generic-lists/{listId}/generic-entities?whereThrough[foo]=bar`. This operation will be applied to the entities under the list specified by `{listId}` and the relationship record with the field `foo` equals to `bar`.
-6. **Sets with Inclusion Filter**: Users can apply sets to include filter. For example: `?filter[include][0][relation]=_genericEntities&filter[include][0][set][and][0][actives]&filter[include][0][set][and][1][publics]`
+5. **whereThrough**: Users can apply `whereThrough` query parameter while performing delete or updateAll on the generic-entities through relationship such as `PATCH /lists/{listId}/entities?whereThrough[foo]=bar`. This operation will be applied to the entities under the list specified by `{listId}` and the relationship record with the field `foo` equals to `bar`.
+6. **Sets with Inclusion Filter**: Users can apply sets to include filter. For example: `?filter[include][0][relation]=_entities&filter[include][0][set][and][0][actives]&filter[include][0][set][and][1][publics]`
 
 **List of Prebuilt Sets:**
 The application comes with a set of prebuilt sets to simplify common data selections. Each set is designed to retrieve specific subsets of data based on predefined conditions. Here are the prebuilt sets:
@@ -247,8 +352,108 @@ The application comes with a set of prebuilt sets to simplify common data select
 | week      | Selects all data where the creationDateTime field is within the last 7 days.                                                                                                                                                                                                                 |
 | month     | Selects all data where the creationDateTime field is within the last 30 days.                                                                                                                                                                                                                |
 | audience  | A combination of multiple sets. This set returns 'active' and 'public' records along with a user's own active and pending records. As a result, it requires user and group IDs similar to the owners set. Requires userIds and groupIds as defined in `owners` and `viewers` configurations. |
+| roots     | Selects all data where the _parentsCount field is 0, meaning these are root-level records that are not children of any other record.                                                                                                                                                         |
+| expired30 | Selects all data where the _validUntilDateTime field has a value and is between the current time and 30 days ago, indicating records that have expired within the last 30 days.                                                                                                           |
 
 The introduction of sets enhances the application's querying capabilities, allowing users to easily access and manage specific subsets of data based on predefined conditions or customized logical combinations.
+
+### Lookups
+
+The application provides a powerful lookup mechanism that allows you to resolve entity references in your queries. This feature supports various types of relationships and nested property lookups.
+
+#### Reference Types
+
+The lookup mechanism supports different types of references based on the reference string format:
+
+- Entity References: `tapp://localhost/entities/{entityId}`
+- List References: `tapp://localhost/lists/{listId}`
+
+#### Query Structure
+
+Lookups can be specified in the filter query string using the `lookup` parameter. The structure is similar to Loopback's relation queries:
+
+```typescript
+// Basic lookup
+?filter[lookup][0][prop]=parents
+
+// Lookup with field selection
+?filter[lookup][0][prop]=parents&filter[lookup][0][scope][fields][name]=true
+
+// Lookup with where conditions
+?filter[lookup][0][prop]=parents&filter[lookup][0][scope][where][_kind]=category
+
+// Lookup with sets
+?filter[lookup][0][prop]=parents&filter[lookup][0][scope][set][actives]
+
+// Multiple lookups
+?filter[lookup][0][prop]=parents&filter[lookup][1][prop]=children
+
+// Nested lookups
+?filter[lookup][0][prop]=parents.foo.bar
+```
+
+#### Examples
+
+1. **Basic Entity Lookup**
+```typescript
+// Get entities with their parent entities resolved
+GET /entities?filter[lookup][0][prop]=parents
+```
+
+2. **List-Entity Lookup**
+```typescript
+// Get lists with their entities resolved
+GET /lists?filter[lookup][0][prop]=entities
+```
+
+3. **Nested Property Lookup**
+```typescript
+// Get entities with nested references resolved
+GET /entities?filter[lookup][0][prop]=metadata.references.parent
+```
+
+4. **Lookup with Field Selection**
+```typescript
+// Get entities with specific fields from their parents
+GET /entities?filter[lookup][0][prop]=parents&filter[lookup][0][scope][fields][name]=true
+```
+
+5. **Lookup with Conditions**
+```typescript
+// Get entities with active parents only
+GET /entities?filter[lookup][0][prop]=parents&filter[lookup][0][scope][set][actives]
+```
+
+6. **Multiple Lookups**
+```typescript
+// Get entities with both parents and children resolved
+GET /entities?filter[lookup][0][prop]=parents&filter[lookup][1][prop]=children
+```
+
+7. **List with Entity Lookups**
+```typescript
+// Get lists with their entities and entity parents resolved
+GET /lists?filter[lookup][0][prop]=entities&filter[lookup][0][scope][lookup][0][prop]=parents
+```
+
+#### Lookup Scope Options
+
+The `scope` parameter in lookups supports various options:
+
+- `fields`: Select specific fields to include in the resolved entities
+- `where`: Apply conditions to filter the resolved entities
+- `set`: Apply predefined sets to filter the resolved entities
+- `lookup`: Define nested lookups for the resolved entities
+- `limit`: Limit the number of resolved entities
+- `skip`: Skip a number of resolved entities
+- `order`: Sort the resolved entities
+
+#### Performance Considerations
+
+- Lookups are resolved in batches to minimize database queries
+- Field selection helps reduce data transfer
+- Nested lookups are processed recursively
+- Results are cached when possible
 
 ### Tags
 
@@ -261,35 +466,41 @@ The updateAll operation is not available for tags since their content is unique,
 3. All managed fields are prefixed with underscore.
 Here are the list of common field names.
 
-| Field Name               | Description                                                                                                                                                                                                                                                                                                                                                                                   |
-| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **_kind**                | A string field represents the kind of the record.  As this application built on top of a schemaless database, objects with different schemas can be considered as different kinds can be stored in same collection. This field is using in order to seggregate objects in same collection. Most of the configuration parameters can be specialized to be applied on specific kind of objects. |
-| **_name\***              | String field represents the name of the record. Mandatory field.                                                                                                                                                                                                                                                                                                                              |
-| **_slug**                | Automatically filled while create or update with the slug format of the value of the name field.                                                                                                                                                                                                                                                                                              |
-| **_visibility**          | Record's visibility level. Can be either `private`, `protected` or `public`.                                                                                                                                                                                                                                                                                                                  |
-| **_version**             | A number field that automatically incremented each update and replace operation. Note: `_version` is not incremented if record is updated with `updateAll` operation. Callers are not allowed to modify this field.                                                                                                                                                                           |
-| **_ownerUsers**          | An array of user ids.                                                                                                                                                                                                                                                                                                                                                                         |
-| **_ownerGroups**         | An array of user groups.                                                                                                                                                                                                                                                                                                                                                                      |
-| **_ownerUsersCount**     | A number field keeps the number of items in ownerUsers array. Facilitates querying records with no-owners with allowing queries like: `/generic-lists?filter[where][_ownerUsersCount]=0`                                                                                                                                                                                                      |
-| **_ownerGroupsCount**    | A number field keeps the number of items in ownerGroups array. Facilitates querying records with no-owners with allowing queries like: `/generic-lists?filter[where][_ownerGroupsCount]=0`                                                                                                                                                                                                    |
-| **_viewerUsers**         | An array of user ids.                                                                                                                                                                                                                                                                                                                                                                         |
-| **_viewerGroups**        | An array of user groups.                                                                                                                                                                                                                                                                                                                                                                      |
-| **_viewerUsersCount**    | A number field keeps the number of items in viewerUsers array. Facilitates querying records with no-viewers with allowing queries like: `/generic-lists?filter[where][_viewerUsersCount]=0`                                                                                                                                                                                                   |
-| **_viewerGroupsCount**   | A number field keeps the number of items in viewerGroups array. Facilitates querying records with no-viewers with allowing queries like: `/generic-lists?filter[where][_viewerGroupsCount]=0`                                                                                                                                                                                                 |
-| **_createdBy**           | Id of the user who created the record. Gateway *may* allow caller to modify this field. By default only admin users can modify this field.                                                                                                                                                                                                                                                    |
-| **_creationDateTime**    | A date time object automatically filled with the datetime of entity create operation. Gateway *may* allow caller to modify this field. By default only admin users can modify this field.                                                                                                                                                                                                     |
-| **_lastUpdatedDateTime** | A date time object automatically filled with the datetime of any entity update operation. Gateway *may* allow caller to modify this field. By default only admin users can modify this field.                                                                                                                                                                                                 |
-| **_lastUpdatedBy**       | Id of the user who performed the last update operation. Gateway *may* allow caller to modify this field. By default only admin users can modify this field.                                                                                                                                                                                                                                   |
-| **_validFromDateTime**   | A date time object represents the time when the object is a valid entity. Can be treated as the approval time. There is a configuration to auto approve records at the time of creation.                                                                                                                                                                                                      |
-| **_validUntilDateTime**  | A date time object represents the time when the objects validity ends. Can be used instead of deleting records.                                                                                                                                                                                                                                                                               |
-| **_idempotencyKey**      | A hashed string field should be computed using the record's fields, which are designed to enhance the record's uniqueness.                                                                                                                                                                                                                                                                    |
+| Field Name               | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **_kind**                | A string field represents the kind of the record.  As this application built on top of a schemaless database, objects with different schemas can be considered as different kinds can be stored in same collection. This field is using in order to seggregate objects in same collection. Most of the configuration parameters can be specialized to be applied on specific kind of objects. **This field is immutable and cannot be changed after creation.** |
+| **_name\***              | String field represents the name of the record. Mandatory field.                                                                                                                                                                                                                                                                                                                                                                                                |
+| **_slug**                | Automatically filled while create or update with the slug format of the value of the name field.                                                                                                                                                                                                                                                                                                                                                                |
+| **_visibility**          | Record's visibility level. Can be either `private`, `protected` or `public`. Gateway enforces query behavior based on the visibility level and caller's authorization.                                                                                                                                                                                                                                                                                          |
+| **_version**             | A number field that automatically incremented each update and replace operation. Note: `_version` is not incremented if record is updated with `updateAll` operation. Callers are not allowed to modify this field.                                                                                                                                                                                                                                             |
+| **_ownerUsers**          | An array of user ids.                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| **_ownerGroups**         | An array of user groups.                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| **_ownerUsersCount**     | A number field keeps the number of items in ownerUsers array. Facilitates querying records with no-owners with allowing queries like: `/lists?filter[where][_ownerUsersCount]=0`                                                                                                                                                                                                                                                                                |
+| **_ownerGroupsCount**    | A number field keeps the number of items in ownerGroups array. Facilitates querying records with no-owners with allowing queries like: `/lists?filter[where][_ownerGroupsCount]=0`                                                                                                                                                                                                                                                                              |
+| **_viewerUsers**         | An array of user ids.                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| **_viewerGroups**        | An array of user groups.                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| **_viewerUsersCount**    | A number field keeps the number of items in viewerUsers array. Facilitates querying records with no-viewers with allowing queries like: `/lists?filter[where][_viewerUsersCount]=0`                                                                                                                                                                                                                                                                             |
+| **_viewerGroupsCount**   | A number field keeps the number of items in viewerGroups array. Facilitates querying records with no-viewers with allowing queries like: `/lists?filter[where][_viewerGroupsCount]=0`                                                                                                                                                                                                                                                                           |
+| **_parentsCount**        | A number field keeps the number of parents of the record. Facilitates retrieving only parents by this usage: `/entities?filter[where][_parentsCount]=0`                                                                                                                                                                                                                                                                                                         |
+| **_createdBy**           | Id of the user who created the record. Gateway *may* allow caller to modify this field. By default only admin users can modify this field.                                                                                                                                                                                                                                                                                                                      |
+| **_creationDateTime**    | A date time object automatically filled with the datetime of entity create operation. Gateway *may* allow caller to modify this field. By default only admin users can modify this field.                                                                                                                                                                                                                                                                       |
+| **_lastUpdatedDateTime** | A date time object automatically filled with the datetime of any entity update operation. Gateway *may* allow caller to modify this field. By default only admin users can modify this field.                                                                                                                                                                                                                                                                   |
+| **_lastUpdatedBy**       | Id of the user who performed the last update operation. Gateway *may* allow caller to modify this field. By default only admin users can modify this field.                                                                                                                                                                                                                                                                                                     |
+| **_validFromDateTime**   | A date time object represents the time when the object is a valid entity. Can be treated as the approval time. There is a configuration to auto approve records at the time of creation.                                                                                                                                                                                                                                                                        |
+| **_validUntilDateTime**  | A date time object represents the time when the objects validity ends. Can be used instead of deleting records.                                                                                                                                                                                                                                                                                                                                                 |
+| **_idempotencyKey**      | A hashed string field should be computed using the record's fields, which are designed to enhance the record's uniqueness.                                                                                                                                                                                                                                                                                                                                      |
 
 **(\*)** Required fields
 
-**Strictly Managed Fields**: `_version`, `_idempotencyKey`, `_viewerUsersCount`, `_viewerGroupsCount`, `_ownerUsersCount` and `_ownerGroupsCount` fields are calculated at the application logic no matter what value is sent by the caller.  
+**Strictly Managed Fields**: `_version`, `_idempotencyKey`, `_parentsCount`,  `_viewerUsersCount`, `_viewerGroupsCount`, `_ownerUsersCount` and `_ownerGroupsCount` fields are calculated at the application logic no matter what value is sent by the caller.  
+
 **Fields Set by Application when Empty**: `_kind`, `_visibility`, `_validFromDateTime`, `_slug`, `_creationDateTime` and `_lastUpdatedDateTime` are calculated at the application logic if it is not specified in the request body. entity-persistence-gateway decides if user is authorized to send these fields by evaluating authorization policies.   
-**Gateway Managed Fields**: `_viewerUsers`, `_viewerGroups`, `_ownerUsers`, `_ownerGroups`, `_createdBy`, `_createdDateTime`, `_lastUpdatedBy`, `_lastUpdatedDateTime ` fields *may* be modified by entity-persistence-gateway. Gateway decides whether it accepts the given value or modify it by evaluating security policies.  
-**Always Hidden Fields**: `_ownerUsersCount`, `_ownerGroupsCount`, `_viewerUsersCount`, `_viewerGroupsCount` fields are hidden from the caller in the response. Yet, these fields can be used while querying records.
+
+**Gateway Managed Fields**: `_viewerUsers`, `_viewerGroups`, `_ownerUsers`, `_ownerGroups`, `_createdBy`, `_createdDateTime`, `_lastUpdatedBy`, `_lastUpdatedDateTime`, `_validFromDateTime` fields *may* be modified by entity-persistence-gateway. Gateway decides whether it accepts the given value, modifies it, or allows the caller to modify it by evaluating security policies.
+
+**Always Hidden Fields**: `_parentsCount`, `_ownerUsersCount`, `_ownerGroupsCount`, `_viewerUsersCount`, `_viewerGroupsCount` and `_idempotencyKey` fields are hidden from the caller in the response. Yet, these fields can be used while querying records. Gateway decides if caller is authorized to read and query by these fields by evaluating security policies.
+
+**Immutable Fields**: The `_id`, and `_kind` fields are immutable and cannot be changed after record creation. This constraint is enforced because many system configurations and data integrity rules are based on the `_kind` value. Changing the `_kind` of an existing record could lead to inconsistencies in uniqueness constraints, validation rules, visibility settings, and other kind-specific configurations. Any attempt to modify the `_kind` field during update or replace operations will result in a 422 error (Unprocessable Entity) with the code `IMMUTABLE-ENTITY-KIND`.
 
 **Note:** entity-persistence-gateway can decide if *caller* is authorized to change the value of a field by evaluating security policies. Any field can be subjected to the authorization policies. By configuring the authorization policy, you can allow or disallow the caller to change, modify or read the value of any field.
 
@@ -309,17 +520,19 @@ We can divide configurations into 9 categories:
 
 ### Database
 
-| Configration                        | Description                                                                      | Default Value   |
-| ----------------------------------- | -------------------------------------------------------------------------------- | --------------- |
-| **mongodb_host**                    | MongoDB database hostname                                                        | localhost       |
-| **mongodb_port**                    | MongoDB database port number                                                     | 27017           |
-| **mongodb_user**                    | MongoDB database user                                                            | tappuser        |
-| **mongodb_password**                | MongoDB password. Provide through k8s secrets                                    | tapppass123!    |
-| **mongodb_database**                | Name of the database                                                             | tappdb          |
-| **mongodb_url**                     | Connection URL can be used instead of host, port and user                        | localhost       |
-| **collection_entity**               | Name of the collection which generic entities are persisted                      | GenericEntities |
-| **collection_list**                 | Name of the collection which generic lists are persisted                         | GenericLists    |
-| **collection_list_list_entity_rel** | Name of the collection which relationships between list and entity are persisted | GenericLists    |
+| Configration                        | Description                                                                      | Default Value       |
+| ----------------------------------- | -------------------------------------------------------------------------------- | ------------------- |
+| **mongodb_host**                    | MongoDB database hostname                                                        | localhost           |
+| **mongodb_port**                    | MongoDB database port number                                                     | 27017               |
+| **mongodb_user**                    | MongoDB database user                                                            | tappuser            |
+| **mongodb_password**                | MongoDB password. Provide through k8s secrets                                    | tapppass123!        |
+| **mongodb_database**                | Name of the database                                                             | tappdb              |
+| **mongodb_url**                     | Connection URL can be used instead of host, port and user                        | localhost           |
+| **collection_entity**               | Name of the collection which generic entities are persisted                      | GenericEntities     |
+| **collection_list**                 | Name of the collection which generic lists are persisted                         | Lists               |
+| **collection_list_list_entity_rel** | Name of the collection which relationships between list and entity are persisted | ListEntityRelations |
+| **collection_entity_reactions**     | Name of the collection which entity reactions are persisted                      | EntityReactions     |
+| **collection_list_reactions**       | Name of the collection which list reactions are persisted                        | ListReactions       |
 
 ### Allowed Kinds
 
@@ -330,29 +543,133 @@ You can limit acceptable values for `kind` fields for the records.
 | **entity_kinds**          | Comma seperated list of allowed values for kind field of entities.                     |               |
 | **list_kinds**            | Comma seperated list of allowed values for kind field of lists.                        |               |
 | **list_entity_rel_kinds** | Comma seperated list of allowed values for kind field of list to entity relationships. | relation      |
+| **entity_reaction_kinds** | Comma seperated list of allowed values for kind field of entity reactions.             |               |
+| **list_reaction_kinds**   | Comma seperated list of allowed values for kind field of list reactions.               |               |
 
 ### Uniqueness
 
-Data uniqueness is configurable with giving the composite-index-like set of field names. Optionally, you can make uniqueness valid for a subset of records. To enforce uniqueness in a subset of record, you can configure "set" feature of the application. That is, uniqueness can be enforced only between valid or public records as well. You can combine multiple sets with logical operators.
+Data uniqueness is configurable using a query-like syntax that allows defining uniqueness rules based on field values and scopes. You can define multiple uniqueness rules by separating them with commas. Each rule consists of:
+- Field conditions using `where` clauses that specify which fields must match exactly
+- Optional scope conditions using either `where` clauses or predefined `set` expressions
+- Template variables that get replaced with actual field values using `${fieldName}` syntax
 
-Field types should be primitive types such as string or number.
+The configuration supports various uniqueness scenarios:
+- Global uniqueness based on specific fields
+- Uniqueness within a subset of records (e.g., only active records)
+- Uniqueness scoped by field values (e.g., within approved records)
+- Multiple uniqueness rules for different combinations
 
-Uniqueness configuration is implemented in application logic. MongoDB has composite unique index feature but this feature supports only one array. Thus, it cannot support ownerUsers and ownerGroups together. Furthermore, MongoDB's unique index on arrays cannot be used to implement 'unique per user' approach as it takes arrays contribute to unique index as a whole.
+| Configuration | Description | Default Value | Example Value |
+|--------------|-------------|---------------|---------------|
+| **ENTITY_UNIQUENESS** | Defines uniqueness rules for entities. Multiple rules can be specified by separating them with commas. | - | `where[_name]=${_name},where[_slug]=${_slug}&set[actives]` |
+| **LIST_UNIQUENESS** | Defines uniqueness rules for lists. Multiple rules can be specified by separating them with commas. | - | `where[_name]=${_name}&where[_kind]=${_kind},where[_slug]=${_slug}&set[publics]` |
+| **RELATION_UNIQUENESS** | Defines uniqueness rules for list-entity relations. Multiple rules can be specified by separating them with commas. | - | `where[_listId]=${_listId}&where[_entityId]=${_entityId}` |
+| **ENTITY_REACTION_UNIQUENESS** | Defines uniqueness rules for entity reactions. Multiple rules can be specified by separating them with commas. | - | `where[_entityId]=${_entityId}&where[type]=${type}&set[actives]` |
+| **LIST_REACTION_UNIQUENESS** | Defines uniqueness rules for list reactions. Multiple rules can be specified by separating them with commas. | - | `where[_listId]=${_listId}&where[type]=${type}&set[actives]` |
 
-| Configration                                          | Description                                                                                                                                                                                 | Default Value | Example Value        |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | -------------------- |
-| **uniqueness_entity_fields**                          | Composite index-like comma seperated list of field names of generic entity. Note that the array fields are not supported. Consider using set feature to implement uniqueness per user.      | -             | slug,kind,ownerUsers |
-| **uniqueness_entity_set**                             | Specify the scope where the uniqueness should be checked with set queries.                                                                                                                  | -             | set[actives]         |
-| **uniqueness_entity_fields_for_{kind_name}**          | Composite index-like comma seperated list of field names of generic entity. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind. | -             | slug,kind,ownerUsers |
-| **uniqueness_entity_set_for_{kind_name}**             | Specify the scope where the uniqueness should be checked with set queries. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.  | -             | set[actives]         |
-| **uniqueness_list_fields**                            | Composite index-like comma seperated list of field names of list                                                                                                                            | -             | slug,kind,ownerUsers |
-| **uniqueness_list_set**                               | Specify the scope where the uniqueness should be checked with set queries                                                                                                                   | false         | set[publics]         |
-| **uniqueness_list_fields_for_{kind_name}**            | Composite index-like comma seperated list of field names of list. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.           | -             | slug,kind,ownerUsers |
-| **uniqueness_list_set_for_{kind_name}**               | Specify the scope where the uniqueness should be checked with set queries. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.  | false         | set[publics]         |
-| **uniqueness_list_entity_rel_fields**                 | Composite index-like comma seperated list of field names of the relation                                                                                                                    | -             | slug,kind            |
-| **uniqueness_list_entity_rel_set**                    | Specify the scope where the uniqueness should be checked with set queries                                                                                                                   | false         | set[publics]         |
-| **uniqueness_list_entity_rel_fields_for_{kind_name}** | Composite index-like comma seperated list of field names of the relation. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.   | -             | slug,kind            |
-| **uniqueness_list_entity_rel_set_for_{kind_name}**    | Specify the scope where the uniqueness should be checked with set queries. Specify a valid kind name in configuration name. This configuration will only be applied to that specific kind.  | false         | set[publics]         |
+#### Configuration Syntax
+
+The uniqueness configuration uses a query-like syntax with these components:
+
+1. **Field Uniqueness** (using `where` clauses):
+   ```bash
+   where[field_name]=${field_name}
+   ```
+   This specifies which fields must be unique.
+
+2. **Scope Definition**:
+   - Using predefined sets:
+     ```bash
+     set[actives]  # Only check uniqueness among active records
+     set[publics]  # Only check uniqueness among public records
+     ```
+   - Using where clauses:
+     ```bash
+     where[status]=approved  # Only check uniqueness among approved records
+     ```
+
+3. **Template Variables**:
+   ```bash
+   ${_name}, ${_slug}, ${_kind}, etc.
+   ```
+   These get replaced with actual field values from the record.
+
+#### Examples
+
+1. **Simple Field Uniqueness**:
+   ```bash
+   # Only one record can exist with a given name
+   ENTITY_UNIQUENESS="where[_name]=${_name}"
+   ```
+
+2. **Multiple Field Uniqueness**:
+   ```bash
+   # Name must be unique within each kind
+   ENTITY_UNIQUENESS="where[_name]=${_name}&where[_kind]=${_kind}"
+   ```
+
+3. **Uniqueness Within Active Records**:
+   ```bash
+   # Only one active record can exist with a given name
+   ENTITY_UNIQUENESS="where[_name]=${_name}&set[actives]"
+   ```
+
+4. **Uniqueness Within Approved Records**:
+   ```bash
+   # Only one record with status=approved can exist with a given name
+   ENTITY_UNIQUENESS="where[_name]=${_name}&where[status]=approved"
+   ```
+
+5. **Multiple Uniqueness Rules**:
+   ```bash
+   # Rule 1: Name must be unique globally
+   # Rule 2: Slug must be unique among active records
+   ENTITY_UNIQUENESS="where[_name]=${_name},where[_slug]=${_slug}&set[actives]"
+   ```
+
+6. **Complex Scoping**:
+   ```bash
+   # Name must be unique among active and public records
+   ENTITY_UNIQUENESS="where[_name]=${_name}&set[actives]&set[publics]"
+   ```
+
+7. **Combined Where and Set Scoping**:
+   ```bash
+   # Name must be unique within each department among active records
+   ENTITY_UNIQUENESS="where[_name]=${_name}&where[department]=${department}&set[actives]"
+   ```
+
+For available sets and their behaviors that can be used in uniqueness rules, see the [Sets](#sets) section.
+
+#### Error Response
+
+When a uniqueness violation occurs, the API returns a detailed error response:
+
+```json
+{
+  "error": {
+    "statusCode": 409,
+    "name": "UniquenessViolationError",
+    "message": "Entity already exists",
+    "code": "ENTITY-UNIQUENESS-VIOLATION",
+    "status": 409,
+    "details": [
+      {
+        "code": "ENTITY-UNIQUENESS-VIOLATION",
+        "message": "Entity already exists",
+        "info": {
+          "scope": "where[_name]=example&set[actives]"
+        }
+      }
+    ]
+  }
+}
+```
+
+The error response includes:
+- The specific uniqueness rule that was violated
+- The scope where the violation occurred
+- The field values that caused the conflict
 
 ### Auto Approve
 
@@ -377,6 +694,10 @@ This option only applies when visibility field is not provided. If you want to a
 | **visibility_entity_for_{kind_name}** | Default value to be filled for `visibility` field while entity creation. This configuration will only be applied to that specific kind. | protected     | public, private |
 | **visibility_list**                   | Default value to be filled for `visibility` field while list creation.                                                                  | protected     | public, private |
 | **visibility_list_for_{kind_name}**   | Default value to be filled for `visibility` field while list creation. This configuration will only be applied to that specific kind.   | protected     | public, private |
+| **visibility_entity_reaction**        | Default value to be filled for `visibility` field while entity reaction creation.                                                       | protected     | public, private |
+| **visibility_entity_reaction_for_{kind_name}** | Default value to be filled for `visibility` field while entity reaction creation. This configuration will only be applied to that specific kind. | protected | public, private |
+| **visibility_list_reaction**          | Default value to be filled for `visibility` field while list reaction creation.                                                        | protected     | public, private |
+| **visibility_list_reaction_for_{kind_name}** | Default value to be filled for `visibility` field while list reaction creation. This configuration will only be applied to that specific kind. | protected | public, private |
 
 ### Response Limits
 
@@ -393,23 +714,148 @@ These setting limits the number of record can be returned for each data model. I
 
 ### Record Limits
 
-These settings limits the number of records can be created for entities and lists. There is no limits for reactions and tags. But you can configure daily or hourly limits from gateway.
-Limits can be configured through sets. For instance, you can limit active or public entities a user can have. You can even set these configurations per entity kind by adding `_for_{kindname}` suffix to the configuration name.
+The record limit mechanism allows you to control the number of records that can be created in the system. It provides a flexible way to define limits based on various criteria such as record type, kind, ownership, and state.
 
-| Configration                                           | Description                                                          | Example Value   |
-| ------------------------------------------------------ | -------------------------------------------------------------------- | --------------- |
-| **record_limit_entity_count**                          | Max entities can be created.                                         | 100             |
-| **record_limit_entity_set**                            | A set string where record limits will be applied.                    | `set[audience]` |
-| **record_limit_entity_count_for_{kind_name}**          | Max entities can be created for a specific entity kind.              | 100             |
-| **record_limit_entity_set_for_{kind_name}**            | A set string where record limits will be applied for a specific kind | 50              |
-| **record_limit_list_count**                            | Max lists can be created.                                            | 50              |
-| **record_limit_list_set**                              | A set string where record limits will be applied.                    | `set[audience]` |
-| **record_limit_list_count_for_{kind_name}**            | Max lists can be created for a specific entity kind.                 | 50              |
-| **record_limit_list_set_for_{kind_name}**              | A set string where record limits will be applied for a specific kind | 50              |
-| **record_limit_list_entity_rel_count**                 | Max number of relations can be created between list and entity.      | 50              |
-| **record_limit_list_entity_rel_set**                   | A set string where record limits will be applied.                    | `set[audience]` |
-| **record_limit_list_entity_rel_count_for_{kind_name}** | Max lists can be created for a specific entity kind.                 | 50              |
-| **record_limit_list_entity_rel_set_for_{kind_name}**   | A set string where record limits will be applied for a specific kind | 50              |
+#### Configuration Mechanism
+
+Record limits are configured through environment variables using a JSON-based notation. Each type of record (entity, list, relation, reactions) has its own configuration variable:
+
+| Environment Variable | Description |
+|---------------------|-------------|
+| `ENTITY_RECORD_LIMITS` | Configures limits for entity records |
+| `LIST_RECORD_LIMITS` | Configures limits for list records |
+| `RELATION_RECORD_LIMITS` | Configures limits for list-entity relations |
+| `ENTITY_REACTION_RECORD_LIMITS` | Configures limits for entity reactions |
+| `LIST_REACTION_RECORD_LIMITS` | Configures limits for list reactions |
+
+#### Configuration Schema
+
+Each environment variable accepts a JSON array of limit configurations:
+
+```json
+[
+  {
+    "scope": "string",  // Where clauses or set expressions defining where the limit applies
+    "limit": number    // Maximum number of records allowed in this scope
+  }
+]
+```
+
+The `scope` field supports:
+- Empty string (`""`) for global limits
+- Where clause expressions (`where[field]=value`)
+- Set expressions (`set[setname]`)
+- Combined expressions using `&` and logical `AND`, `OR` operators
+
+#### Dynamic Value Interpolation
+
+The scope field supports interpolation of record values using `${fieldname}` syntax:
+- `${_kind}` - Record's kind
+- `${_ownerUsers}` - Record's owner users
+- `${_listId}` - Relation's list ID
+- Any other field from the record being created
+
+#### Common Use Cases and Examples
+
+1. **Global Record Limit**
+   ```bash
+   # Limit total entities to 1000
+   ENTITY_RECORD_LIMITS='[{"scope":"","limit":1000}]'
+   ```
+
+2. **Kind-Specific Limits**
+   ```bash
+   # Limit book entities to 100, movie entities to 50
+   ENTITY_RECORD_LIMITS='[
+     {"scope":"where[_kind]=book","limit":100},
+     {"scope":"where[_kind]=movie","limit":50}
+   ]'
+   ```
+
+3. **Active Records Limit**
+   ```bash
+   # Limit active entities to 50
+   ENTITY_RECORD_LIMITS='[{"scope":"set[actives]","limit":50}]'
+   ```
+
+4. **Per-User Limits**
+   ```bash
+   # Limit each user to 10 lists
+   LIST_RECORD_LIMITS='[{"scope":"set[owners][userIds]=${_ownerUsers}","limit":10}]'
+   ```
+
+5. **Combined Criteria**
+   ```bash
+   # Limit active public book entities to 20
+   ENTITY_RECORD_LIMITS='[{
+     "scope":"set[actives]&set[publics]&where[_kind]=book",
+     "limit":20
+   }]'
+   ```
+
+6. **List-Entity Relations**
+   ```bash
+   # Limit each list to 100 entities
+   RELATION_RECORD_LIMITS='[{
+     "scope":"where[_listId]=${_listId}",
+     "limit":100
+   }]'
+
+   # Different limits for different list kinds
+   RELATION_RECORD_LIMITS='[
+     {"scope":"where[_listId]=${_listId}&where[_kind]=reading-list","limit":10},
+     {"scope":"where[_listId]=${_listId}&where[_kind]=watch-list","limit":20}
+   ]'
+   ```
+
+7. **Multiple Limits**
+   ```bash
+   # Combined global and kind-specific limits
+   LIST_RECORD_LIMITS='[
+     {"scope":"","limit":1000},
+     {"scope":"where[_kind]=featured","limit":10},
+     {"scope":"set[actives]&set[publics]","limit":50}
+   ]'
+   ```
+
+#### Filter Expressions
+
+Filter expressions use the Loopback query syntax:
+- Simple equality: `where[field]=value`
+- Multiple conditions: `where[field1]=value1&where[field2]=value2`
+- Nested fields: `where[field.nested]=value`
+
+#### Set Expressions
+
+Available sets for filtering:
+- `set[actives]` - Currently active records (based on validity dates)
+- `set[publics]` - Public records
+- `set[owners]` - Records by owner
+- `set[viewers]` - Records by viewer
+- `set[audience]` - Records by combined owners and viewers
+
+#### Error Handling
+
+When a limit is exceeded, the service returns a 429 error with details:
+```json
+{
+  "statusCode": 429,
+  "name": "LimitExceededError",
+  "message": "Record limit exceeded for [type]",
+  "code": "[TYPE]-LIMIT-EXCEEDED",
+  "status": 429,
+  "details": [{
+    "code": "[TYPE]-LIMIT-EXCEEDED",
+    "message": "Record limit exceeded for [type]",
+    "info": {
+      "limit": number,
+      "scope": "string"
+    }
+  }]
+}
+```
+
+Where `[type]` is one of: entity, list, relation, entity-reaction, list-reaction.
 
 ### Idempotency
 
@@ -423,6 +869,10 @@ entity-persistence-service ensures data creation is efficient and predictable. Y
 | **idempotency_list_for_{kindName}**            | comma seperated list of field names for list records with kind value is {kindName} that are contributing to the calculation of idempotency key   | -             | kind, slug, author     |
 | **idempotency_list_entity_rel**                | comma seperated list of field names for entity records that are contributing to the calculation of idempotency key                               | -             | kind, listId, entityId |
 | **idempotency_list_entity_rel_for_{kindName}** | comma seperated list of field names for entity records with kind value is {kindName} that are contributing to the calculation of idempotency key | -             | kind, listId, entityId |
+| **idempotency_entity_reaction**                | comma seperated list of field names for entity reaction records that are contributing to the calculation of idempotency key                      | -             | kind, entityId, type   |
+| **idempotency_entity_reaction_for_{kindName}** | comma seperated list of field names for entity reaction records with kind value is {kindName} that are contributing to the calculation of idempotency key | -      | kind, entityId, type   |
+| **idempotency_list_reaction**                  | comma seperated list of field names for list reaction records that are contributing to the calculation of idempotency key                        | -             | kind, listId, type     |
+| **idempotency_list_reaction_for_{kindName}**   | comma seperated list of field names for list reaction records with kind value is {kindName} that are contributing to the calculation of idempotency key | -      | kind, listId, type     |
 
 Please note that idempotency calculation takes place before populating managed fields. Thus, do not use managed fields as contributor to the idempotency. For instance, use `name` instead of `slug`.
 
@@ -450,12 +900,44 @@ db.createUser({
 
 For VSCode, create a dev.env file at the root of your workspace folder. Add local database configuration as environment variables to this file. This file will be read once you start the application in debug mode. Sample .env files can be found under /doc/env folder.
 
-# Known Issues
+# Known Issues and Limitations
 
-## 1. Idempotency and Visibility
+### 1. Idempotency and Visibility
 
-   If a user creates a record idempotently, they may receive a success response, even if the previously created idempotent record is set as private. However, due to the visibility settings, the user who attempted to create idempotent record won't be able to view private records created by someone else. This can create a situation where it appears as if the data was created successfully, but it may not be visible to whom created it because of the privacy settings. It's essential to be aware of this behavior when working with idempotent data creation and privacy settings.
-   This issue is going to be addressed with making `set`s can contribute to the idempotency calculation.
+If a user creates a record idempotently, they may receive a success response, even if the previously created idempotent record is set as private. However, due to the visibility settings, the user who attempted to create idempotent record won't be able to view private records created by someone else. This can create a situation where it appears as if the data was created successfully, but it may not be visible to whom created it because of the privacy settings. It's essential to be aware of this behavior when working with idempotent data creation and privacy settings.
+This issue is going to be addressed with making `set`s can contribute to the idempotency calculation.
+
+### 2. Field Selection with Arbitrary Fields
+
+All models in the application (entities, lists, relations, and reactions) allow arbitrary fields through `additionalProperties: true` in their model definitions. When using field selection with these models, there is a limitation in Loopback's behavior:
+
+- If you explicitly set any arbitrary field to `false` in the field selection filter, all other arbitrary fields will also be excluded from the response, even if they weren't explicitly mentioned in the filter.
+- This behavior affects all arbitrary fields (fields not defined in the model schema) in all models (entities, lists, relations, and reactions).
+- Built-in fields (those defined in the model schema, like `_id`, `_name`, `_kind`, etc.) are not affected by this behavior.
+
+Example:
+```typescript
+// All models allow arbitrary fields
+const response = await client.get('/entities').query({
+  filter: {
+    fields: {
+      customField: false    // Setting any arbitrary field to false...
+    }
+  }
+});
+
+// Result: All arbitrary fields (customField, description, and any other custom fields)
+// will be excluded from the response, even if not explicitly mentioned in the filter.
+// All built-in fields defined in the model schema will be returned by default
+```
+
+This is a known limitation in Loopback's implementation of field selection when dealing with models that allow arbitrary fields.
+
+### 3. Version Incrementation for Update All operations.
+When performing PATCH or PUT operations on a single record, the version field (_version) is automatically incremented by 1. However, for bulk update operations (updateAll), version tracking is not supported. The version field remains unchanged even when records are modified.
+
+### 4. Dot Notation in Connected Model Filters for List-Entity Relations
+When querying list-entity relations, dot notation filtering (e.g., `metadata.status.current`) is not supported in `listFilter` and `entityFilter` parameters for connected models. While other filtering approaches work normally, nested property filtering using dot notation specifically for connected List and Entity models through their relations is not available.
 
 # Development Status
 

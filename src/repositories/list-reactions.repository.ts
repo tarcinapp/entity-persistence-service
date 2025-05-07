@@ -1,55 +1,17 @@
-import { Getter, inject } from '@loopback/core';
-import {
-  DefaultCrudRepository,
-  Filter,
-  HasManyRepositoryFactory,
-  Options,
-  repository,
-} from '@loopback/repository';
-import _ from 'lodash';
+import { inject } from '@loopback/core';
+import { DefaultCrudRepository, Filter, Options } from '@loopback/repository';
 import { EntityDbDataSource } from '../datasources';
-import { ListReactions, ListReactionsRelations, SubReactions } from '../models';
-import { SubReactionsRepository } from './sub-reactions.repository';
+import { ListReaction } from '../models';
 
 export class ListReactionsRepository extends DefaultCrudRepository<
-  ListReactions,
-  typeof ListReactions.prototype.id,
-  ListReactionsRelations
+  ListReaction,
+  typeof ListReaction.prototype.id
 > {
-  public readonly subReactions: HasManyRepositoryFactory<
-    SubReactions,
-    typeof ListReactions.prototype.id
-  >;
-
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  private static response_limit = _.parseInt(
-    process.env.response_limit_list_reaction ?? '50',
-  );
-
-  constructor(
-    @inject('datasources.EntityDb') dataSource: EntityDbDataSource,
-    @repository.getter('SubReactionsRepository')
-    protected subReactionsRepositoryGetter: Getter<SubReactionsRepository>,
-  ) {
-    super(ListReactions, dataSource);
-    this.subReactions = this.createHasManyRepositoryFactoryFor(
-      'subReactions',
-      subReactionsRepositoryGetter,
-    );
-    this.registerInclusionResolver(
-      'subReactions',
-      this.subReactions.inclusionResolver,
-    );
+  constructor(@inject('datasources.EntityDb') dataSource: EntityDbDataSource) {
+    super(ListReaction, dataSource);
   }
 
-  async find(filter?: Filter<ListReactions>, options?: Options) {
-    if (
-      filter?.limit &&
-      filter.limit > ListReactionsRepository.response_limit
-    ) {
-      filter.limit = ListReactionsRepository.response_limit;
-    }
-
+  async find(filter?: Filter<ListReaction>, options?: Options) {
     return super.find(filter, options);
   }
 }

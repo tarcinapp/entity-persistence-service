@@ -5,11 +5,15 @@ import {
   IdempotencyConfigurationReader,
   KindConfigurationReader,
   RecordLimitsConfigurationReader,
+  ResponseLimitConfigurationReader,
   UniquenessConfigurationReader,
   ValidfromConfigurationReader,
   VisibilityConfigurationReader,
 } from '../../../extensions';
-import { ResponseLimitConfigurationReader } from '../../../extensions/config-helpers/response-limit-config-helper';
+import {
+  LookupBindings,
+  LookupHelper,
+} from '../../../extensions/utils/lookup-helper';
 
 export async function setupRepositoryTest(): Promise<{
   app: EntityPersistenceApplication;
@@ -46,6 +50,9 @@ export async function setupRepositoryTest(): Promise<{
   const validfromConfigReader = new ValidfromConfigurationReader();
   const idempotencyConfigReader = new IdempotencyConfigurationReader();
   const responseLimitConfigReader = new ResponseLimitConfigurationReader();
+
+  // Add lookup helper binding for tests
+  app.bind(LookupBindings.HELPER).toClass(LookupHelper);
 
   return {
     app,

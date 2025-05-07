@@ -4,7 +4,7 @@ import type { ListEntityCommonBase } from '../base-models/list-entity-common-bas
  * Inherits:
  * _id, _kind, _validFromDateTime, _validUntilDateTime, _ownerUsers, _ownerGroups, _viewerUsers, _viewerGroups, _visibility
  *
- * This type is designed to be used for the GenericListEntityRel.fromMeta and GenericListEntityRel.toMeta
+ * This type is designed to be used for the ListEntityRel.fromMetadata, ListEntityRel.toMetadata, EntityReactions._fromMetadata and ListReactions._fromMetadata
  */
 type SelectedKeys =
   | '_kind'

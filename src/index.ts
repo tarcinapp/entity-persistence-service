@@ -19,6 +19,15 @@ import {
   KindBindings,
   KindConfigurationReader,
 } from './extensions';
+import { LookupBindings, LookupHelper } from './extensions/utils/lookup-helper';
+import {
+  MongoPipelineHelper,
+  MongoPipelineHelperBindings,
+} from './extensions/utils/mongo-pipeline-helper';
+import { LookupConstraintBindings } from './services/lookup-constraint.bindings';
+import { LookupConstraintService } from './services/lookup-constraint.service';
+import { RecordLimitCheckerBindings } from './services/record-limit-checker.bindings';
+import { RecordLimitCheckerService } from './services/record-limit-checker.service';
 
 export * from './application';
 
@@ -60,6 +69,20 @@ export async function main(options: ApplicationConfig = {}) {
     .toClass(ResponseLimitConfigurationReader);
 
   app.bind(KindBindings.CONFIG_READER).toClass(KindConfigurationReader);
+
+  // add lookup helper to context
+  app.bind(LookupBindings.HELPER).toClass(LookupHelper);
+
+  // add mongo pipeline helper to context
+  app.bind(MongoPipelineHelperBindings.HELPER).toClass(MongoPipelineHelper);
+
+  // add record limit checker service to context
+  app
+    .bind(RecordLimitCheckerBindings.SERVICE)
+    .toClass(RecordLimitCheckerService);
+
+  // add lookup constraint service to context
+  app.bind(LookupConstraintBindings.SERVICE).toClass(LookupConstraintService);
 
   await app.boot();
   await app.start();

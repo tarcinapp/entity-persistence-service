@@ -25,12 +25,12 @@ data:
   db_database: "tarcinapp"
   # Uniqueness
   uniqueness_entity_fields: "kind,slug"
-  #uniqueness_entity_set: "set[actives]"
+  #uniqueness_entity_scope: "set[actives]"
   #uniqueness_entity_fields_for_{kind_name}: slug,kind,ownerUsers
-  #uniqueness_entity_set_for_{kind_name}: set[actives]
-  #uniqueness_list_set: set[publics]
+  #uniqueness_entity_scope_for_{kind_name}: set[actives]
+  #uniqueness_list_scope: set[publics]
   #uniqueness_list_fields_for_{kind_name}: slug,kind,ownerUsers
-  #uniqueness_list_set_for_{kind_name}: set[actives]
+  #uniqueness_list_scope_for_{kind_name}: set[actives]
   # Auto Approve
   #autoapprove_entity: "false"
   #autoapprove_list: "false"
@@ -52,13 +52,13 @@ data:
   #response_limit_tag: "50"
   # Record Limits
   #record_limit_entity_count: "50"
-  #record_limit_entity_set: "50"
+  #record_limit_entity_scope: "50"
   #record_limit_entity_count_for_{kind_name}: "50"
-  #record_limit_entity_set_for_{kind_name}: "50"
+  #record_limit_entity_scope_for_{kind_name}: "50"
   #record_limit_list_count: "50"
-  #record_limit_list_set: "50"
+  #record_limit_list_scope: "50"
   #record_limit_list_count_for_{kind_name}: "50"
-  #record_limit_list_set_for_{kind_name}: "50"
+  #record_limit_list_scope_for_{kind_name}: "50"
 ---
 apiVersion: apps/v1
 kind: Deployment

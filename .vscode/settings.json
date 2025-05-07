@@ -28,5 +28,11 @@
   "mochaExplorer.files": "src/__tests__/**/*.test.ts",
   "mochaExplorer.require": [
     "ts-node/register",
-  ]
+  ],
+  "mochaExplorer.nodePath": "/home/kdrkrst/.nvm/versions/node/v22.13.0/bin/node",
+  "typescript.tsserver.experimental.enableProjectDiagnostics": true,
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "terminal.integrated.env.linux": {
+    "NODE_PATH": "/home/kdrkrst/.nvm/versions/node/v22.13.0/bin/node"
+  }
 }

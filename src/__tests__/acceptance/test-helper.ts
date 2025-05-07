@@ -7,6 +7,7 @@ import {
   expect,
 } from '@loopback/testlab';
 import { MongoMemoryServer } from 'mongodb-memory-server';
+import { parse } from 'qs';
 import { EntityPersistenceApplication } from '../..';
 import { EntityDbDataSource } from '../../datasources/entity-db.datasource';
 import {
@@ -25,6 +26,19 @@ import {
   KindBindings,
   KindConfigurationReader,
 } from '../../extensions';
+import {
+  LookupBindings,
+  LookupHelper,
+} from '../../extensions/utils/lookup-helper';
+import {
+  MongoPipelineHelperBindings,
+  MongoPipelineHelper,
+} from '../../extensions/utils/mongo-pipeline-helper';
+import type { GenericEntity, List, EntityReaction } from '../../models';
+import { LookupConstraintBindings } from '../../services/lookup-constraint.bindings';
+import { LookupConstraintService } from '../../services/lookup-constraint.service';
+import { RecordLimitCheckerBindings } from '../../services/record-limit-checker.bindings';
+import { RecordLimitCheckerService } from '../../services/record-limit-checker.service';
 
 /**
  * Utility function to verify that all fields in two responses match exactly
@@ -76,24 +90,35 @@ export interface TestEnvironmentVariables {
   entity_kinds?: string;
   list_kinds?: string;
   list_entity_rel_kinds?: string;
+  entity_reaction_kinds?: string;
+  list_reaction_kinds?: string;
 
   // Default Values Configuration
-  // default_entity_kind?: string;
-  // default_list_kind?: string;
-  // default_relation_kind?: string;
+  default_entity_kind?: string;
+  default_list_kind?: string;
+  default_relation_kind?: string;
+  default_entity_reaction_kind?: string;
+  default_list_reaction_kind?: string;
 
   // Uniqueness Configuration
   uniqueness_entity_fields?: string;
   uniqueness_list_fields?: string;
   uniqueness_list_entity_rel_fields?: string;
-  uniqueness_entity_set?: string;
-  uniqueness_list_set?: string;
-  uniqueness_list_entity_rel_set?: string;
+  uniqueness_entity_scope?: string;
+  uniqueness_list_scope?: string;
+  uniqueness_list_entity_rel_scope?: string;
+  ENTITY_UNIQUENESS?: string;
+  LIST_UNIQUENESS?: string;
+  RELATION_UNIQUENESS?: string;
+  ENTITY_REACTION_UNIQUENESS?: string;
+  LIST_REACTION_UNIQUENESS?: string;
 
   // Auto Approve Configuration
   autoapprove_entity?: string;
   autoapprove_list?: string;
   autoapprove_list_entity_relations?: string;
+  autoapprove_entity_reaction?: string;
+  autoapprove_list_reaction?: string;
 
   // Visibility Configuration
   visibility_entity?: string;
@@ -108,18 +133,11 @@ export interface TestEnvironmentVariables {
   response_limit_list_reaction?: string;
 
   // Record Limits Configuration
-  record_limit_entity_count?: string;
-  record_limit_entity_set?: string;
-  record_limit_list_count?: string;
-  record_limit_list_set?: string;
-  record_limit_list_entity_rel_count?: string;
-  record_limit_list_entity_rel_set?: string;
-  record_limit_entity_reaction_count?: string;
-  record_limit_entity_reaction_set?: string;
-  record_limit_list_reaction_count?: string;
-  record_limit_list_reaction_set?: string;
-  record_limit_tag_count?: string;
-  record_limit_tag_set?: string;
+  ENTITY_RECORD_LIMITS?: string;
+  LIST_RECORD_LIMITS?: string;
+  RELATION_RECORD_LIMITS?: string;
+  ENTITY_REACTION_RECORD_LIMITS?: string;
+  LIST_REACTION_RECORD_LIMITS?: string;
 
   // Idempotency Configuration
   idempotency_entity?: string;
@@ -139,9 +157,9 @@ export interface TestEnvironmentVariables {
   [key: `uniqueness_entity_fields_for_${string}`]: string;
   [key: `uniqueness_list_fields_for_${string}`]: string;
   [key: `uniqueness_list_entity_rel_fields_for_${string}`]: string;
-  [key: `uniqueness_entity_set_for_${string}`]: string;
-  [key: `uniqueness_list_set_for_${string}`]: string;
-  [key: `uniqueness_list_entity_rel_set_for_${string}`]: string;
+  [key: `uniqueness_entity_scope_for_${string}`]: string;
+  [key: `uniqueness_list_scope_for_${string}`]: string;
+  [key: `uniqueness_list_entity_rel_scope_for_${string}`]: string;
 
   [key: `visibility_entity_for_${string}`]: string;
   [key: `visibility_list_for_${string}`]: string;
@@ -163,32 +181,6 @@ export interface TestEnvironmentVariables {
   [key: `response_limit_list_reaction_for_${string}`]: string;
   [key: `response_limit_tag_for_${string}`]: string;
 
-  [key: `record_limit_entity_count_for_${string}`]: string;
-  [key: `record_limit_entity_set_for_${string}`]: string;
-  [key: `record_limit_list_count_for_${string}`]: string;
-  [key: `record_limit_list_set_for_${string}`]: string;
-  [key: `record_limit_list_entity_rel_count_for_${string}`]: string;
-  [key: `record_limit_list_entity_rel_set_for_${string}`]: string;
-  [key: `record_limit_entity_reaction_count_for_${string}`]: string;
-  [key: `record_limit_entity_reaction_set_for_${string}`]: string;
-  [key: `record_limit_list_reaction_count_for_${string}`]: string;
-  [key: `record_limit_list_reaction_set_for_${string}`]: string;
-  [key: `record_limit_tag_count_for_${string}`]: string;
-  [key: `record_limit_tag_set_for_${string}`]: string;
-
-  [key: `idempotency_entity_for_${string}`]: string;
-  [key: `idempotency_entity_set_for_${string}`]: string;
-  [key: `idempotency_list_for_${string}`]: string;
-  [key: `idempotency_list_set_for_${string}`]: string;
-  [key: `idempotency_list_entity_rel_for_${string}`]: string;
-  [key: `idempotency_list_entity_rel_set_for_${string}`]: string;
-  [key: `idempotency_entity_reaction_for_${string}`]: string;
-  [key: `idempotency_entity_reaction_set_for_${string}`]: string;
-  [key: `idempotency_list_reaction_for_${string}`]: string;
-  [key: `idempotency_list_reaction_set_for_${string}`]: string;
-  [key: `idempotency_tag_for_${string}`]: string;
-  [key: `idempotency_tag_set_for_${string}`]: string;
-
   [key: string]: string | undefined;
 }
 
@@ -199,7 +191,7 @@ export async function setupApplication(
   process.env.NODE_ENV = 'test';
 
   // Set higher timeout for tests
-  process.env.MOCHA_TIMEOUT = '10000';
+  process.env.MOCHA_TIMEOUT = '30000';
 
   // Store original env vars
   const originalEnv: TestEnvironmentVariables = {
@@ -230,15 +222,17 @@ export async function setupApplication(
     default_entity_kind: process.env.default_entity_kind,
     default_list_kind: process.env.default_list_kind,
     default_relation_kind: process.env.default_relation_kind,
+    default_entity_reaction_kind: process.env.default_entity_reaction_kind,
 
     // Uniqueness Configuration
     uniqueness_entity_fields: process.env.uniqueness_entity_fields,
     uniqueness_list_fields: process.env.uniqueness_list_fields,
     uniqueness_list_entity_rel_fields:
       process.env.uniqueness_list_entity_rel_fields,
-    uniqueness_entity_set: process.env.uniqueness_entity_set,
-    uniqueness_list_set: process.env.uniqueness_list_set,
-    uniqueness_list_entity_rel_set: process.env.uniqueness_list_entity_rel_set,
+    uniqueness_entity_scope: process.env.uniqueness_entity_scope,
+    uniqueness_list_scope: process.env.uniqueness_list_scope,
+    uniqueness_list_entity_rel_scope:
+      process.env.uniqueness_list_entity_rel_scope,
 
     // Auto Approve Configuration
     autoapprove_entity: process.env.autoapprove_entity,
@@ -300,9 +294,9 @@ export async function setupApplication(
           key.startsWith('uniqueness_entity_fields_for_') ||
           key.startsWith('uniqueness_list_fields_for_') ||
           key.startsWith('uniqueness_list_entity_rel_fields_for_') ||
-          key.startsWith('uniqueness_entity_set_for_') ||
-          key.startsWith('uniqueness_list_set_for_') ||
-          key.startsWith('uniqueness_list_entity_rel_set_for_') ||
+          key.startsWith('uniqueness_entity_scope_for_') ||
+          key.startsWith('uniqueness_list_scope_for_') ||
+          key.startsWith('uniqueness_list_entity_rel_scope_for_') ||
           key.startsWith('visibility_entity_for_') ||
           key.startsWith('visibility_list_for_') ||
           key.startsWith('visibility_entity_reaction_for_') ||
@@ -343,7 +337,13 @@ export async function setupApplication(
           key.startsWith('idempotency_list_reaction_for_') ||
           key.startsWith('idempotency_list_reaction_set_for_') ||
           key.startsWith('idempotency_tag_for_') ||
-          key.startsWith('idempotency_tag_set_for_'),
+          key.startsWith('idempotency_tag_set_for_') ||
+          key.startsWith('record_limit_entity_scope_for_') ||
+          key.startsWith('record_limit_list_scope_for_') ||
+          key.startsWith('record_limit_list_entity_rel_scope_for_') ||
+          key.startsWith('record_limit_entity_reaction_scope_for_') ||
+          key.startsWith('record_limit_list_reaction_scope_for_') ||
+          key.startsWith('record_limit_tag_scope_for_'),
       )
       .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {}),
   };
@@ -372,6 +372,12 @@ export async function setupApplication(
     rest: {
       ...givenHttpServerConfig(),
       port: 0, // Let the OS pick an available port
+      expressSettings: {
+        'x-powered-by': false,
+        'query parser': (query: any) => {
+          return parse(query, { depth: 10 });
+        },
+      },
     },
   });
 
@@ -441,6 +447,20 @@ export async function setupApplication(
     .bind(ResponseLimitConfigBindings.CONFIG_READER)
     .toClass(ResponseLimitConfigurationReader);
 
+  // Add lookup helper binding for tests
+  app.bind(LookupBindings.HELPER).toClass(LookupHelper);
+
+  // add record limit checker service to context
+  app
+    .bind(RecordLimitCheckerBindings.SERVICE)
+    .toClass(RecordLimitCheckerService);
+
+  // add lookup constraint service to context
+  app.bind(LookupConstraintBindings.SERVICE).toClass(LookupConstraintService);
+
+  // add mongo pipeline helper to context
+  app.bind(MongoPipelineHelperBindings.HELPER).toClass(MongoPipelineHelper);
+
   await app.boot();
   await app.start();
 
@@ -480,5 +500,72 @@ export async function teardownApplication(appWithClient: AppWithClient) {
   if (appWithClient.mongod) {
     // Ensure MongoDB memory server is properly stopped
     await appWithClient.mongod.stop();
+  }
+}
+
+// Store created entity IDs for cleanup
+let createdEntityIds: string[] = [];
+
+/**
+ * Creates a test entity and returns its ID
+ */
+export async function createTestEntity(
+  client: Client,
+  entityData: Partial<GenericEntity>,
+): Promise<string> {
+  const response = await client.post('/entities').send(entityData).expect(200);
+  const entityId = response.body._id;
+  createdEntityIds.push(entityId);
+
+  return entityId;
+}
+
+/**
+ * Creates a test list and returns its ID
+ */
+export async function createTestList(
+  client: Client,
+  listData: Partial<List>,
+): Promise<string> {
+  const response = await client.post('/lists').send(listData).expect(200);
+
+  return response.body._id;
+}
+
+/**
+ * Cleans up all created entities
+ */
+export async function cleanupCreatedEntities(client: Client): Promise<void> {
+  for (const id of createdEntityIds) {
+    try {
+      await client.delete(`/entities/${id}`);
+    } catch (error) {
+      console.error(`Failed to delete entity ${id}:`, error);
+    }
+  }
+
+  createdEntityIds = [];
+}
+
+export async function createTestEntityReaction(
+  client: Client,
+  entityReaction: Partial<EntityReaction>,
+): Promise<string> {
+  const response = await client
+    .post('/entity-reactions')
+    .send(entityReaction)
+    .expect(200);
+
+  return response.body._id;
+}
+
+export async function cleanupCreatedEntityReactions(
+  client: Client,
+): Promise<void> {
+  const response = await client.get('/entity-reactions').expect(200);
+  const entityReactions = response.body;
+
+  for (const entityReaction of entityReactions) {
+    await client.delete(`/entity-reactions/${entityReaction._id}`).expect(204);
   }
 }

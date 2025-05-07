@@ -14,42 +14,41 @@ import { EntityDbDataSource } from '../datasources';
 import {
   GenericEntity,
   GenericEntityWithRelations,
-  GenericList,
-  GenericListToEntityRelation,
+  List,
+  ListToEntityRelation,
 } from '../models';
-import { GenericEntityRepository } from './generic-entity.repository';
-import { GenericListEntityRelationRepository } from './generic-list-entity-relation.repository';
+import { EntityRepository } from './entity.repository';
+import { ListEntityRelationRepository } from './list-entity-relation.repository';
 
 export class CustomEntityThroughListRepository extends DefaultCrudRepository<
   GenericEntity,
   typeof GenericEntity.prototype._id,
   GenericEntityWithRelations
 > {
-  protected sourceListId: typeof GenericList.prototype._id;
+  protected sourceListId: typeof List.prototype._id;
 
   constructor(
     @inject('datasources.EntityDb') dataSource: EntityDbDataSource,
 
-    @repository.getter('GenericEntityRepository')
-    protected genericEntityRepositoryGetter: Getter<GenericEntityRepository>,
+    @repository.getter('EntityRepository')
+    protected entityRepositoryGetter: Getter<EntityRepository>,
 
-    @repository.getter('GenericListEntityRelationRepository')
-    protected genericListEntityRepositoryGetter: Getter<GenericListEntityRelationRepository>,
+    @repository.getter('ListEntityRelationRepository')
+    protected listEntityRepoGetter: Getter<ListEntityRelationRepository>,
   ) {
     super(GenericEntity, dataSource);
   }
 
   async find(
     filter?: Filter<GenericEntity>,
-    filterThrough?: Filter<GenericListToEntityRelation>,
+    filterThrough?: Filter<ListToEntityRelation>,
     options?: Options,
   ): Promise<GenericEntity[]> {
     // Get the through repository
-    const genericListEntityRelationRepo =
-      await this.genericListEntityRepositoryGetter();
+    const listEntityRelationRepo = await this.listEntityRepoGetter();
 
     // Calculate fields logic
-    let fields: Fields<GenericListToEntityRelation> | undefined;
+    let fields: Fields<ListToEntityRelation> | undefined;
 
     if (Array.isArray(filterThrough?.fields)) {
       // If fields is an array, ensure listId and entityId exists
@@ -72,11 +71,11 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
         // if entityId explicitly given as false, remove it
         fields = _.omitBy(
           filterThrough.fields,
-          (v, k) => k === 'entityId' && v === false,
+          (v, k) => k === '_entityId' && v === false,
         );
 
         // if listId explicitly given as false, remove it
-        fields = _.omitBy(fields, (v, k) => k === 'listId' && v === false);
+        fields = _.omitBy(fields, (v, k) => k === '_listId' && v === false);
       }
     } else {
       fields = undefined;
@@ -89,13 +88,12 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
       include: filterThrough?.include,
     };
 
-    const relations = await genericListEntityRelationRepo.find(
-      throughFilter,
-      options,
-    );
+    const relations = await listEntityRelationRepo.find(throughFilter);
 
     // Extract target entity IDs from relations
-    const entityIds = relations.map((rel) => rel._entityId);
+    const entityIds = relations.map(
+      (rel: ListToEntityRelation) => rel._entityId,
+    );
 
     // Update the filter to only include entities matching the IDs
     const updatedFilter = {
@@ -108,7 +106,9 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
 
     // Map relation metadata to entities, excluding `toMetadata`
     return entities.map((entity) => {
-      const relation = relations.find((rel) => rel._entityId === entity._id);
+      const relation = relations.find(
+        (rel: ListToEntityRelation) => rel._entityId === entity._id,
+      );
       if (relation) {
         // Exclude `toMetadata` while retaining other properties
 
@@ -134,14 +134,13 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
     data: DataObject<GenericEntity>,
     options?: Options,
   ): Promise<GenericEntity> {
-    const genericEntitiesRepo = await this.genericEntityRepositoryGetter();
-    const genericListEntityRelationRepo =
-      await this.genericListEntityRepositoryGetter();
+    const entitiesRepo = await this.entityRepositoryGetter();
+    const listEntityRelationRepo = await this.listEntityRepoGetter();
 
-    const entity = await genericEntitiesRepo.create(data, options);
+    const entity = await entitiesRepo.create(data, options);
 
     try {
-      await genericListEntityRelationRepo.create(
+      await listEntityRelationRepo.create(
         {
           _entityId: entity._id,
           _listId: this.sourceListId,
@@ -149,7 +148,7 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
         options,
       );
     } catch (err) {
-      await genericEntitiesRepo.deleteById(entity._id, options);
+      await entitiesRepo.deleteById(entity._id, options);
       throw err;
     }
 
@@ -168,45 +167,47 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
   async updateAll(
     data: DataObject<GenericEntity>,
     where?: Where<GenericEntity>,
-    whereThrough?: Where<GenericListToEntityRelation>,
+    whereThrough?: Where<ListToEntityRelation>,
     options?: Options,
   ) {
-    const genericEntitiesRepo = await this.genericEntityRepositoryGetter();
-    const genericListEntityRelationRepo =
-      await this.genericListEntityRepositoryGetter();
+    const entitiesRepo = await this.entityRepositoryGetter();
+    const listEntityRelationRepo = await this.listEntityRepoGetter();
 
-    const relations = await genericListEntityRelationRepo.find({
+    const relations = await listEntityRelationRepo.find({
       where: {
         _listId: this.sourceListId,
         ...whereThrough,
       },
     });
-    const entityIds = relations.map((rel) => rel._entityId);
+    const entityIds = relations.map(
+      (rel: ListToEntityRelation) => rel._entityId,
+    );
 
     where = { _id: { inq: entityIds }, ...where };
 
-    return genericEntitiesRepo.updateAll(data, where, options);
+    return entitiesRepo.updateAll(data, where, options);
   }
 
   async deleteAll(
     where?: Where<GenericEntity>,
-    whereThrough?: Where<GenericListToEntityRelation>,
+    whereThrough?: Where<ListToEntityRelation>,
     options?: Options,
   ) {
-    const genericEntitiesRepo = await this.genericEntityRepositoryGetter();
-    const genericListEntityRelationRepo =
-      await this.genericListEntityRepositoryGetter();
+    const entitiesRepo = await this.entityRepositoryGetter();
+    const listEntityRelationRepo = await this.listEntityRepoGetter();
 
-    const relations = await genericListEntityRelationRepo.find({
+    const relations = await listEntityRelationRepo.find({
       where: {
         _listId: this.sourceListId,
         ...whereThrough,
       },
     });
-    const entityIds = relations.map((rel) => rel._entityId);
+    const entityIds = relations.map(
+      (rel: ListToEntityRelation) => rel._entityId,
+    );
 
     where = { _id: { inq: entityIds }, ...where };
 
-    return genericEntitiesRepo.deleteAll(where, options);
+    return entitiesRepo.deleteAll(where, options);
   }
 }
