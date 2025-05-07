@@ -18,11 +18,16 @@
 </p>
 
 📌 Each record — whether an entity, list, or reaction — is automatically enriched with a consistent set of **managed fields**, including:
+- `_ownerUsers`, `_ownerGroups`
+- `_viewerUsers`, `_viewerGroups`
+- `_visibility`
+- `_parents`
 - `_createdBy`
 - `_createdDateTime`
 - `_lastUpdatedBy`
 - `_lastUpdatedDateTime`
 - `_version`
+- `_idempotencyKey`
 - and more...
 
 These fields support essential functionality like traceability, access control, and automation logic.
