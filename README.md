@@ -4,10 +4,10 @@
 
 📌 It is built on a simple yet powerful data model composed of **entities**, **lists**, and **reactions**, each represented as JSON documents stored in MongoDB.
 
-📌 This generic, extensible model allows developers to represent a wide variety of use cases across different domains by reusing and configuring the same foundational components.
+📌 This generic, extensible model allows developers to represent a wide variety of use cases across different domains by reusing and configuring the same foundational components ([Use Cases]())
 
 📌 For example:
-- **Entities** can represent user profiles, configuration objects, blog posts, products, campaigns, documents, or even IoT devices.
+- **Entities** can represent user profiles, configuration objects, notification, blog posts, products, campaigns, documents, or even IoT devices.
 - **Lists** can model playlists, wishlists, saved searches, shopping carts, or collections.
 - **Reactions** can track likes, ratings, flags, reviews, bookmarks, follows, or measurement signals from IoT devices.
 
@@ -53,11 +53,6 @@ Tarcinapp is a generic backend microservices suite developed to address common i
 Suppose you want to build a system to manage support tickets of your application.
 
 With Tarcinapp you can effortlessly handle support tickets using the full suite of REST operations—GET, POST, PUT, PATCH, and DELETE—alongside hierarchical record-management features.
-
-<p align="left">
-  <img src="./doc/img/support-tickets-api.png" alt="Tarcinapp Suite Overview">
-</p>
-
 
 When you POST a support ticket data, the service automatically adds managed fields (such as ownership, timestamps, and visibility). Your stored record will include both your original data and these additional fields, making it ready for secure and controlled access.
 
