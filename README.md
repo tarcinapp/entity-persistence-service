@@ -1,10 +1,159 @@
 # Entity Persistence Service
 
+- [Entity Persistence Service](#entity-persistence-service)
+- [Getting Started](#getting-started)
+  - [Features](#features)
+  - [Benefits](#benefits)
+    - [Generic Data Model (Entities, Lists, Reactions)](#generic-data-model-entities-lists-reactions)
+    - [Built-in Ownership and Access Control Metadata](#built-in-ownership-and-access-control-metadata)
+    - [Configurable Idempotency and Uniqueness Enforcement](#configurable-idempotency-and-uniqueness-enforcement)
+    - [Rich Querying with Pagination and Aliases](#rich-querying-with-pagination-and-aliases)
+    - [Soft Deletion \& Approval Windows](#soft-deletion--approval-windows)
+    - [Distributed Locking for Race Condition Prevention](#distributed-locking-for-race-condition-prevention)
+    - [Customizable Limits and Constraints](#customizable-limits-and-constraints)
+    - [Relationship Management](#relationship-management)
+    - [MongoDB-powered, Schemaless but Validated](#mongodb-powered-schemaless-but-validated)
+  - [What is Tarcinapp Post-Login Solution?](#what-is-tarcinapp-post-login-solution)
+- [Entity Persistence Service Application in Detail](#entity-persistence-service-application-in-detail)
+    - [Available Endpoints](#available-endpoints)
+  - [Use Cases \& Themes \& Benefits](#use-cases--themes--benefits)
+  - [Data Model](#data-model)
+    - [Entities](#entities)
+    - [Lists](#lists)
+      - [List-Entity Relations](#list-entity-relations)
+    - [Entity Reactions](#entity-reactions)
+    - [List Reactions](#list-reactions)
+  - [Features of Entity Persistence Service](#features-of-entity-persistence-service)
+    - [Essential Data Management](#essential-data-management)
+    - [Data Organization](#data-organization)
+    - [User Engagement](#user-engagement)
+    - [Advanced Data Control](#advanced-data-control)
+    - [Efficiency and Optimization](#efficiency-and-optimization)
+    - [Gateway Integration](#gateway-integration)
+  - [Authentication and Authorization](#authentication-and-authorization)
+    - [Authentication](#authentication)
+    - [Authorization](#authorization)
+    - [Gateway-Based Security](#gateway-based-security)
+  - [Sample Use Cases](#sample-use-cases)
+  - [Concepts](#concepts)
+    - [Relations](#relations)
+    - [Sets](#sets)
+    - [Lookups](#lookups)
+      - [Reference Types](#reference-types)
+      - [Query Structure](#query-structure)
+      - [Examples](#examples)
+      - [Lookup Scope Options](#lookup-scope-options)
+      - [Performance Considerations](#performance-considerations)
+    - [Tags](#tags)
+  - [Programming Conventions](#programming-conventions)
+- [Configuration](#configuration)
+    - [Database](#database)
+    - [Allowed Kinds](#allowed-kinds)
+    - [Uniqueness](#uniqueness)
+      - [Configuration Syntax](#configuration-syntax)
+      - [Examples](#examples-1)
+      - [Error Response](#error-response)
+    - [Auto Approve](#auto-approve)
+    - [Visibility](#visibility)
+    - [Response Limits](#response-limits)
+    - [Record Limits](#record-limits)
+      - [Configuration Mechanism](#configuration-mechanism)
+      - [Configuration Schema](#configuration-schema)
+      - [Dynamic Value Interpolation](#dynamic-value-interpolation)
+      - [Common Use Cases and Examples](#common-use-cases-and-examples)
+      - [Filter Expressions](#filter-expressions)
+      - [Set Expressions](#set-expressions)
+      - [Error Handling](#error-handling)
+    - [Idempotency](#idempotency)
+- [Deploying to Kubernetes](#deploying-to-kubernetes)
+- [Configuring for Development](#configuring-for-development)
+- [Known Issues and Limitations](#known-issues-and-limitations)
+    - [1. Idempotency and Visibility](#1-idempotency-and-visibility)
+    - [2. Field Selection with Arbitrary Fields](#2-field-selection-with-arbitrary-fields)
+    - [3. Version Incrementation for Update All operations.](#3-version-incrementation-for-update-all-operations)
+    - [4. Dot Notation in Connected Model Filters for List-Entity Relations](#4-dot-notation-in-connected-model-filters-for-list-entity-relations)
+- [Development Status](#development-status)
+
+# Getting Started
+
 📌 **Entity Persistence Service** is a REST-based backend microservice and a core component of the **Tarcinapp Suite** ([What is Tarcinapp?](#what-is-tarcinapp-post-login-solution)).
 
 📌 It is built on a simple yet powerful data model composed of **entities**, **lists**, and **reactions**, each represented as JSON documents stored in MongoDB.
 
-📌 This generic, extensible model allows developers to represent a wide variety of use cases across different domains by reusing and configuring the same foundational components ([Use Cases]())
+📌 This generic, extensible model allows developers to represent a wide variety of use cases across different domains by reusing and configuring the same foundational components ([Use Cases- [Entity Persistence Service](#entity-persistence-service)
+- [Entity Persistence Service](#entity-persistence-service)
+- [Getting Started](#getting-started)
+  - [Features](#features)
+  - [Benefits](#benefits)
+    - [Generic Data Model (Entities, Lists, Reactions)](#generic-data-model-entities-lists-reactions)
+    - [Built-in Ownership and Access Control Metadata](#built-in-ownership-and-access-control-metadata)
+    - [Configurable Idempotency and Uniqueness Enforcement](#configurable-idempotency-and-uniqueness-enforcement)
+    - [Rich Querying with Pagination and Aliases](#rich-querying-with-pagination-and-aliases)
+    - [Soft Deletion \& Approval Windows](#soft-deletion--approval-windows)
+    - [Distributed Locking for Race Condition Prevention](#distributed-locking-for-race-condition-prevention)
+    - [Customizable Limits and Constraints](#customizable-limits-and-constraints)
+    - [Relationship Management](#relationship-management)
+    - [MongoDB-powered, Schemaless but Validated](#mongodb-powered-schemaless-but-validated)
+  - [What is Tarcinapp Post-Login Solution?](#what-is-tarcinapp-post-login-solution)
+- [Entity Persistence Service Application in Detail](#entity-persistence-service-application-in-detail)
+    - [Available Endpoints](#available-endpoints)
+  - [Use Cases \& Themes \& Benefits](#use-cases--themes--benefits)
+  - [Data Model](#data-model)
+    - [Entities](#entities)
+    - [Lists](#lists)
+      - [List-Entity Relations](#list-entity-relations)
+    - [Entity Reactions](#entity-reactions)
+    - [List Reactions](#list-reactions)
+  - [Features of Entity Persistence Service](#features-of-entity-persistence-service)
+    - [Essential Data Management](#essential-data-management)
+    - [Data Organization](#data-organization)
+    - [User Engagement](#user-engagement)
+    - [Advanced Data Control](#advanced-data-control)
+    - [Efficiency and Optimization](#efficiency-and-optimization)
+    - [Gateway Integration](#gateway-integration)
+  - [Authentication and Authorization](#authentication-and-authorization)
+    - [Authentication](#authentication)
+    - [Authorization](#authorization)
+    - [Gateway-Based Security](#gateway-based-security)
+  - [Sample Use Cases](#sample-use-cases)
+  - [Concepts](#concepts)
+    - [Relations](#relations)
+    - [Sets](#sets)
+    - [Lookups](#lookups)
+      - [Reference Types](#reference-types)
+      - [Query Structure](#query-structure)
+      - [Examples](#examples)
+      - [Lookup Scope Options](#lookup-scope-options)
+      - [Performance Considerations](#performance-considerations)
+    - [Tags](#tags)
+  - [Programming Conventions](#programming-conventions)
+- [Configuration](#configuration)
+    - [Database](#database)
+    - [Allowed Kinds](#allowed-kinds)
+    - [Uniqueness](#uniqueness)
+      - [Configuration Syntax](#configuration-syntax)
+      - [Examples](#examples-1)
+      - [Error Response](#error-response)
+    - [Auto Approve](#auto-approve)
+    - [Visibility](#visibility)
+    - [Response Limits](#response-limits)
+    - [Record Limits](#record-limits)
+      - [Configuration Mechanism](#configuration-mechanism)
+      - [Configuration Schema](#configuration-schema)
+      - [Dynamic Value Interpolation](#dynamic-value-interpolation)
+      - [Common Use Cases and Examples](#common-use-cases-and-examples)
+      - [Filter Expressions](#filter-expressions)
+      - [Set Expressions](#set-expressions)
+      - [Error Handling](#error-handling)
+    - [Idempotency](#idempotency)
+- [Deploying to Kubernetes](#deploying-to-kubernetes)
+- [Configuring for Development](#configuring-for-development)
+- [Known Issues and Limitations](#known-issues-and-limitations)
+    - [1. Idempotency and Visibility](#1-idempotency-and-visibility)
+    - [2. Field Selection with Arbitrary Fields](#2-field-selection-with-arbitrary-fields)
+    - [3. Version Incrementation for Update All operations.](#3-version-incrementation-for-update-all-operations)
+    - [4. Dot Notation in Connected Model Filters for List-Entity Relations](#4-dot-notation-in-connected-model-filters-for-list-entity-relations)
+- [Development Status](#development-status)
 
 📌 For example:
 - **Entities** can represent user profiles, configuration objects, notification, blog posts, products, campaigns, documents, or even IoT devices.
@@ -49,13 +198,13 @@ These fields support essential functionality like traceability, access control, 
 > ⚡ **Tarcinapp dramatically reduces time-to-value** for digital products by delivering a ready-to-use backend built on practical defaults. With generic yet powerful data structures (entities, lists, reactions), configurable authorization, and automation-ready metadata, developers can go from concept to working prototype in days—not weeks.
 
 ### Generic Data Model (Entities, Lists, Reactions)
-→ **Easily model diverse use cases**:
-    - **Entities**: products, users, blog posts, devices
-    - **Lists**: shopping carts, saved searches, wishlists
-    - **Reactions**: likes, ratings, reviews, sensor events
+→ **Easily model diverse use cases**:  
+  - **Entities**: products, users, blog posts, devices  
+  - **Lists**: shopping carts, saved searches, wishlists  
+  - **Reactions**: likes, ratings, reviews, sensor events  
 
 ### Built-in Ownership and Access Control Metadata
-→ Fields like `_ownerUsers`, `_viewerGroups`, `_visibility` make RBAC and field-level authorization straightforward.
+→ Fields like `_ownerUsers`, `_viewerGroups`, `_visibility` make RBAC and field-level authorization straightforward in the [entity-persistence-gateway](#).
 
 ### Configurable Idempotency and Uniqueness Enforcement
 → Prevent duplicate records across scopes (global, per user, per list).  
@@ -69,14 +218,15 @@ These fields support essential functionality like traceability, access control, 
 *Example*: future-dated articles or expiring access links.
 
 ### Distributed Locking for Race Condition Prevention
-→ Lock operations like concurrent creation or update to ensure integrity.
+→ Lock operations like concurrent creation or update to ensure integrity with the use of [entity-persistence-gateway](#).
 
 ### Customizable Limits and Constraints
 → Restrict max entities per list or reactions per entity easily via config.  
 *Example*: limit to 5 saved addresses per user.
 
 ### Relationship Management
-→ Support entity-to-entity, list-to-entity, and nested structures like category hierarchies or campaign groups.
+→ Support entity-to-entity, list-to-entity, and nested structures like category hierarchies or campaign groups.  
+→ Solves all querying and authorization complexities of the backend with relationships between models
 
 ### MongoDB-powered, Schemaless but Validated
 → Flexible yet safe: supports optional JSON schema validation and reference resolution.
