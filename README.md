@@ -1,10 +1,159 @@
 # Entity Persistence Service
 
+- [Entity Persistence Service](#entity-persistence-service)
+- [Getting Started](#getting-started)
+  - [Features](#features)
+  - [Benefits](#benefits)
+    - [Generic Data Model (Entities, Lists, Reactions)](#generic-data-model-entities-lists-reactions)
+    - [Built-in Ownership and Access Control Metadata](#built-in-ownership-and-access-control-metadata)
+    - [Configurable Idempotency and Uniqueness Enforcement](#configurable-idempotency-and-uniqueness-enforcement)
+    - [Rich Querying with Pagination and Aliases](#rich-querying-with-pagination-and-aliases)
+    - [Soft Deletion \& Approval Windows](#soft-deletion--approval-windows)
+    - [Distributed Locking for Race Condition Prevention](#distributed-locking-for-race-condition-prevention)
+    - [Customizable Limits and Constraints](#customizable-limits-and-constraints)
+    - [Relationship Management](#relationship-management)
+    - [MongoDB-powered, Schemaless but Validated](#mongodb-powered-schemaless-but-validated)
+  - [What is Tarcinapp Post-Login Solution?](#what-is-tarcinapp-post-login-solution)
+- [Entity Persistence Service Application in Detail](#entity-persistence-service-application-in-detail)
+    - [Available Endpoints](#available-endpoints)
+  - [Use Cases \& Themes \& Benefits](#use-cases--themes--benefits)
+  - [Data Model](#data-model)
+    - [Entities](#entities)
+    - [Lists](#lists)
+      - [List-Entity Relations](#list-entity-relations)
+    - [Entity Reactions](#entity-reactions)
+    - [List Reactions](#list-reactions)
+  - [Features of Entity Persistence Service](#features-of-entity-persistence-service)
+    - [Essential Data Management](#essential-data-management)
+    - [Data Organization](#data-organization)
+    - [User Engagement](#user-engagement)
+    - [Advanced Data Control](#advanced-data-control)
+    - [Efficiency and Optimization](#efficiency-and-optimization)
+    - [Gateway Integration](#gateway-integration)
+  - [Authentication and Authorization](#authentication-and-authorization)
+    - [Authentication](#authentication)
+    - [Authorization](#authorization)
+    - [Gateway-Based Security](#gateway-based-security)
+  - [Sample Use Cases](#sample-use-cases)
+  - [Concepts](#concepts)
+    - [Relations](#relations)
+    - [Sets](#sets)
+    - [Lookups](#lookups)
+      - [Reference Types](#reference-types)
+      - [Query Structure](#query-structure)
+      - [Examples](#examples)
+      - [Lookup Scope Options](#lookup-scope-options)
+      - [Performance Considerations](#performance-considerations)
+    - [Tags](#tags)
+  - [Programming Conventions](#programming-conventions)
+- [Configuration](#configuration)
+    - [Database](#database)
+    - [Allowed Kinds](#allowed-kinds)
+    - [Uniqueness](#uniqueness)
+      - [Configuration Syntax](#configuration-syntax)
+      - [Examples](#examples-1)
+      - [Error Response](#error-response)
+    - [Auto Approve](#auto-approve)
+    - [Visibility](#visibility)
+    - [Response Limits](#response-limits)
+    - [Record Limits](#record-limits)
+      - [Configuration Mechanism](#configuration-mechanism)
+      - [Configuration Schema](#configuration-schema)
+      - [Dynamic Value Interpolation](#dynamic-value-interpolation)
+      - [Common Use Cases and Examples](#common-use-cases-and-examples)
+      - [Filter Expressions](#filter-expressions)
+      - [Set Expressions](#set-expressions)
+      - [Error Handling](#error-handling)
+    - [Idempotency](#idempotency)
+- [Deploying to Kubernetes](#deploying-to-kubernetes)
+- [Configuring for Development](#configuring-for-development)
+- [Known Issues and Limitations](#known-issues-and-limitations)
+    - [1. Idempotency and Visibility](#1-idempotency-and-visibility)
+    - [2. Field Selection with Arbitrary Fields](#2-field-selection-with-arbitrary-fields)
+    - [3. Version Incrementation for Update All operations.](#3-version-incrementation-for-update-all-operations)
+    - [4. Dot Notation in Connected Model Filters for List-Entity Relations](#4-dot-notation-in-connected-model-filters-for-list-entity-relations)
+- [Development Status](#development-status)
+
+# Getting Started
+
 📌 **Entity Persistence Service** is a REST-based backend microservice and a core component of the **Tarcinapp Suite** ([What is Tarcinapp?](#what-is-tarcinapp-post-login-solution)).
 
 📌 It is built on a simple yet powerful data model composed of **entities**, **lists**, and **reactions**, each represented as JSON documents stored in MongoDB.
 
-📌 This generic, extensible model allows developers to represent a wide variety of use cases across different domains by reusing and configuring the same foundational components ([Use Cases]())
+📌 This generic, extensible model allows developers to represent a wide variety of use cases across different domains by reusing and configuring the same foundational components ([Use Cases- [Entity Persistence Service](#entity-persistence-service)
+- [Entity Persistence Service](#entity-persistence-service)
+- [Getting Started](#getting-started)
+  - [Features](#features)
+  - [Benefits](#benefits)
+    - [Generic Data Model (Entities, Lists, Reactions)](#generic-data-model-entities-lists-reactions)
+    - [Built-in Ownership and Access Control Metadata](#built-in-ownership-and-access-control-metadata)
+    - [Configurable Idempotency and Uniqueness Enforcement](#configurable-idempotency-and-uniqueness-enforcement)
+    - [Rich Querying with Pagination and Aliases](#rich-querying-with-pagination-and-aliases)
+    - [Soft Deletion \& Approval Windows](#soft-deletion--approval-windows)
+    - [Distributed Locking for Race Condition Prevention](#distributed-locking-for-race-condition-prevention)
+    - [Customizable Limits and Constraints](#customizable-limits-and-constraints)
+    - [Relationship Management](#relationship-management)
+    - [MongoDB-powered, Schemaless but Validated](#mongodb-powered-schemaless-but-validated)
+  - [What is Tarcinapp Post-Login Solution?](#what-is-tarcinapp-post-login-solution)
+- [Entity Persistence Service Application in Detail](#entity-persistence-service-application-in-detail)
+    - [Available Endpoints](#available-endpoints)
+  - [Use Cases \& Themes \& Benefits](#use-cases--themes--benefits)
+  - [Data Model](#data-model)
+    - [Entities](#entities)
+    - [Lists](#lists)
+      - [List-Entity Relations](#list-entity-relations)
+    - [Entity Reactions](#entity-reactions)
+    - [List Reactions](#list-reactions)
+  - [Features of Entity Persistence Service](#features-of-entity-persistence-service)
+    - [Essential Data Management](#essential-data-management)
+    - [Data Organization](#data-organization)
+    - [User Engagement](#user-engagement)
+    - [Advanced Data Control](#advanced-data-control)
+    - [Efficiency and Optimization](#efficiency-and-optimization)
+    - [Gateway Integration](#gateway-integration)
+  - [Authentication and Authorization](#authentication-and-authorization)
+    - [Authentication](#authentication)
+    - [Authorization](#authorization)
+    - [Gateway-Based Security](#gateway-based-security)
+  - [Sample Use Cases](#sample-use-cases)
+  - [Concepts](#concepts)
+    - [Relations](#relations)
+    - [Sets](#sets)
+    - [Lookups](#lookups)
+      - [Reference Types](#reference-types)
+      - [Query Structure](#query-structure)
+      - [Examples](#examples)
+      - [Lookup Scope Options](#lookup-scope-options)
+      - [Performance Considerations](#performance-considerations)
+    - [Tags](#tags)
+  - [Programming Conventions](#programming-conventions)
+- [Configuration](#configuration)
+    - [Database](#database)
+    - [Allowed Kinds](#allowed-kinds)
+    - [Uniqueness](#uniqueness)
+      - [Configuration Syntax](#configuration-syntax)
+      - [Examples](#examples-1)
+      - [Error Response](#error-response)
+    - [Auto Approve](#auto-approve)
+    - [Visibility](#visibility)
+    - [Response Limits](#response-limits)
+    - [Record Limits](#record-limits)
+      - [Configuration Mechanism](#configuration-mechanism)
+      - [Configuration Schema](#configuration-schema)
+      - [Dynamic Value Interpolation](#dynamic-value-interpolation)
+      - [Common Use Cases and Examples](#common-use-cases-and-examples)
+      - [Filter Expressions](#filter-expressions)
+      - [Set Expressions](#set-expressions)
+      - [Error Handling](#error-handling)
+    - [Idempotency](#idempotency)
+- [Deploying to Kubernetes](#deploying-to-kubernetes)
+- [Configuring for Development](#configuring-for-development)
+- [Known Issues and Limitations](#known-issues-and-limitations)
+    - [1. Idempotency and Visibility](#1-idempotency-and-visibility)
+    - [2. Field Selection with Arbitrary Fields](#2-field-selection-with-arbitrary-fields)
+    - [3. Version Incrementation for Update All operations.](#3-version-incrementation-for-update-all-operations)
+    - [4. Dot Notation in Connected Model Filters for List-Entity Relations](#4-dot-notation-in-connected-model-filters-for-list-entity-relations)
+- [Development Status](#development-status)
 
 📌 For example:
 - **Entities** can represent user profiles, configuration objects, notification, blog posts, products, campaigns, documents, or even IoT devices.
@@ -17,7 +166,7 @@
   <img src="./doc/img/models.png" alt="Tarcinapp Data Model">
 </p>
 
-📌 Each record — whether an entity, list, or reaction — is automatically enriched with a consistent set of **managed fields**, including:
+📌 Each record — whether an entity, list, or reaction — is automatically decorated with a consistent set of **managed fields**, including:
 - `_ownerUsers`, `_ownerGroups`
 - `_viewerUsers`, `_viewerGroups`
 - `_visibility`
@@ -45,63 +194,141 @@ These fields support essential functionality like traceability, access control, 
 - 🗑️ **Soft deletion** via `validUntilDateTime`
 - 🕓 **Full audit metadata tracking** (created/updated timestamps and users)
 
+## Benefits
+> ⚡ **Tarcinapp dramatically reduces time-to-value** for digital products by delivering a ready-to-use backend built on practical defaults. With generic yet powerful data structures (entities, lists, reactions), configurable authorization, and automation-ready metadata, developers can go from concept to working prototype in days—not weeks.
+
+### Generic Data Model (Entities, Lists, Reactions)
+→ **Easily model diverse use cases**:  
+  - **Entities**: products, users, blog posts, devices  
+  - **Lists**: shopping carts, saved searches, wishlists  
+  - **Reactions**: likes, ratings, reviews, sensor events  
+
+### Built-in Ownership and Access Control Metadata
+→ Fields like `_ownerUsers`, `_viewerGroups`, `_visibility` make RBAC and field-level authorization straightforward in the [entity-persistence-gateway](#).
+
+### Configurable Idempotency and Uniqueness Enforcement
+→ Prevent duplicate records across scopes (global, per user, per list).  
+*Example*: avoid duplicate product names per seller.
+
+### Rich Querying with Pagination and Aliases
+→ Short query aliases simplify client-side work, and response limits protect performance.
+
+### Soft Deletion & Approval Windows
+→ Use `_validUntilDateTime` for expiration, `_validFromDateTime` for publish scheduling.  
+*Example*: future-dated articles or expiring access links.
+
+### Distributed Locking for Race Condition Prevention
+→ Lock operations like concurrent creation or update to ensure integrity with the use of [entity-persistence-gateway](#).
+
+### Customizable Limits and Constraints
+→ Restrict max entities per list or reactions per entity easily via config.  
+*Example*: limit to 5 saved addresses per user.
+
+### Relationship Management
+→ Support entity-to-entity, list-to-entity, and nested structures like category hierarchies or campaign groups.  
+→ Solves all querying and authorization complexities of the backend with relationships between models
+
+### MongoDB-powered, Schemaless but Validated
+→ Flexible yet safe: supports optional JSON schema validation and reference resolution.
 
 ## What is Tarcinapp Post-Login Solution?
 
-Tarcinapp is a generic backend microservices suite developed to address common issues when building a web application, aiming to reduce Time-to-Value from idea to value.
+**Tarcinapp Suite** is a modular backend microservices architecture designed to streamline common challenges in web application development, helping teams reduce **Time-to-Value** from concept to deployment.
 
-Suppose you want to build a system to manage support tickets of your application.
+The suite is composed of purpose-specific services for different layers of a modern backend system, including:
 
-With Tarcinapp you can effortlessly handle support tickets using the full suite of REST operations—GET, POST, PUT, PATCH, and DELETE—alongside hierarchical record-management features.
+- `entity-persistence-dos`
+- `entity-persistence-gateway`
+- `entity-persistence-gateway-policies`
+- `entity-persistence-orchestration`
+- `entity-persistence-bff`
+- `entity-persistence-service` _(you are here)_
 
-When you POST a support ticket data, the service automatically adds managed fields (such as ownership, timestamps, and visibility). Your stored record will include both your original data and these additional fields, making it ready for secure and controlled access.
-
-
-
-The Tarcinapp suite is a comprehensive and flexible application framework, harmoniously blending a suite of interconnected components designed to deliver a seamless and secure microservices architecture. It also provides the flexibility for users to leverage it as an upstream project for their own REST API-based backend implementations, allowing for easy adaptation to their specific requirements and use cases.
-
-<p align="center">
-  <img src="./doc/img/high-level-arch.png" alt="Tarcinapp Suite Overview">
+<p align="left">
+  <img src="./doc/img/high-level-arch.png" alt="Tarcinapp Data Model">
 </p>
 
-At its core is the **Entity Persistence Service**, an easily adaptable REST-based backend application built on the [Loopback 4](https://loopback.io) framework. This service utilizes on a schemaless MongoDB database to provide a scalable and highly adaptable data persistence layer. Offering a generic data model with predefined fields such as `_id`, `_name`,  `_kind`, `_lastUpdatedDateTime`, `_creationDateTime`, `_ ownerUsers` and [more](#programming-conventions), it effortlessly adapts to diverse use cases.  
+📘 For a full overview and integration guidance, refer to the [Tarcinapp Suite Documentation](#).
 
-The integration with the **Entity Persistence Gateway** empowers users to implement enhanced validation, authentication, authorization, and rate-limiting functionalities, ensuring a secure and efficient environment. Leveraging the power of **Redis**, the application seamlessly manages distributed locks, enabling robust data synchronization and rate limiting. Furthermore, the ecosystem includes the **Open Policy Agent (OPA)** to enforce policies, safeguarding your application against unauthorized access and ensuring compliance with your security and operational requirements. These policies, combined with the entire suite of components, form a cohesive and powerful ecosystem, paving the way for efficient and secure microservice development.  
-Here is an example request and response to the one of the most basic endpoint: `/entities`:
-<p align="left">
-  <img src="./doc/img/request-response.png" alt="Sample request and response">
-</p>  
+Documentation for each Tarcinapp component is available in their respective repositories:
 
-**Note:** The client's authorization to create an entity, the fields that user can specify, and the fields returned in the response body may vary based on the user's role. The values of managed fields such as `_visibility`, `_idempotencyKey`, `_validFromDateTime`, and `_validUntilDateTime` can also be adjusted according to the user's role and the system's configuration.  
-  
-**Note**: Endpoints can be configured with arbitrary values within the gateway component. For example, `/books` can be used for records with `kind: book`, and the field `kind` can be completely omitted from the API interaction.
+📄 [entity-persistence-gateway](#)
+📄 [entity-persistence-gateway-policies](#)
 
 # Entity Persistence Service Application in Detail
 
 Once the application is up and running:
 
 - It starts listening on **port 3000** for HTTP requests.
+- Spins up an in-memory MongoDB instance, for non-production environments
 - The following REST endpoints are exposed:
 
-  ### Core Endpoints
-  - `GET /entities`, `POST /entities`: Manage your primary data models — supports full CRUD operations.
-  - `GET /lists`, `POST /lists`: Organize related entities with user-defined lists.
-
-  ### Relationships
-  - `GET /lists/{listId}/entities`, `POST /lists/{listId}/entities`: Add or retrieve entities within a specific list.
-  - `GET /entities/{id}/lists`: Fetch lists that a given entity belongs to.
-  - `GET /entities/{id}/parents`, `POST /entities/{id}/parents`: Retrieve or assign parent entities.
-  - `GET /entities/{id}/children`: List child entities of a specific entity.
-  - `GET /lists/{id}/parents`, `POST /lists/{id}/parents`: Handle list hierarchies by linking to parent lists.
-  - `GET /lists/{id}/children`: Retrieve child lists of a specific list.
-
-  ### Reactions
-  - `GET /entity-reactions`, `POST /entity-reactions`: Manage reactions (likes, ratings, etc.) on entities.
-  - `GET /list-reactions`, `POST /list-reactions`: Capture interactions on lists.
-  - `GET /entities/{id}/reactions`: Get all reactions associated with an entity.
-  - `GET /lists/{id}/reactions`: Retrieve reactions on a list.
-
-- By default, the app uses an **in-memory MongoDB** instance as the backing store (can be customized for production).
+### Available Endpoints
+ | Controller                             | Method | Endpoint                          | Description                           |
+ | -------------------------------------- | ------ | --------------------------------- | ------------------------------------- |
+ | **EntityController**                   | GET    | `/entities/count`                 | Get entity count                      |
+ |                                        | POST   | `/entities/{id}/children`         | Add child to entity                   |
+ |                                        | GET    | `/entities/{id}/children`         | Get entity children                   |
+ |                                        | GET    | `/entities/{id}/parents`          | Get entity parents                    |
+ |                                        | PUT    | `/entities/{id}`                  | Replace entity                        |
+ |                                        | PATCH  | `/entities/{id}`                  | Update entity partially               |
+ |                                        | GET    | `/entities/{id}`                  | Get entity by ID                      |
+ |                                        | DELETE | `/entities/{id}`                  | Delete entity                         |
+ |                                        | POST   | `/entities`                       | Create new entity                     |
+ |                                        | PATCH  | `/entities`                       | Update multiple entities              |
+ |                                        | GET    | `/entities`                       | List all entities                     |
+ | **ListController**                     | GET    | `/lists/count`                    | Get list count                        |
+ |                                        | POST   | `/lists/{id}/children`            | Add child to list                     |
+ |                                        | GET    | `/lists/{id}/children`            | Get list children                     |
+ |                                        | GET    | `/lists/{id}/parents`             | Get list parents                      |
+ |                                        | PUT    | `/lists/{id}`                     | Replace list                          |
+ |                                        | PATCH  | `/lists/{id}`                     | Update list partially                 |
+ |                                        | GET    | `/lists/{id}`                     | Get list by ID                        |
+ |                                        | DELETE | `/lists/{id}`                     | Delete list                           |
+ |                                        | POST   | `/lists`                          | Create new list                       |
+ |                                        | PATCH  | `/lists`                          | Update multiple lists                 |
+ |                                        | GET    | `/lists`                          | List all lists                        |
+ | **ListEntityRelController**            | GET    | `/list-entity-relations/count`    | Get list-entity relation count        |
+ |                                        | PUT    | `/list-entity-relations/{id}`     | Replace list-entity relation          |
+ |                                        | PATCH  | `/list-entity-relations/{id}`     | Update list-entity relation partially |
+ |                                        | GET    | `/list-entity-relations/{id}`     | Get list-entity relation by ID        |
+ |                                        | DELETE | `/list-entity-relations/{id}`     | Delete list-entity relation           |
+ |                                        | POST   | `/list-entity-relations`          | Create new list-entity relation       |
+ |                                        | PATCH  | `/list-entity-relations`          | Update multiple list-entity relations |
+ |                                        | GET    | `/list-entity-relations`          | List all list-entity relations        |
+ | **EntitiesThroughListController**      | POST   | `/lists/{id}/entities`            | Add entities to list                  |
+ |                                        | PATCH  | `/lists/{id}/entities`            | Update list entities                  |
+ |                                        | GET    | `/lists/{id}/entities`            | Get list entities                     |
+ |                                        | DELETE | `/lists/{id}/entities`            | Delete list entities                  |
+ | **ListsThroughEntitiesController**     | GET    | `/entities/{id}/lists`            | Get lists for entity                  |
+ | **EntityReactionController**           | GET    | `/entity-reactions/count`         | Get entity reaction count             |
+ |                                        | POST   | `/entity-reactions/{id}/children` | Add child to entity reaction          |
+ |                                        | GET    | `/entity-reactions/{id}/children` | Get entity reaction children          |
+ |                                        | GET    | `/entity-reactions/{id}/parents`  | Get entity reaction parents           |
+ |                                        | PUT    | `/entity-reactions/{id}`          | Replace entity reaction               |
+ |                                        | PATCH  | `/entity-reactions/{id}`          | Update entity reaction partially      |
+ |                                        | GET    | `/entity-reactions/{id}`          | Get entity reaction by ID             |
+ |                                        | DELETE | `/entity-reactions/{id}`          | Delete entity reaction                |
+ |                                        | POST   | `/entity-reactions`               | Create new entity reaction            |
+ |                                        | PATCH  | `/entity-reactions`               | Update multiple entity reactions      |
+ |                                        | GET    | `/entity-reactions`               | List all entity reactions             |
+ | **ReactionsThroughEntitiesController** | POST   | `/entities/{id}/reactions`        | Add reaction to entity                |
+ |                                        | PATCH  | `/entities/{id}/reactions`        | Update entity reactions               |
+ |                                        | GET    | `/entities/{id}/reactions`        | Get entity reactions                  |
+ |                                        | DELETE | `/entities/{id}/reactions`        | Delete entity reactions               |
+ | **ListReactionController**             | GET    | `/list-reactions/count`           | Get list reaction count               |
+ |                                        | PUT    | `/list-reactions/{id}`            | Replace list reaction                 |
+ |                                        | PATCH  | `/list-reactions/{id}`            | Update list reaction partially        |
+ |                                        | GET    | `/list-reactions/{id}`            | Get list reaction by ID               |
+ |                                        | DELETE | `/list-reactions/{id}`            | Delete list reaction                  |
+ |                                        | POST   | `/list-reactions`                 | Create new list reaction              |
+ |                                        | PATCH  | `/list-reactions`                 | Update multiple list reactions        |
+ |                                        | GET    | `/list-reactions`                 | List all list reactions               |
+ | **ReactionsThroughListsController**    | POST   | `/lists/{id}/reactions`           | Add reaction to list                  |
+ |                                        | PATCH  | `/lists/{id}/reactions`           | Update list reactions                 |
+ |                                        | GET    | `/lists/{id}/reactions`           | Get list reactions                    |
+ |                                        | DELETE | `/lists/{id}/reactions`           | Delete list reactions                 |
+ | **PingController**                     | GET    | `/ping`                           | Ping endpoint                         |
 
 ## Use Cases & Themes & Benefits
 
@@ -353,7 +580,7 @@ The application comes with a set of prebuilt sets to simplify common data select
 | month     | Selects all data where the creationDateTime field is within the last 30 days.                                                                                                                                                                                                                |
 | audience  | A combination of multiple sets. This set returns 'active' and 'public' records along with a user's own active and pending records. As a result, it requires user and group IDs similar to the owners set. Requires userIds and groupIds as defined in `owners` and `viewers` configurations. |
 | roots     | Selects all data where the _parentsCount field is 0, meaning these are root-level records that are not children of any other record.                                                                                                                                                         |
-| expired30 | Selects all data where the _validUntilDateTime field has a value and is between the current time and 30 days ago, indicating records that have expired within the last 30 days.                                                                                                           |
+| expired30 | Selects all data where the _validUntilDateTime field has a value and is between the current time and 30 days ago, indicating records that have expired within the last 30 days.                                                                                                              |
 
 The introduction of sets enhances the application's querying capabilities, allowing users to easily access and manage specific subsets of data based on predefined conditions or customized logical combinations.
 
@@ -467,9 +694,9 @@ The updateAll operation is not available for tags since their content is unique,
 Here are the list of common field names.
 
 | Field Name               | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **_kind**                | A string field represents the kind of the record.  As this application built on top of a schemaless database, objects with different schemas can be considered as different kinds can be stored in same collection. This field is using in order to seggregate objects in same collection. Most of the configuration parameters can be specialized to be applied on specific kind of objects. **This field is immutable and cannot be changed after creation.** |
-| **_name\***              | String field represents the name of the record. Mandatory field.                                                                                                                                                                                                                                                                                                                                                                                                |
+| **_name**                | String field represents the name of the record. Mandatory field.                                                                                                                                                                                                                                                                                                                                                                                                |
 | **_slug**                | Automatically filled while create or update with the slug format of the value of the name field.                                                                                                                                                                                                                                                                                                                                                                |
 | **_visibility**          | Record's visibility level. Can be either `private`, `protected` or `public`. Gateway enforces query behavior based on the visibility level and caller's authorization.                                                                                                                                                                                                                                                                                          |
 | **_version**             | A number field that automatically incremented each update and replace operation. Note: `_version` is not incremented if record is updated with `updateAll` operation. Callers are not allowed to modify this field.                                                                                                                                                                                                                                             |
@@ -559,13 +786,13 @@ The configuration supports various uniqueness scenarios:
 - Uniqueness scoped by field values (e.g., within approved records)
 - Multiple uniqueness rules for different combinations
 
-| Configuration | Description | Default Value | Example Value |
-|--------------|-------------|---------------|---------------|
-| **ENTITY_UNIQUENESS** | Defines uniqueness rules for entities. Multiple rules can be specified by separating them with commas. | - | `where[_name]=${_name},where[_slug]=${_slug}&set[actives]` |
-| **LIST_UNIQUENESS** | Defines uniqueness rules for lists. Multiple rules can be specified by separating them with commas. | - | `where[_name]=${_name}&where[_kind]=${_kind},where[_slug]=${_slug}&set[publics]` |
-| **RELATION_UNIQUENESS** | Defines uniqueness rules for list-entity relations. Multiple rules can be specified by separating them with commas. | - | `where[_listId]=${_listId}&where[_entityId]=${_entityId}` |
-| **ENTITY_REACTION_UNIQUENESS** | Defines uniqueness rules for entity reactions. Multiple rules can be specified by separating them with commas. | - | `where[_entityId]=${_entityId}&where[type]=${type}&set[actives]` |
-| **LIST_REACTION_UNIQUENESS** | Defines uniqueness rules for list reactions. Multiple rules can be specified by separating them with commas. | - | `where[_listId]=${_listId}&where[type]=${type}&set[actives]` |
+| Configuration                  | Description                                                                                                         | Default Value | Example Value                                                                    |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------- | ------------- | -------------------------------------------------------------------------------- |
+| **ENTITY_UNIQUENESS**          | Defines uniqueness rules for entities. Multiple rules can be specified by separating them with commas.              | -             | `where[_name]=${_name},where[_slug]=${_slug}&set[actives]`                       |
+| **LIST_UNIQUENESS**            | Defines uniqueness rules for lists. Multiple rules can be specified by separating them with commas.                 | -             | `where[_name]=${_name}&where[_kind]=${_kind},where[_slug]=${_slug}&set[publics]` |
+| **RELATION_UNIQUENESS**        | Defines uniqueness rules for list-entity relations. Multiple rules can be specified by separating them with commas. | -             | `where[_listId]=${_listId}&where[_entityId]=${_entityId}`                        |
+| **ENTITY_REACTION_UNIQUENESS** | Defines uniqueness rules for entity reactions. Multiple rules can be specified by separating them with commas.      | -             | `where[_entityId]=${_entityId}&where[type]=${type}&set[actives]`                 |
+| **LIST_REACTION_UNIQUENESS**   | Defines uniqueness rules for list reactions. Multiple rules can be specified by separating them with commas.        | -             | `where[_listId]=${_listId}&where[type]=${type}&set[actives]`                     |
 
 #### Configuration Syntax
 
@@ -688,16 +915,16 @@ The error response includes:
 
 This option only applies when visibility field is not provided. If you want to apply a visibility rule bu user role, please see entity-persistence-gateway.
 
-| Configuration                         | Description                                                                                                                             | Default Value | Example Values  |
-| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------- | --------------- |
-| **visibility_entity**                 | Default value to be filled for `visibility` field while entity creation.                                                                | protected     | public, private |
-| **visibility_entity_for_{kind_name}** | Default value to be filled for `visibility` field while entity creation. This configuration will only be applied to that specific kind. | protected     | public, private |
-| **visibility_list**                   | Default value to be filled for `visibility` field while list creation.                                                                  | protected     | public, private |
-| **visibility_list_for_{kind_name}**   | Default value to be filled for `visibility` field while list creation. This configuration will only be applied to that specific kind.   | protected     | public, private |
-| **visibility_entity_reaction**        | Default value to be filled for `visibility` field while entity reaction creation.                                                       | protected     | public, private |
-| **visibility_entity_reaction_for_{kind_name}** | Default value to be filled for `visibility` field while entity reaction creation. This configuration will only be applied to that specific kind. | protected | public, private |
-| **visibility_list_reaction**          | Default value to be filled for `visibility` field while list reaction creation.                                                        | protected     | public, private |
-| **visibility_list_reaction_for_{kind_name}** | Default value to be filled for `visibility` field while list reaction creation. This configuration will only be applied to that specific kind. | protected | public, private |
+| Configuration                                  | Description                                                                                                                                      | Default Value | Example Values  |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------- | --------------- |
+| **visibility_entity**                          | Default value to be filled for `visibility` field while entity creation.                                                                         | protected     | public, private |
+| **visibility_entity_for_{kind_name}**          | Default value to be filled for `visibility` field while entity creation. This configuration will only be applied to that specific kind.          | protected     | public, private |
+| **visibility_list**                            | Default value to be filled for `visibility` field while list creation.                                                                           | protected     | public, private |
+| **visibility_list_for_{kind_name}**            | Default value to be filled for `visibility` field while list creation. This configuration will only be applied to that specific kind.            | protected     | public, private |
+| **visibility_entity_reaction**                 | Default value to be filled for `visibility` field while entity reaction creation.                                                                | protected     | public, private |
+| **visibility_entity_reaction_for_{kind_name}** | Default value to be filled for `visibility` field while entity reaction creation. This configuration will only be applied to that specific kind. | protected     | public, private |
+| **visibility_list_reaction**                   | Default value to be filled for `visibility` field while list reaction creation.                                                                  | protected     | public, private |
+| **visibility_list_reaction_for_{kind_name}**   | Default value to be filled for `visibility` field while list reaction creation. This configuration will only be applied to that specific kind.   | protected     | public, private |
 
 ### Response Limits
 
@@ -720,13 +947,13 @@ The record limit mechanism allows you to control the number of records that can 
 
 Record limits are configured through environment variables using a JSON-based notation. Each type of record (entity, list, relation, reactions) has its own configuration variable:
 
-| Environment Variable | Description |
-|---------------------|-------------|
-| `ENTITY_RECORD_LIMITS` | Configures limits for entity records |
-| `LIST_RECORD_LIMITS` | Configures limits for list records |
-| `RELATION_RECORD_LIMITS` | Configures limits for list-entity relations |
-| `ENTITY_REACTION_RECORD_LIMITS` | Configures limits for entity reactions |
-| `LIST_REACTION_RECORD_LIMITS` | Configures limits for list reactions |
+| Environment Variable            | Description                                 |
+| ------------------------------- | ------------------------------------------- |
+| `ENTITY_RECORD_LIMITS`          | Configures limits for entity records        |
+| `LIST_RECORD_LIMITS`            | Configures limits for list records          |
+| `RELATION_RECORD_LIMITS`        | Configures limits for list-entity relations |
+| `ENTITY_REACTION_RECORD_LIMITS` | Configures limits for entity reactions      |
+| `LIST_REACTION_RECORD_LIMITS`   | Configures limits for list reactions        |
 
 #### Configuration Schema
 
@@ -861,18 +1088,18 @@ Where `[type]` is one of: entity, list, relation, entity-reaction, list-reaction
 
 entity-persistence-service ensures data creation is efficient and predictable. You can define JSON field paths, and the system generates a unique key based on these values. When clients attempt to create records, the system checks if a matching record exists using this key. If found, it returns the result as if it were a new record.
 
-| Configuration                                  | Description                                                                                                                                      | Default Value | Example Values         |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------- | ---------------------- |
-| **idempotency_entity**                         | comma seperated list of field names for entity records that are contributing to the calculation of idempotency key                               | -             | kind, slug, author     |
-| **idempotency_entity_for_{kindName}**          | comma seperated list of field names for entity records with kind value is {kindName} that are contributing to the calculation of idempotency key | -             | kind, slug, author     |
-| **idempotency_list**                           | comma seperated list of field names for list records that are contributing to the calculation of idempotency key                                 | -             | kind, slug             |
-| **idempotency_list_for_{kindName}**            | comma seperated list of field names for list records with kind value is {kindName} that are contributing to the calculation of idempotency key   | -             | kind, slug, author     |
-| **idempotency_list_entity_rel**                | comma seperated list of field names for entity records that are contributing to the calculation of idempotency key                               | -             | kind, listId, entityId |
-| **idempotency_list_entity_rel_for_{kindName}** | comma seperated list of field names for entity records with kind value is {kindName} that are contributing to the calculation of idempotency key | -             | kind, listId, entityId |
-| **idempotency_entity_reaction**                | comma seperated list of field names for entity reaction records that are contributing to the calculation of idempotency key                      | -             | kind, entityId, type   |
-| **idempotency_entity_reaction_for_{kindName}** | comma seperated list of field names for entity reaction records with kind value is {kindName} that are contributing to the calculation of idempotency key | -      | kind, entityId, type   |
-| **idempotency_list_reaction**                  | comma seperated list of field names for list reaction records that are contributing to the calculation of idempotency key                        | -             | kind, listId, type     |
-| **idempotency_list_reaction_for_{kindName}**   | comma seperated list of field names for list reaction records with kind value is {kindName} that are contributing to the calculation of idempotency key | -      | kind, listId, type     |
+| Configuration                                  | Description                                                                                                                                               | Default Value | Example Values         |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | ---------------------- |
+| **idempotency_entity**                         | comma seperated list of field names for entity records that are contributing to the calculation of idempotency key                                        | -             | kind, slug, author     |
+| **idempotency_entity_for_{kindName}**          | comma seperated list of field names for entity records with kind value is {kindName} that are contributing to the calculation of idempotency key          | -             | kind, slug, author     |
+| **idempotency_list**                           | comma seperated list of field names for list records that are contributing to the calculation of idempotency key                                          | -             | kind, slug             |
+| **idempotency_list_for_{kindName}**            | comma seperated list of field names for list records with kind value is {kindName} that are contributing to the calculation of idempotency key            | -             | kind, slug, author     |
+| **idempotency_list_entity_rel**                | comma seperated list of field names for entity records that are contributing to the calculation of idempotency key                                        | -             | kind, listId, entityId |
+| **idempotency_list_entity_rel_for_{kindName}** | comma seperated list of field names for entity records with kind value is {kindName} that are contributing to the calculation of idempotency key          | -             | kind, listId, entityId |
+| **idempotency_entity_reaction**                | comma seperated list of field names for entity reaction records that are contributing to the calculation of idempotency key                               | -             | kind, entityId, type   |
+| **idempotency_entity_reaction_for_{kindName}** | comma seperated list of field names for entity reaction records with kind value is {kindName} that are contributing to the calculation of idempotency key | -             | kind, entityId, type   |
+| **idempotency_list_reaction**                  | comma seperated list of field names for list reaction records that are contributing to the calculation of idempotency key                                 | -             | kind, listId, type     |
+| **idempotency_list_reaction_for_{kindName}**   | comma seperated list of field names for list reaction records with kind value is {kindName} that are contributing to the calculation of idempotency key   | -             | kind, listId, type     |
 
 Please note that idempotency calculation takes place before populating managed fields. Thus, do not use managed fields as contributor to the idempotency. For instance, use `name` instead of `slug`.
 

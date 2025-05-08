@@ -19,7 +19,7 @@ import { RelationMetadataType } from '../base-types/relation-metadata-under-enti
 export class ListEntityCommonBase extends AccessControlBase {
   @property({
     type: 'string',
-    required: true,
+    required: false,
     jsonSchema: {
       minLength: 2,
     },
