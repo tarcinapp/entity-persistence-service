@@ -46,7 +46,40 @@ These fields support essential functionality like traceability, access control, 
 - 🕓 **Full audit metadata tracking** (created/updated timestamps and users)
 
 ## Benefits
+> ⚡ **Tarcinapp dramatically reduces time-to-value** for digital products by delivering a ready-to-use backend built on practical defaults. With generic yet powerful data structures (entities, lists, reactions), configurable authorization, and automation-ready metadata, developers can go from concept to working prototype in days—not weeks.
 
+### Generic Data Model (Entities, Lists, Reactions)
+→ **Easily model diverse use cases**:
+    - **Entities**: products, users, blog posts, devices
+    - **Lists**: shopping carts, saved searches, wishlists
+    - **Reactions**: likes, ratings, reviews, sensor events
+
+### Built-in Ownership and Access Control Metadata
+→ Fields like `_ownerUsers`, `_viewerGroups`, `_visibility` make RBAC and field-level authorization straightforward.
+
+### Configurable Idempotency and Uniqueness Enforcement
+→ Prevent duplicate records across scopes (global, per user, per list).  
+*Example*: avoid duplicate product names per seller.
+
+### Rich Querying with Pagination and Aliases
+→ Short query aliases simplify client-side work, and response limits protect performance.
+
+### Soft Deletion & Approval Windows
+→ Use `_validUntilDateTime` for expiration, `_validFromDateTime` for publish scheduling.  
+*Example*: future-dated articles or expiring access links.
+
+### Distributed Locking for Race Condition Prevention
+→ Lock operations like concurrent creation or update to ensure integrity.
+
+### Customizable Limits and Constraints
+→ Restrict max entities per list or reactions per entity easily via config.  
+*Example*: limit to 5 saved addresses per user.
+
+### Relationship Management
+→ Support entity-to-entity, list-to-entity, and nested structures like category hierarchies or campaign groups.
+
+### MongoDB-powered, Schemaless but Validated
+→ Flexible yet safe: supports optional JSON schema validation and reference resolution.
 
 ## What is Tarcinapp Post-Login Solution?
 
@@ -66,6 +99,11 @@ The suite is composed of purpose-specific services for different layers of a mod
 </p>
 
 📘 For a full overview and integration guidance, refer to the [Tarcinapp Suite Documentation](#).
+
+Documentation for each Tarcinapp component is available in their respective repositories:
+
+📄 [entity-persistence-gateway](#)
+📄 [entity-persistence-gateway-policies](#)
 
 # Entity Persistence Service Application in Detail
 
