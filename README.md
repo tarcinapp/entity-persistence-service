@@ -17,7 +17,7 @@
   <img src="./doc/img/models.png" alt="Tarcinapp Data Model">
 </p>
 
-📌 Each record — whether an entity, list, or reaction — is automatically enriched with a consistent set of **managed fields**, including:
+📌 Each record — whether an entity, list, or reaction — is automatically decorated with a consistent set of **managed fields**, including:
 - `_ownerUsers`, `_ownerGroups`
 - `_viewerUsers`, `_viewerGroups`
 - `_visibility`
@@ -45,36 +45,26 @@ These fields support essential functionality like traceability, access control, 
 - 🗑️ **Soft deletion** via `validUntilDateTime`
 - 🕓 **Full audit metadata tracking** (created/updated timestamps and users)
 
+## Benefits
 
 ## What is Tarcinapp Post-Login Solution?
 
-Tarcinapp is a generic backend microservices suite developed to address common issues when building a web application, aiming to reduce Time-to-Value from idea to value.
+**Tarcinapp Suite** is a modular backend microservices architecture designed to streamline common challenges in web application development, helping teams reduce **Time-to-Value** from concept to deployment.
 
-Suppose you want to build a system to manage support tickets of your application.
+The suite is composed of purpose-specific services for different layers of a modern backend system, including:
 
-With Tarcinapp you can effortlessly handle support tickets using the full suite of REST operations—GET, POST, PUT, PATCH, and DELETE—alongside hierarchical record-management features.
+- `entity-persistence-dos`
+- `entity-persistence-gateway`
+- `entity-persistence-gateway-policies`
+- `entity-persistence-orchestration`
+- `entity-persistence-bff`
+- `entity-persistence-service` _(you are here)_
 
-When you POST a support ticket data, the service automatically adds managed fields (such as ownership, timestamps, and visibility). Your stored record will include both your original data and these additional fields, making it ready for secure and controlled access.
-
-
-
-The Tarcinapp suite is a comprehensive and flexible application framework, harmoniously blending a suite of interconnected components designed to deliver a seamless and secure microservices architecture. It also provides the flexibility for users to leverage it as an upstream project for their own REST API-based backend implementations, allowing for easy adaptation to their specific requirements and use cases.
-
-<p align="center">
-  <img src="./doc/img/high-level-arch.png" alt="Tarcinapp Suite Overview">
+<p align="left">
+  <img src="./doc/img/high-level-arch.png" alt="Tarcinapp Data Model">
 </p>
 
-At its core is the **Entity Persistence Service**, an easily adaptable REST-based backend application built on the [Loopback 4](https://loopback.io) framework. This service utilizes on a schemaless MongoDB database to provide a scalable and highly adaptable data persistence layer. Offering a generic data model with predefined fields such as `_id`, `_name`,  `_kind`, `_lastUpdatedDateTime`, `_creationDateTime`, `_ ownerUsers` and [more](#programming-conventions), it effortlessly adapts to diverse use cases.  
-
-The integration with the **Entity Persistence Gateway** empowers users to implement enhanced validation, authentication, authorization, and rate-limiting functionalities, ensuring a secure and efficient environment. Leveraging the power of **Redis**, the application seamlessly manages distributed locks, enabling robust data synchronization and rate limiting. Furthermore, the ecosystem includes the **Open Policy Agent (OPA)** to enforce policies, safeguarding your application against unauthorized access and ensuring compliance with your security and operational requirements. These policies, combined with the entire suite of components, form a cohesive and powerful ecosystem, paving the way for efficient and secure microservice development.  
-Here is an example request and response to the one of the most basic endpoint: `/entities`:
-<p align="left">
-  <img src="./doc/img/request-response.png" alt="Sample request and response">
-</p>  
-
-**Note:** The client's authorization to create an entity, the fields that user can specify, and the fields returned in the response body may vary based on the user's role. The values of managed fields such as `_visibility`, `_idempotencyKey`, `_validFromDateTime`, and `_validUntilDateTime` can also be adjusted according to the user's role and the system's configuration.  
-  
-**Note**: Endpoints can be configured with arbitrary values within the gateway component. For example, `/books` can be used for records with `kind: book`, and the field `kind` can be completely omitted from the API interaction.
+📘 For a full overview and integration guidance, refer to the [Tarcinapp Suite Documentation](#).
 
 # Entity Persistence Service Application in Detail
 
