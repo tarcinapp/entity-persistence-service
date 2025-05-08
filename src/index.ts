@@ -1,5 +1,6 @@
 import type {} from './extensions/types/inclusion-augmentation';
 import { RestBindings } from '@loopback/rest';
+import { MongoMemoryServer } from 'mongodb-memory-server';
 import { parse } from 'qs';
 import type { ApplicationConfig } from './application';
 import { EntityPersistenceApplication } from './application';
@@ -31,7 +32,34 @@ import { RecordLimitCheckerService } from './services/record-limit-checker.servi
 
 export * from './application';
 
+let mongod: MongoMemoryServer | undefined;
+
+async function setupInMemoryMongoDB() {
+  // Check if we're in production or if MongoDB config is provided
+  const hasMongoConfig = !!(
+    process.env['mongodb_url'] ??
+    (process.env['mongodb_host'] &&
+      process.env['mongodb_port'] &&
+      process.env['mongodb_user'] &&
+      process.env['mongodb_password'])
+  );
+
+  if (process.env.NODE_ENV !== 'production' && !hasMongoConfig) {
+    // Create and start in-memory MongoDB instance
+    mongod = new MongoMemoryServer();
+    await mongod.start();
+    const uri = mongod.getUri();
+
+    // Set MongoDB environment variables
+    process.env['mongodb_url'] = uri;
+    process.env['mongodb_database'] = 'memory-db';
+  }
+}
+
 export async function main(options: ApplicationConfig = {}) {
+  // Set up in-memory MongoDB if needed
+  await setupInMemoryMongoDB();
+
   const app = new EntityPersistenceApplication(options);
 
   app.bind(RestBindings.ERROR_WRITER_OPTIONS).to({
