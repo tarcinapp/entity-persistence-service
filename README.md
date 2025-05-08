@@ -80,80 +80,7 @@
 
 📌 It is built on a simple yet powerful data model composed of **entities**, **lists**, and **reactions**, each represented as JSON documents stored in MongoDB.
 
-📌 This generic, extensible model allows developers to represent a wide variety of use cases across different domains by reusing and configuring the same foundational components ([Use Cases- [Entity Persistence Service](#entity-persistence-service)
-- [Entity Persistence Service](#entity-persistence-service)
-- [Getting Started](#getting-started)
-  - [Features](#features)
-  - [Benefits](#benefits)
-    - [Generic Data Model (Entities, Lists, Reactions)](#generic-data-model-entities-lists-reactions)
-    - [Built-in Ownership and Access Control Metadata](#built-in-ownership-and-access-control-metadata)
-    - [Configurable Idempotency and Uniqueness Enforcement](#configurable-idempotency-and-uniqueness-enforcement)
-    - [Rich Querying with Pagination and Aliases](#rich-querying-with-pagination-and-aliases)
-    - [Soft Deletion \& Approval Windows](#soft-deletion--approval-windows)
-    - [Distributed Locking for Race Condition Prevention](#distributed-locking-for-race-condition-prevention)
-    - [Customizable Limits and Constraints](#customizable-limits-and-constraints)
-    - [Relationship Management](#relationship-management)
-    - [MongoDB-powered, Schemaless but Validated](#mongodb-powered-schemaless-but-validated)
-  - [What is Tarcinapp Post-Login Solution?](#what-is-tarcinapp-post-login-solution)
-- [Entity Persistence Service Application in Detail](#entity-persistence-service-application-in-detail)
-    - [Available Endpoints](#available-endpoints)
-  - [Use Cases \& Themes \& Benefits](#use-cases--themes--benefits)
-  - [Data Model](#data-model)
-    - [Entities](#entities)
-    - [Lists](#lists)
-      - [List-Entity Relations](#list-entity-relations)
-    - [Entity Reactions](#entity-reactions)
-    - [List Reactions](#list-reactions)
-  - [Features of Entity Persistence Service](#features-of-entity-persistence-service)
-    - [Essential Data Management](#essential-data-management)
-    - [Data Organization](#data-organization)
-    - [User Engagement](#user-engagement)
-    - [Advanced Data Control](#advanced-data-control)
-    - [Efficiency and Optimization](#efficiency-and-optimization)
-    - [Gateway Integration](#gateway-integration)
-  - [Authentication and Authorization](#authentication-and-authorization)
-    - [Authentication](#authentication)
-    - [Authorization](#authorization)
-    - [Gateway-Based Security](#gateway-based-security)
-  - [Sample Use Cases](#sample-use-cases)
-  - [Concepts](#concepts)
-    - [Relations](#relations)
-    - [Sets](#sets)
-    - [Lookups](#lookups)
-      - [Reference Types](#reference-types)
-      - [Query Structure](#query-structure)
-      - [Examples](#examples)
-      - [Lookup Scope Options](#lookup-scope-options)
-      - [Performance Considerations](#performance-considerations)
-    - [Tags](#tags)
-  - [Programming Conventions](#programming-conventions)
-- [Configuration](#configuration)
-    - [Database](#database)
-    - [Allowed Kinds](#allowed-kinds)
-    - [Uniqueness](#uniqueness)
-      - [Configuration Syntax](#configuration-syntax)
-      - [Examples](#examples-1)
-      - [Error Response](#error-response)
-    - [Auto Approve](#auto-approve)
-    - [Visibility](#visibility)
-    - [Response Limits](#response-limits)
-    - [Record Limits](#record-limits)
-      - [Configuration Mechanism](#configuration-mechanism)
-      - [Configuration Schema](#configuration-schema)
-      - [Dynamic Value Interpolation](#dynamic-value-interpolation)
-      - [Common Use Cases and Examples](#common-use-cases-and-examples)
-      - [Filter Expressions](#filter-expressions)
-      - [Set Expressions](#set-expressions)
-      - [Error Handling](#error-handling)
-    - [Idempotency](#idempotency)
-- [Deploying to Kubernetes](#deploying-to-kubernetes)
-- [Configuring for Development](#configuring-for-development)
-- [Known Issues and Limitations](#known-issues-and-limitations)
-    - [1. Idempotency and Visibility](#1-idempotency-and-visibility)
-    - [2. Field Selection with Arbitrary Fields](#2-field-selection-with-arbitrary-fields)
-    - [3. Version Incrementation for Update All operations.](#3-version-incrementation-for-update-all-operations)
-    - [4. Dot Notation in Connected Model Filters for List-Entity Relations](#4-dot-notation-in-connected-model-filters-for-list-entity-relations)
-- [Development Status](#development-status)
+📌 This generic, extensible model allows developers to represent a wide variety of use cases across different domains by reusing and configuring the same foundational components ([Use Cases- [Entity Persistence Service]
 
 📌 For example:
 - **Entities** can represent user profiles, configuration objects, notification, blog posts, products, campaigns, documents, or even IoT devices.
@@ -261,74 +188,76 @@ Once the application is up and running:
 
 - It starts listening on **port 3000** for HTTP requests.
 - Spins up an in-memory MongoDB instance, for non-production environments
+- Ready to integrate with entity-persistence-gateway
+- Resources created through gateway are kept private to the creator users, and visible only to the creators
 - The following REST endpoints are exposed:
 
-### Available Endpoints
- | Controller                             | Method | Endpoint                          | Description                           |
- | -------------------------------------- | ------ | --------------------------------- | ------------------------------------- |
- | **EntityController**                   | GET    | `/entities/count`                 | Get entity count                      |
- |                                        | POST   | `/entities/{id}/children`         | Add child to entity                   |
- |                                        | GET    | `/entities/{id}/children`         | Get entity children                   |
- |                                        | GET    | `/entities/{id}/parents`          | Get entity parents                    |
- |                                        | PUT    | `/entities/{id}`                  | Replace entity                        |
- |                                        | PATCH  | `/entities/{id}`                  | Update entity partially               |
- |                                        | GET    | `/entities/{id}`                  | Get entity by ID                      |
- |                                        | DELETE | `/entities/{id}`                  | Delete entity                         |
- |                                        | POST   | `/entities`                       | Create new entity                     |
- |                                        | PATCH  | `/entities`                       | Update multiple entities              |
- |                                        | GET    | `/entities`                       | List all entities                     |
- | **ListController**                     | GET    | `/lists/count`                    | Get list count                        |
- |                                        | POST   | `/lists/{id}/children`            | Add child to list                     |
- |                                        | GET    | `/lists/{id}/children`            | Get list children                     |
- |                                        | GET    | `/lists/{id}/parents`             | Get list parents                      |
- |                                        | PUT    | `/lists/{id}`                     | Replace list                          |
- |                                        | PATCH  | `/lists/{id}`                     | Update list partially                 |
- |                                        | GET    | `/lists/{id}`                     | Get list by ID                        |
- |                                        | DELETE | `/lists/{id}`                     | Delete list                           |
- |                                        | POST   | `/lists`                          | Create new list                       |
- |                                        | PATCH  | `/lists`                          | Update multiple lists                 |
- |                                        | GET    | `/lists`                          | List all lists                        |
- | **ListEntityRelController**            | GET    | `/list-entity-relations/count`    | Get list-entity relation count        |
- |                                        | PUT    | `/list-entity-relations/{id}`     | Replace list-entity relation          |
- |                                        | PATCH  | `/list-entity-relations/{id}`     | Update list-entity relation partially |
- |                                        | GET    | `/list-entity-relations/{id}`     | Get list-entity relation by ID        |
- |                                        | DELETE | `/list-entity-relations/{id}`     | Delete list-entity relation           |
- |                                        | POST   | `/list-entity-relations`          | Create new list-entity relation       |
- |                                        | PATCH  | `/list-entity-relations`          | Update multiple list-entity relations |
- |                                        | GET    | `/list-entity-relations`          | List all list-entity relations        |
- | **EntitiesThroughListController**      | POST   | `/lists/{id}/entities`            | Add entities to list                  |
- |                                        | PATCH  | `/lists/{id}/entities`            | Update list entities                  |
- |                                        | GET    | `/lists/{id}/entities`            | Get list entities                     |
- |                                        | DELETE | `/lists/{id}/entities`            | Delete list entities                  |
- | **ListsThroughEntitiesController**     | GET    | `/entities/{id}/lists`            | Get lists for entity                  |
- | **EntityReactionController**           | GET    | `/entity-reactions/count`         | Get entity reaction count             |
- |                                        | POST   | `/entity-reactions/{id}/children` | Add child to entity reaction          |
- |                                        | GET    | `/entity-reactions/{id}/children` | Get entity reaction children          |
- |                                        | GET    | `/entity-reactions/{id}/parents`  | Get entity reaction parents           |
- |                                        | PUT    | `/entity-reactions/{id}`          | Replace entity reaction               |
- |                                        | PATCH  | `/entity-reactions/{id}`          | Update entity reaction partially      |
- |                                        | GET    | `/entity-reactions/{id}`          | Get entity reaction by ID             |
- |                                        | DELETE | `/entity-reactions/{id}`          | Delete entity reaction                |
- |                                        | POST   | `/entity-reactions`               | Create new entity reaction            |
- |                                        | PATCH  | `/entity-reactions`               | Update multiple entity reactions      |
- |                                        | GET    | `/entity-reactions`               | List all entity reactions             |
- | **ReactionsThroughEntitiesController** | POST   | `/entities/{id}/reactions`        | Add reaction to entity                |
- |                                        | PATCH  | `/entities/{id}/reactions`        | Update entity reactions               |
- |                                        | GET    | `/entities/{id}/reactions`        | Get entity reactions                  |
- |                                        | DELETE | `/entities/{id}/reactions`        | Delete entity reactions               |
- | **ListReactionController**             | GET    | `/list-reactions/count`           | Get list reaction count               |
- |                                        | PUT    | `/list-reactions/{id}`            | Replace list reaction                 |
- |                                        | PATCH  | `/list-reactions/{id}`            | Update list reaction partially        |
- |                                        | GET    | `/list-reactions/{id}`            | Get list reaction by ID               |
- |                                        | DELETE | `/list-reactions/{id}`            | Delete list reaction                  |
- |                                        | POST   | `/list-reactions`                 | Create new list reaction              |
- |                                        | PATCH  | `/list-reactions`                 | Update multiple list reactions        |
- |                                        | GET    | `/list-reactions`                 | List all list reactions               |
- | **ReactionsThroughListsController**    | POST   | `/lists/{id}/reactions`           | Add reaction to list                  |
- |                                        | PATCH  | `/lists/{id}/reactions`           | Update list reactions                 |
- |                                        | GET    | `/lists/{id}/reactions`           | Get list reactions                    |
- |                                        | DELETE | `/lists/{id}/reactions`           | Delete list reactions                 |
- | **PingController**                     | GET    | `/ping`                           | Ping endpoint                         |
+  ### Available Endpoints
+  | Controller                             | Method | Endpoint                          | Description                             |
+  | -------------------------------------- | ------ | --------------------------------- | --------------------------------------- |
+  | **EntityController**                   | GET    | `/entities/count`                 | Get entity   count                      |
+  |                                        | POST   | `/entities/{id}/children`         | Add child  to entity                    |
+  |                                        | GET    | `/entities/{id}/children`         | Get entity   children                   |
+  |                                        | GET    | `/entities/{id}/parents`          | Get entity   parents                    |
+  |                                        | PUT    | `/entities/{id}`                  | Replace  entity                         |
+  |                                        | PATCH  | `/entities/{id}`                  | Update   entity partially               |
+  |                                        | GET    | `/entities/{id}`                  | Get entity   by ID                      |
+  |                                        | DELETE | `/entities/{id}`                  | Delete   entity                         |
+  |                                        | POST   | `/entities`                       | Create new   entity                     |
+  |                                        | PATCH  | `/entities`                       | Update   multiple entities              |
+  |                                        | GET    | `/entities`                       | List all   entities                     |
+  | **ListController**                     | GET    | `/lists/count`                    | Get list   count                        |
+  |                                        | POST   | `/lists/{id}/children`            | Add child  to list                      |
+  |                                        | GET    | `/lists/{id}/children`            | Get list   children                     |
+  |                                        | GET    | `/lists/{id}/parents`             | Get list   parents                      |
+  |                                        | PUT    | `/lists/{id}`                     | Replace  list                           |
+  |                                        | PATCH  | `/lists/{id}`                     | Update list  partially                  |
+  |                                        | GET    | `/lists/{id}`                     | Get list by  ID                         |
+  |                                        | DELETE | `/lists/{id}`                     | Delete   list                           |
+  |                                        | POST   | `/lists`                          | Create new   list                       |
+  |                                        | PATCH  | `/lists`                          | Update   multiple lists                 |
+  |                                        | GET    | `/lists`                          | List all   lists                        |
+  | **ListEntityRelController**            | GET    | `/list-entity-relations/count`    | Get  list-entity relation count         |
+  |                                        | PUT    | `/list-entity-relations/{id}`     | Replace  list-entity relation           |
+  |                                        | PATCH  | `/list-entity-relations/{id}`     | Update   list-entity relation partially |
+  |                                        | GET    | `/list-entity-relations/{id}`     | Get  list-entity relation by ID         |
+  |                                        | DELETE | `/list-entity-relations/{id}`     | Delete   list-entity relation           |
+  |                                        | POST   | `/list-entity-relations`          | Create new   list-entity relation       |
+  |                                        | PATCH  | `/list-entity-relations`          | Update   multiple list-entity relations |
+  |                                        | GET    | `/list-entity-relations`          | List all   list-entity relations        |
+  | **EntitiesThroughListController**      | POST   | `/lists/{id}/entities`            | Add  entities to list                   |
+  |                                        | PATCH  | `/lists/{id}/entities`            | Update list  entities                   |
+  |                                        | GET    | `/lists/{id}/entities`            | Get list   entities                     |
+  |                                        | DELETE | `/lists/{id}/entities`            | Delete list  entities                   |
+  | **ListsThroughEntitiesController**     | GET    | `/entities/{id}/lists`            | Get lists  for entity                   |
+  | **EntityReactionController**           | GET    | `/entity-reactions/count`         | Get entity   reaction count             |
+  |                                        | POST   | `/entity-reactions/{id}/children` | Add child  to entity reaction           |
+  |                                        | GET    | `/entity-reactions/{id}/children` | Get entity   reaction children          |
+  |                                        | GET    | `/entity-reactions/{id}/parents`  | Get entity   reaction parents           |
+  |                                        | PUT    | `/entity-reactions/{id}`          | Replace  entity reaction                |
+  |                                        | PATCH  | `/entity-reactions/{id}`          | Update   entity reaction partially      |
+  |                                        | GET    | `/entity-reactions/{id}`          | Get entity   reaction by ID             |
+  |                                        | DELETE | `/entity-reactions/{id}`          | Delete   entity reaction                |
+  |                                        | POST   | `/entity-reactions`               | Create new   entity reaction            |
+  |                                        | PATCH  | `/entity-reactions`               | Update   multiple entity reactions      |
+  |                                        | GET    | `/entity-reactions`               | List all   entity reactions             |
+  | **ReactionsThroughEntitiesController** | POST   | `/entities/{id}/reactions`        | Add  reaction to entity                 |
+  |                                        | PATCH  | `/entities/{id}/reactions`        | Update   entity reactions               |
+  |                                        | GET    | `/entities/{id}/reactions`        | Get entity   reactions                  |
+  |                                        | DELETE | `/entities/{id}/reactions`        | Delete   entity reactions               |
+  | **ListReactionController**             | GET    | `/list-reactions/count`           | Get list   reaction count               |
+  |                                        | PUT    | `/list-reactions/{id}`            | Replace  list reaction                  |
+  |                                        | PATCH  | `/list-reactions/{id}`            | Update list  reaction partially         |
+  |                                        | GET    | `/list-reactions/{id}`            | Get list   reaction by ID               |
+  |                                        | DELETE | `/list-reactions/{id}`            | Delete list  reaction                   |
+  |                                        | POST   | `/list-reactions`                 | Create new   list reaction              |
+  |                                        | PATCH  | `/list-reactions`                 | Update   multiple list reactions        |
+  |                                        | GET    | `/list-reactions`                 | List all   list reactions               |
+  | **ReactionsThroughListsController**    | POST   | `/lists/{id}/reactions`           | Add  reaction to list                   |
+  |                                        | PATCH  | `/lists/{id}/reactions`           | Update list  reactions                  |
+  |                                        | GET    | `/lists/{id}/reactions`           | Get list   reactions                    |
+  |                                        | DELETE | `/lists/{id}/reactions`           | Delete list  reactions                  |
+  | **PingController**                     | GET    | `/ping`                           | Ping   endpoint                         |
 
 ## Use Cases & Themes & Benefits
 
