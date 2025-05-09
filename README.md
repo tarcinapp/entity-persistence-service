@@ -6,7 +6,7 @@
   - [Data Model](#data-model)
     - [Entities](#entities)
     - [Lists](#lists)
-      - [List-Entity Relations](#list-entity-relations)
+    - [List-Entity Relations](#list-entity-relations)
     - [Entity Reactions](#entity-reactions)
     - [List Reactions](#list-reactions)
   - [Features of Entity Persistence Service](#features-of-entity-persistence-service)
@@ -81,9 +81,8 @@
 
 📌 The service significantly reduces **Time-To-Value** for digital products, internal tools, and early-stage startups by solving key backend concerns out-of-the-box.
 
-
-
 📌 Each record — whether an entity, list, or reaction — is automatically decorated with a consistent set of **managed fields**, including:
+- `_id`
 - `_ownerUsers`, `_ownerGroups`
 - `_viewerUsers`, `_viewerGroups`
 - `_visibility`
@@ -159,6 +158,7 @@ Documentation for each Tarcinapp component is available in their respective repo
 - **Custom record constraints** to limit number of entities, reactions, or list items globally, per user, or per context.
 
 - **Optional schema validation** and reference resolution with tapp:// URIs for resolving related records dynamically.
+
 # Getting Started
 
 Once the application is up and running:
@@ -169,12 +169,13 @@ Once the application is up and running:
 - Resources created through gateway are kept private to the creator users, and visible only to the creators
 - Ready to create and query resources. See [Endpoints Reference](#endpoints-reference) for more information about the endpoints.
 - See [Querying Data](#querying-data) for more information about the advanced querying capabilities.
-- An empty request to `/POST /entities` will create a new entity with following properties:
+- An empty request to `POST /entities` will create a new entity with following properties:
   <p align="left">
     <img src="./doc/img/request-response.png" alt="Tarcinapp Data Model">
   </p>
-- Some properties are hidden from the response but can be used for querying and filtering. See [Managed Fields](#managed-fields) for more information.
-- `_createdBy`, `_ownerUsers` and `_lastUpdatedBy` are populated with the user id of the creator, when same request is made through the gateway.
+- Some properties (e.g. `_idempotencyKey`) are hidden from the response but can be used for querying and filtering. See [Managed Fields](#managed-fields) for more information.
+- `_createdBy`, `_ownerUsers` and `_lastUpdatedBy` are populated with the user id of the creator, when request is made through the gateway.
+- You can use payload to pass arbitrary properties to the request. Incoming payload will be merged with the managed fields.
 
 
 ## Data Model
@@ -187,15 +188,32 @@ This structure is designed to flexibly represent a wide range of use cases, incl
   <img src="./doc/img/models.png" alt="Tarcinapp Data Model">
 </p>
 
-### Entities
+⭐ **Store Any Shape of Data**
 
-The Generic Entity is the core data model that represents objects in your application. It uses a schemaless structure to support any data type. Each entity has a '_kind' field (like 'book' or 'author') to identify its type. This flexible model adapts easily to different use cases while providing consistent organization.
+Each model—Entity, List, Reactions, and even ListEntityRelation—can hold arbitrary JSON structures tailored to your application's needs. This allows you to enrich records with domain-specific fields without rigid schemas.
+
+When structure is needed, the gateway can validate these records against configurable JSON Schemas based on their `_kind`, offering the best of both flexibility and consistency.
+
+⭐ **Using `_kind` to Organize Data Variants**
+
+Each model (entity, list, list-entity-relation, list-reaction, entity-reaction) includes an optional `_kind` field used to distinguish different types of data stored within the same MongoDB collection. By default, this field is auto-filled with the model name (`entity`, `list`, `list-entity-relation`, `list-reaction`, `entity-reaction`, etc.), but it can be customized to represent domain-specific subtypes.
+
+This allows applications to store diverse schemas under a shared model—for example, storing `blog-post`, `product`, and `profile` under the same `entity` collection— **while still enabling filtering, validation, or constraints based on kind.**
+
+The `_kind` field is especially helpful when the application needs to apply different logic, limits, or schema validations per subtype. Admins can configure allowed `_kind` values for each model to enforce consistency and avoid accidental misuse.
+
+### Entities
+The Entity is the core data model that represents the primary objects in your application. It’s typically the starting point when modeling your domain. Whether you're building a book review platform, an e-commerce store, a knowledge base, or a job board—books, products, articles, or job listings would all likely to be stored as entities. Entities hold the core business data and can be extended or connected to other models such as lists or reactions to build richer experiences. 
+
+**Base Endpoint**: `/entities`  
 
 ### Lists
 
-The List model organizes collections of entities. Lists can be categorized by kind, just like entities (e.g. 'favorites' or 'science_fiction') and can contain multiple entities. List objects provide a simple way to group and manage related data.
+The List model organizes collections of entities into meaningful groups. A single list can contain many entities, and an entity can belong to many lists. This many-to-many relationship is managed through a dedicated ListEntityRelation model, enabling fine-grained control over each association. Lists themselves are also records that can hold arbitrary data and can be categorized by kind—such as “favorites,” “watchlist,” or “top_picks.” Whether you're modeling playlists, reading lists, or campaign groupings, lists make it easy to structure and reuse related content across your application.
 
-#### List-Entity Relations
+**Base Endpoint**: `/lists`  
+
+### List-Entity Relations
 
 Lists and entities are connected through the `ListEntityRelation` model. Having a seperated model for the relation helps user to store arbitrary data about the relation with the relation object. Relation objects have a dedicated endpoint, just like lists and entities. To interact with relation objects you can call `/list-entity-relations` endpoint.
 
