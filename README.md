@@ -9,18 +9,6 @@
     - [List-Entity Relations](#list-entity-relations)
     - [Entity Reactions](#entity-reactions)
     - [List Reactions](#list-reactions)
-  - [Features of Entity Persistence Service](#features-of-entity-persistence-service)
-    - [Essential Data Management](#essential-data-management)
-    - [Data Organization](#data-organization)
-    - [User Engagement](#user-engagement)
-    - [Advanced Data Control](#advanced-data-control)
-    - [Efficiency and Optimization](#efficiency-and-optimization)
-    - [Gateway Integration](#gateway-integration)
-  - [Authentication and Authorization](#authentication-and-authorization)
-    - [Authentication](#authentication)
-    - [Authorization](#authorization)
-    - [Gateway-Based Security](#gateway-based-security)
-  - [Sample Use Cases](#sample-use-cases)
   - [Concepts](#concepts)
     - [Relations](#relations)
     - [Sets](#sets)
@@ -168,7 +156,6 @@ Once the application is up and running:
 - Ready to integrate with entity-persistence-gateway
 - Resources created through gateway are kept private to the creator users, and visible only to the creators
 - Ready to create and query resources. See [Endpoints Reference](#endpoints-reference) for more information about the endpoints.
-- See [Querying Data](#querying-data) for more information about the advanced querying capabilities.
 - An empty request to `POST /entities` will create a new entity with following properties:
   <p align="left">
     <img src="./doc/img/request-response.png" alt="Tarcinapp Data Model">
@@ -176,6 +163,8 @@ Once the application is up and running:
 - Some properties (e.g. `_idempotencyKey`) are hidden from the response but can be used for querying and filtering. See [Managed Fields](#managed-fields) for more information.
 - `_createdBy`, `_ownerUsers` and `_lastUpdatedBy` are populated with the user id of the creator, when request is made through the gateway.
 - You can use payload to pass arbitrary properties to the request. Incoming payload will be merged with the managed fields.
+- See [Querying Data](#querying-data) for more information about the advanced querying capabilities.
+- Experiment with creating and querying Lists, ListEntityRelations and Reactions (See [Endpoint Reference](#endpoints-reference) for more information)
 
 
 ## Data Model
@@ -309,101 +298,6 @@ The Entity Reaction data model is responsible for capturing and managing a broad
 ### List Reactions
 
 Similar to the Entity Reaction model, the List Reaction data model is tailored to manage events associated with lists. It empowers your application to capture actions like comments, likes, measurements, and reactions linked to lists. This versatility ensures that your application can effectively handle a variety of reactions and interactions related to lists, enhancing user participation and interaction.
-
-## Features of Entity Persistence Service
-
-### Essential Data Management
-
-**CRUD operations**: Perform Create, Read, Update, and Delete operations on entities for fundamental data management.  
-**Approval**: Manage data approval processes, ensuring quality control.  
-**Uniqueness**: Guarantee data integrity through unique entity constraints.  
-**Ownership**: Control data access with well-defined ownership and permissions.  
-
-### Data Organization
-
-**Entity relationships**: Establish and manage connections between entities.  
-**Hierarchical lists**: Create structured, hierarchical data categorization for organized data management.  
-**Tagging entities**: Efficiently categorize and organize data using tags.  
-
-### User Engagement
-
-**Reactions to entities and lists**: Enable user interactions through likes, comments, and more.  
-**Sub-reactions to reactions**: Enhance user engagement with detailed reactions.  
-**Entity visibility**: Control data access with options for public, private, and protected visibility.  
-**Adding entities to lists**: Organize related data by associating entities with lists.
-
-### Advanced Data Control
-
-**Customized validations**: Tailor validation rules to specific use cases.  
-**Prebuilt queries**: Simplify data retrieval with predefined query sets.  
-**Strong querying capability**: Benefit from Loopback's robust querying capabilities for data analysis.  
-
-### Efficiency and Optimization
-
-**Limiting total records**: Manage data loads by controlling the total number of records.  
-**Limiting response items**: Streamline responses by specifying the maximum number of items to return.  
-**Automatically Idempotency calculation**: Enhance transaction safety and data consistency with automatic Idempotency calculations.  
-
-### Gateway Integration
-
-**Special gateway application**: Access enhanced features and secure access control through a dedicated gateway: **entity-persistence-gateway**
-
-## Authentication and Authorization
-
-The Entity Persistence Service is designed with a clear separation of concerns regarding authentication and authorization. While the service includes rich data structures and fields to support complex authorization scenarios, it does not enforce any authentication or authorization rules itself. This responsibility is fully delegated to the **entity-persistence-gateway**.
-
-### Authentication
-
-- The service operates in a **stateless** manner and does not perform any user authentication
-- All endpoints are accessible without requiring authentication tokens or credentials
-- User identity information (like user IDs in `_createdBy` or `_ownerUsers`) is accepted as-is without validation
-- The actual authentication process is handled by the entity-persistence-gateway
-
-### Authorization
-
-While the service includes several authorization-related fields, it does not enforce any access control rules:
-
-**Authorization Fields**:
-- `_visibility`: Can be 'private', 'protected', or 'public'
-- `_ownerUsers`: Array of user IDs who own the record
-- `_ownerGroups`: Array of group IDs with ownership rights
-- `_viewerUsers`: Array of user IDs with view access
-- `_viewerGroups`: Array of group IDs with view access
-
-**Behavior**:
-- All records are returned regardless of their visibility settings
-- No validation is performed against the caller's identity
-- Owner and viewer lists are not enforced
-- Records with 'private' visibility are still accessible
-
-### Gateway-Based Security
-
-The actual security implementation is handled by the **entity-persistence-gateway**, which:
-- Authenticates users and validates their identity
-- Enforces visibility rules based on the caller's context
-- Validates ownership and viewing rights
-- Applies role-based access control (RBAC)
-- Controls field-level access based on user roles
-- Enforces security policies for data operations
-
-## Sample Use Cases
-
-1. **User Configuration Storage**  
-  Every user has an entity record with the kind 'config.' Entities are labeled as 'mobileapp,' 'webui,' 'menu,' 'dashboard,' etc., to store arbitrary data for personalized user configurations. For example, the 'menu' entity stores the user's menu preferences, and the 'dashboard' entity stores the user's dashboard preferences.  
-2. **IoT Platform**  
-  Each list in the application represents a solution, and each solution contains entities representing IoT devices with the kind 'device.' The application records measurements as reactions, enabling real-time data tracking and analytics.
-
-3. **Movie Database**  
-  The application manages movies and directors as separate entities. Each movie and director has its own entity, and a relationship named 'director' connects directors with the movies they have directed. Users can create lists like 'watchlist' and 'watched' to organize their movie preferences. Editors can curate special lists like '10 Must-See Movies' for user recommendations.
-
-4. **Task Management System**  
-  The application serves as a task management system, allowing users and teams to efficiently manage tasks and projects. Each task is represented as an entity with attributes like name, description, due date, and assignee. Users can create lists to categorize tasks based on projects or priority levels.
-
-5. **Recipe Management Application**  
-  The application functions as a recipe management tool, helping users discover, save, and organize recipes. Each recipe is represented as an entity with details such as title, ingredients, instructions, and preparation time. Users can create lists like 'favorites' and 'tried recipes' to bookmark recipes they love or have tested.
-
-6. **Fitness Tracker**  
-  The application acts as a fitness tracker, assisting users in monitoring their workouts and progress. Each workout session is represented as an entity with attributes like date, exercise type, duration, and intensity. Users can create lists to categorize workouts based on specific activities or fitness goals.
 
 ## Concepts
 
