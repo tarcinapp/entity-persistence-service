@@ -1,21 +1,8 @@
-# Entity Persistence Service
-
 - [Entity Persistence Service](#entity-persistence-service)
-- [Getting Started](#getting-started)
+  - [What is Tarcinapp Post-Login Solution?](#what-is-tarcinapp-post-login-solution)
   - [Features](#features)
   - [Benefits](#benefits)
-    - [Generic Data Model (Entities, Lists, Reactions)](#generic-data-model-entities-lists-reactions)
-    - [Built-in Ownership and Access Control Metadata](#built-in-ownership-and-access-control-metadata)
-    - [Configurable Idempotency and Uniqueness Enforcement](#configurable-idempotency-and-uniqueness-enforcement)
-    - [Rich Querying with Pagination and Aliases](#rich-querying-with-pagination-and-aliases)
-    - [Soft Deletion \& Approval Windows](#soft-deletion--approval-windows)
-    - [Distributed Locking for Race Condition Prevention](#distributed-locking-for-race-condition-prevention)
-    - [Customizable Limits and Constraints](#customizable-limits-and-constraints)
-    - [Relationship Management](#relationship-management)
-    - [MongoDB-powered, Schemaless but Validated](#mongodb-powered-schemaless-but-validated)
-  - [What is Tarcinapp Post-Login Solution?](#what-is-tarcinapp-post-login-solution)
-- [Entity Persistence Service Application in Detail](#entity-persistence-service-application-in-detail)
-  - [Use Cases \& Themes \& Benefits](#use-cases--themes--benefits)
+- [Getting Started](#getting-started)
   - [Data Model](#data-model)
     - [Entities](#entities)
     - [Lists](#lists)
@@ -76,7 +63,7 @@
   - [Error Codes Reference](#error-codes-reference)
 - [Development Status](#development-status)
 
-# Getting Started
+# Entity Persistence Service
 
 📌 **Entity Persistence Service** is a REST-based backend microservice and a core component of the **Tarcinapp Suite** ([What is Tarcinapp?](#what-is-tarcinapp-post-login-solution)).
 
@@ -110,56 +97,6 @@
 
 These fields support essential functionality like traceability, access control, and automation logic.
 
-## Features
-
-- 🔍 **Advanced querying** via flexible query string notation
-- 📈 **Record limits** by user, type, or custom context (e.g., number of entities in a list)
-- 🔒 **Uniqueness constraints** across user or global scopes
-- 📦 **Paginated responses** with configurable limits
-- 👥 **Ownership & viewership metadata** to support role-based access enforcement via gateway
-- 🌀 **Idempotent operations**, configurable per use case
-- 🌐 **Visibility levels** (`public`, `protected`, `private`) with default enforcement
-- ✅ **Approval gating** using `validFromDateTime`
-- 🗑️ **Soft deletion** via `validUntilDateTime`
-- 🕓 **Full audit metadata tracking** (created/updated timestamps and users)
-
-## Benefits
-> ⚡ **Tarcinapp dramatically reduces time-to-value** for digital products by delivering a ready-to-use backend built on practical defaults. With generic yet powerful data structures (entities, lists, reactions), configurable authorization, and automation-ready metadata, developers can go from concept to working prototype in days—not weeks.
-
-### Generic Data Model (Entities, Lists, Reactions)
-→ **Easily model diverse use cases**:  
-  - **Entities**: products, users, blog posts, devices  
-  - **Lists**: shopping carts, saved searches, wishlists  
-  - **Reactions**: likes, ratings, reviews, sensor events  
-
-### Built-in Ownership and Access Control Metadata
-→ Fields like `_ownerUsers`, `_viewerGroups`, `_visibility` make RBAC and field-level authorization straightforward in the [entity-persistence-gateway](#).
-
-### Configurable Idempotency and Uniqueness Enforcement
-→ Prevent duplicate records across scopes (global, per user, per list).  
-*Example*: avoid duplicate product names per seller.
-
-### Rich Querying with Pagination and Aliases
-→ Short query aliases simplify client-side work, and response limits protect performance.
-
-### Soft Deletion & Approval Windows
-→ Use `_validUntilDateTime` for expiration, `_validFromDateTime` for publish scheduling.  
-*Example*: future-dated articles or expiring access links.
-
-### Distributed Locking for Race Condition Prevention
-→ Lock operations like concurrent creation or update to ensure integrity with the use of [entity-persistence-gateway](#).
-
-### Customizable Limits and Constraints
-→ Restrict max entities per list or reactions per entity easily via config.  
-*Example*: limit to 5 saved addresses per user.
-
-### Relationship Management
-→ Support entity-to-entity, list-to-entity, and nested structures like category hierarchies or campaign groups.  
-→ Solves all querying and authorization complexities of the backend with relationships between models
-
-### MongoDB-powered, Schemaless but Validated
-→ Flexible yet safe: supports optional JSON schema validation and reference resolution.
-
 ## What is Tarcinapp Post-Login Solution?
 
 **Tarcinapp Suite** is a modular backend microservices architecture designed to streamline common challenges in web application development, helping teams reduce **Time-to-Value** from concept to deployment.
@@ -184,7 +121,22 @@ Documentation for each Tarcinapp component is available in their respective repo
 📄 [entity-persistence-gateway](#)
 📄 [entity-persistence-gateway-policies](#)
 
-# Entity Persistence Service Application in Detail
+## Features
+
+- 🔍 **Advanced querying** via flexible query string notation
+- 📈 **Record limits** by user, type, or custom context (e.g., number of entities in a list)
+- 🔒 **Uniqueness constraints** across user or global scopes
+- 📦 **Paginated responses** with configurable limits
+- 👥 **Ownership & viewership metadata** to support role-based access enforcement via gateway
+- 🌀 **Idempotent operations**, configurable per use case
+- 🌐 **Visibility levels** (`public`, `protected`, `private`) with default enforcement
+- ✅ **Approval gating** using `validFromDateTime`
+- 🗑️ **Soft deletion** via `validUntilDateTime`
+- 🕓 **Full audit metadata tracking** (created/updated timestamps and users)
+
+## Benefits
+
+# Getting Started
 
 Once the application is up and running:
 
@@ -194,11 +146,9 @@ Once the application is up and running:
 - Resources created through gateway are kept private to the creator users, and visible only to the creators
 - Ready to create resources. For example, you can create entities (`POST /entities`), lists (`POST /lists`), reactions (`POST /reactions`), and list-entity-relations (POST /list-entity-relations)
 
-## Use Cases & Themes & Benefits
-
 ## Data Model
 
-Many digital applications—despite differing in purpose—share a set of common data relationships. Based on this observation, Entity Persistence Service defines a generic yet expressive data model consisting of **entities**, **lists**, and **reactions**. This structure is designed to flexibly represent a wide range of use cases, including startup MVPs, AI-driven tools, internal request systems, feedback collectors, collaborative platforms, and user preference managers.
+Many digital applications—despite differing in purpose—share a set of common data relationships. Based on this observation, Entity Persistence Service defines a generic yet expressive data model consisting of **entities**, **lists**, and **reactions**. This structure is designed to flexibly represent a wide range of use cases, including startup MVPs, AI-driven tools, internal request systems, feedback collectors, collaborative platforms, user notifications systems, and user preference managers.
   
 <p align="center">
   <img src="./doc/img/model-overview.png" alt="Tarcinapp Suite Overview">
