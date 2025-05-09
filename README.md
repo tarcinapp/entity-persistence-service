@@ -67,9 +67,11 @@
 
 📌 **Entity Persistence Service** is a REST-based backend microservice and a core component of the **Tarcinapp Suite** ([What is Tarcinapp?](#what-is-tarcinapp-post-login-solution)).
 
-📌 It is built on a simple yet powerful data model composed of **entities**, **lists**, and **reactions**, each represented as JSON documents stored in MongoDB.
+📌 It is built on a simple yet powerful data model composed of **entities**, **lists**, and **reactions**, each represented as JSON documents stored in MongoDB. See [Data Model](#data-model) for more information.
 
-📌 This generic, extensible model allows developers to represent a wide variety of use cases across different domains by reusing and configuring the same foundational components ([Use Cases- [Entity Persistence Service]
+📌 This generic, extensible model allows developers to represent a wide variety of use cases across different domains by reusing and configuring the same foundational components.
+
+📌 Each resource can store arbitrary properties.
 
 📌 For example:
 - **Entities** can represent user profiles, configuration objects, notification, blog posts, products, campaigns, documents, or even IoT devices.
@@ -78,9 +80,7 @@
 
 📌 The service significantly reduces **Time-To-Value** for digital products, internal tools, and early-stage startups by solving key backend concerns out-of-the-box.
 
-<p align="left">
-  <img src="./doc/img/models.png" alt="Tarcinapp Data Model">
-</p>
+
 
 📌 Each record — whether an entity, list, or reaction — is automatically decorated with a consistent set of **managed fields**, including:
 - `_ownerUsers`, `_ownerGroups`
@@ -135,7 +135,29 @@ Documentation for each Tarcinapp component is available in their respective repo
 - 🕓 **Full audit metadata tracking** (created/updated timestamps and users)
 
 ## Benefits
+> ⚡ **Tarcinapp dramatically reduces time-to-value** for digital products by delivering a ready-to-use backend built on practical defaults. With generic yet powerful data structures (entities, lists, reactions), configurable authorization, and automation-ready metadata, developers can go from concept to working prototype in days—not weeks.
+- **Generic data model** for diverse use cases:  
+  - **Entities**: products, users, blog posts, devices  
+  - **Lists**: shopping carts, saved searches, collections  
+  - **Reactions**: likes, ratings, reviews, measurements
 
+- **Relationship support** between entities and lists enables nested structures like categories, playlists, campaign groups, and workflows.
+
+- **Ownership and access control** with built-in fields like `_ownerUsers`, `_viewerGroups`, `_visibility`—integrated with the gateway for full authorization enforcement.
+
+- **Idempotency and uniqueness** support via configurable fields and scopes.  
+  _Example: Prevent duplicate product names per seller._
+
+- **Flexible querying and pagination**, with alias-based filters and response size limits to simplify client logic and protect performance.
+
+- **Approval and soft deletion** using `_validFromDateTime` and `_validUntilDateTime`.  
+  _Example: Schedule future-dated articles or auto-expiring invites._
+
+- **Distributed locking** ensures race condition protection when creating or updating data—powered by Redis via the gateway.
+
+- **Custom record constraints** to limit number of entities, reactions, or list items globally, per user, or per context.
+
+- **Optional schema validation** and reference resolution with tapp:// URIs for resolving related records dynamically.
 # Getting Started
 
 Once the application is up and running:
@@ -144,14 +166,22 @@ Once the application is up and running:
 - Spins up an in-memory MongoDB instance, for non-production environments
 - Ready to integrate with entity-persistence-gateway
 - Resources created through gateway are kept private to the creator users, and visible only to the creators
-- Ready to create resources. For example, you can create entities (`POST /entities`), lists (`POST /lists`), reactions (`POST /reactions`), and list-entity-relations (POST /list-entity-relations)
+- Ready to create and query resources. See [Endpoints Reference](#endpoints-reference) for more information about the endpoints.
+- See [Querying Data](#querying-data) for more information about the advanced querying capabilities.
+- An empty request to `/POST /entities` will create a new entity with following properties:
+  <p align="left">
+    <img src="./doc/img/request-response.png" alt="Tarcinapp Data Model">
+  </p>
+
 
 ## Data Model
 
-Many digital applications—despite differing in purpose—share a set of common data relationships. Based on this observation, Entity Persistence Service defines a generic yet expressive data model consisting of **entities**, **lists**, and **reactions**. This structure is designed to flexibly represent a wide range of use cases, including startup MVPs, AI-driven tools, internal request systems, feedback collectors, collaborative platforms, user notifications systems, and user preference managers.
+Many digital applications—despite differing in purpose—share a set of common data relationships. Based on this observation, Entity Persistence Service defines a generic yet expressive data model consisting of **entities**, **lists**, and **reactions**.
+
+This structure is designed to flexibly represent a wide range of use cases, including startup MVPs, AI-driven tools, internal request systems, feedback collectors, collaborative platforms, user notifications systems, and user preference managers.
   
-<p align="center">
-  <img src="./doc/img/model-overview.png" alt="Tarcinapp Suite Overview">
+<p align="left">
+  <img src="./doc/img/models.png" alt="Tarcinapp Data Model">
 </p>
 
 ### Entities
