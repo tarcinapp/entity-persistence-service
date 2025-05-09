@@ -32,6 +32,7 @@
       - [Performance Considerations](#performance-considerations)
     - [Tags](#tags)
   - [Programming Conventions](#programming-conventions)
+    - [Managed Fields](#managed-fields)
 - [Configuration](#configuration)
     - [Database](#database)
     - [Allowed Kinds](#allowed-kinds)
@@ -172,6 +173,8 @@ Once the application is up and running:
   <p align="left">
     <img src="./doc/img/request-response.png" alt="Tarcinapp Data Model">
   </p>
+- Some properties are hidden from the response but can be used for querying and filtering. See [Managed Fields](#managed-fields) for more information.
+- `_createdBy`, `_ownerUsers` and `_lastUpdatedBy` are populated with the user id of the creator, when same request is made through the gateway.
 
 
 ## Data Model
@@ -536,6 +539,8 @@ The updateAll operation is not available for tags since their content is unique,
 2. DateTime fields names are end with '`dateTime`'
 3. All managed fields are prefixed with underscore.
 Here are the list of common field names.
+
+### Managed Fields
 
 | Field Name               | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
