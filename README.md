@@ -207,8 +207,6 @@ When records are created or updated through **Entity Persistence Service**, the 
 - Metadata tracking (`_createdBy`, `_lastUpdatedDateTime`, `_version`)
 - Query optimizations (`_parentsCount`, `_ownerUsersCount`, etc.)
 
-This query returns all top-level records (i.e., those without parents), thanks to the internally computed `_parentsCount`.
-
 Managed fields are either:
 - **Strictly controlled** by the application (e.g., `_version`, `_idempotencyKey`)
 - **Auto-filled** when missing (e.g., `_slug`, `_creationDateTime`)
@@ -219,8 +217,8 @@ See the example below for a request to create an entity and the decorated data s
   <img src="./doc/img/request-decoration.png" alt="Tarcinapp Data Model">
 </p>
 
-Some fields are returned in API responses, while others are hidden but still play an important role in filtering. For example:
-
+Some fields are returned in API responses, while others are hidden but still play an important role in filtering. For example:  
+This query returns all top-level records (i.e., those without parents), thanks to the internally computed `_parentsCount`.  
 `GET /entities?filter[where][_parentsCount]=0`  
 
 See [Managed Fields](#managed-fields) for more information.
