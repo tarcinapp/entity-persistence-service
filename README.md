@@ -101,7 +101,7 @@ These fields are used for various purposes, such as traceability, and are evalua
 
 While many tools exist to generate REST APIs from JSON schemas, they often stop at basic CRUD operations. These solutions typically lack support for more advanced concerns—such as managing **relationships between records**, handling **ownership and access control**, or modeling **user interactions in post-login scenarios**.
 
-Tarcinapp addresses these gaps with opinionated models, built-in metadata, and a gateway architecture that enables secure, configurable behaviors out of the box.
+Tarcinapp addresses these gaps with **opinionated models**, built-in metadata, and a gateway architecture that enables secure, configurable behaviors out of the box.
 
 The suite is composed of purpose-specific services for different layers of a modern backend system, including:
 
@@ -178,7 +178,8 @@ Once the application is up and running:
 - `_createdBy`, `_ownerUsers` and `_lastUpdatedBy` are populated with the user id of the creator, when request is made through the gateway.
 - You can use payload to pass arbitrary properties to the request. Incoming payload will be merged with the managed fields.
 - See [Querying Data](#querying-data) for more information about the advanced querying capabilities.
-- Experiment with creating and querying Lists, ListEntityRelations and Reactions (See [Endpoint Reference](#endpoints-reference) for more information)
+- Configure the behavior of the service, such as default visibility, record limits, and more, through environment variables. See [Configuration](#configuration) for more information.
+- Experiment with creating and querying Entities, Lists, ListEntityRelations and Reactions (See [Endpoint Reference](#endpoints-reference) for more information)
 
 # Concepts
 
