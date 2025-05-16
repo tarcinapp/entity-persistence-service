@@ -259,7 +259,8 @@ The Entity is the core data model that represents the primary objects in your ap
 **Children of an entity**: `/entities/{entityId}/children`
 
 
-See [Endpoints Reference - EntityController](#entitycontroller) for more information about the endpoints.
+See [Endpoints Reference - EntityController](#entitycontroller) for overview about the endpoints.  
+See [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/dev/openapi.json#tag/EntityController) for more information about the endpoints.
 
 ### Lists
 
@@ -270,7 +271,8 @@ The List model organizes collections of entities into meaningful groups. A singl
 **Parents of a list**: `/lists/{listId}/parents`  
 **Children of a list**: `/lists/{listId}/children`
 
-See [Endpoints Reference - ListController](#listcontroller) for more information about the endpoints.
+See [Endpoints Reference - ListController](#listcontroller) for overview about the endpoints.  
+See [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/dev/openapi.json#tag/ListController) for more information about the endpoints.
 
 ### List-Entity Relations
 
