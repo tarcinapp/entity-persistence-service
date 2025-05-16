@@ -5,6 +5,11 @@
 - [Getting Started](#getting-started)
 - [Concepts](#concepts)
   - [Data Model](#data-model)
+    - [Store Any Shape of Data](#store-any-shape-of-data)
+    - [Decoration with Managed Fields](#decoration-with-managed-fields)
+    - [Using `_kind` to Organize Data Variants](#using-_kind-to-organize-data-variants)
+    - [Build Hierarchical Structures Across Models](#build-hierarchical-structures-across-models)
+    - [Data Relations](#data-relations)
     - [Entities](#entities)
     - [Lists](#lists)
     - [List-Entity Relations](#list-entity-relations)
@@ -193,13 +198,13 @@ This structure is designed to flexibly represent a wide range of use cases, incl
   <img src="./doc/img/models.png" alt="Tarcinapp Data Model">
 </p>
 
-⭐ **Store Any Shape of Data**
+### Store Any Shape of Data
 
 Each model—Entity, List, Reactions, and even ListEntityRelation—can hold arbitrary JSON structures tailored to your application's needs. This allows you to enrich records with domain-specific fields without rigid schemas.
 
 When structure is needed, the gateway can validate these records against configurable JSON Schemas based on their `_kind`, offering the best of both flexibility and consistency.
 
-⭐ **Decoration with Managed Fields**
+### Decoration with Managed Fields
 
 When records are created or updated through **Entity Persistence Service**, the system automatically **decorates the incoming JSON data** with a set of managed fields. These fields support core capabilities like:
 
@@ -223,7 +228,7 @@ This query returns all top-level records (i.e., those without parents), thanks t
 
 See [Managed Fields](#managed-fields) or [Querying Data](#querying-data) for more information.
 
-⭐ **Using `_kind` to Organize Data Variants**
+### Using `_kind` to Organize Data Variants
 
 Each model (entity, list, list-entity-relation, list-reaction, entity-reaction) includes an optional `_kind` field used to distinguish different types of data stored within the same MongoDB collection. By default, this field is auto-filled with the model name (`entity`, `list`, `list-entity-relation`, `list-reaction`, `entity-reaction`, etc.), but it can be customized to represent domain-specific subtypes.
 
@@ -231,7 +236,7 @@ This allows applications to store diverse schemas under a shared model—for exa
 
 The `_kind` field is especially helpful when the application needs to apply different logic, limits, or schema validations per subtype. Admins can configure allowed `_kind` values for each model to enforce consistency and avoid accidental misuse.
 
-⭐ **Build Hierarchical Structures Across Models**
+### Build Hierarchical Structures Across Models
 
 Each core model — Entity, List, EntityReaction, ListReaction — supports hierarchy out of the box. A record can define one or more parents using special reference fields (`_parents`), enabling the creation of nested structures.
 
@@ -242,7 +247,7 @@ This allows you to represent:
 
 Hierarchies are navigable via `{id}/parents` and `{id}/children` endpoints, and can be controlled with configurable constraints to match your application's needs.
 
-⭐ **Data Relations**
+### Data Relations
 
 Introducing relations to an application raise a lot of complexities which is intended. Real world applications always have relational data.
 Tarcinapp opinionated approach contains data relations and aims to solve these complexities.
@@ -256,6 +261,8 @@ List-to-entity
   Relation records do not contain visibility and ownership metadata.
   visibility and ownership depends on the visibility of the list and entity. for example to see the relation user must be able to see the list and entity.
   Relation itself can hold arbitrary data.
+  When querying entities under a list, filter can be applied by the fields of relation.
+    `/lists/{listId}/entities?filterThrough[where][_relationField]=value`
 
 List-to-reaction or entity-to-reaction
   No need to be owner of the list or entity, but user must be able to see the list or entity. This is also enforced by the gateway.
