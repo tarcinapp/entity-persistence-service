@@ -72,7 +72,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GenericEntity"
+                  "$ref": "#/components/schemas/GenericEntityExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_"
                 }
               }
             }
@@ -170,7 +170,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/GenericEntityWithRelations"
+                    "$ref": "#/components/schemas/GenericEntityExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations"
                   }
                 }
               }
@@ -325,7 +325,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/GenericEntityWithRelations"
+                    "$ref": "#/components/schemas/GenericEntityExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations"
                   }
                 }
               }
@@ -900,7 +900,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GenericEntityWithRelations"
+                  "$ref": "#/components/schemas/GenericEntityExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations"
                 }
               }
             }
@@ -1110,7 +1110,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/GenericEntityWithRelations"
+                    "$ref": "#/components/schemas/GenericEntityExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations"
                   }
                 }
               }
@@ -6227,6 +6227,205 @@
         "additionalProperties": true,
         "x-typescript-type": "Omit<GenericEntity, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>"
       },
+      "EntityReactionExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations": {
+        "title": "EntityReactionExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations",
+        "type": "object",
+        "description": "(tsType: Omit<EntityReactionWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>, schemaOptions: { includeRelations: true, exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "_kind": {
+            "type": "string"
+          },
+          "_validFromDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "This is the approval time.Only those records with validFromDateTime property has a value can beseen by other members.If caller is not a member at the creation time, this field is filledautomatically by the server.",
+            "nullable": true
+          },
+          "_validUntilDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "This field indicates if the rcord is currently active.",
+            "nullable": true
+          },
+          "_createdDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "This field is filled by server at the time of the creation of the record."
+          },
+          "_createdBy": {
+            "type": "string"
+          },
+          "_lastUpdatedDateTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "_lastUpdatedBy": {
+            "type": "string"
+          },
+          "_version": {
+            "type": "number"
+          },
+          "_ownerUsers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "_ownerGroups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "_viewerUsers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "_viewerGroups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "_visibility": {
+            "type": "string",
+            "description": "public: anyone can see the record if validFromDateTime has a value. protected: only owner groups can see. private: only owner users can see.",
+            "enum": [
+              "public",
+              "protected",
+              "private"
+            ]
+          },
+          "_relationMetadata": {
+            "type": "object",
+            "description": "Contains the relation metadata for the record"
+          },
+          "_entityId": {
+            "type": "string"
+          },
+          "_parents": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^tapp://localhost/entity-reactions/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "uniqueItems": true
+            }
+          }
+        },
+        "required": [
+          "_entityId"
+        ],
+        "additionalProperties": true,
+        "x-typescript-type": "Omit<EntityReactionWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>"
+      },
+      "GenericEntityExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations": {
+        "title": "GenericEntityExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations",
+        "type": "object",
+        "description": "(tsType: Omit<GenericEntityWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>, schemaOptions: { includeRelations: true, exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "_kind": {
+            "type": "string"
+          },
+          "_validFromDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "This is the approval time.Only those records with validFromDateTime property has a value can beseen by other members.If caller is not a member at the creation time, this field is filledautomatically by the server.",
+            "nullable": true
+          },
+          "_validUntilDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "This field indicates if the rcord is currently active.",
+            "nullable": true
+          },
+          "_createdDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "This field is filled by server at the time of the creation of the record."
+          },
+          "_createdBy": {
+            "type": "string"
+          },
+          "_lastUpdatedDateTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "_lastUpdatedBy": {
+            "type": "string"
+          },
+          "_version": {
+            "type": "number"
+          },
+          "_ownerUsers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "_ownerGroups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "_viewerUsers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "_viewerGroups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "_visibility": {
+            "type": "string",
+            "description": "public: anyone can see the record if validFromDateTime has a value. protected: only owner groups can see. private: only owner users can see.",
+            "enum": [
+              "public",
+              "protected",
+              "private"
+            ]
+          },
+          "_name": {
+            "type": "string",
+            "minLength": 2
+          },
+          "_slug": {
+            "type": "string"
+          },
+          "_relationMetadata": {
+            "type": "object",
+            "description": "Contains the relation metadata for the record"
+          },
+          "_parents": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^tapp://localhost/entities/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "uniqueItems": true
+            }
+          },
+          "_reactions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityReactionExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations"
+            }
+          }
+        },
+        "additionalProperties": true,
+        "x-typescript-type": "Omit<GenericEntityWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>"
+      },
       "PartialEntity": {
         "title": "PartialEntity",
         "type": "object",
@@ -6394,119 +6593,6 @@
         },
         "additionalProperties": true,
         "x-typescript-type": "Omit<GenericEntity, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>"
-      },
-      "GenericEntity": {
-        "title": "GenericEntity",
-        "type": "object",
-        "properties": {
-          "_id": {
-            "type": "string"
-          },
-          "_kind": {
-            "type": "string"
-          },
-          "_validFromDateTime": {
-            "type": "string",
-            "format": "date-time",
-            "description": "This is the approval time.Only those records with validFromDateTime property has a value can beseen by other members.If caller is not a member at the creation time, this field is filledautomatically by the server.",
-            "nullable": true
-          },
-          "_validUntilDateTime": {
-            "type": "string",
-            "format": "date-time",
-            "description": "This field indicates if the rcord is currently active.",
-            "nullable": true
-          },
-          "_createdDateTime": {
-            "type": "string",
-            "format": "date-time",
-            "description": "This field is filled by server at the time of the creation of the record."
-          },
-          "_createdBy": {
-            "type": "string"
-          },
-          "_lastUpdatedDateTime": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "_lastUpdatedBy": {
-            "type": "string"
-          },
-          "_idempotencyKey": {
-            "type": "string"
-          },
-          "_version": {
-            "type": "number"
-          },
-          "_ownerUsers": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "_ownerGroups": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "_viewerUsers": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "_viewerGroups": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "_visibility": {
-            "type": "string",
-            "description": "public: anyone can see the record if validFromDateTime has a value. protected: only owner groups can see. private: only owner users can see.",
-            "enum": [
-              "public",
-              "protected",
-              "private"
-            ]
-          },
-          "_name": {
-            "type": "string",
-            "minLength": 2
-          },
-          "_slug": {
-            "type": "string"
-          },
-          "_ownerUsersCount": {
-            "type": "number"
-          },
-          "_ownerGroupsCount": {
-            "type": "number"
-          },
-          "_viewerUsersCount": {
-            "type": "number"
-          },
-          "_viewerGroupsCount": {
-            "type": "number"
-          },
-          "_parentsCount": {
-            "type": "number"
-          },
-          "_relationMetadata": {
-            "type": "object",
-            "description": "Contains the relation metadata for the record"
-          },
-          "_parents": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "pattern": "^tapp://localhost/entities/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
-              "uniqueItems": true
-            }
-          }
-        },
-        "additionalProperties": true
       },
       "NewChildEntity": {
         "title": "NewChildEntity",
@@ -7084,6 +7170,119 @@
         ],
         "additionalProperties": true,
         "x-typescript-type": "Omit<EntityReaction, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey' | '_parents'>"
+      },
+      "GenericEntity": {
+        "title": "GenericEntity",
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "_kind": {
+            "type": "string"
+          },
+          "_validFromDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "This is the approval time.Only those records with validFromDateTime property has a value can beseen by other members.If caller is not a member at the creation time, this field is filledautomatically by the server.",
+            "nullable": true
+          },
+          "_validUntilDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "This field indicates if the rcord is currently active.",
+            "nullable": true
+          },
+          "_createdDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "This field is filled by server at the time of the creation of the record."
+          },
+          "_createdBy": {
+            "type": "string"
+          },
+          "_lastUpdatedDateTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "_lastUpdatedBy": {
+            "type": "string"
+          },
+          "_idempotencyKey": {
+            "type": "string"
+          },
+          "_version": {
+            "type": "number"
+          },
+          "_ownerUsers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "_ownerGroups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "_viewerUsers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "_viewerGroups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "_visibility": {
+            "type": "string",
+            "description": "public: anyone can see the record if validFromDateTime has a value. protected: only owner groups can see. private: only owner users can see.",
+            "enum": [
+              "public",
+              "protected",
+              "private"
+            ]
+          },
+          "_name": {
+            "type": "string",
+            "minLength": 2
+          },
+          "_slug": {
+            "type": "string"
+          },
+          "_ownerUsersCount": {
+            "type": "number"
+          },
+          "_ownerGroupsCount": {
+            "type": "number"
+          },
+          "_viewerUsersCount": {
+            "type": "number"
+          },
+          "_viewerGroupsCount": {
+            "type": "number"
+          },
+          "_parentsCount": {
+            "type": "number"
+          },
+          "_relationMetadata": {
+            "type": "object",
+            "description": "Contains the relation metadata for the record"
+          },
+          "_parents": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^tapp://localhost/entities/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "uniqueItems": true
+            }
+          }
+        },
+        "additionalProperties": true
       },
       "NewEntityInList": {
         "title": "NewEntityInList",
