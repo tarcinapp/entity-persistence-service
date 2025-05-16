@@ -1,5 +1,5 @@
 - [Entity Persistence Service](#entity-persistence-service)
-  - [What is Tarcinapp Post-Login Solution?](#what-is-tarcinapp-post-login-solution)
+  - [What is Tarcinapp?](#what-is-tarcinapp)
   - [Features](#features)
   - [Benefits](#benefits)
 - [Getting Started](#getting-started)
@@ -95,9 +95,13 @@
 
 These fields are used for various purposes, such as traceability, and are evaluated by the gateway to support essential functionality, including access control, idempotency, and distributed locking.
 
-## What is Tarcinapp Post-Login Solution?
+## What is Tarcinapp?
 
-**Tarcinapp Suite** is a modular backend microservices architecture designed to streamline common challenges in web application development, helping teams reduce **Time-to-Value** from concept to deployment.
+**Tarcinapp** is a modular backend microservices suite designed to streamline common challenges in REST-based backend development, helping teams reduce **Time-to-Value** from concept to deployment.
+
+While many tools exist to generate REST APIs from JSON schemas, they often stop at basic CRUD operations. These solutions typically lack support for more advanced concerns—such as managing **relationships between records**, handling **ownership and access control**, or modeling **user interactions in post-login scenarios**.
+
+Tarcinapp addresses these gaps with opinionated models, built-in metadata, and a gateway architecture that enables secure, configurable behaviors out of the box.
 
 The suite is composed of purpose-specific services for different layers of a modern backend system, including:
 
