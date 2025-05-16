@@ -169,7 +169,7 @@ Once the application is up and running:
 - Spins up an in-memory MongoDB instance, for non-production environments
 - Ready to integrate with entity-persistence-gateway
 - Resources created through gateway are kept private to the creator users, and visible only to the creators
-- Ready to create and query resources. See [Endpoints Reference](#endpoints-reference) for more information about the endpoints.
+- Ready to create and query resources. See [Endpoints Reference](#endpoints-reference) or take a look at the [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/dev/openapi.json) for more information about the endpoints.
 - An empty request to `POST /entities` will create a new entity with following properties:
   <p align="left">
     <img src="./doc/img/request-response.png" alt="Tarcinapp Data Model">
@@ -221,7 +221,7 @@ Some fields are returned in API responses, while others are hidden but still pla
 This query returns all top-level records (i.e., those without parents), thanks to the internally computed `_parentsCount`.  
 `GET /entities?filter[where][_parentsCount]=0`  
 
-See [Managed Fields](#managed-fields) for more information.
+See [Managed Fields](#managed-fields) or [Querying Data](#querying-data) for more information.
 
 ⭐ **Using `_kind` to Organize Data Variants**
 
@@ -242,13 +242,26 @@ This allows you to represent:
 
 Hierarchies are navigable via `{id}/parents` and `{id}/children` endpoints, and can be controlled with configurable constraints to match your application's needs.
 
-⭐ **Data Model - Use Case Examples**
+⭐ **Relations**
+Introducing relations to an application raise a lot of complexities which is intended. Real world applications always have relational data.
+Tarcinapp opinionated approach contains data relations and aims to solve these complexities.
+Parent-child relations for entities, lists and reactions.
+List-to-entity
+  To add an entity to a list user must be owner of the list. This is enforced by the gateway.
+  User must be able to see the entity.
+  Number of entities under a list can be configured
+  This type of relation can be queried by the fields of list or entity. Such as give me entities whose list's foo field is bar.
+  Relation itself an individual record.
+  Relation records do not contain visibility and ownership metadata.
+  visibility and ownership depends on the visibility of the list and entity. for example to see the relation user must be able to see the list and entity.
+  Relation itself can hold arbitrary data.
 
-| Model        | E-Commerce     | Social Media  | IoT Platform       |
-| ------------ | -------------- | ------------- | ------------------ |
-| **Entity**   | Product        | Post          | Device             |
-| **List**     | Shopping Cart  | Friend Circle | Device Group       |
-| **Reaction** | Product Review | Like/Comment  | Sensor Measurement |
+List-to-reaction or entity-to-reaction
+  No need to be owner of the list or entity, but user must be able to see the list or entity. This is also enforced by the gateway.
+  Number of reactions under a list or entity can be configured
+
+Lookups
+  Lookups are secured by the gateway. access control is applied.
 
 ### Entities
 The Entity is the core data model that represents the primary objects in your application. It's typically the starting point when modeling your domain. Whether you're building a book review platform, an e-commerce store, a knowledge base, or a job board—books, products, articles, or job listings would all likely to be stored as entities. Entities hold the core business data and can be extended or connected to other models such as lists or reactions to build richer experiences. 
@@ -275,6 +288,24 @@ See [Endpoints Reference - ListController](#listcontroller) for overview about t
 See [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/dev/openapi.json#tag/ListController) for more information about the endpoints.
 
 ### List-Entity Relations
+
+The **ListEntityRelation** model manages the many-to-many relationship between entities and lists. It enables associating any entity with one or more lists, and vice versa, allowing you to build collections like "featured products," "reading lists," or "user watchlists."  
+
+Each relation is represented as a separate record, containing mandatory `_listId` and `_entityId` fields. This design not only simplifies management of complex associations but also allows storing **custom metadata** for each relation. For example, when an entity is added to a list, you can attach contextual data like the reason for inclusion, sort order, tags, or notes.  
+
+Thanks to ListToEntityRelation, you can:
+- Query all **entities in a list** using `/lists/{listId}/entities`  
+- Query all **lists an entity belongs to** using `/entities/{entityId}/lists`  
+
+Additionally, responses for these queries include `_fromMetadata` and `_toMetadata` fields that expose the metadata attached to the relation from both sides (list → entity and entity → list), making it easy to customize display logic and behaviors based on relation context.
+
+**Base Endpoint:** /list-entity-relations  
+**Entities under a list:** /lists/{listId}/entities  
+**Lists containing an entity:** /entities/{entityId}/lists  
+
+See [Endpoints Reference - ListEntityRelController](#listentityrelcontroller) for overview about the endpoints.  
+See [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/dev/openapi.json#tag/ListEntityRelController) for more information about the endpoints.
+
 
 Lists and entities are connected through the `ListEntityRelation` model. 
 
