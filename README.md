@@ -242,7 +242,8 @@ This allows you to represent:
 
 Hierarchies are navigable via `{id}/parents` and `{id}/children` endpoints, and can be controlled with configurable constraints to match your application's needs.
 
-⭐ **Relations**
+⭐ **Data Relations**
+
 Introducing relations to an application raise a lot of complexities which is intended. Real world applications always have relational data.
 Tarcinapp opinionated approach contains data relations and aims to solve these complexities.
 Parent-child relations for entities, lists and reactions.
