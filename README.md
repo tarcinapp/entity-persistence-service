@@ -64,7 +64,9 @@
 
 # Entity Persistence Service
 
-📌 **Entity Persistence Service** is a REST-based backend microservice and a core component of the **Tarcinapp Suite** ([What is Tarcinapp?](#what-is-tarcinapp-post-login-solution)).
+📌 **Entity Persistence Service** is a REST-based backend microservice and a core component of the **Tarcinapp** ([What is Tarcinapp?](#what-is-tarcinapp-post-login-solution)).
+
+📌 The service significantly reduces **Time-To-Value** for digital products, internal tools, and early-stage startups by solving key backend concerns out-of-the-box.
 
 📌 It is built on a simple yet powerful data model composed of **entities**, **lists**, and **reactions**, each represented as JSON documents stored in MongoDB. See [Data Model](#data-model) for more information.
 
@@ -76,8 +78,6 @@
 - **Entities** can represent user profiles, configuration objects, notification, blog posts, products, campaigns, documents, or even IoT devices.
 - **Lists** can model playlists, wishlists, saved searches, shopping carts, or collections.
 - **Reactions** can track likes, ratings, flags, reviews, bookmarks, follows, or measurement signals from IoT devices.
-
-📌 The service significantly reduces **Time-To-Value** for digital products, internal tools, and early-stage startups by solving key backend concerns out-of-the-box.
 
 📌 Each record — whether an entity, list, or reaction — is automatically decorated with a consistent set of **managed fields**, including:
 - `_id`
@@ -93,7 +93,7 @@
 - `_idempotencyKey`
 - and more...
 
-These fields support essential functionality like traceability, access control, and automation logic.
+These fields are used for various purposes, such as traceability, and are evaluated by the gateway to support essential functionality, including access control, idempotency, and distributed locking.
 
 ## What is Tarcinapp Post-Login Solution?
 
