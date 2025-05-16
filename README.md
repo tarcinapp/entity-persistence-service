@@ -244,18 +244,20 @@ Hierarchies are navigable via `{id}/parents` and `{id}/children` endpoints, and 
 
 ⭐ **Data Model - Use Case Examples**
 
-| Model        | E-Commerce          | Social Media       | IoT Platform       |
-|--------------|---------------------|--------------------|--------------------|
-| **Entity**   | Product             | Post               | Device             |
-| **List**     | Shopping Cart       | Friend Circle      | Device Group       |
-| **Reaction** | Product Review      | Like/Comment       | Sensor Measurement |
+| Model        | E-Commerce     | Social Media  | IoT Platform       |
+| ------------ | -------------- | ------------- | ------------------ |
+| **Entity**   | Product        | Post          | Device             |
+| **List**     | Shopping Cart  | Friend Circle | Device Group       |
+| **Reaction** | Product Review | Like/Comment  | Sensor Measurement |
 
 ### Entities
 The Entity is the core data model that represents the primary objects in your application. It's typically the starting point when modeling your domain. Whether you're building a book review platform, an e-commerce store, a knowledge base, or a job board—books, products, articles, or job listings would all likely to be stored as entities. Entities hold the core business data and can be extended or connected to other models such as lists or reactions to build richer experiences. 
 
 **Base Endpoint**: `/entities`  
+**Entities under a list**: `/lists/{listId}/entities`  
 **Parents of an entity**: `/entities/{entityId}/parents`  
 **Children of an entity**: `/entities/{entityId}/children`
+
 
 See [Endpoints Reference - EntityController](#entitycontroller) for more information about the endpoints.
 
@@ -267,6 +269,8 @@ The List model organizes collections of entities into meaningful groups. A singl
 **Entities under a list**: `/lists/{listId}/entities`  
 **Parents of a list**: `/lists/{listId}/parents`  
 **Children of a list**: `/lists/{listId}/children`
+
+See [Endpoints Reference - ListController](#listcontroller) for more information about the endpoints.
 
 ### List-Entity Relations
 
@@ -521,11 +525,17 @@ Here are the list of common field names.
 
 | Field Name               | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **_id**                  | A string field represents the id of the record.                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | **_kind**                | A string field represents the kind of the record.  As this application built on top of a schemaless database, objects with different schemas can be considered as different kinds can be stored in same collection. This field is using in order to seggregate objects in same collection. Most of the configuration parameters can be specialized to be applied on specific kind of objects. **This field is immutable and cannot be changed after creation.** |
 | **_name**                | String field represents the name of the record. Mandatory field.                                                                                                                                                                                                                                                                                                                                                                                                |
 | **_slug**                | Automatically filled while create or update with the slug format of the value of the name field.                                                                                                                                                                                                                                                                                                                                                                |
 | **_visibility**          | Record's visibility level. Can be either `private`, `protected` or `public`. Gateway enforces query behavior based on the visibility level and caller's authorization.                                                                                                                                                                                                                                                                                          |
 | **_version**             | A number field that automatically incremented each update and replace operation. Note: `_version` is not incremented if record is updated with `updateAll` operation. Callers are not allowed to modify this field.                                                                                                                                                                                                                                             |
+| **_entityId**            | A string field represents the id of the entity. Only used in list-entity-relation and entity-reaction models.                                                                                                                                                                                                                                                                                                                                                   |
+| **_listId**              | A string field represents the id of the list. Only used in list-entity-relation and list-reaction models.                                                                                                                                                                                                                                                                                                                                                       |
+| **_fromMetadata**        | An object field that used to store metadata of the source list, when querying list-entity-relation models. Only used in list-entity-relation models.                                                                                                                                                                                                                                                                                                            |
+| **_toMetadata**          | An object field that used to store metadata of the target entity, when querying list-entity-relation models. Only used in list-entity-relation models.                                                                                                                                                                                                                                                                                                          |
+| **_relationMetadata**    | An object field that used to store metadata of the source record (either entity or list), when querying entity-reaction or list-reaction models. Only used in entity-reaction and list-reaction models.                                                                                                                                                                                                                                                         |
 | **_ownerUsers**          | An array of user ids.                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | **_ownerGroups**         | An array of user groups.                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | **_ownerUsersCount**     | A number field keeps the number of items in ownerUsers array. Facilitates querying records with no-owners with allowing queries like: `/lists?filter[where][_ownerUsersCount]=0`                                                                                                                                                                                                                                                                                |
@@ -998,107 +1008,107 @@ When querying list-entity relations, dot notation filtering (e.g., `metadata.sta
   ## Endpoints Reference
 
   ### EntityController
-  | Method | Endpoint                          | Description                             |
-  | ------ | --------------------------------- | --------------------------------------- |
-  | POST   | `/entities`                       | Create new entity                       |
-  | GET    | `/entities`                       | List all entities                       |
-  | GET    | `/entities/{id}`                  | Get entity by ID                        |
-  | PATCH  | `/entities/{id}`                  | Update entity partially                 |
-  | PUT    | `/entities/{id}`                  | Replace entity                          |
-  | PATCH  | `/entities`                       | Update multiple entities                |
-  | GET    | `/entities/count`                 | Get entity count                        |
-  | POST   | `/entities/{id}/children`         | Add child to entity                     |
-  | GET    | `/entities/{id}/children`         | Get entity children                     |
-  | GET    | `/entities/{id}/parents`          | Get entity parents                      |
-  | DELETE | `/entities/{id}`                  | Delete entity                           |
+  | Method | Endpoint                  | Description              |
+  | ------ | ------------------------- | ------------------------ |
+  | POST   | `/entities`               | Create new entity        |
+  | GET    | `/entities`               | List all entities        |
+  | GET    | `/entities/{id}`          | Get entity by ID         |
+  | PATCH  | `/entities/{id}`          | Update entity partially  |
+  | PUT    | `/entities/{id}`          | Replace entity           |
+  | PATCH  | `/entities`               | Update multiple entities |
+  | GET    | `/entities/count`         | Get entity count         |
+  | POST   | `/entities/{id}/children` | Add child to entity      |
+  | GET    | `/entities/{id}/children` | Get entity children      |
+  | GET    | `/entities/{id}/parents`  | Get entity parents       |
+  | DELETE | `/entities/{id}`          | Delete entity            |
 
   ### ListController
-  | Method | Endpoint                          | Description                             |
-  | ------ | --------------------------------- | --------------------------------------- |
-  | POST   | `/lists`                          | Create new list                         |
-  | GET    | `/lists`                          | List all lists                          |
-  | GET    | `/lists/{id}`                     | Get list by ID                          |
-  | PATCH  | `/lists/{id}`                     | Update list partially                   |
-  | PUT    | `/lists/{id}`                     | Replace list                            |
-  | PATCH  | `/lists`                          | Update multiple lists                   |
-  | GET    | `/lists/count`                    | Get list count                          |
-  | POST   | `/lists/{id}/children`            | Add child to list                       |
-  | GET    | `/lists/{id}/children`            | Get list children                       |
-  | GET    | `/lists/{id}/parents`             | Get list parents                        |
-  | DELETE | `/lists/{id}`                     | Delete list                             |
+  | Method | Endpoint               | Description           |
+  | ------ | ---------------------- | --------------------- |
+  | POST   | `/lists`               | Create new list       |
+  | GET    | `/lists`               | List all lists        |
+  | GET    | `/lists/{id}`          | Get list by ID        |
+  | PATCH  | `/lists/{id}`          | Update list partially |
+  | PUT    | `/lists/{id}`          | Replace list          |
+  | PATCH  | `/lists`               | Update multiple lists |
+  | GET    | `/lists/count`         | Get list count        |
+  | POST   | `/lists/{id}/children` | Add child to list     |
+  | GET    | `/lists/{id}/children` | Get list children     |
+  | GET    | `/lists/{id}/parents`  | Get list parents      |
+  | DELETE | `/lists/{id}`          | Delete list           |
 
   ### ListEntityRelController
-  | Method | Endpoint                          | Description                             |
-  | ------ | --------------------------------- | --------------------------------------- |
-  | POST   | `/list-entity-relations`          | Create new list-entity relation         |
-  | GET    | `/list-entity-relations`          | List all list-entity relations          |
-  | GET    | `/list-entity-relations/{id}`     | Get list-entity relation by ID          |
-  | PATCH  | `/list-entity-relations/{id}`     | Update list-entity relation partially   |
-  | PUT    | `/list-entity-relations/{id}`     | Replace list-entity relation            |
-  | PATCH  | `/list-entity-relations`          | Update multiple list-entity relations   |
-  | GET    | `/list-entity-relations/count`    | Get list-entity relation count          |
-  | DELETE | `/list-entity-relations/{id}`     | Delete list-entity relation             |
+  | Method | Endpoint                       | Description                           |
+  | ------ | ------------------------------ | ------------------------------------- |
+  | POST   | `/list-entity-relations`       | Create new list-entity relation       |
+  | GET    | `/list-entity-relations`       | List all list-entity relations        |
+  | GET    | `/list-entity-relations/{id}`  | Get list-entity relation by ID        |
+  | PATCH  | `/list-entity-relations/{id}`  | Update list-entity relation partially |
+  | PUT    | `/list-entity-relations/{id}`  | Replace list-entity relation          |
+  | PATCH  | `/list-entity-relations`       | Update multiple list-entity relations |
+  | GET    | `/list-entity-relations/count` | Get list-entity relation count        |
+  | DELETE | `/list-entity-relations/{id}`  | Delete list-entity relation           |
 
   ### EntitiesThroughListController
-  | Method | Endpoint                          | Description                             |
-  | ------ | --------------------------------- | --------------------------------------- |
-  | POST   | `/lists/{id}/entities`            | Add entities to list                    |
-  | GET    | `/lists/{id}/entities`            | Get list entities                       |
-  | PATCH  | `/lists/{id}/entities`            | Update list entities                    |
-  | DELETE | `/lists/{id}/entities`            | Delete list entities                    |
+  | Method | Endpoint               | Description          |
+  | ------ | ---------------------- | -------------------- |
+  | POST   | `/lists/{id}/entities` | Add entities to list |
+  | GET    | `/lists/{id}/entities` | Get list entities    |
+  | PATCH  | `/lists/{id}/entities` | Update list entities |
+  | DELETE | `/lists/{id}/entities` | Delete list entities |
 
   ### ListsThroughEntitiesController
-  | Method | Endpoint                          | Description                             |
-  | ------ | --------------------------------- | --------------------------------------- |
-  | GET    | `/entities/{id}/lists`            | Get lists for entity                    |
+  | Method | Endpoint               | Description          |
+  | ------ | ---------------------- | -------------------- |
+  | GET    | `/entities/{id}/lists` | Get lists for entity |
 
   ### EntityReactionController
-  | Method | Endpoint                          | Description                             |
-  | ------ | --------------------------------- | --------------------------------------- |
-  | POST   | `/entity-reactions`               | Create new entity reaction              |
-  | GET    | `/entity-reactions`               | List all entity reactions               |
-  | GET    | `/entity-reactions/{id}`          | Get entity reaction by ID               |
-  | PATCH  | `/entity-reactions/{id}`          | Update entity reaction partially        |
-  | PUT    | `/entity-reactions/{id}`          | Replace entity reaction                 |
-  | PATCH  | `/entity-reactions`               | Update multiple entity reactions        |
-  | GET    | `/entity-reactions/count`         | Get entity reaction count               |
-  | POST   | `/entity-reactions/{id}/children` | Add child to entity reaction            |
-  | GET    | `/entity-reactions/{id}/children` | Get entity reaction children            |
-  | GET    | `/entity-reactions/{id}/parents`  | Get entity reaction parents             |
-  | DELETE | `/entity-reactions/{id}`          | Delete entity reaction                  |
+  | Method | Endpoint                          | Description                      |
+  | ------ | --------------------------------- | -------------------------------- |
+  | POST   | `/entity-reactions`               | Create new entity reaction       |
+  | GET    | `/entity-reactions`               | List all entity reactions        |
+  | GET    | `/entity-reactions/{id}`          | Get entity reaction by ID        |
+  | PATCH  | `/entity-reactions/{id}`          | Update entity reaction partially |
+  | PUT    | `/entity-reactions/{id}`          | Replace entity reaction          |
+  | PATCH  | `/entity-reactions`               | Update multiple entity reactions |
+  | GET    | `/entity-reactions/count`         | Get entity reaction count        |
+  | POST   | `/entity-reactions/{id}/children` | Add child to entity reaction     |
+  | GET    | `/entity-reactions/{id}/children` | Get entity reaction children     |
+  | GET    | `/entity-reactions/{id}/parents`  | Get entity reaction parents      |
+  | DELETE | `/entity-reactions/{id}`          | Delete entity reaction           |
 
   ### ReactionsThroughEntitiesController
-  | Method | Endpoint                          | Description                             |
-  | ------ | --------------------------------- | --------------------------------------- |
-  | POST   | `/entities/{id}/reactions`        | Add reaction to entity                  |
-  | GET    | `/entities/{id}/reactions`        | Get entity reactions                    |
-  | PATCH  | `/entities/{id}/reactions`        | Update entity reactions                 |
-  | DELETE | `/entities/{id}/reactions`        | Delete entity reactions                 |
+  | Method | Endpoint                   | Description             |
+  | ------ | -------------------------- | ----------------------- |
+  | POST   | `/entities/{id}/reactions` | Add reaction to entity  |
+  | GET    | `/entities/{id}/reactions` | Get entity reactions    |
+  | PATCH  | `/entities/{id}/reactions` | Update entity reactions |
+  | DELETE | `/entities/{id}/reactions` | Delete entity reactions |
 
   ### ListReactionController
-  | Method | Endpoint                          | Description                             |
-  | ------ | --------------------------------- | --------------------------------------- |
-  | POST   | `/list-reactions`                 | Create new list reaction                |
-  | GET    | `/list-reactions`                 | List all list reactions                 |
-  | GET    | `/list-reactions/{id}`            | Get list reaction by ID                 |
-  | PATCH  | `/list-reactions/{id}`            | Update list reaction partially          |
-  | PUT    | `/list-reactions/{id}`            | Replace list reaction                   |
-  | PATCH  | `/list-reactions`                 | Update multiple list reactions          |
-  | GET    | `/list-reactions/count`           | Get list reaction count                 |
-  | DELETE | `/list-reactions/{id}`            | Delete list reaction                    |
+  | Method | Endpoint                | Description                    |
+  | ------ | ----------------------- | ------------------------------ |
+  | POST   | `/list-reactions`       | Create new list reaction       |
+  | GET    | `/list-reactions`       | List all list reactions        |
+  | GET    | `/list-reactions/{id}`  | Get list reaction by ID        |
+  | PATCH  | `/list-reactions/{id}`  | Update list reaction partially |
+  | PUT    | `/list-reactions/{id}`  | Replace list reaction          |
+  | PATCH  | `/list-reactions`       | Update multiple list reactions |
+  | GET    | `/list-reactions/count` | Get list reaction count        |
+  | DELETE | `/list-reactions/{id}`  | Delete list reaction           |
 
   ### ReactionsThroughListsController
-  | Method | Endpoint                          | Description                             |
-  | ------ | --------------------------------- | --------------------------------------- |
-  | POST   | `/lists/{id}/reactions`           | Add reaction to list                    |
-  | GET    | `/lists/{id}/reactions`           | Get list reactions                      |
-  | PATCH  | `/lists/{id}/reactions`           | Update list reactions                   |
-  | DELETE | `/lists/{id}/reactions`           | Delete list reactions                   |
+  | Method | Endpoint                | Description           |
+  | ------ | ----------------------- | --------------------- |
+  | POST   | `/lists/{id}/reactions` | Add reaction to list  |
+  | GET    | `/lists/{id}/reactions` | Get list reactions    |
+  | PATCH  | `/lists/{id}/reactions` | Update list reactions |
+  | DELETE | `/lists/{id}/reactions` | Delete list reactions |
 
   ### PingController
-  | Method | Endpoint                          | Description                             |
-  | ------ | --------------------------------- | --------------------------------------- |
-  | GET    | `/ping`                           | Ping endpoint                           |
+  | Method | Endpoint | Description   |
+  | ------ | -------- | ------------- |
+  | GET    | `/ping`  | Ping endpoint |
 
   ## Error Codes Reference
   

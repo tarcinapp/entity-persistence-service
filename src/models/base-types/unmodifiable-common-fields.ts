@@ -7,10 +7,21 @@ export const UNMODIFIABLE_COMMON_FIELDS = Object.freeze([
   '_viewerUsersCount',
   '_viewerGroupsCount',
   '_parentsCount',
+  '_fromMetadata',
+  '_toMetadata',
   '_relationMetadata',
   '_version',
   '_idempotencyKey',
 ]) as ReadonlyArray<string>;
+
+export const ALWAYS_HIDDEN_FIELDS = Object.freeze([
+  '_idempotencyKey',
+  '_ownerUsersCount',
+  '_ownerGroupsCount',
+  '_viewerUsersCount',
+  '_viewerGroupsCount',
+  '_parentsCount',
+] as ReadonlyArray<string>);
 
 // Create a union type from the array elements
 export type UnmodifiableCommonFields =
