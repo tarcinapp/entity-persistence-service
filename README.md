@@ -64,7 +64,7 @@
 
 # Entity Persistence Service
 
-📌 **Entity Persistence Service** is a REST-based backend microservice and a core component of the **Tarcinapp** ([What is Tarcinapp?](#what-is-tarcinapp-post-login-solution)).
+📌 **Entity Persistence Service** is a REST-based backend microservice and a core component of the **Tarcinapp** ([What is Tarcinapp?](#what-is-tarcinapp)).
 
 📌 The service significantly reduces **Time-To-Value** for digital products, internal tools, and early-stage startups by solving key backend concerns out-of-the-box.
 
