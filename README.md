@@ -3,7 +3,7 @@
   - [Features](#features)
   - [Benefits](#benefits)
 - [Getting Started](#getting-started)
-- [Concepts](#concepts)
+- [Concepts Overview](#concepts-overview)
   - [Data Model](#data-model)
     - [Store Any Shape of Data](#store-any-shape-of-data)
     - [Decoration with Managed Fields](#decoration-with-managed-fields)
@@ -185,7 +185,7 @@ Once the application is up and running:
 - Configure the behavior of the service, such as default visibility, record limits, and more, through environment variables. See [Configuration](#configuration) for more information.
 - Experiment with creating and querying Entities, Lists, ListEntityRelations and Reactions (See [Endpoint Reference](#endpoints-reference) for more information)
 
-# Concepts
+# Concepts Overview
 
 ## Data Model
 
