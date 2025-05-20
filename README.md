@@ -10,6 +10,7 @@
     - [Using `_kind` to Organize Data Variants](#using-_kind-to-organize-data-variants)
     - [Build Hierarchical Structures Across Models](#build-hierarchical-structures-across-models)
     - [Data Relations](#data-relations)
+      - [Supported Relations](#supported-relations)
     - [Entity Model](#entity-model)
     - [List Model](#list-model)
     - [List-Entity Relation Model](#list-entity-relation-model)
@@ -172,13 +173,13 @@ Once the application is up and running:
 - Spins up an in-memory MongoDB instance, for non-production environments
 - Ready to integrate with entity-persistence-gateway
 - Resources created through gateway are kept private to the creator users, and visible only to the creators
-- Ready to create and query resources. See [Endpoints Reference](#endpoints-reference) or take a look at the [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/dev/openapi.json) for more information about the endpoints.
+- Ready to create and query resources. See [Endpoints Reference](#endpoints-reference) or take a look at the [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/dev/openapi.json) for more information about the endpoints. 
 - An empty request to `POST /entities` will create a new entity with following properties:
   <p align="left">
     <img src="./doc/img/request-response.png" alt="Tarcinapp Data Model">
   </p>
 - Some properties (e.g. `_idempotencyKey`) are hidden from the response but can be used for querying and filtering. See [Managed Fields](#managed-fields) for more information.
-- `_createdBy`, `_ownerUsers` and `_lastUpdatedBy` are populated with the user id of the creator, when request is made through the gateway.
+- `_createdBy`, `_ownerUsers` and `_lastUpdatedBy` are populated with the user id of the creator, **when request is made through the gateway.**
 - You can use payload to pass arbitrary properties to the request. Incoming payload will be merged with the managed fields.
 - See [Querying Data](#querying-data) for more information about the advanced querying capabilities.
 - Configure the behavior of the service, such as default visibility, record limits, and more, through environment variables. See [Configuration](#configuration) for more information.
@@ -200,7 +201,7 @@ This structure is designed to flexibly represent a wide range of use cases, incl
 
 Each model—Entity, List, Reactions, and even ListEntityRelation—can hold arbitrary JSON structures tailored to your application's needs. This allows you to enrich records with domain-specific fields without rigid schemas.
 
-When structure is needed, the gateway can validate these records against configurable JSON Schemas based on their `_kind`, offering the best of both flexibility and consistency.
+When structure is needed, the gateway can validate these records against configurable **JSON Schemas** based on their `_kind`, offering the best of both flexibility and consistency.
 
 ### Decoration with Managed Fields
 
@@ -247,20 +248,70 @@ Hierarchies are navigable via `{id}/parents` and `{id}/children` endpoints, and 
 
 ### Data Relations
 
-Introducing relations to an application raise a lot of complexities which is intended. Real world applications always have relational data.
+Tarcinapp takes a comprehensive and opinionated approach to handling data relationships, acknowledging that real-world applications almost always involve complex relational data. While many backend tools focus on exposing isolated JSON resources via REST, they often fall short when it comes to solving the real complexities introduced by **resource relationships**—especially in post-login use cases that involve ownership, access control, and user-specific behavior.
+
+Tarcinapp embraces relationships as a **first-class concept**, supporting them out of the box with built-in behavior and authorization logic.
+
+---
+
+#### Supported Relations
+
+Tarcinapp currently supports these relationship types:
+
+- **Parent-child hierarchies**  
+  - Supported for: `entities`, `lists`, and `reactions`  
+  - Enables modeling of structures like categories, subgroups, and content hierarchies  
+  - Query examples:
+    - `/entities/{id}/parents`, `/entities/{id}/children`
+    - `/lists/{id}/parents`, `/reactions/{id}/children`, etc.
+- **List-to-Entity Relations**  
+  - Managed through a dedicated `ListEntityRelation` model  
+  - Many-to-many: an entity can be in multiple lists, a list can contain multiple entities  
+  - Each relation is its own record and **can store arbitrary metadata**  
+  - Visibility is derived from both sides—**user must be able to see both the list and the entity** to see the relation  
+  - To **create a relation**, user must:
+    - Have ownership rights on the **list**
+    - Have at least view access to the **entity**
+  - Configurable limits such as: max entities per list
+  - Querying support:
+    - `/lists/{listId}/entities` with filters and pagination
+    - `/entities/{id}/lists`
+    - Advanced filtering with relation metadata:
+      - `/lists/{id}/entities?filterThrough[where][_relationField]=value`
+      - `/list-entity-relations?listFilter[where][foo]=bar&entityFilter[where][baz]=qux`
+- **Reactions on Lists and Entities**  
+  - User must be able to **see** the list or entity to react (ownership not required)
+  - Configurable limits on number of reactions per target
+  - Separate endpoints for reactions tied to lists or entities:
+    - `/entities/{id}/reactions`, `/lists/{id}/reactions`
+
+
+Introducing relations to an application raise a lot of complexities which is intended. Intended because Tarcinapp aims to solve these complexities too.
+Real world applications always have relational data. API generation tools, tools generating REST APIs from JSON schemas, mostly not inclyde solutions to solve relational data problems
 Tarcinapp opinionated approach contains data relations and aims to solve these complexities.
+Relations out of the box:
 Parent-child relations for entities, lists and reactions.
-List-to-entity
-  To add an entity to a list user must be owner of the list. This is enforced by the gateway.
-  User must be able to see the entity.
-  Number of entities under a list can be configured
-  This type of relation can be queried by the fields of list or entity. Such as give me entities whose list's foo field is bar.
-  Relation itself an individual record.
-  Relation records do not contain visibility and ownership metadata.
-  visibility and ownership depends on the visibility of the list and entity. for example to see the relation user must be able to see the list and entity.
+List-to-entity relation
+  Complexities:
+   User can see one but not the other.
+   User can be owner of one but not the other.
+    Relation object itself a queryable model. how to determine if user will see or modify the relation object?
+  
+    For lists our behavior is:
+    To add an entity to a list user must be owner of the list. This is enforced by the gateway.
+    User must be able to see the entity.
+    Number of entities under a list can be configured
+    This type of relation can be queried by the fields of list or entity. Such as give me entities whose list's foo field is bar.
+    Relation itself an individual record.
+    Relation records do not contain visibility and ownership metadata.
+    visibility and ownership depends on the visibility of the list and entity. for example to see the relation user must be able to see the list and entity.
   Relation itself can hold arbitrary data.
   When querying entities under a list, filter can be applied by the fields of relation.
     `/lists/{listId}/entities?filterThrough[where][_relationField]=value`
+
+  When querying relations these are doable
+    /list-entity-relations?listFilter[where][a-field-of-list]=value or 
+    /list-entity-relations?entityFilter[where][a-field-of-entity]=value
 
 List-to-reaction or entity-to-reaction
   No need to be owner of the list or entity, but user must be able to see the list or entity. This is also enforced by the gateway.
@@ -268,6 +319,16 @@ List-to-reaction or entity-to-reaction
 
 Lookups
   Lookups are secured by the gateway. access control is applied.
+  o json model record to another record can be done wlike:
+  {
+    "foo": "bar",
+    "baz": "id-of-the-other-record"
+  }
+  we have our lookup id structure: tapp://localhost/entity/id-of-the-other-record
+  application can solve such references with actual objects. references can be in array, or under nested fields.
+  ?filter[lookup][0][prop]=baz
+
+  if the resolved property is an array, you can apply queries too.
 
 ### Entity Model
 The Entity is the core data model that represents the primary objects in your application. It's typically the starting point when modeling your domain. Whether you're building a book review platform, an e-commerce store, a knowledge base, or a job board—books, products, articles, or job listings would all likely to be stored as entities. Entities hold the core business data and can be extended or connected to other models such as lists or reactions to build richer experiences. 
@@ -311,94 +372,6 @@ Additionally, responses for these queries include `_fromMetadata` and `_toMetada
 
 See [Endpoints Reference - ListEntityRelController](#listentityrelcontroller) for overview about the endpoints.  
 See [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/dev/openapi.json#tag/ListEntityRelController) for more information about the endpoints.
-
-
-Lists and entities are connected through the `ListEntityRelation` model. 
-
-Model of the relation object is as follows:
-
-```json
-{
-  "_kind": "string",
-  "_creationDateTime": "2024-12-19T12:56:59.656Z",
-  "_lastUpdatedDateTime": "2024-12-19T12:56:59.656Z",
-  "_validFromDateTime": "2024-12-19T12:56:59.656Z",
-  "_validUntilDateTime": "2024-12-19T12:56:59.656Z",
-  "_listId": "string",
-  "_entityId": "string",
-  "_fromMetadata": {},
-  "_toMetadata": {},
-  "_idempotencyKey": "string",
-  "_version": 0,
-  "_lastUpdatedBy": "string",
-  "_createdBy": "string",
-  "_additionalProp1": {}
-}
-```
-
-* You can query (get), create (post), replace (put), update (patch), delete (delete) entities through lists calling the endpoint: `/list-entity-relations`.
-* This endpoint supports filtering capabilities with `sets` just like other endpoints like `/lists` and `/entities`. See [Sets](#sets) for more information about the Set feature.
-* Uniqueness, idempotency, auto-approve, record-limit, response-limit settings can be configured for individual relationship records.
-* ownership (_ownerUsers, _ownerGroups), viewership (_viewerUsers, _viewerGroups) and _visibility controls are not defined in the `ListEntityRelation` model. Instead, these properties are returned under the _fromMetadata and _toMetadata fields from the connected List and Entity. Authorization is enforced under "Anyone can see the list and the entity, can see the relation" principle.
-* `listFilter`, `listSet`, `entityFilter` and `entitySet` can be passed as query parameter while querying the `/list-entity-relations` endpoint.
-
-A sample response to the `GET /list-entity-relations` endpoint is as follows:
-
-```json
-[
-    {
-        "_id": "a6d5f090-76ba-45c3-8ea2-9785f2237382",
-        "_kind": "relation",
-        "_lastUpdatedDateTime": "2024-12-16T17:42:01.522Z",
-        "_validFromDateTime": null,
-        "_validUntilDateTime": null,
-        "_listId": "e24ad71e-9041-4570-affe-04db7aca2efb",
-        "_entityId": "408d809c-ff00-4969-b8a0-01b8a64aa359",
-        "_fromMetadata": {
-            "_validFromDateTime": null,
-            "_validUntilDateTime": null,
-            "_visibility": "protected",
-            "_ownerUsers": [
-                "user-id-1",
-                "user-id-2"
-            ],
-            "_ownerGroups": [],
-            "_viewerUsers": [],
-            "_viewerGroups": []
-        },
-        "_toMetadata": {
-            "_validFromDateTime": null,
-            "_validUntilDateTime": null,
-            "_visibility": "private",
-            "_ownerUsers": [],
-            "_ownerGroups": [],
-            "_viewerUsers": [],
-            "_viewerGroups": []
-        },
-        "_version": 4,
-        "_arbitraryProperty": "foo"
-    }
-]
-```
-
-Notice fields like `_fromMetadata` and `_toMetadata` fields are are added to the response along with managed fields.  
-  
-`_fromMetadata`: This field includes metadata (managed fields) of the source object, which is the list in this case.
-`_toMetadata`: This field includes metadata (managed fields) of the target objcet, which is the entity in this case.  
-
-
-
-**Note:** Creation or update operations always require existence of the list and entity specified by the ids.
-
-With the help of the relationship between lists and entities users can interact with entities under a specific list calling this endpoint: `/lists/{listId}/entities`.
-
-A sample response of the `GET` call to the `/lists/{listId}/entities` endpoint is as follows:
-
-```json
-
-```
-
-Similarly, you can retrieve all lists associated with a specific entity using the `/entities/{id}/lists` endpoint. This endpoint allows you to find all lists that contain a particular entity, with support for filtering both the lists and the relationship data using `filter`, `filterThrough`, `set` and `setThrough` parameters respectively.
 
 ### Entity Reactions
 
