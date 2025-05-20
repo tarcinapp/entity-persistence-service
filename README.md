@@ -20,8 +20,14 @@
       - [Entity Reactions](#entity-reactions)
   - [Role \& Responsibilities of entity-persistence-gateway](#role--responsibilities-of-entity-persistence-gateway)
   - [Querying Data](#querying-data)
+    - [Standard Filtering Syntax](#standard-filtering-syntax)
+    - [Sets](#sets)
+    - [Including and Querying Relations](#including-and-querying-relations)
+    - [Including Lookups](#including-lookups)
+    - [Querying the Relation](#querying-the-relation)
+    - [Using `through` Filters](#using-through-filters)
   - [Relations](#relations)
-  - [Sets](#sets)
+  - [Sets](#sets-1)
     - [Lookups](#lookups)
       - [Reference Types](#reference-types)
       - [Query Structure](#query-structure)
@@ -441,6 +447,36 @@ The **entity-persistence-gateway** performs all access-related responsibilities:
   - When a record is visible or mutable based on `_kind`, user role, or metadata  
 
 ## Querying Data
+All endpoints support advanced, structured querying via query string parameters. These allow clients to precisely control which records are returned, what fields are included, how results are filtered or sorted, and how relationships are traversed.
+
+### Standard Filtering Syntax
+**`filter[where]` — Conditional filtering**
+
+Defines constraints on the records returned. You can use logical operators like `and`, `or`, as well as comparison operators like `gt`, `lt`, `inq`, `between`, etc.
+
+~~~http
+GET /entities?filter[where][_kind]=product
+GET /entities?filter[where][and][0][_kind]=product&filter[where][and][1][_visibility]=public
+~~~
+
+**Supported operators include**:  
+`eq`, `neq`, `gt`, `gte`, `lt`, `lte`, `inq`, `nin`, `between`, `like`, `nlike`, `ilike`, `nilike`, `exists`, `regexp`
+
+Add examples for 
+  each operator.
+  logical operators
+  nested examples
+  arbitrary non-string fields - using type
+
+### Sets
+### Including and Querying Relations
+Scope usage
+### Including Lookups
+### Querying the Relation
+### Using `through` Filters
+
+Query parameters are passed using standard and extended filter syntaxes described below.
+
 where
   dot notation
   operators
