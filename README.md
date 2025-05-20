@@ -69,9 +69,7 @@
 
 # Entity Persistence Service
 
-📌 **Entity Persistence Service** is a REST-based backend microservice and a core component of the **Tarcinapp** ([What is Tarcinapp?](#what-is-tarcinapp)).
-
-📌 The service significantly reduces **Time-To-Value** for digital products, internal tools, and early-stage startups by solving key backend concerns out-of-the-box.
+📌 **Entity Persistence Service** is a REST-based backend microservice and a **core component** of the **Tarcinapp** ([What is Tarcinapp?](#what-is-tarcinapp)).
 
 📌 It is built on a simple yet powerful data model composed of **entities**, **lists**, and **reactions**, each represented as JSON documents stored in MongoDB. See [Data Model](#data-model) or take a look at the [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/dev/openapi.json) for more information.
 
