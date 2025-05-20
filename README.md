@@ -11,11 +11,13 @@
     - [Build Hierarchical Structures Across Models](#build-hierarchical-structures-across-models)
     - [Data Relations](#data-relations)
       - [Supported Relations](#supported-relations)
+      - [Lookups (Reference Resolution)](#lookups-reference-resolution)
     - [Entity Model](#entity-model)
     - [List Model](#list-model)
     - [List-Entity Relation Model](#list-entity-relation-model)
-    - [Entity Reactions](#entity-reactions)
-    - [List Reactions](#list-reactions)
+    - [Reactions Model](#reactions-model)
+      - [List Reactions](#list-reactions)
+      - [Entity Reactions](#entity-reactions)
   - [Gateway's Role](#gateways-role)
   - [Querying Data](#querying-data)
   - [Relations](#relations)
@@ -252,8 +254,6 @@ Tarcinapp takes a comprehensive and opinionated approach to handling data relati
 
 Tarcinapp embraces relationships as a **first-class concept**, supporting them out of the box with built-in behavior and authorization logic.
 
----
-
 #### Supported Relations
 
 Tarcinapp currently supports these relationship types:
@@ -285,50 +285,32 @@ Tarcinapp currently supports these relationship types:
   - Separate endpoints for reactions tied to lists or entities:
     - `/entities/{id}/reactions`, `/lists/{id}/reactions`
 
+#### Lookups (Reference Resolution)
 
-Introducing relations to an application raise a lot of complexities which is intended. Intended because Tarcinapp aims to solve these complexities too.
-Real world applications always have relational data. API generation tools, tools generating REST APIs from JSON schemas, mostly not inclyde solutions to solve relational data problems
-Tarcinapp opinionated approach contains data relations and aims to solve these complexities.
-Relations out of the box:
-Parent-child relations for entities, lists and reactions.
-List-to-entity relation
-  Complexities:
-   User can see one but not the other.
-   User can be owner of one but not the other.
-    Relation object itself a queryable model. how to determine if user will see or modify the relation object?
-  
-    For lists our behavior is:
-    To add an entity to a list user must be owner of the list. This is enforced by the gateway.
-    User must be able to see the entity.
-    Number of entities under a list can be configured
-    This type of relation can be queried by the fields of list or entity. Such as give me entities whose list's foo field is bar.
-    Relation itself an individual record.
-    Relation records do not contain visibility and ownership metadata.
-    visibility and ownership depends on the visibility of the list and entity. for example to see the relation user must be able to see the list and entity.
-  Relation itself can hold arbitrary data.
-  When querying entities under a list, filter can be applied by the fields of relation.
-    `/lists/{listId}/entities?filterThrough[where][_relationField]=value`
+Tarcinapp supports a **powerful lookup mechanism** to resolve references embedded in records—effectively allowing JSON objects to link to other records by URI and query them as if they were joined.
 
-  When querying relations these are doable
-    /list-entity-relations?listFilter[where][a-field-of-list]=value or 
-    /list-entity-relations?entityFilter[where][a-field-of-entity]=value
+Example reference format:
+```
+"parent": "tapp://localhost/entities/{entityId}"
+```
 
-List-to-reaction or entity-to-reaction
-  No need to be owner of the list or entity, but user must be able to see the list or entity. This is also enforced by the gateway.
-  Number of reactions under a list or entity can be configured
+Features:
+- Supports **nested paths**, arrays, and scalar reference fields
+- Resolves only if **caller is authorized** (enforced by the gateway)
+- Follows familiar filter syntax, similar to relations:
+```
+/entities?filter[lookup][0][prop]=parents
+/entities?filter[lookup][0][prop]=metadata.references.parent
+```
+- Lookup `scope` supports:
+  - `fields`: include only certain fields
+  - `where`: filter resolved records
+  - `lookup`: nested lookups
+  - `set`, `order`, `limit`, `skip`
 
-Lookups
-  Lookups are secured by the gateway. access control is applied.
-  o json model record to another record can be done wlike:
-  {
-    "foo": "bar",
-    "baz": "id-of-the-other-record"
-  }
-  we have our lookup id structure: tapp://localhost/entity/id-of-the-other-record
-  application can solve such references with actual objects. references can be in array, or under nested fields.
-  ?filter[lookup][0][prop]=baz
+---
 
-  if the resolved property is an array, you can apply queries too.
+These features allow developers to express rich relationships between data records without compromising on access control or query performance. Whether building social graphs, organizational hierarchies, or content collections, Tarcinapp enables real-world modeling with safe, consistent, and queryable relationships.
 
 ### Entity Model
 The Entity is the core data model that represents the primary objects in your application. It's typically the starting point when modeling your domain. Whether you're building a book review platform, an e-commerce store, a knowledge base, or a job board—books, products, articles, or job listings would all likely to be stored as entities. Entities hold the core business data and can be extended or connected to other models such as lists or reactions to build richer experiences. 
@@ -373,13 +355,55 @@ Additionally, responses for these queries include `_fromMetadata` and `_toMetada
 See [Endpoints Reference - ListEntityRelController](#listentityrelcontroller) for overview about the endpoints.  
 See [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/dev/openapi.json#tag/ListEntityRelController) for more information about the endpoints.
 
-### Entity Reactions
+### Reactions Model
 
-The Entity Reaction data model is responsible for capturing and managing a broad spectrum of events related to objects within your application. It offers the flexibility to represent a wide range of actions and interactions, including comments, likes, measurements, and emotional responses. With this model, your application can handle diverse reactions and interactions associated with entities effectively, enriching user engagement and data interactivity.
+The Reactions model enables applications to capture user interactions on both **entities** and **lists** in a structured, extensible way. These reactions are stored as standalone records and can represent a wide range of behaviors, such as likes, ratings, bookmarks, measurements, or comments.
 
-### List Reactions
+Reactions are flexible:
+- Allows arbitrary custom fields
+- Supports parent-child hierarchies (e.g., threaded replies)
+- Includes managed fields for visibility, ownership, and approval
+- Configurable per `_kind`, allowing domain-specific behavior
 
-Similar to the Entity Reaction model, the List Reaction data model is tailored to manage events associated with lists. It empowers your application to capture actions like comments, likes, measurements, and reactions linked to lists. This versatility ensures that your application can effectively handle a variety of reactions and interactions related to lists, enhancing user participation and interaction.
+#### List Reactions
+List Reactions represent user interactions related to a **list**.
+
+Each list reaction:
+- Is a standalone record referencing a target list via `_listId`
+- May include arbitrary metadata, such as scoring, flags, or comments
+- Can be categorized using the `_kind` field (e.g., `like`, `flag`, `feedback`)
+- Supports nesting through `_parents` for scenarios like threaded discussions
+- Obeys access rules defined through `_ownerUsers`, `_viewerGroups`, and `_visibility`
+
+**Base Endpoint**: `/list-reactions`  
+**Reactions on a list**: `/lists/{listId}/reactions`  
+**Parent reactions**: `/list-reactions/{reactionId}/parents`  
+**Child reactions**: `/list-reactions/{reactionId}/children`
+
+See [Endpoints Reference - ListReactionController](#listreactioncontroller)  
+See [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/dev/openapi.json#tag/ListReactionController)
+
+---
+
+#### Entity Reactions
+
+**Entity Reactions** represent interactions directed at a specific **entity**—such as a product, blog post, campaign, or user profile.
+
+Each entity reaction:
+- References a target entity via `_entityId`
+- Uses the `_kind` field to define its purpose (e.g., `bookmark`, `measurement`, `review`)
+- Can store arbitrary fields to capture custom logic or content
+- Supports hierarchical relationships via `_parents`
+- Inherits visibility and ownership controls enforced by the gateway
+
+**Base Endpoint**: `/entity-reactions`  
+**Reactions on an entity**: `/entities/{entityId}/reactions`  
+**Parent reactions**: `/entity-reactions/{reactionId}/parents`  
+**Child reactions**: `/entity-reactions/{reactionId}/children`
+
+See [Endpoints Reference - EntityReactionController](#entityreactioncontroller)  
+See [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/dev/openapi.json#tag/EntityReactionController)
+
 
 ## Gateway's Role
 
