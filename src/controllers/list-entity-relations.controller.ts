@@ -135,11 +135,11 @@ export class ListEntityRelController {
     @param.query.object('set') set?: Set,
     @param.where(ListToEntityRelation)
     where?: Where<ListToEntityRelation>,
-    @param.where(ListToEntityRelation)
+    @param.query.object('listWhere')
     listWhere?: Where<ListToEntityRelation>,
     @param.query.object('listSet')
     listSet?: Set,
-    @param.where(ListToEntityRelation)
+    @param.query.object('entityWhere')
     entityWhere?: Where<ListToEntityRelation>,
     @param.query.object('entitySet')
     entitySet?: Set,

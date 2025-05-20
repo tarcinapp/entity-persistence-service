@@ -50,7 +50,7 @@
                   "type": "object",
                   "title": "GenericEntity.WhereFilter",
                   "additionalProperties": true,
-                  "x-typescript-type": "@loopback/repository#Where<GenericEntity>"
+                  "x-typescript-type": "@loopback/repository#Where\u003CGenericEntity\u003E"
                 }
               }
             }
@@ -1079,7 +1079,7 @@
                   "type": "object",
                   "title": "GenericEntity.WhereFilter",
                   "additionalProperties": true,
-                  "x-typescript-type": "@loopback/repository#Where<GenericEntity>"
+                  "x-typescript-type": "@loopback/repository#Where\u003CGenericEntity\u003E"
                 }
               }
             }
@@ -1186,7 +1186,7 @@
                   "type": "object",
                   "title": "EntityReaction.WhereFilter",
                   "additionalProperties": true,
-                  "x-typescript-type": "@loopback/repository#Where<EntityReaction>"
+                  "x-typescript-type": "@loopback/repository#Where\u003CEntityReaction\u003E"
                 }
               }
             }
@@ -1773,7 +1773,7 @@
                   "type": "object",
                   "title": "EntityReaction.WhereFilter",
                   "additionalProperties": true,
-                  "x-typescript-type": "@loopback/repository#Where<EntityReaction>"
+                  "x-typescript-type": "@loopback/repository#Where\u003CEntityReaction\u003E"
                 }
               }
             }
@@ -1799,7 +1799,7 @@
                   "type": "object",
                   "title": "EntityReaction.WhereFilter",
                   "additionalProperties": true,
-                  "x-typescript-type": "@loopback/repository#Where<EntityReaction>"
+                  "x-typescript-type": "@loopback/repository#Where\u003CEntityReaction\u003E"
                 }
               }
             }
@@ -1929,21 +1929,19 @@
                   "type": "object",
                   "title": "ListToEntityRelation.WhereFilter",
                   "additionalProperties": true,
-                  "x-typescript-type": "@loopback/repository#Where<ListToEntityRelation>"
+                  "x-typescript-type": "@loopback/repository#Where\u003CListToEntityRelation\u003E"
                 }
               }
             }
           },
           {
-            "name": "where",
+            "name": "listWhere",
             "in": "query",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "title": "ListToEntityRelation.WhereFilter",
-                  "additionalProperties": true,
-                  "x-typescript-type": "@loopback/repository#Where<ListToEntityRelation>"
+                  "additionalProperties": true
                 }
               }
             }
@@ -1961,15 +1959,13 @@
             }
           },
           {
-            "name": "where",
+            "name": "entityWhere",
             "in": "query",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "title": "ListToEntityRelation.WhereFilter",
-                  "additionalProperties": true,
-                  "x-typescript-type": "@loopback/repository#Where<ListToEntityRelation>"
+                  "additionalProperties": true
                 }
               }
             }
@@ -2332,7 +2328,7 @@
                   "type": "object",
                   "title": "ListToEntityRelation.WhereFilter",
                   "additionalProperties": true,
-                  "x-typescript-type": "@loopback/repository#Where<ListToEntityRelation>"
+                  "x-typescript-type": "@loopback/repository#Where\u003CListToEntityRelation\u003E"
                 }
               }
             }
@@ -2473,7 +2469,7 @@
                   "type": "object",
                   "title": "ListReaction.WhereFilter",
                   "additionalProperties": true,
-                  "x-typescript-type": "@loopback/repository#Where<ListReaction>"
+                  "x-typescript-type": "@loopback/repository#Where\u003CListReaction\u003E"
                 }
               }
             }
@@ -2735,7 +2731,7 @@
                   "type": "object",
                   "title": "ListReaction.WhereFilter",
                   "additionalProperties": true,
-                  "x-typescript-type": "@loopback/repository#Where<ListReaction>"
+                  "x-typescript-type": "@loopback/repository#Where\u003CListReaction\u003E"
                 }
               }
             }
@@ -2830,7 +2826,7 @@
                   "type": "object",
                   "title": "List.WhereFilter",
                   "additionalProperties": true,
-                  "x-typescript-type": "@loopback/repository#Where<List>"
+                  "x-typescript-type": "@loopback/repository#Where\u003CList\u003E"
                 }
               }
             }
@@ -3180,7 +3176,7 @@
                   "type": "object",
                   "title": "GenericEntity.WhereFilter",
                   "additionalProperties": true,
-                  "x-typescript-type": "@loopback/repository#Where<GenericEntity>"
+                  "x-typescript-type": "@loopback/repository#Where\u003CGenericEntity\u003E"
                 }
               }
             }
@@ -3379,7 +3375,7 @@
                   "type": "object",
                   "title": "GenericEntity.WhereFilter",
                   "additionalProperties": true,
-                  "x-typescript-type": "@loopback/repository#Where<GenericEntity>"
+                  "x-typescript-type": "@loopback/repository#Where\u003CGenericEntity\u003E"
                 }
               }
             }
@@ -3549,7 +3545,7 @@
                   "type": "object",
                   "title": "ListReaction.WhereFilter",
                   "additionalProperties": true,
-                  "x-typescript-type": "@loopback/repository#Where<ListReaction>"
+                  "x-typescript-type": "@loopback/repository#Where\u003CListReaction\u003E"
                 }
               }
             }
@@ -3648,7 +3644,7 @@
                   "type": "object",
                   "title": "ListReaction.WhereFilter",
                   "additionalProperties": true,
-                  "x-typescript-type": "@loopback/repository#Where<ListReaction>"
+                  "x-typescript-type": "@loopback/repository#Where\u003CListReaction\u003E"
                 }
               }
             }
@@ -3985,7 +3981,7 @@
                   "type": "object",
                   "title": "List.WhereFilter",
                   "additionalProperties": true,
-                  "x-typescript-type": "@loopback/repository#Where<List>"
+                  "x-typescript-type": "@loopback/repository#Where\u003CList\u003E"
                 }
               }
             }
@@ -4196,7 +4192,7 @@
       "NewListReactionsInList": {
         "title": "NewListReactionsInList",
         "type": "object",
-        "description": "(tsType: @loopback/repository-json-schema#Optional<Omit<ListReaction, 'id'>, 'listId'>, schemaOptions: { title: 'NewListReactionsInList', exclude: [ 'id' ], optional: [ 'listId' ] })",
+        "description": "(tsType: @loopback/repository-json-schema#Optional\u003COmit\u003CListReaction, 'id'\u003E, 'listId'\u003E, schemaOptions: { title: 'NewListReactionsInList', exclude: [ 'id' ], optional: [ 'listId' ] })",
         "properties": {
           "_id": {
             "type": "string"
@@ -4305,12 +4301,12 @@
           "_listId"
         ],
         "additionalProperties": true,
-        "x-typescript-type": "@loopback/repository-json-schema#Optional<Omit<ListReaction, 'id'>, 'listId'>"
+        "x-typescript-type": "@loopback/repository-json-schema#Optional\u003COmit\u003CListReaction, 'id'\u003E, 'listId'\u003E"
       },
       "ListReactionPartial": {
         "title": "ListReactionPartial",
         "type": "object",
-        "description": "(tsType: Partial<ListReaction>, schemaOptions: { partial: true })",
+        "description": "(tsType: Partial\u003CListReaction\u003E, schemaOptions: { partial: true })",
         "properties": {
           "_id": {
             "type": "string"
@@ -4416,12 +4412,12 @@
           }
         },
         "additionalProperties": true,
-        "x-typescript-type": "Partial<ListReaction>"
+        "x-typescript-type": "Partial\u003CListReaction\u003E"
       },
       "EntityReactionExcluding__relationMetadata-_idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations": {
         "title": "EntityReactionExcluding__relationMetadata-_idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations",
         "type": "object",
-        "description": "(tsType: Omit<EntityReactionWithRelations, '_relationMetadata' | '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>, schemaOptions: { includeRelations: true, exclude: [ '_relationMetadata', '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
+        "description": "(tsType: Omit\u003CEntityReactionWithRelations, '_relationMetadata' | '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'\u003E, schemaOptions: { includeRelations: true, exclude: [ '_relationMetadata', '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
         "properties": {
           "_id": {
             "type": "string"
@@ -4508,12 +4504,12 @@
           "_entityId"
         ],
         "additionalProperties": true,
-        "x-typescript-type": "Omit<EntityReactionWithRelations, '_relationMetadata' | '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>"
+        "x-typescript-type": "Omit\u003CEntityReactionWithRelations, '_relationMetadata' | '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'\u003E"
       },
       "EntityReactionExcluding__relationMetadata-_idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_": {
         "title": "EntityReactionExcluding__relationMetadata-_idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_",
         "type": "object",
-        "description": "(tsType: Omit<EntityReaction, '_relationMetadata' | '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>, schemaOptions: { exclude: [ '_relationMetadata', '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
+        "description": "(tsType: Omit\u003CEntityReaction, '_relationMetadata' | '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'\u003E, schemaOptions: { exclude: [ '_relationMetadata', '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
         "properties": {
           "_id": {
             "type": "string"
@@ -4600,12 +4596,12 @@
           "_entityId"
         ],
         "additionalProperties": true,
-        "x-typescript-type": "Omit<EntityReaction, '_relationMetadata' | '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>"
+        "x-typescript-type": "Omit\u003CEntityReaction, '_relationMetadata' | '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'\u003E"
       },
       "NewReactionInEntity": {
         "title": "NewReactionInEntity",
         "type": "object",
-        "description": "(tsType: Omit<EntityReaction, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>, schemaOptions: { title: 'NewReactionInEntity', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false })",
+        "description": "(tsType: Omit\u003CEntityReaction, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E, schemaOptions: { title: 'NewReactionInEntity', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false })",
         "properties": {
           "_kind": {
             "type": "string"
@@ -4686,12 +4682,12 @@
           "_entityId"
         ],
         "additionalProperties": true,
-        "x-typescript-type": "Omit<EntityReaction, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>"
+        "x-typescript-type": "Omit\u003CEntityReaction, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E"
       },
       "PatchReactionInEntity": {
         "title": "PatchReactionInEntity",
         "type": "object",
-        "description": "(tsType: Omit<Partial<EntityReaction>, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>, schemaOptions: { title: 'PatchReactionInEntity', partial: true, exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false })",
+        "description": "(tsType: Omit\u003CPartial\u003CEntityReaction\u003E, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E, schemaOptions: { title: 'PatchReactionInEntity', partial: true, exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false })",
         "properties": {
           "_kind": {
             "type": "string"
@@ -4769,12 +4765,12 @@
           }
         },
         "additionalProperties": true,
-        "x-typescript-type": "Omit<Partial<EntityReaction>, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>"
+        "x-typescript-type": "Omit\u003CPartial\u003CEntityReaction\u003E, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E"
       },
       "ListExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_": {
         "title": "ListExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_",
         "type": "object",
-        "description": "(tsType: Omit<List, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>, schemaOptions: { exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
+        "description": "(tsType: Omit\u003CList, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'\u003E, schemaOptions: { exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
         "properties": {
           "_id": {
             "type": "string"
@@ -4866,12 +4862,12 @@
           }
         },
         "additionalProperties": true,
-        "x-typescript-type": "Omit<List, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>"
+        "x-typescript-type": "Omit\u003CList, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'\u003E"
       },
       "NewList": {
         "title": "NewList",
         "type": "object",
-        "description": "(tsType: Omit<List, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>, schemaOptions: { title: 'NewList', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false })",
+        "description": "(tsType: Omit\u003CList, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E, schemaOptions: { title: 'NewList', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false })",
         "properties": {
           "_kind": {
             "type": "string"
@@ -4950,12 +4946,12 @@
           }
         },
         "additionalProperties": true,
-        "x-typescript-type": "Omit<List, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>"
+        "x-typescript-type": "Omit\u003CList, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E"
       },
       "EntityReactionExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations": {
         "title": "EntityReactionExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations",
         "type": "object",
-        "description": "(tsType: Omit<EntityReactionWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>, schemaOptions: { includeRelations: true, exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
+        "description": "(tsType: Omit\u003CEntityReactionWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'\u003E, schemaOptions: { includeRelations: true, exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
         "properties": {
           "_id": {
             "type": "string"
@@ -5046,12 +5042,12 @@
           "_entityId"
         ],
         "additionalProperties": true,
-        "x-typescript-type": "Omit<EntityReactionWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>"
+        "x-typescript-type": "Omit\u003CEntityReactionWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'\u003E"
       },
       "GenericEntityExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations": {
         "title": "GenericEntityExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations",
         "type": "object",
-        "description": "(tsType: Omit<GenericEntityWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>, schemaOptions: { includeRelations: true, exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
+        "description": "(tsType: Omit\u003CGenericEntityWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'\u003E, schemaOptions: { includeRelations: true, exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
         "properties": {
           "_id": {
             "type": "string"
@@ -5149,12 +5145,12 @@
           }
         },
         "additionalProperties": true,
-        "x-typescript-type": "Omit<GenericEntityWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>"
+        "x-typescript-type": "Omit\u003CGenericEntityWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'\u003E"
       },
       "ListReactionExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations": {
         "title": "ListReactionExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations",
         "type": "object",
-        "description": "(tsType: Omit<ListReactionWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>, schemaOptions: { includeRelations: true, exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
+        "description": "(tsType: Omit\u003CListReactionWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'\u003E, schemaOptions: { includeRelations: true, exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
         "properties": {
           "_id": {
             "type": "string"
@@ -5245,12 +5241,12 @@
           "_listId"
         ],
         "additionalProperties": true,
-        "x-typescript-type": "Omit<ListReactionWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>"
+        "x-typescript-type": "Omit\u003CListReactionWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'\u003E"
       },
       "ListExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations": {
         "title": "ListExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations",
         "type": "object",
-        "description": "(tsType: Omit<ListWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>, schemaOptions: { includeRelations: true, exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
+        "description": "(tsType: Omit\u003CListWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'\u003E, schemaOptions: { includeRelations: true, exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
         "properties": {
           "_id": {
             "type": "string"
@@ -5354,12 +5350,12 @@
           }
         },
         "additionalProperties": true,
-        "x-typescript-type": "Omit<ListWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>"
+        "x-typescript-type": "Omit\u003CListWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'\u003E"
       },
       "PartialList": {
         "title": "PartialList",
         "type": "object",
-        "description": "(tsType: Omit<Partial<List>, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>, schemaOptions: { title: 'PartialList', partial: true, exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false })",
+        "description": "(tsType: Omit\u003CPartial\u003CList\u003E, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E, schemaOptions: { title: 'PartialList', partial: true, exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false })",
         "properties": {
           "_kind": {
             "type": "string"
@@ -5438,12 +5434,12 @@
           }
         },
         "additionalProperties": true,
-        "x-typescript-type": "Omit<Partial<List>, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>"
+        "x-typescript-type": "Omit\u003CPartial\u003CList\u003E, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E"
       },
       "NewChildList": {
         "title": "NewChildList",
         "type": "object",
-        "description": "(tsType: Omit<List, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey' | '_parents'>, schemaOptions: { title: 'NewChildList', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey', '_parents' ], includeRelations: false })",
+        "description": "(tsType: Omit\u003CList, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey' | '_parents'\u003E, schemaOptions: { title: 'NewChildList', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey', '_parents' ], includeRelations: false })",
         "properties": {
           "_kind": {
             "type": "string"
@@ -5514,12 +5510,12 @@
           }
         },
         "additionalProperties": true,
-        "x-typescript-type": "Omit<List, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey' | '_parents'>"
+        "x-typescript-type": "Omit\u003CList, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey' | '_parents'\u003E"
       },
       "NewListReaction": {
         "title": "NewListReaction",
         "type": "object",
-        "description": "(tsType: Omit<ListReaction, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>, schemaOptions: { title: 'NewListReaction', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false })",
+        "description": "(tsType: Omit\u003CListReaction, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E, schemaOptions: { title: 'NewListReaction', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false })",
         "properties": {
           "_kind": {
             "type": "string"
@@ -5600,7 +5596,7 @@
           "_listId"
         ],
         "additionalProperties": true,
-        "x-typescript-type": "Omit<ListReaction, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>"
+        "x-typescript-type": "Omit\u003CListReaction, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E"
       },
       "ListReactionWithRelations": {
         "title": "ListReactionWithRelations",
@@ -5719,7 +5715,7 @@
       "ListToEntityRelationExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_": {
         "title": "ListToEntityRelationExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_",
         "type": "object",
-        "description": "(tsType: Omit<ListToEntityRelation, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>, schemaOptions: { exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
+        "description": "(tsType: Omit\u003CListToEntityRelation, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'\u003E, schemaOptions: { exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
         "properties": {
           "_id": {
             "type": "string"
@@ -5777,12 +5773,12 @@
           "_entityId"
         ],
         "additionalProperties": true,
-        "x-typescript-type": "Omit<ListToEntityRelation, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>"
+        "x-typescript-type": "Omit\u003CListToEntityRelation, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'\u003E"
       },
       "NewListEntityRelation": {
         "title": "NewListEntityRelation",
         "type": "object",
-        "description": "(tsType: Omit<ListToEntityRelation, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>, schemaOptions: { title: 'NewListEntityRelation', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false })",
+        "description": "(tsType: Omit\u003CListToEntityRelation, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E, schemaOptions: { title: 'NewListEntityRelation', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false })",
         "properties": {
           "_kind": {
             "type": "string"
@@ -5826,12 +5822,12 @@
           "_entityId"
         ],
         "additionalProperties": true,
-        "x-typescript-type": "Omit<ListToEntityRelation, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>"
+        "x-typescript-type": "Omit\u003CListToEntityRelation, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E"
       },
       "ListToEntityRelationExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations": {
         "title": "ListToEntityRelationExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations",
         "type": "object",
-        "description": "(tsType: Omit<ListToEntityRelationWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>, schemaOptions: { includeRelations: true, exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
+        "description": "(tsType: Omit\u003CListToEntityRelationWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'\u003E, schemaOptions: { includeRelations: true, exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
         "properties": {
           "_id": {
             "type": "string"
@@ -5889,12 +5885,12 @@
           "_entityId"
         ],
         "additionalProperties": true,
-        "x-typescript-type": "Omit<ListToEntityRelationWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>"
+        "x-typescript-type": "Omit\u003CListToEntityRelationWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'\u003E"
       },
       "ListToEntityRelationPartialExcluding__id-_slug-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount-_fromMetadata-_toMetadata-_relationMetadata-_version-_idempotencyKey_": {
         "title": "ListToEntityRelationPartialExcluding__id-_slug-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount-_fromMetadata-_toMetadata-_relationMetadata-_version-_idempotencyKey_",
         "type": "object",
-        "description": "(tsType: Omit<Partial<ListToEntityRelation>, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>, schemaOptions: { exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false, partial: true })",
+        "description": "(tsType: Omit\u003CPartial\u003CListToEntityRelation\u003E, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E, schemaOptions: { exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false, partial: true })",
         "properties": {
           "_kind": {
             "type": "string"
@@ -5934,12 +5930,12 @@
           }
         },
         "additionalProperties": true,
-        "x-typescript-type": "Omit<Partial<ListToEntityRelation>, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>"
+        "x-typescript-type": "Omit\u003CPartial\u003CListToEntityRelation\u003E, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E"
       },
       "PatchListEntityRelation": {
         "title": "PatchListEntityRelation",
         "type": "object",
-        "description": "(tsType: Omit<Partial<ListToEntityRelation>, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>, schemaOptions: { title: 'PatchListEntityRelation', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false, partial: true })",
+        "description": "(tsType: Omit\u003CPartial\u003CListToEntityRelation\u003E, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E, schemaOptions: { title: 'PatchListEntityRelation', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false, partial: true })",
         "properties": {
           "_kind": {
             "type": "string"
@@ -5979,12 +5975,12 @@
           }
         },
         "additionalProperties": true,
-        "x-typescript-type": "Omit<Partial<ListToEntityRelation>, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>"
+        "x-typescript-type": "Omit\u003CPartial\u003CListToEntityRelation\u003E, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E"
       },
       "ReplaceListEntityRelation": {
         "title": "ReplaceListEntityRelation",
         "type": "object",
-        "description": "(tsType: Omit<ListToEntityRelation, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>, schemaOptions: { title: 'ReplaceListEntityRelation', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false })",
+        "description": "(tsType: Omit\u003CListToEntityRelation, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E, schemaOptions: { title: 'ReplaceListEntityRelation', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false })",
         "properties": {
           "_kind": {
             "type": "string"
@@ -6028,12 +6024,12 @@
           "_entityId"
         ],
         "additionalProperties": true,
-        "x-typescript-type": "Omit<ListToEntityRelation, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>"
+        "x-typescript-type": "Omit\u003CListToEntityRelation, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E"
       },
       "GenericEntityExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_": {
         "title": "GenericEntityExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_",
         "type": "object",
-        "description": "(tsType: Omit<GenericEntity, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>, schemaOptions: { exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
+        "description": "(tsType: Omit\u003CGenericEntity, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'\u003E, schemaOptions: { exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
         "properties": {
           "_id": {
             "type": "string"
@@ -6125,12 +6121,12 @@
           }
         },
         "additionalProperties": true,
-        "x-typescript-type": "Omit<GenericEntity, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>"
+        "x-typescript-type": "Omit\u003CGenericEntity, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'\u003E"
       },
       "NewEntity": {
         "title": "NewEntity",
         "type": "object",
-        "description": "(tsType: Omit<GenericEntity, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>, schemaOptions: { title: 'NewEntity', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false })",
+        "description": "(tsType: Omit\u003CGenericEntity, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E, schemaOptions: { title: 'NewEntity', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false })",
         "properties": {
           "_kind": {
             "type": "string"
@@ -6209,12 +6205,12 @@
           }
         },
         "additionalProperties": true,
-        "x-typescript-type": "Omit<GenericEntity, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>"
+        "x-typescript-type": "Omit\u003CGenericEntity, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E"
       },
       "PartialEntity": {
         "title": "PartialEntity",
         "type": "object",
-        "description": "(tsType: @loopback/repository-json-schema#Optional<Omit<GenericEntity, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>, '_name'>, schemaOptions: { title: 'PartialEntity', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false, optional: [ '_name' ] })",
+        "description": "(tsType: @loopback/repository-json-schema#Optional\u003COmit\u003CGenericEntity, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E, '_name'\u003E, schemaOptions: { title: 'PartialEntity', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false, optional: [ '_name' ] })",
         "properties": {
           "_kind": {
             "type": "string"
@@ -6293,12 +6289,12 @@
           }
         },
         "additionalProperties": true,
-        "x-typescript-type": "@loopback/repository-json-schema#Optional<Omit<GenericEntity, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>, '_name'>"
+        "x-typescript-type": "@loopback/repository-json-schema#Optional\u003COmit\u003CGenericEntity, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E, '_name'\u003E"
       },
       "ReplaceEntity": {
         "title": "ReplaceEntity",
         "type": "object",
-        "description": "(tsType: Omit<GenericEntity, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>, schemaOptions: { title: 'ReplaceEntity', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false })",
+        "description": "(tsType: Omit\u003CGenericEntity, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E, schemaOptions: { title: 'ReplaceEntity', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false })",
         "properties": {
           "_kind": {
             "type": "string"
@@ -6377,12 +6373,12 @@
           }
         },
         "additionalProperties": true,
-        "x-typescript-type": "Omit<GenericEntity, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>"
+        "x-typescript-type": "Omit\u003CGenericEntity, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E"
       },
       "NewChildEntity": {
         "title": "NewChildEntity",
         "type": "object",
-        "description": "(tsType: Omit<GenericEntity, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey' | '_parents'>, schemaOptions: { title: 'NewChildEntity', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey', '_parents' ], includeRelations: false })",
+        "description": "(tsType: Omit\u003CGenericEntity, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey' | '_parents'\u003E, schemaOptions: { title: 'NewChildEntity', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey', '_parents' ], includeRelations: false })",
         "properties": {
           "_kind": {
             "type": "string"
@@ -6453,12 +6449,12 @@
           }
         },
         "additionalProperties": true,
-        "x-typescript-type": "Omit<GenericEntity, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey' | '_parents'>"
+        "x-typescript-type": "Omit\u003CGenericEntity, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey' | '_parents'\u003E"
       },
       "EntityReactionExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_": {
         "title": "EntityReactionExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_",
         "type": "object",
-        "description": "(tsType: Omit<EntityReaction, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>, schemaOptions: { exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
+        "description": "(tsType: Omit\u003CEntityReaction, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'\u003E, schemaOptions: { exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
         "properties": {
           "_id": {
             "type": "string"
@@ -6549,7 +6545,7 @@
           "_entityId"
         ],
         "additionalProperties": true,
-        "x-typescript-type": "Omit<EntityReaction, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>"
+        "x-typescript-type": "Omit\u003CEntityReaction, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'\u003E"
       },
       "HttpErrorResponse": {
         "title": "HttpErrorResponse",
@@ -6610,7 +6606,7 @@
       "NewEntityReaction": {
         "title": "NewEntityReaction",
         "type": "object",
-        "description": "(tsType: Omit<EntityReaction, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>, schemaOptions: { title: 'NewEntityReaction', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false })",
+        "description": "(tsType: Omit\u003CEntityReaction, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E, schemaOptions: { title: 'NewEntityReaction', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false })",
         "properties": {
           "_kind": {
             "type": "string"
@@ -6691,12 +6687,12 @@
           "_entityId"
         ],
         "additionalProperties": true,
-        "x-typescript-type": "Omit<EntityReaction, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>"
+        "x-typescript-type": "Omit\u003CEntityReaction, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E"
       },
       "PartialEntityReaction": {
         "title": "PartialEntityReaction",
         "type": "object",
-        "description": "(tsType: @loopback/repository-json-schema#Optional<Omit<EntityReaction, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>, '_entityId'>, schemaOptions: { title: 'PartialEntityReaction', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false, optional: [ '_entityId' ] })",
+        "description": "(tsType: @loopback/repository-json-schema#Optional\u003COmit\u003CEntityReaction, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E, '_entityId'\u003E, schemaOptions: { title: 'PartialEntityReaction', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false, optional: [ '_entityId' ] })",
         "properties": {
           "_kind": {
             "type": "string"
@@ -6774,12 +6770,12 @@
           }
         },
         "additionalProperties": true,
-        "x-typescript-type": "@loopback/repository-json-schema#Optional<Omit<EntityReaction, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>, '_entityId'>"
+        "x-typescript-type": "@loopback/repository-json-schema#Optional\u003COmit\u003CEntityReaction, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E, '_entityId'\u003E"
       },
       "ReplaceEntityReaction": {
         "title": "ReplaceEntityReaction",
         "type": "object",
-        "description": "(tsType: Omit<EntityReaction, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>, schemaOptions: { title: 'ReplaceEntityReaction', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false })",
+        "description": "(tsType: Omit\u003CEntityReaction, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E, schemaOptions: { title: 'ReplaceEntityReaction', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false })",
         "properties": {
           "_kind": {
             "type": "string"
@@ -6860,12 +6856,12 @@
           "_entityId"
         ],
         "additionalProperties": true,
-        "x-typescript-type": "Omit<EntityReaction, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>"
+        "x-typescript-type": "Omit\u003CEntityReaction, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E"
       },
       "NewChildEntityReaction": {
         "title": "NewChildEntityReaction",
         "type": "object",
-        "description": "(tsType: Omit<EntityReaction, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey' | '_parents'>, schemaOptions: { title: 'NewChildEntityReaction', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey', '_parents' ], includeRelations: false })",
+        "description": "(tsType: Omit\u003CEntityReaction, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey' | '_parents'\u003E, schemaOptions: { title: 'NewChildEntityReaction', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey', '_parents' ], includeRelations: false })",
         "properties": {
           "_kind": {
             "type": "string"
@@ -6938,12 +6934,12 @@
           "_entityId"
         ],
         "additionalProperties": true,
-        "x-typescript-type": "Omit<EntityReaction, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey' | '_parents'>"
+        "x-typescript-type": "Omit\u003CEntityReaction, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey' | '_parents'\u003E"
       },
       "NewEntityInList": {
         "title": "NewEntityInList",
         "type": "object",
-        "description": "(tsType: Omit<GenericEntity, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>, schemaOptions: { title: 'NewEntityInList', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false })",
+        "description": "(tsType: Omit\u003CGenericEntity, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E, schemaOptions: { title: 'NewEntityInList', exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false })",
         "properties": {
           "_kind": {
             "type": "string"
@@ -7022,12 +7018,12 @@
           }
         },
         "additionalProperties": true,
-        "x-typescript-type": "Omit<GenericEntity, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>"
+        "x-typescript-type": "Omit\u003CGenericEntity, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E"
       },
       "PatchEntityInList": {
         "title": "PatchEntityInList",
         "type": "object",
-        "description": "(tsType: Omit<Partial<GenericEntity>, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>, schemaOptions: { title: 'PatchEntityInList', partial: true, exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false })",
+        "description": "(tsType: Omit\u003CPartial\u003CGenericEntity\u003E, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E, schemaOptions: { title: 'PatchEntityInList', partial: true, exclude: [ '_id', '_slug', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount', '_fromMetadata', '_toMetadata', '_relationMetadata', '_version', '_idempotencyKey' ], includeRelations: false })",
         "properties": {
           "_kind": {
             "type": "string"
@@ -7106,7 +7102,7 @@
           }
         },
         "additionalProperties": true,
-        "x-typescript-type": "Omit<Partial<GenericEntity>, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>"
+        "x-typescript-type": "Omit\u003CPartial\u003CGenericEntity\u003E, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'\u003E"
       },
       "loopback.Count": {
         "type": "object",
@@ -7570,7 +7566,7 @@
           }
         },
         "additionalProperties": false,
-        "x-typescript-type": "@loopback/repository#Filter<ListReaction>"
+        "x-typescript-type": "@loopback/repository#Filter\u003CListReaction\u003E"
       },
       "ListReaction.Filter1": {
         "type": "object",
@@ -7697,7 +7693,7 @@
           }
         },
         "additionalProperties": false,
-        "x-typescript-type": "@loopback/repository#Filter<ListReaction>"
+        "x-typescript-type": "@loopback/repository#Filter\u003CListReaction\u003E"
       },
       "ListFilter": {
         "type": "object",
