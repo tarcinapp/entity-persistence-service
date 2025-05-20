@@ -27,6 +27,7 @@ import { ListToEntityRelation, HttpErrorResponse } from '../models';
 import {
   UNMODIFIABLE_COMMON_FIELDS,
   UnmodifiableCommonFields,
+  ALWAYS_HIDDEN_FIELDS,
 } from '../models/base-types/unmodifiable-common-fields';
 import { getFilterSchemaFor } from '../openapi/filter-schemas';
 import { ListEntityRelationRepository } from '../repositories';
@@ -48,7 +49,9 @@ export class ListEntityRelController {
         description: '  ListEntityRelation model instance',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(ListToEntityRelation),
+            schema: getModelSchemaRef(ListToEntityRelation, {
+              exclude: ALWAYS_HIDDEN_FIELDS as (keyof ListToEntityRelation)[],
+            }),
           },
         },
       },
@@ -202,6 +205,7 @@ export class ListEntityRelController {
               type: 'array',
               items: getModelSchemaRef(ListToEntityRelation, {
                 includeRelations: true,
+                exclude: ALWAYS_HIDDEN_FIELDS as (keyof ListToEntityRelation)[],
               }),
             },
           },
@@ -308,6 +312,7 @@ export class ListEntityRelController {
           'application/json': {
             schema: getModelSchemaRef(ListToEntityRelation, {
               includeRelations: true,
+              exclude: ALWAYS_HIDDEN_FIELDS as (keyof ListToEntityRelation)[],
             }),
           },
         },
