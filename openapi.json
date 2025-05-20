@@ -242,7 +242,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/List"
+                    "$ref": "#/components/schemas/ListExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_"
                   }
                 }
               }
@@ -395,7 +395,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/EntityReactionExcluding__relationMetadata_"
+                  "$ref": "#/components/schemas/EntityReactionExcluding__relationMetadata-_idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_"
                 }
               }
             }
@@ -615,7 +615,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/EntityReactionExcluding__relationMetadata_WithRelations"
+                    "$ref": "#/components/schemas/EntityReactionExcluding__relationMetadata-_idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations"
                   }
                 }
               }
@@ -1234,7 +1234,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/EntityReaction"
+                  "$ref": "#/components/schemas/EntityReactionExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_"
                 }
               }
             }
@@ -1316,7 +1316,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/EntityReactionWithRelations"
+                    "$ref": "#/components/schemas/EntityReactionExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations"
                   }
                 }
               }
@@ -1407,7 +1407,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/EntityReactionWithRelations"
+                    "$ref": "#/components/schemas/EntityReactionExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations"
                   }
                 }
               }
@@ -1602,7 +1602,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/EntityReactionWithRelations"
+                  "$ref": "#/components/schemas/EntityReactionExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations"
                 }
               }
             }
@@ -1688,7 +1688,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/EntityReaction"
+                  "$ref": "#/components/schemas/EntityReactionExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_"
                 }
               }
             }
@@ -1832,7 +1832,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/EntityReactionWithRelations"
+                    "$ref": "#/components/schemas/EntityReactionExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations"
                   }
                 }
               }
@@ -2127,7 +2127,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ListToEntityRelationWithRelations"
+                  "$ref": "#/components/schemas/ListToEntityRelationExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations"
                 }
               }
             }
@@ -2221,7 +2221,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ListToEntityRelation"
+                  "$ref": "#/components/schemas/ListToEntityRelationExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_"
                 }
               }
             }
@@ -2365,7 +2365,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ListToEntityRelationWithRelations"
+                    "$ref": "#/components/schemas/ListToEntityRelationExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations"
                   }
                 }
               }
@@ -2854,7 +2854,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/List"
+                  "$ref": "#/components/schemas/ListExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_"
                 }
               }
             }
@@ -2952,7 +2952,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ListWithRelations"
+                    "$ref": "#/components/schemas/ListExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations"
                   }
                 }
               }
@@ -3022,7 +3022,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GenericEntity"
+                  "$ref": "#/components/schemas/GenericEntityExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_"
                 }
               }
             }
@@ -3238,7 +3238,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/GenericEntityWithRelations"
+                    "$ref": "#/components/schemas/GenericEntityExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations"
                   }
                 }
               }
@@ -3417,7 +3417,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ListWithRelations"
+                    "$ref": "#/components/schemas/ListExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations"
                   }
                 }
               }
@@ -3808,7 +3808,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ListWithRelations"
+                  "$ref": "#/components/schemas/ListExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations"
                 }
               }
             }
@@ -3902,7 +3902,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/List"
+                  "$ref": "#/components/schemas/ListExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_"
                 }
               }
             }
@@ -4018,7 +4018,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ListWithRelations"
+                    "$ref": "#/components/schemas/ListExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations"
                   }
                 }
               }
@@ -4420,10 +4420,10 @@
         "additionalProperties": true,
         "x-typescript-type": "Partial<ListReaction>"
       },
-      "EntityReactionExcluding__relationMetadata_WithRelations": {
-        "title": "EntityReactionExcluding__relationMetadata_WithRelations",
+      "EntityReactionExcluding__relationMetadata-_idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations": {
+        "title": "EntityReactionExcluding__relationMetadata-_idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations",
         "type": "object",
-        "description": "(tsType: Omit<EntityReactionWithRelations, '_relationMetadata'>, schemaOptions: { includeRelations: true, exclude: [ '_relationMetadata' ] })",
+        "description": "(tsType: Omit<EntityReactionWithRelations, '_relationMetadata' | '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>, schemaOptions: { includeRelations: true, exclude: [ '_relationMetadata', '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
         "properties": {
           "_id": {
             "type": "string"
@@ -4456,9 +4456,6 @@
             "format": "date-time"
           },
           "_lastUpdatedBy": {
-            "type": "string"
-          },
-          "_idempotencyKey": {
             "type": "string"
           },
           "_version": {
@@ -4497,21 +4494,6 @@
               "private"
             ]
           },
-          "_ownerUsersCount": {
-            "type": "number"
-          },
-          "_ownerGroupsCount": {
-            "type": "number"
-          },
-          "_viewerUsersCount": {
-            "type": "number"
-          },
-          "_viewerGroupsCount": {
-            "type": "number"
-          },
-          "_parentsCount": {
-            "type": "number"
-          },
           "_entityId": {
             "type": "string"
           },
@@ -4528,12 +4510,12 @@
           "_entityId"
         ],
         "additionalProperties": true,
-        "x-typescript-type": "Omit<EntityReactionWithRelations, '_relationMetadata'>"
+        "x-typescript-type": "Omit<EntityReactionWithRelations, '_relationMetadata' | '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>"
       },
-      "EntityReactionExcluding__relationMetadata_": {
-        "title": "EntityReactionExcluding__relationMetadata_",
+      "EntityReactionExcluding__relationMetadata-_idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_": {
+        "title": "EntityReactionExcluding__relationMetadata-_idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_",
         "type": "object",
-        "description": "(tsType: Omit<EntityReaction, '_relationMetadata'>, schemaOptions: { exclude: [ '_relationMetadata' ] })",
+        "description": "(tsType: Omit<EntityReaction, '_relationMetadata' | '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>, schemaOptions: { exclude: [ '_relationMetadata', '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
         "properties": {
           "_id": {
             "type": "string"
@@ -4566,9 +4548,6 @@
             "format": "date-time"
           },
           "_lastUpdatedBy": {
-            "type": "string"
-          },
-          "_idempotencyKey": {
             "type": "string"
           },
           "_version": {
@@ -4607,21 +4586,6 @@
               "private"
             ]
           },
-          "_ownerUsersCount": {
-            "type": "number"
-          },
-          "_ownerGroupsCount": {
-            "type": "number"
-          },
-          "_viewerUsersCount": {
-            "type": "number"
-          },
-          "_viewerGroupsCount": {
-            "type": "number"
-          },
-          "_parentsCount": {
-            "type": "number"
-          },
           "_entityId": {
             "type": "string"
           },
@@ -4638,7 +4602,7 @@
           "_entityId"
         ],
         "additionalProperties": true,
-        "x-typescript-type": "Omit<EntityReaction, '_relationMetadata'>"
+        "x-typescript-type": "Omit<EntityReaction, '_relationMetadata' | '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>"
       },
       "NewReactionInEntity": {
         "title": "NewReactionInEntity",
@@ -4809,9 +4773,10 @@
         "additionalProperties": true,
         "x-typescript-type": "Omit<Partial<EntityReaction>, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>"
       },
-      "List": {
-        "title": "List",
+      "ListExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_": {
+        "title": "ListExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_",
         "type": "object",
+        "description": "(tsType: Omit<List, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>, schemaOptions: { exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
         "properties": {
           "_id": {
             "type": "string"
@@ -4844,9 +4809,6 @@
             "format": "date-time"
           },
           "_lastUpdatedBy": {
-            "type": "string"
-          },
-          "_idempotencyKey": {
             "type": "string"
           },
           "_version": {
@@ -4892,21 +4854,6 @@
           "_slug": {
             "type": "string"
           },
-          "_ownerUsersCount": {
-            "type": "number"
-          },
-          "_ownerGroupsCount": {
-            "type": "number"
-          },
-          "_viewerUsersCount": {
-            "type": "number"
-          },
-          "_viewerGroupsCount": {
-            "type": "number"
-          },
-          "_parentsCount": {
-            "type": "number"
-          },
           "_relationMetadata": {
             "type": "object",
             "description": "Contains the relation metadata for the record"
@@ -4920,7 +4867,8 @@
             }
           }
         },
-        "additionalProperties": true
+        "additionalProperties": true,
+        "x-typescript-type": "Omit<List, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>"
       },
       "NewList": {
         "title": "NewList",
@@ -5006,10 +4954,10 @@
         "additionalProperties": true,
         "x-typescript-type": "Omit<List, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>"
       },
-      "EntityReactionWithRelations": {
-        "title": "EntityReactionWithRelations",
+      "EntityReactionExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations": {
+        "title": "EntityReactionExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations",
         "type": "object",
-        "description": "(tsType: EntityReactionWithRelations, schemaOptions: { includeRelations: true })",
+        "description": "(tsType: Omit<EntityReactionWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>, schemaOptions: { includeRelations: true, exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
         "properties": {
           "_id": {
             "type": "string"
@@ -5042,9 +4990,6 @@
             "format": "date-time"
           },
           "_lastUpdatedBy": {
-            "type": "string"
-          },
-          "_idempotencyKey": {
             "type": "string"
           },
           "_version": {
@@ -5082,21 +5027,6 @@
               "protected",
               "private"
             ]
-          },
-          "_ownerUsersCount": {
-            "type": "number"
-          },
-          "_ownerGroupsCount": {
-            "type": "number"
-          },
-          "_viewerUsersCount": {
-            "type": "number"
-          },
-          "_viewerGroupsCount": {
-            "type": "number"
-          },
-          "_parentsCount": {
-            "type": "number"
           },
           "_relationMetadata": {
             "type": "object",
@@ -5118,12 +5048,12 @@
           "_entityId"
         ],
         "additionalProperties": true,
-        "x-typescript-type": "EntityReactionWithRelations"
+        "x-typescript-type": "Omit<EntityReactionWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>"
       },
-      "GenericEntityWithRelations": {
-        "title": "GenericEntityWithRelations",
+      "GenericEntityExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations": {
+        "title": "GenericEntityExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations",
         "type": "object",
-        "description": "(tsType: GenericEntityWithRelations, schemaOptions: { includeRelations: true })",
+        "description": "(tsType: Omit<GenericEntityWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>, schemaOptions: { includeRelations: true, exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
         "properties": {
           "_id": {
             "type": "string"
@@ -5156,9 +5086,6 @@
             "format": "date-time"
           },
           "_lastUpdatedBy": {
-            "type": "string"
-          },
-          "_idempotencyKey": {
             "type": "string"
           },
           "_version": {
@@ -5204,21 +5131,6 @@
           "_slug": {
             "type": "string"
           },
-          "_ownerUsersCount": {
-            "type": "number"
-          },
-          "_ownerGroupsCount": {
-            "type": "number"
-          },
-          "_viewerUsersCount": {
-            "type": "number"
-          },
-          "_viewerGroupsCount": {
-            "type": "number"
-          },
-          "_parentsCount": {
-            "type": "number"
-          },
           "_relationMetadata": {
             "type": "object",
             "description": "Contains the relation metadata for the record"
@@ -5234,17 +5146,17 @@
           "_reactions": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/EntityReactionWithRelations"
+              "$ref": "#/components/schemas/EntityReactionExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations"
             }
           }
         },
         "additionalProperties": true,
-        "x-typescript-type": "GenericEntityWithRelations"
+        "x-typescript-type": "Omit<GenericEntityWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>"
       },
-      "ListReactionWithRelations": {
-        "title": "ListReactionWithRelations",
+      "ListReactionExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations": {
+        "title": "ListReactionExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations",
         "type": "object",
-        "description": "(tsType: ListReactionWithRelations, schemaOptions: { includeRelations: true })",
+        "description": "(tsType: Omit<ListReactionWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>, schemaOptions: { includeRelations: true, exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
         "properties": {
           "_id": {
             "type": "string"
@@ -5277,9 +5189,6 @@
             "format": "date-time"
           },
           "_lastUpdatedBy": {
-            "type": "string"
-          },
-          "_idempotencyKey": {
             "type": "string"
           },
           "_version": {
@@ -5317,21 +5226,6 @@
               "protected",
               "private"
             ]
-          },
-          "_ownerUsersCount": {
-            "type": "number"
-          },
-          "_ownerGroupsCount": {
-            "type": "number"
-          },
-          "_viewerUsersCount": {
-            "type": "number"
-          },
-          "_viewerGroupsCount": {
-            "type": "number"
-          },
-          "_parentsCount": {
-            "type": "number"
           },
           "_relationMetadata": {
             "type": "object",
@@ -5353,12 +5247,12 @@
           "_listId"
         ],
         "additionalProperties": true,
-        "x-typescript-type": "ListReactionWithRelations"
+        "x-typescript-type": "Omit<ListReactionWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>"
       },
-      "ListWithRelations": {
-        "title": "ListWithRelations",
+      "ListExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations": {
+        "title": "ListExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations",
         "type": "object",
-        "description": "(tsType: ListWithRelations, schemaOptions: { includeRelations: true })",
+        "description": "(tsType: Omit<ListWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>, schemaOptions: { includeRelations: true, exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
         "properties": {
           "_id": {
             "type": "string"
@@ -5391,9 +5285,6 @@
             "format": "date-time"
           },
           "_lastUpdatedBy": {
-            "type": "string"
-          },
-          "_idempotencyKey": {
             "type": "string"
           },
           "_version": {
@@ -5439,21 +5330,6 @@
           "_slug": {
             "type": "string"
           },
-          "_ownerUsersCount": {
-            "type": "number"
-          },
-          "_ownerGroupsCount": {
-            "type": "number"
-          },
-          "_viewerUsersCount": {
-            "type": "number"
-          },
-          "_viewerGroupsCount": {
-            "type": "number"
-          },
-          "_parentsCount": {
-            "type": "number"
-          },
           "_relationMetadata": {
             "type": "object",
             "description": "Contains the relation metadata for the record"
@@ -5469,18 +5345,18 @@
           "_entities": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/GenericEntityWithRelations"
+              "$ref": "#/components/schemas/GenericEntityExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations"
             }
           },
           "_reactions": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ListReactionWithRelations"
+              "$ref": "#/components/schemas/ListReactionExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations"
             }
           }
         },
         "additionalProperties": true,
-        "x-typescript-type": "ListWithRelations"
+        "x-typescript-type": "Omit<ListWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>"
       },
       "PartialList": {
         "title": "PartialList",
@@ -5728,9 +5604,10 @@
         "additionalProperties": true,
         "x-typescript-type": "Omit<ListReaction, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>"
       },
-      "ListToEntityRelation": {
-        "title": "ListToEntityRelation",
+      "ListReactionWithRelations": {
+        "title": "ListReactionWithRelations",
         "type": "object",
+        "description": "(tsType: ListReactionWithRelations, schemaOptions: { includeRelations: true })",
         "properties": {
           "_id": {
             "type": "string"
@@ -5771,6 +5648,117 @@
           "_version": {
             "type": "number"
           },
+          "_ownerUsers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "_ownerGroups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "_viewerUsers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "_viewerGroups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "_visibility": {
+            "type": "string",
+            "description": "public: anyone can see the record if validFromDateTime has a value. protected: only owner groups can see. private: only owner users can see.",
+            "enum": [
+              "public",
+              "protected",
+              "private"
+            ]
+          },
+          "_ownerUsersCount": {
+            "type": "number"
+          },
+          "_ownerGroupsCount": {
+            "type": "number"
+          },
+          "_viewerUsersCount": {
+            "type": "number"
+          },
+          "_viewerGroupsCount": {
+            "type": "number"
+          },
+          "_parentsCount": {
+            "type": "number"
+          },
+          "_relationMetadata": {
+            "type": "object",
+            "description": "Contains the relation metadata for the record"
+          },
+          "_listId": {
+            "type": "string"
+          },
+          "_parents": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^tapp://localhost/list-reactions/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+              "uniqueItems": true
+            }
+          }
+        },
+        "required": [
+          "_listId"
+        ],
+        "additionalProperties": true,
+        "x-typescript-type": "ListReactionWithRelations"
+      },
+      "ListToEntityRelationExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_": {
+        "title": "ListToEntityRelationExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_",
+        "type": "object",
+        "description": "(tsType: Omit<ListToEntityRelation, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>, schemaOptions: { exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "_kind": {
+            "type": "string"
+          },
+          "_validFromDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "This is the approval time.Only those records with validFromDateTime property has a value can beseen by other members.If caller is not a member at the creation time, this field is filledautomatically by the server.",
+            "nullable": true
+          },
+          "_validUntilDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "This field indicates if the rcord is currently active.",
+            "nullable": true
+          },
+          "_createdDateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "This field is filled by server at the time of the creation of the record."
+          },
+          "_createdBy": {
+            "type": "string"
+          },
+          "_lastUpdatedDateTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "_lastUpdatedBy": {
+            "type": "string"
+          },
+          "_version": {
+            "type": "number"
+          },
           "_listId": {
             "type": "string"
           },
@@ -5790,7 +5778,8 @@
           "_listId",
           "_entityId"
         ],
-        "additionalProperties": true
+        "additionalProperties": true,
+        "x-typescript-type": "Omit<ListToEntityRelation, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>"
       },
       "NewListEntityRelation": {
         "title": "NewListEntityRelation",
@@ -5841,10 +5830,10 @@
         "additionalProperties": true,
         "x-typescript-type": "Omit<ListToEntityRelation, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>"
       },
-      "ListToEntityRelationWithRelations": {
-        "title": "ListToEntityRelationWithRelations",
+      "ListToEntityRelationExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations": {
+        "title": "ListToEntityRelationExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations",
         "type": "object",
-        "description": "(tsType: ListToEntityRelationWithRelations, schemaOptions: { includeRelations: true })",
+        "description": "(tsType: Omit<ListToEntityRelationWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>, schemaOptions: { includeRelations: true, exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
         "properties": {
           "_id": {
             "type": "string"
@@ -5879,9 +5868,6 @@
           "_lastUpdatedBy": {
             "type": "string"
           },
-          "_idempotencyKey": {
-            "type": "string"
-          },
           "_version": {
             "type": "number"
           },
@@ -5905,7 +5891,7 @@
           "_entityId"
         ],
         "additionalProperties": true,
-        "x-typescript-type": "ListToEntityRelationWithRelations"
+        "x-typescript-type": "Omit<ListToEntityRelationWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>"
       },
       "ListToEntityRelationPartialExcluding__id-_slug-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount-_fromMetadata-_toMetadata-_relationMetadata-_version-_idempotencyKey_": {
         "title": "ListToEntityRelationPartialExcluding__id-_slug-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount-_fromMetadata-_toMetadata-_relationMetadata-_version-_idempotencyKey_",
@@ -6227,205 +6213,6 @@
         "additionalProperties": true,
         "x-typescript-type": "Omit<GenericEntity, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey'>"
       },
-      "EntityReactionExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations": {
-        "title": "EntityReactionExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations",
-        "type": "object",
-        "description": "(tsType: Omit<EntityReactionWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>, schemaOptions: { includeRelations: true, exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
-        "properties": {
-          "_id": {
-            "type": "string"
-          },
-          "_kind": {
-            "type": "string"
-          },
-          "_validFromDateTime": {
-            "type": "string",
-            "format": "date-time",
-            "description": "This is the approval time.Only those records with validFromDateTime property has a value can beseen by other members.If caller is not a member at the creation time, this field is filledautomatically by the server.",
-            "nullable": true
-          },
-          "_validUntilDateTime": {
-            "type": "string",
-            "format": "date-time",
-            "description": "This field indicates if the rcord is currently active.",
-            "nullable": true
-          },
-          "_createdDateTime": {
-            "type": "string",
-            "format": "date-time",
-            "description": "This field is filled by server at the time of the creation of the record."
-          },
-          "_createdBy": {
-            "type": "string"
-          },
-          "_lastUpdatedDateTime": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "_lastUpdatedBy": {
-            "type": "string"
-          },
-          "_version": {
-            "type": "number"
-          },
-          "_ownerUsers": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "_ownerGroups": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "_viewerUsers": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "_viewerGroups": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "_visibility": {
-            "type": "string",
-            "description": "public: anyone can see the record if validFromDateTime has a value. protected: only owner groups can see. private: only owner users can see.",
-            "enum": [
-              "public",
-              "protected",
-              "private"
-            ]
-          },
-          "_relationMetadata": {
-            "type": "object",
-            "description": "Contains the relation metadata for the record"
-          },
-          "_entityId": {
-            "type": "string"
-          },
-          "_parents": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "pattern": "^tapp://localhost/entity-reactions/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
-              "uniqueItems": true
-            }
-          }
-        },
-        "required": [
-          "_entityId"
-        ],
-        "additionalProperties": true,
-        "x-typescript-type": "Omit<EntityReactionWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>"
-      },
-      "GenericEntityExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations": {
-        "title": "GenericEntityExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations",
-        "type": "object",
-        "description": "(tsType: Omit<GenericEntityWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>, schemaOptions: { includeRelations: true, exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
-        "properties": {
-          "_id": {
-            "type": "string"
-          },
-          "_kind": {
-            "type": "string"
-          },
-          "_validFromDateTime": {
-            "type": "string",
-            "format": "date-time",
-            "description": "This is the approval time.Only those records with validFromDateTime property has a value can beseen by other members.If caller is not a member at the creation time, this field is filledautomatically by the server.",
-            "nullable": true
-          },
-          "_validUntilDateTime": {
-            "type": "string",
-            "format": "date-time",
-            "description": "This field indicates if the rcord is currently active.",
-            "nullable": true
-          },
-          "_createdDateTime": {
-            "type": "string",
-            "format": "date-time",
-            "description": "This field is filled by server at the time of the creation of the record."
-          },
-          "_createdBy": {
-            "type": "string"
-          },
-          "_lastUpdatedDateTime": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "_lastUpdatedBy": {
-            "type": "string"
-          },
-          "_version": {
-            "type": "number"
-          },
-          "_ownerUsers": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "_ownerGroups": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "_viewerUsers": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "_viewerGroups": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "_visibility": {
-            "type": "string",
-            "description": "public: anyone can see the record if validFromDateTime has a value. protected: only owner groups can see. private: only owner users can see.",
-            "enum": [
-              "public",
-              "protected",
-              "private"
-            ]
-          },
-          "_name": {
-            "type": "string",
-            "minLength": 2
-          },
-          "_slug": {
-            "type": "string"
-          },
-          "_relationMetadata": {
-            "type": "object",
-            "description": "Contains the relation metadata for the record"
-          },
-          "_parents": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "pattern": "^tapp://localhost/entities/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
-              "uniqueItems": true
-            }
-          },
-          "_reactions": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/EntityReactionExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_WithRelations"
-            }
-          }
-        },
-        "additionalProperties": true,
-        "x-typescript-type": "Omit<GenericEntityWithRelations, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>"
-      },
       "PartialEntity": {
         "title": "PartialEntity",
         "type": "object",
@@ -6670,9 +6457,10 @@
         "additionalProperties": true,
         "x-typescript-type": "Omit<GenericEntity, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey' | '_parents'>"
       },
-      "EntityReaction": {
-        "title": "EntityReaction",
+      "EntityReactionExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_": {
+        "title": "EntityReactionExcluding__idempotencyKey-_ownerUsersCount-_ownerGroupsCount-_viewerUsersCount-_viewerGroupsCount-_parentsCount_",
         "type": "object",
+        "description": "(tsType: Omit<EntityReaction, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>, schemaOptions: { exclude: [ '_idempotencyKey', '_ownerUsersCount', '_ownerGroupsCount', '_viewerUsersCount', '_viewerGroupsCount', '_parentsCount' ] })",
         "properties": {
           "_id": {
             "type": "string"
@@ -6705,9 +6493,6 @@
             "format": "date-time"
           },
           "_lastUpdatedBy": {
-            "type": "string"
-          },
-          "_idempotencyKey": {
             "type": "string"
           },
           "_version": {
@@ -6746,21 +6531,6 @@
               "private"
             ]
           },
-          "_ownerUsersCount": {
-            "type": "number"
-          },
-          "_ownerGroupsCount": {
-            "type": "number"
-          },
-          "_viewerUsersCount": {
-            "type": "number"
-          },
-          "_viewerGroupsCount": {
-            "type": "number"
-          },
-          "_parentsCount": {
-            "type": "number"
-          },
           "_relationMetadata": {
             "type": "object",
             "description": "Contains the relation metadata for the record"
@@ -6780,7 +6550,8 @@
         "required": [
           "_entityId"
         ],
-        "additionalProperties": true
+        "additionalProperties": true,
+        "x-typescript-type": "Omit<EntityReaction, '_idempotencyKey' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount'>"
       },
       "HttpErrorResponse": {
         "title": "HttpErrorResponse",
@@ -7170,119 +6941,6 @@
         ],
         "additionalProperties": true,
         "x-typescript-type": "Omit<EntityReaction, '_id' | '_slug' | '_ownerUsersCount' | '_ownerGroupsCount' | '_viewerUsersCount' | '_viewerGroupsCount' | '_parentsCount' | '_fromMetadata' | '_toMetadata' | '_relationMetadata' | '_version' | '_idempotencyKey' | '_parents'>"
-      },
-      "GenericEntity": {
-        "title": "GenericEntity",
-        "type": "object",
-        "properties": {
-          "_id": {
-            "type": "string"
-          },
-          "_kind": {
-            "type": "string"
-          },
-          "_validFromDateTime": {
-            "type": "string",
-            "format": "date-time",
-            "description": "This is the approval time.Only those records with validFromDateTime property has a value can beseen by other members.If caller is not a member at the creation time, this field is filledautomatically by the server.",
-            "nullable": true
-          },
-          "_validUntilDateTime": {
-            "type": "string",
-            "format": "date-time",
-            "description": "This field indicates if the rcord is currently active.",
-            "nullable": true
-          },
-          "_createdDateTime": {
-            "type": "string",
-            "format": "date-time",
-            "description": "This field is filled by server at the time of the creation of the record."
-          },
-          "_createdBy": {
-            "type": "string"
-          },
-          "_lastUpdatedDateTime": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "_lastUpdatedBy": {
-            "type": "string"
-          },
-          "_idempotencyKey": {
-            "type": "string"
-          },
-          "_version": {
-            "type": "number"
-          },
-          "_ownerUsers": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "_ownerGroups": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "_viewerUsers": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "_viewerGroups": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "_visibility": {
-            "type": "string",
-            "description": "public: anyone can see the record if validFromDateTime has a value. protected: only owner groups can see. private: only owner users can see.",
-            "enum": [
-              "public",
-              "protected",
-              "private"
-            ]
-          },
-          "_name": {
-            "type": "string",
-            "minLength": 2
-          },
-          "_slug": {
-            "type": "string"
-          },
-          "_ownerUsersCount": {
-            "type": "number"
-          },
-          "_ownerGroupsCount": {
-            "type": "number"
-          },
-          "_viewerUsersCount": {
-            "type": "number"
-          },
-          "_viewerGroupsCount": {
-            "type": "number"
-          },
-          "_parentsCount": {
-            "type": "number"
-          },
-          "_relationMetadata": {
-            "type": "object",
-            "description": "Contains the relation metadata for the record"
-          },
-          "_parents": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "pattern": "^tapp://localhost/entities/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
-              "uniqueItems": true
-            }
-          }
-        },
-        "additionalProperties": true
       },
       "NewEntityInList": {
         "title": "NewEntityInList",
