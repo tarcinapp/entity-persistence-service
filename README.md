@@ -10,12 +10,14 @@
     - [Using `_kind` to Organize Data Variants](#using-_kind-to-organize-data-variants)
     - [Build Hierarchical Structures Across Models](#build-hierarchical-structures-across-models)
     - [Data Relations](#data-relations)
-    - [Entities](#entities)
-    - [Lists](#lists)
-    - [List-Entity Relations](#list-entity-relations)
+    - [Entity Model](#entity-model)
+    - [List Model](#list-model)
+    - [List-Entity Relation Model](#list-entity-relation-model)
     - [Entity Reactions](#entity-reactions)
     - [List Reactions](#list-reactions)
-  - [Relation](#relation)
+  - [Gateway's Role](#gateways-role)
+  - [Querying Data](#querying-data)
+  - [Relations](#relations)
   - [Sets](#sets)
     - [Lookups](#lookups)
       - [Reference Types](#reference-types)
@@ -23,7 +25,6 @@
       - [Examples](#examples)
       - [Lookup Scope Options](#lookup-scope-options)
       - [Performance Considerations](#performance-considerations)
-    - [Tags](#tags)
   - [Programming Conventions](#programming-conventions)
     - [Managed Fields](#managed-fields)
 - [Configuration](#configuration)
@@ -45,7 +46,7 @@
       - [Set Expressions](#set-expressions)
       - [Error Handling](#error-handling)
     - [Idempotency](#idempotency)
-- [Deploying to Kubernetes](#deploying-to-kubernetes)
+- [Deployment](#deployment)
 - [Configuring for Development](#configuring-for-development)
 - [Known Issues and Limitations](#known-issues-and-limitations)
     - [1. Idempotency and Visibility](#1-idempotency-and-visibility)
@@ -65,7 +66,6 @@
     - [ReactionsThroughListsController](#reactionsthroughlistscontroller)
     - [PingController](#pingcontroller)
   - [Error Codes Reference](#error-codes-reference)
-- [Development Status](#development-status)
 
 # Entity Persistence Service
 
@@ -271,7 +271,7 @@ List-to-reaction or entity-to-reaction
 Lookups
   Lookups are secured by the gateway. access control is applied.
 
-### Entities
+### Entity Model
 The Entity is the core data model that represents the primary objects in your application. It's typically the starting point when modeling your domain. Whether you're building a book review platform, an e-commerce store, a knowledge base, or a job board—books, products, articles, or job listings would all likely to be stored as entities. Entities hold the core business data and can be extended or connected to other models such as lists or reactions to build richer experiences. 
 
 **Base Endpoint**: `/entities`  
@@ -283,7 +283,7 @@ The Entity is the core data model that represents the primary objects in your ap
 See [Endpoints Reference - EntityController](#entitycontroller) for overview about the endpoints.  
 See [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/dev/openapi.json#tag/EntityController) for more information about the endpoints.
 
-### Lists
+### List Model
 
 The List model organizes collections of entities into meaningful groups. A single list can contain many entities, and an entity can belong to many lists. This many-to-many relationship is managed through a dedicated ListEntityRelation model, enabling fine-grained control over each association. Lists themselves are also records that can hold arbitrary data and can be categorized by kind—such as "favorites," "watchlist," or "top_picks." Whether you're modeling playlists, reading lists, or campaign groupings, lists make it easy to structure and reuse related content across your application.
 
@@ -295,7 +295,7 @@ The List model organizes collections of entities into meaningful groups. A singl
 See [Endpoints Reference - ListController](#listcontroller) for overview about the endpoints.  
 See [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/dev/openapi.json#tag/ListController) for more information about the endpoints.
 
-### List-Entity Relations
+### List-Entity Relation Model
 
 The **ListEntityRelation** model manages the many-to-many relationship between entities and lists. It enables associating any entity with one or more lists, and vice versa, allowing you to build collections like "featured products," "reading lists," or "user watchlists."  
 
@@ -410,8 +410,27 @@ The Entity Reaction data model is responsible for capturing and managing a broad
 
 Similar to the Entity Reaction model, the List Reaction data model is tailored to manage events associated with lists. It empowers your application to capture actions like comments, likes, measurements, and reactions linked to lists. This versatility ensures that your application can effectively handle a variety of reactions and interactions related to lists, enhancing user participation and interaction.
 
+## Gateway's Role
 
-## Relation
+## Querying Data
+where
+  dot notation
+  operators
+filter
+  where
+  include
+  lookup
+filterThrough
+entityFilter
+listFilter
+set
+entitySet
+listSet
+setThrough
+
+
+
+## Relations
 
 Relations are individual records just like entities and lists. Relations can hold arbitrary data along with the managed fields. Each time a relation is queried existence of the source and the target record is always checked. With the help of the relations entities under specific list, or reactions under specific list or entity can be queried.  
 `/lists/{listId}/entities`  
@@ -550,10 +569,6 @@ The `scope` parameter in lookups supports various options:
 - Field selection helps reduce data transfer
 - Nested lookups are processed recursively
 - Results are cached when possible
-
-### Tags
-
-The updateAll operation is not available for tags since their content is unique, and the only property that might need updating is the "content" property itself. Updating the creationDateTime for all tags would not be meaningful in this context.
 
 ## Programming Conventions
 
@@ -980,7 +995,7 @@ entity-persistence-service ensures data creation is efficient and predictable. Y
 
 Please note that idempotency calculation takes place before populating managed fields. Thus, do not use managed fields as contributor to the idempotency. For instance, use `name` instead of `slug`.
 
-# Deploying to Kubernetes
+# Deployment
 
 * A configmap and secret sample yaml files are provided
 
@@ -1152,8 +1167,3 @@ When querying list-entity relations, dot notation filtering (e.g., `metadata.sta
   | GET    | `/ping`  | Ping endpoint |
 
   ## Error Codes Reference
-  
-
-# Development Status
-
-* All configurations are fully implemented for generic-entities.
