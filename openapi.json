@@ -1204,15 +1204,13 @@
             }
           },
           {
-            "name": "where",
+            "name": "entityWhere",
             "in": "query",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "title": "EntityReaction.WhereFilter",
-                  "additionalProperties": true,
-                  "x-typescript-type": "@loopback/repository#Where<EntityReaction>"
+                  "additionalProperties": true
                 }
               }
             }

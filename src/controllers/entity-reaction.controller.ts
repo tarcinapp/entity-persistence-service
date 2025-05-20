@@ -105,7 +105,7 @@ export class EntityReactionController {
     @param.query.object('set') set?: Set,
     @param.where(EntityReaction) where?: Where<EntityReaction>,
     @param.query.object('entitySet') entitySet?: Set,
-    @param.where(EntityReaction) entityWhere?: Where<EntityReaction>,
+    @param.query.object('entityWhere') entityWhere?: Where<EntityReaction>,
   ): Promise<Count> {
     const filterBuilder = new FilterBuilder<EntityReaction>();
 
