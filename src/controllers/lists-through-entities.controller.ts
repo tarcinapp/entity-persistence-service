@@ -3,6 +3,7 @@ import { get, getModelSchemaRef, param } from '@loopback/rest';
 import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
 import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
 import { List, ListToEntityRelation } from '../models';
+import { ALWAYS_HIDDEN_FIELDS } from '../models/base-types/unmodifiable-common-fields';
 import { EntityRepository } from '../repositories';
 
 export class ListsThroughEntitiesController {
@@ -17,7 +18,12 @@ export class ListsThroughEntitiesController {
         description: 'Array of Lists through ListEntityRelation',
         content: {
           'application/json': {
-            schema: { type: 'array', items: getModelSchemaRef(List) },
+            schema: {
+              type: 'array',
+              items: getModelSchemaRef(List, {
+                exclude: ALWAYS_HIDDEN_FIELDS as (keyof List)[],
+              }),
+            },
           },
         },
       },
