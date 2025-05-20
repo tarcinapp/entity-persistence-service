@@ -3,7 +3,7 @@
   - [Features](#features)
   - [Benefits](#benefits)
 - [Getting Started](#getting-started)
-- [Concepts Overview](#concepts-overview)
+- [Core Concepts](#core-concepts)
   - [Data Model](#data-model)
     - [Store Any Shape of Data](#store-any-shape-of-data)
     - [Decoration with Managed Fields](#decoration-with-managed-fields)
@@ -18,7 +18,7 @@
     - [Reactions Model](#reactions-model)
       - [List Reactions](#list-reactions)
       - [Entity Reactions](#entity-reactions)
-  - [Gateway's Role](#gateways-role)
+  - [Role \& Responsibilities of entity-persistence-gateway](#role--responsibilities-of-entity-persistence-gateway)
   - [Querying Data](#querying-data)
   - [Relations](#relations)
   - [Sets](#sets)
@@ -187,7 +187,7 @@ Once the application is up and running:
 - Configure the behavior of the service, such as default visibility, record limits, and more, through environment variables. See [Configuration](#configuration) for more information.
 - Experiment with creating and querying Entities, Lists, ListEntityRelations and Reactions (See [Endpoint Reference](#endpoints-reference) for more information)
 
-# Concepts Overview
+# Core Concepts
 
 ## Data Model
 
@@ -308,9 +308,6 @@ Features:
   - `lookup`: nested lookups
   - `set`, `order`, `limit`, `skip`
 
----
-
-These features allow developers to express rich relationships between data records without compromising on access control or query performance. Whether building social graphs, organizational hierarchies, or content collections, Tarcinapp enables real-world modeling with safe, consistent, and queryable relationships.
 
 ### Entity Model
 The Entity is the core data model that represents the primary objects in your application. It's typically the starting point when modeling your domain. Whether you're building a book review platform, an e-commerce store, a knowledge base, or a job board—books, products, articles, or job listings would all likely to be stored as entities. Entities hold the core business data and can be extended or connected to other models such as lists or reactions to build richer experiences. 
@@ -383,8 +380,6 @@ Each list reaction:
 See [Endpoints Reference - ListReactionController](#listreactioncontroller)  
 See [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/dev/openapi.json#tag/ListReactionController)
 
----
-
 #### Entity Reactions
 
 **Entity Reactions** represent interactions directed at a specific **entity**—such as a product, blog post, campaign, or user profile.
@@ -405,7 +400,45 @@ See [Endpoints Reference - EntityReactionController](#entityreactioncontroller)
 See [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/dev/openapi.json#tag/EntityReactionController)
 
 
-## Gateway's Role
+## Role & Responsibilities of entity-persistence-gateway
+The entity-persistence-service is designed to be a generic and flexible data store. By design, it does not handle access control, authentication, or any user-specific filtering. It responds to all valid queries with matching records, regardless of who the caller is or whether they are authorized to see the data.
+
+Security, access control, and response shaping are handled by the entity-persistence-gateway, which sits in front of this service and evaluates incoming requests against authorization policies.
+
+**What the Entity Persistence Service Does Not Do**
+
+- It does not authenticate requests (no JWT verification)
+- It does not evaluate roles or permissions
+- It does not restrict records based on ownership, visibility, or viewer settings
+- It does not perform field masking or redaction
+- It does not check whether a user is allowed to see or modify a record
+
+If queried directly, entity-persistence-service will return all records and all fields that match the request filter, regardless of visibility or access settings.
+
+The **entity-persistence-gateway** performs all access-related responsibilities:
+
+**Authentication and Role Validation**  
+- Verifies JWTs to authenticate the user  
+- Uses the user's roles to determine whether a request is allowed (e.g., whether a `visitor` can `PATCH /entities`)  
+
+**Query Scope Enforcement**  
+- Restricts results to only those records the user is authorized to see  
+- Evaluates fields like `_visibility`, `_ownerUsers`, `_viewerGroups`, etc.  
+- Ensures that even if a user requests all entities, lists, or reactions, they only receive records visible to them  
+
+**Field-Level Access Control**  
+- Removes fields from the response that the user is not authorized to see  
+- This applies even if the user explicitly requests those fields via a `fields` filter  
+
+**Record-Level Filtering**  
+- Entire records are excluded from the response if the user does not have access, based on ownership, viewership, or visibility constraints  
+- For example, if a user queries by ID for a private record they do not own or cannot view, the gateway blocks access—even if the record exists  
+
+**Policy Enforcement**  
+- Leverages Open Policy Agent (OPA) to enforce fine-grained access rules:  
+  - Who can access which endpoints  
+  - What fields are readable or writable  
+  - When a record is visible or mutable based on `_kind`, user role, or metadata  
 
 ## Querying Data
 where
