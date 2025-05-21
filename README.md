@@ -491,18 +491,94 @@ You can use this to reduce payload size or limit data exposure. See [2. Field Se
 
 #### `filter[include]` — Related Models
 
-Used to include relations such as `parents`, `children`, or custom foreign references when querying models with relationships.
+The `filter[include]` option allows you to include related records (such as reactions or contained entities) directly within the response of a primary resource. This can reduce roundtrips and simplify client-side logic.
 
-**Examples:**
-
-~~~http
-GET /entities?filter[include]=children
-GET /entities?filter[include]=parents
-~~~
-
-If the relationship supports scoping, additional filters can be applied via `scope`.
+The available relations to include depend on the endpoint being queried. Each inclusion adds a new field (prefixed with `_`) to the response, populated with related data.
 
 ---
+
+**Available Relations by Resource**
+
+- **For Lists (`/lists`)**
+  - `_entities`: All entities contained in the list
+  - `_reactions`: All reactions attached to the list
+
+  ~~~http
+  GET /lists?filter[include][0][relation]=_entities&filter[include][1][relation]=_reactions
+  ~~~
+
+- **For Entities (`/entities`)**
+  - `_reactions`: All reactions attached to the entity
+
+  ~~~http
+  GET /entities?filter[include][0][relation]=_reactions
+  ~~~
+
+---
+
+**Response Behavior**
+
+When `include` is used, the resulting records will have additional fields named after the relation (e.g., `_entities`, `_reactions`) that contain the related data.
+
+**Example Response for `/lists` with `_entities` and `_reactions` included:**
+
+~~~json
+[
+  {
+    "_id": "list123",
+    "name": "Top Picks",
+    "_kind": "playlist",
+    "_entities": [
+      {
+        "_id": "ent1",
+        "title": "Item A",
+        "_kind": "product"
+      },
+      {
+        "_id": "ent2",
+        "title": "Item B",
+        "_kind": "product"
+      }
+    ],
+    "_reactions": [
+      {
+        "_id": "react1",
+        "_kind": "like",
+        "_createdBy": "user123"
+      }
+    ]
+  }
+]
+~~~
+
+**Scoped Includes with `scope`**
+
+You can apply filters to the related records using a `scope` sub-filter. This allows for precise inclusion of only matching related data.
+
+**Example: Return lists with their contained entities, but only if the entity's `_kind` is `product`:**
+
+~~~http
+GET /lists?filter[include][0][relation]=_entities&filter[include][0][scope][where][_kind]=product
+~~~
+
+**Example: Include only public reactions on each entity:**
+
+~~~http
+GET /entities?filter[include][0][relation]=_reactions&filter[include][0][scope][where][_visibility]=public
+~~~
+
+**Scope supports all standard filters**, including:
+- `where`
+- `fields`
+- `limit`, `skip`, `order`
+- Nested `include` (where applicable)
+
+This mechanism is useful for structured queries like:
+- "Fetch a list and include only entities of a certain kind"
+- "Get entities and only include visible reactions"
+- "List playlists and show top 3 most recent included entities"
+
+Use of `filter[include]` significantly improves expressiveness for relational queries and allows complex join-like behavior directly in your API layer, all without requiring multiple client-side requests.
 
 #### `filter[order]` — Sorting
 
