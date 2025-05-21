@@ -680,7 +680,7 @@ class SetToFilterTransformer {
         },
         {
           _validUntilDateTime: {
-            between: [thirtyDaysAgo.toISOString(), now.toISOString()],
+            lt: thirtyDaysAgo.toISOString(),
           },
         },
       ],

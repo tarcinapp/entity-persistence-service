@@ -27,6 +27,9 @@
       - [`filter[limit]` — Pagination Limit](#filterlimit--pagination-limit)
       - [`filter[skip]` — Offset](#filterskip--offset)
     - [Sets](#sets)
+      - [Available Sets](#available-sets)
+      - [Features of Sets](#features-of-sets)
+      - [Example Use Cases](#example-use-cases)
     - [Including and Querying Relations](#including-and-querying-relations)
     - [Including Lookups](#including-lookups)
     - [Querying the Relation](#querying-the-relation)
@@ -203,7 +206,7 @@ Once the application is up and running:
 - [Role & Responsibilities of the Gateway Component](#role--responsibilities-of-the-gateway-component)
 - [Querying Data](#querying-data)
 - [Relations](#relations)
-- [Sets](#sets-1)
+- [Sets](#sets)
 - [Programming Conventions](#programming-conventions)
 
 
@@ -458,23 +461,23 @@ GET /entities?filter[where][score][between][]=10&filter[where][score][between][]
 
 You can use comparison operators within `filter[where]` to match complex conditions:
 
-| Operator    | Description                              | Example                                                                 |
-|-------------|------------------------------------------|-------------------------------------------------------------------------|
-| `eq`        | Equal to (implicit)                      | `filter[where][status]=active`                                         |
-| `neq`       | Not equal to                             | `filter[where][status][neq]=archived`                                  |
-| `gt`        | Greater than                             | `filter[where][score][gt]=100`                                         |
-| `gte`       | Greater than or equal to                 | `filter[where][score][gte]=100`                                        |
-| `lt`        | Less than                                | `filter[where][score][lt]=100`                                         |
-| `lte`       | Less than or equal to                    | `filter[where][score][lte]=100`                                        |
-| `inq`       | Value is in the list                     | `filter[where][tag][inq][]=foo&filter[where][tag][inq][]=bar`          |
-| `nin`       | Value is not in the list                 | `filter[where][status][nin][]=archived`                                |
-| `between`   | Between two values                       | `filter[where][score][between][]=10&filter[where][score][between][]=20`|
-| `like`      | Case-sensitive pattern match             | `filter[where][name][like]=admin%25`                                   |
-| `nlike`     | Not like (case-sensitive)                | `filter[where][name][nlike]=test%25`                                   |
-| `ilike`     | Case-insensitive like                    | `filter[where][name][ilike]=hello%25`                                  |
-| `nilike`    | Case-insensitive not like                | `filter[where][name][nilike]=demo%25`                                  |
-| `exists`    | Field exists or not                      | `filter[where][metadata.field][exists]=true`                           |
-| `regexp`    | Regular expression match                 | `filter[where][email][regexp]=^.+@domain.com$`                         |
+| Operator  | Description                  | Example                                                                 |
+| --------- | ---------------------------- | ----------------------------------------------------------------------- |
+| `eq`      | Equal to (implicit)          | `filter[where][status]=active`                                          |
+| `neq`     | Not equal to                 | `filter[where][status][neq]=archived`                                   |
+| `gt`      | Greater than                 | `filter[where][score][gt]=100`                                          |
+| `gte`     | Greater than or equal to     | `filter[where][score][gte]=100`                                         |
+| `lt`      | Less than                    | `filter[where][score][lt]=100`                                          |
+| `lte`     | Less than or equal to        | `filter[where][score][lte]=100`                                         |
+| `inq`     | Value is in the list         | `filter[where][tag][inq][]=foo&filter[where][tag][inq][]=bar`           |
+| `nin`     | Value is not in the list     | `filter[where][status][nin][]=archived`                                 |
+| `between` | Between two values           | `filter[where][score][between][]=10&filter[where][score][between][]=20` |
+| `like`    | Case-sensitive pattern match | `filter[where][name][like]=admin%25`                                    |
+| `nlike`   | Not like (case-sensitive)    | `filter[where][name][nlike]=test%25`                                    |
+| `ilike`   | Case-insensitive like        | `filter[where][name][ilike]=hello%25`                                   |
+| `nilike`  | Case-insensitive not like    | `filter[where][name][nilike]=demo%25`                                   |
+| `exists`  | Field exists or not          | `filter[where][metadata.field][exists]=true`                            |
+| `regexp`  | Regular expression match     | `filter[where][email][regexp]=^.+@domain.com$`                          |
 
 #### `filter[fields]` — Field Selection
 
@@ -575,9 +578,7 @@ GET /entities?filter[include][0][relation]=_reactions&filter[include][0][scope][
 This mechanism is useful for structured queries like:
 - "Fetch a list and include only entities of a certain kind"
 - "Get entities and only include visible reactions"
-- "List playlists and show top 3 most recent included entities"
-
-Use of `filter[include]` significantly improves expressiveness for relational queries and allows complex join-like behavior directly in your API layer, all without requiring multiple client-side requests.
+- "List playlists and show top 3 most recent included entities" 
 
 #### `filter[order]` — Sorting
 
@@ -632,37 +633,77 @@ GET /entities?filter[where][and][0][_kind]=article&filter[where][and][1][_visibi
 
 ### Sets
 
-Sets are a powerful feature introduced in the application, designed to streamline data filtering and selection. They provide a convenient and flexible way to retrieve specific subsets of data based on predefined conditions or custom logical combinations.
+Sets are predefined named filters that simplify common and reusable data selection patterns. Instead of writing long or complex filter conditions, users can use concise set names to apply meaningful filtering logic.
 
-**Features of Sets:**
+They are useful for quickly retrieving commonly scoped data like public items, active records, recently created entities, or ownership-based access views.
 
-1. **Combining Sets with Logical Operators:** Sets can be combined using logical operators such as AND, OR, and NOT, enabling users to construct complex queries tailored to their specific needs.
-`?set[and][0][actives]&set[and][1][publics]`
-2. **Default Filtering with Sets:** Users can still apply default filtering to sets. For example, using the query parameter **`set[actives]&filter[where][_kind]=config`** allows users to select all active data with a **`_kind`** value of **`config`**.
-3. **setThrough:** Users can apply `setThrough` query parameter while querying a data through relationship such as `/lists/{listId}/entities?setThrough[actives]`. This query will retrieve entities under the list specified by `{listId}` and relation record is active.
-4. **Enforced Sets for Role-Based Access Control:** Sets can be enforced, ensuring that users work on specific predefined sets. The Gateway application facilitates the creation of sets according to role-based access control policies, enhancing data security and access control.
-5. **whereThrough**: Users can apply `whereThrough` query parameter while performing delete or updateAll on the generic-entities through relationship such as `PATCH /lists/{listId}/entities?whereThrough[foo]=bar`. This operation will be applied to the entities under the list specified by `{listId}` and the relationship record with the field `foo` equals to `bar`.
-6. **Sets with Inclusion Filter**: Users can apply sets to include filter. For example: `?filter[include][0][relation]=_entities&filter[include][0][set][and][0][actives]&filter[include][0][set][and][1][publics]`
+#### Available Sets
 
-**List of Prebuilt Sets:**
-The application comes with a set of prebuilt sets to simplify common data selections. Each set is designed to retrieve specific subsets of data based on predefined conditions. Here are the prebuilt sets:
+| Set Name   | Description                                                                                              |
+|------------|----------------------------------------------------------------------------------------------------------|
+| `publics`  | Records where `_visibility` is `public`                                                                  |
+| `actives`  | Records where `_validFromDateTime` is not null and in the past, and `_validUntilDateTime` is null or in the future |
+| `inactives`| Records where `_validUntilDateTime` is in the past                                                       |
+| `pendings` | Records where `_validFromDateTime` is null or in the future                                              |
+| `owners`   | Records where `_ownerUsers` or `_ownerGroups` contain the given user or group IDs                        |
+| `viewers`  | Records where `_viewerUsers` or `_viewerGroups` contain the given user or group IDs                      |
+| `audience` | Combines `actives`, `publics`, and ownership/viewership filters. Requires `userIds` and `groupIds`       |
+| `day`      | Records created within the last 24 hours                                                                 |
+| `week`     | Records created within the last 7 days                                                                   |
+| `month`    | Records created within the last 30 days                                                                  |
+| `roots`    | Records where `_parentsCount` is 0 (i.e., not a child of any other record)                              |
+| `expired30`| Records where `_validUntilDateTime` is more than 30 days in the past                                     |
 
-| Set Name  | Description                                                                                                                                                                                                                                                                                  |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| publics   | Selects all data with a visibility (visibility) value of public.                                                                                                                                                                                                                             |
-| actives   | Selects all data where the _validFromDateTime is not null, less than the current date time, and the_validUntilDateTime field is either null or greater than the current date time.                                                                                                           |
-| inactives | Selects all data where the _validUntilDateTime field has a value and is less than the current date time.                                                                                                                                                                                     |
-| pendings  | Selects all data where the _validFromDateTime field is empty.                                                                                                                                                                                                                                |
-| owners    | Selects all data where the given user ID is in the _ownerUsers or the given group is in the_ownerGroups. User IDs and groups should be provided as comma-separated values in the query variable: set[owners][userIds]=userId1,userId2&set[owners][groupIds]=groupId1,groupId2.               |
-| viewers   | Selects all data where the given user ID is in the _viewerUsers or the given group is in the_viewerGroups. User IDs and groups should be provided as comma-separated values in the query variable: set[viewers][userIds]=userId1,userId2&set[viewers][groupIds]=groupId1,groupId2.           |
-| day       | Selects all data where the creationDateTime field is within the last 24 hours.                                                                                                                                                                                                               |
-| week      | Selects all data where the creationDateTime field is within the last 7 days.                                                                                                                                                                                                                 |
-| month     | Selects all data where the creationDateTime field is within the last 30 days.                                                                                                                                                                                                                |
-| audience  | A combination of multiple sets. This set returns 'active' and 'public' records along with a user's own active and pending records. As a result, it requires user and group IDs similar to the owners set. Requires userIds and groupIds as defined in `owners` and `viewers` configurations. |
-| roots     | Selects all data where the _parentsCount field is 0, meaning these are root-level records that are not children of any other record.                                                                                                                                                         |
-| expired30 | Selects all data where the _validUntilDateTime field has a value and is between the current time and 30 days ago, indicating records that have expired within the last 30 days.                                                                                                              |
+#### Features of Sets
 
-The introduction of sets enhances the application's querying capabilities, allowing users to easily access and manage specific subsets of data based on predefined conditions or customized logical combinations.
+- **Simple Named Filters**  
+  Use sets like `?set[publics]` or `?set[actives]` to apply predefined filter logic without repeating full filter expressions.
+
+- **Combining Sets with Logical Operators**  
+  Use logical expressions like `and`, `or`, and `not` to compose multiple sets:
+  
+  ```http
+  ?set[and][0][actives]&set[and][1][publics]
+  ```
+
+- **Mixing Sets with Other Filters**  
+  Sets can be combined with regular filters to further narrow results:
+  
+  ```http
+  ?set[actives]&filter[where][_kind]=config
+  ```
+
+- **Sets Inside Include Filters**  
+  You can apply sets to related records using `filter[include][set]`. For example, return only active and public entities included in each list:
+  
+  ```http
+  ?filter[include][0][relation]=_entities&filter[include][0][set][and][0][actives]&filter[include][0][set][and][1][publics]
+  ```
+
+- **Role-Based Enforcement**  
+  Sets can be enforced by the gateway based on the user’s roles or scopes. For example, users with read-only roles might automatically be restricted to the `publics` or `audience` set, regardless of the query they submit.
+
+#### Example Use Cases
+
+- **Fetch active and public blog entities**
+  
+  ```http
+  GET /entities?set[and][0][actives]&set[and][1][publics]&filter[where][_kind]=blog
+  ```
+
+- **Get all root-level public items**
+  
+  ```http
+  GET /entities?set[and][0][roots]&set[and][1][publics]
+  ```
+
+- **Retrieve lists created in the last week**
+  
+  ```http
+  GET /lists?set[week]
+  ```
+
+Sets provide a convenient and secure abstraction for filtering data while keeping API requests short and expressive.
 ### Including and Querying Relations
 Scope usage
 ### Including Lookups
