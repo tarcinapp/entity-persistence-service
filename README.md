@@ -28,7 +28,7 @@
       - [`filter[skip]` — Offset](#filterskip--offset)
     - [Sets](#sets)
       - [Available Sets](#available-sets)
-      - [Features of Sets](#features-of-sets)
+      - [Usage of Sets](#usage-of-sets)
       - [Example Use Cases](#example-use-cases)
     - [Including and Querying Relations](#including-and-querying-relations)
     - [Including Lookups](#including-lookups)
@@ -639,22 +639,22 @@ They are useful for quickly retrieving commonly scoped data like public items, a
 
 #### Available Sets
 
-| Set Name    | Description                                                                                                        |
-| ----------- | ------------------------------------------------------------------------------------------------------------------ |
-| `publics`   | Records where `_visibility` is `public`                                                                            |
-| `actives`   | Records where `_validFromDateTime` is not null and in the past, and `_validUntilDateTime` is null or in the future |
-| `expired`   | Records where `_validUntilDateTime` is in the past                                                                 |
-| `pendings`  | Records where `_validFromDateTime` is null or in the future                                                        |
-| `owners`    | Records where `_ownerUsers` or `_ownerGroups` contain the given user or group IDs                                  |
-| `viewers`   | Records where `_viewerUsers` or `_viewerGroups` contain the given user or group IDs                                |
-| `audience`  | Combines `actives`, `publics`, and ownership/viewership filters. Requires `userIds` and `groupIds`                 |
-| `day`       | Records created within the last 24 hours                                                                           |
-| `week`      | Records created within the last 7 days                                                                             |
-| `month`     | Records created within the last 30 days                                                                            |
-| `roots`     | Records where `_parentsCount` is 0 (i.e., not a child of any other record)                                         |
-| `expired30` | Records where `_validUntilDateTime` is more than 30 days in the past                                               |
+| Set Name    | Description                                                                                                            |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `publics`   | Records where `_visibility` is `public`                                                                                |
+| `actives`   | Records where `_validFromDateTime` is not null and in the past, and `_validUntilDateTime` is null or in the future     |
+| `expired`   | Records where `_validUntilDateTime` is in the past                                                                     |
+| `pendings`  | Records where `_validFromDateTime` is null or in the future                                                            |
+| `owners`    | Records where `_ownerUsers` or `_ownerGroups` contain the given user or group IDs. Requires `userIds` and `groupIds`   |
+| `viewers`   | Records where `_viewerUsers` or `_viewerGroups` contain the given user or group IDs. Requires `userIds` and `groupIds` |
+| `audience`  | Combines `actives`, `publics`, and ownership/viewership filters. Requires `userIds` and `groupIds`                     |
+| `day`       | Records created within the last 24 hours                                                                               |
+| `week`      | Records created within the last 7 days                                                                                 |
+| `month`     | Records created within the last 30 days                                                                                |
+| `roots`     | Records where `_parentsCount` is 0 (i.e., not a child of any other record)                                             |
+| `expired30` | Records where `_validUntilDateTime` is more than 30 days in the past                                                   |
 
-#### Features of Sets
+#### Usage of Sets
 
 - **Simple Named Filters**  
   Use sets like `?set[publics]` or `?set[actives]` to apply predefined filter logic without repeating full filter expressions.
@@ -667,41 +667,74 @@ They are useful for quickly retrieving commonly scoped data like public items, a
   ```
 
 - **Mixing Sets with Other Filters**  
-  Sets can be combined with regular filters to further narrow results:
+  Sets can be combined with standard filter clauses to refine results further:
   
   ```http
   ?set[actives]&filter[where][_kind]=config
   ```
 
 - **Sets Inside Include Filters**  
-  You can apply sets to related records using `filter[include][set]`. For example, return only active and public entities included in each list:
+  You can apply sets inside `filter[include]` to filter related records.  
+  Example: Include only active and public entities in each list:
   
   ```http
   ?filter[include][0][relation]=_entities&filter[include][0][set][and][0][actives]&filter[include][0][set][and][1][publics]
   ```
 
+- **Sets with User and Group Context**  
+  The `owners`, `viewers`, and `audience` sets require you to specify which user and group IDs the filtering should consider.  
+  Use the following query parameters to provide those identifiers:
+
+  ```http
+  ?set[owners][userIds]=user1,user2&set[owners][groupIds]=group1,group2
+  ?set[viewers][userIds]=user1&set[viewers][groupIds]=group1
+  ?set[audience][userIds]=user1&set[audience][groupIds]=group1
+  ```
+
+  These parameters are used to check whether the caller is listed in the `_ownerUsers`, `_ownerGroups`, `_viewerUsers`, or `_viewerGroups` fields of a record.
+
 - **Role-Based Enforcement**  
-  Sets can be enforced by the gateway based on the user’s roles or scopes. For example, users with read-only roles might automatically be restricted to the `publics` or `audience` set, regardless of the query they submit.
+  Sets can be automatically enforced by the gateway depending on the user's role or scope.  
+  For example, a read-only user might always receive data filtered by the `audience` set, regardless of the filters provided in the query.
 
 #### Example Use Cases
 
 - **Fetch active and public blog entities**
-  
+
   ```http
   GET /entities?set[and][0][actives]&set[and][1][publics]&filter[where][_kind]=blog
   ```
 
 - **Get all root-level public items**
-  
+
   ```http
   GET /entities?set[and][0][roots]&set[and][1][publics]
   ```
 
 - **Retrieve lists created in the last week**
-  
+
   ```http
   GET /lists?set[week]
   ```
+
+- **Fetch entities owned by specific users or groups**
+
+  ```http
+  GET /entities?set[owners][userIds]=user1,user2&set[owners][groupIds]=group1,group2
+  ```
+
+- **Fetch entities viewable by specific users or groups**
+
+  ```http
+  GET /entities?set[viewers][userIds]=user3&set[viewers][groupIds]=groupX
+  ```
+
+- **Fetch records visible to a user's audience scope (active, public, or owned/viewable)**
+
+  ```http
+  GET /entities?set[audience][userIds]=user5&set[audience][groupIds]=groupZ
+  ```
+
 
 Sets provide a convenient and secure abstraction for filtering data while keeping API requests short and expressive.
 ### Including and Querying Relations
