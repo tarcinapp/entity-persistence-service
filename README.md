@@ -20,13 +20,19 @@
   - [Role \& Responsibilities of the Gateway Component](#role--responsibilities-of-the-gateway-component)
   - [Querying Data](#querying-data)
     - [Standard Filtering Syntax](#standard-filtering-syntax)
+      - [`filter[where]` — Conditional Filtering](#filterwhere--conditional-filtering)
+      - [`filter[fields]` — Field Selection](#filterfields--field-selection)
+      - [`filter[include]` — Related Models](#filterinclude--related-models)
+      - [`filter[order]` — Sorting](#filterorder--sorting)
+      - [`filter[limit]` — Pagination Limit](#filterlimit--pagination-limit)
+      - [`filter[skip]` — Offset](#filterskip--offset)
+      - [Comparison Operators](#comparison-operators)
     - [Sets](#sets)
     - [Including and Querying Relations](#including-and-querying-relations)
     - [Including Lookups](#including-lookups)
     - [Querying the Relation](#querying-the-relation)
     - [Using `through` Filters](#using-through-filters)
   - [Relations](#relations)
-  - [Sets](#sets-1)
     - [Lookups](#lookups)
       - [Reference Types](#reference-types)
       - [Query Structure](#query-structure)
@@ -432,59 +438,133 @@ The **entity-persistence-gateway** performs all access-related responsibilities:
 All endpoints support advanced, structured querying via query string parameters. These allow clients to precisely control which records are returned, what fields are included, how results are filtered or sorted, and how relationships are traversed.
 
 ### Standard Filtering Syntax
-**`filter[where]` — Conditional filtering**
 
-Defines constraints on the records returned. You can use logical operators like `and`, `or`, as well as comparison operators like `gt`, `lt`, `inq`, `between`, etc.
+The API supports a powerful and expressive query system using structured query string syntax. Standard filters are passed using the `filter[...]` parameter and can be combined to control which records are returned, which fields are included, how results are sorted, and more.
+
+#### `filter[where]` — Conditional Filtering
+
+Defines constraints on which records to include in the result set.
+
+You can use logical operators (`and`, `or`) and comparison operators (`gt`, `inq`, `like`, etc.) to filter on any field—including nested fields via dot notation.
+
+**Examples:**
 
 ~~~http
 GET /entities?filter[where][_kind]=product
 GET /entities?filter[where][and][0][_kind]=product&filter[where][and][1][_visibility]=public
+GET /entities?filter[where][views][gte]=100
+GET /entities?filter[where][metadata.createdBy]=user123
+GET /entities?filter[where][score][between][]=10&filter[where][score][between][]=20
 ~~~
 
-**Supported operators include**:  
-`eq`, `neq`, `gt`, `gte`, `lt`, `lte`, `inq`, `nin`, `between`, `like`, `nlike`, `ilike`, `nilike`, `exists`, `regexp`
+For a full list of supported operators, see the [Comparison Operators Table](#comparison-operators).
 
-Add examples for 
-  each operator.
-  logical operators
-  nested examples
-  arbitrary non-string fields - using type
+#### `filter[fields]` — Field Selection
+
+Controls which fields are included in the response. Fields not listed will be excluded.
+
+**Examples:**
+
+~~~http
+GET /entities?filter[fields][name]=true&filter[fields][score]=true
+GET /lists?filter[fields][_id]=true&filter[fields][title]=true
+~~~
+
+You can use this to reduce payload size or limit data exposure.
+
+#### `filter[include]` — Related Models
+
+Used to include relations such as `parents`, `children`, or custom foreign references when querying models with relationships.
+
+**Examples:**
+
+~~~http
+GET /entities?filter[include]=children
+GET /entities?filter[include]=parents
+~~~
+
+If the relationship supports scoping, additional filters can be applied via `scope`.
+
+---
+
+#### `filter[order]` — Sorting
+
+Sort results by one or more fields in ascending (`ASC`) or descending (`DESC`) order.
+
+**Examples:**
+
+~~~http
+GET /entities?filter[order]=_createdDateTime DESC
+GET /lists?filter[order]=title ASC
+~~~
+
+Multiple sorting levels can be chained:
+
+~~~http
+GET /entities?filter[order]=_kind ASC&filter[order]=name DESC
+~~~
+
+---
+
+#### `filter[limit]` — Pagination Limit
+
+Restricts the number of records returned in the response.
+
+**Example:**
+
+~~~http
+GET /entities?filter[limit]=10
+~~~
+
+---
+
+#### `filter[skip]` — Offset
+
+Skips a number of records. Commonly used for pagination in combination with `limit`.
+
+**Example:**
+
+~~~http
+GET /entities?filter[skip]=20&filter[limit]=10
+~~~
+
+This would return the third "page" if your page size is 10.
+
+---
+
+#### Comparison Operators
+
+You can use comparison operators within `filter[where]` to match complex conditions:
+
+| Operator    | Description                              | Example                                                                 |
+|-------------|------------------------------------------|-------------------------------------------------------------------------|
+| `eq`        | Equal to (implicit)                      | `filter[where][status]=active`                                         |
+| `neq`       | Not equal to                             | `filter[where][status][neq]=archived`                                  |
+| `gt`        | Greater than                             | `filter[where][score][gt]=100`                                         |
+| `gte`       | Greater than or equal to                 | `filter[where][score][gte]=100`                                        |
+| `lt`        | Less than                                | `filter[where][score][lt]=100`                                         |
+| `lte`       | Less than or equal to                    | `filter[where][score][lte]=100`                                        |
+| `inq`       | Value is in the list                     | `filter[where][tag][inq][]=foo&filter[where][tag][inq][]=bar`          |
+| `nin`       | Value is not in the list                 | `filter[where][status][nin][]=archived`                                |
+| `between`   | Between two values                       | `filter[where][score][between][]=10&filter[where][score][between][]=20`|
+| `like`      | Case-sensitive pattern match             | `filter[where][name][like]=admin%25`                                   |
+| `nlike`     | Not like (case-sensitive)                | `filter[where][name][nlike]=test%25`                                   |
+| `ilike`     | Case-insensitive like                    | `filter[where][name][ilike]=hello%25`                                  |
+| `nilike`    | Case-insensitive not like                | `filter[where][name][nilike]=demo%25`                                  |
+| `exists`    | Field exists or not                      | `filter[where][metadata.field][exists]=true`                           |
+| `regexp`    | Regular expression match                 | `filter[where][email][regexp]=^.+@domain.com$`                         |
+
+---
+
+You can freely combine all of these filters in the same query to express powerful and precise logic.
+
+**Example combining all:**
+
+~~~http
+GET /entities?filter[where][and][0][_kind]=article&filter[where][and][1][_visibility]=public&filter[fields][title]=true&filter[fields][summary]=true&filter[order]=_createdDateTime DESC&filter[limit]=5&filter[skip]=10
+~~~
 
 ### Sets
-### Including and Querying Relations
-Scope usage
-### Including Lookups
-### Querying the Relation
-### Using `through` Filters
-
-Query parameters are passed using standard and extended filter syntaxes described below.
-
-where
-  dot notation
-  operators
-filter
-  where
-  include
-  lookup
-filterThrough
-entityFilter
-listFilter
-set
-entitySet
-listSet
-setThrough
-
-
-
-## Relations
-
-Relations are individual records just like entities and lists. Relations can hold arbitrary data along with the managed fields. Each time a relation is queried existence of the source and the target record is always checked. With the help of the relations entities under specific list, or reactions under specific list or entity can be queried.  
-`/lists/{listId}/entities`  
-`/entities/{entityId}/reactions`  
-While querying the target record with the notation above, users can filter by the relation object using the `filterThrough` extension. For instance:  
-`/lists/{listId}/entities?filterThrough[where][kind]=consists`  
-
-## Sets
 
 Sets are a powerful feature introduced in the application, designed to streamline data filtering and selection. They provide a convenient and flexible way to retrieve specific subsets of data based on predefined conditions or custom logical combinations.
 
@@ -517,6 +597,38 @@ The application comes with a set of prebuilt sets to simplify common data select
 | expired30 | Selects all data where the _validUntilDateTime field has a value and is between the current time and 30 days ago, indicating records that have expired within the last 30 days.                                                                                                              |
 
 The introduction of sets enhances the application's querying capabilities, allowing users to easily access and manage specific subsets of data based on predefined conditions or customized logical combinations.
+### Including and Querying Relations
+Scope usage
+### Including Lookups
+### Querying the Relation
+### Using `through` Filters
+
+Query parameters are passed using standard and extended filter syntaxes described below.
+
+where
+  dot notation
+  operators
+filter
+  where
+  include
+  lookup
+filterThrough
+entityFilter
+listFilter
+set
+entitySet
+listSet
+setThrough
+
+
+
+## Relations
+
+Relations are individual records just like entities and lists. Relations can hold arbitrary data along with the managed fields. Each time a relation is queried existence of the source and the target record is always checked. With the help of the relations entities under specific list, or reactions under specific list or entity can be queried.  
+`/lists/{listId}/entities`  
+`/entities/{entityId}/reactions`  
+While querying the target record with the notation above, users can filter by the relation object using the `filterThrough` extension. For instance:  
+`/lists/{listId}/entities?filterThrough[where][kind]=consists`  
 
 ### Lookups
 
