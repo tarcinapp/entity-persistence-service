@@ -90,7 +90,7 @@
 - **Lists** can model playlists, wishlists, saved searches, shopping carts, or collections.
 - **Reactions** can track likes, ratings, flags, reviews, bookmarks, follows, or measurement signals from IoT devices.
 
-📌 Each record — whether an entity, list, or reaction — is automatically decorated with a consistent set of **managed fields**, including:
+📌 Each record — whether an entity, list, or reaction — is automatically decorated with a set of **managed fields**, including:
 - `_id`
 - `_ownerUsers`, `_ownerGroups`
 - `_viewerUsers`, `_viewerGroups`
@@ -177,7 +177,7 @@ Documentation for each Tarcinapp component is available in their respective repo
 Once the application is up and running:
 
 - It starts listening on **port 3000** for HTTP requests.
-- Spins up an in-memory MongoDB instance, for non-production environments
+- If database is not provided, it spins up an in-memory MongoDB instance, for non-production environments
 - Ready to integrate with entity-persistence-gateway
 - Resources created through gateway are kept private to the creator users, and visible only to the creators
 - Ready to create and query resources. See [Endpoints Reference](#endpoints-reference) or take a look at the [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/dev/openapi.json) for more information about the endpoints. 
@@ -193,6 +193,15 @@ Once the application is up and running:
 - Experiment with creating and querying Entities, Lists, ListEntityRelations and Reactions (See [Endpoint Reference](#endpoints-reference) for more information)
 
 # Core Concepts
+
+- [Data Model](#data-model)
+- [Role & Responsibilities of the Gateway Component](#role--responsibilities-of-the-gateway-component)
+- [Querying Data](#querying-data)
+- [Relations](#relations)
+- [Sets](#sets-1)
+- [Programming Conventions](#programming-conventions)
+
+
 
 ## Data Model
 
@@ -301,7 +310,7 @@ See [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.git
 
 ### List Model
 
-The List model organizes collections of entities into meaningful groups. A single list can contain many entities, and an entity can belong to many lists. This many-to-many relationship is managed through a dedicated ListEntityRelation model, enabling fine-grained control over each association. Lists themselves are also records that can hold arbitrary data and can be categorized by kind—such as "favorites," "watchlist," or "top_picks." Whether you're modeling playlists, reading lists, or campaign groupings, lists make it easy to structure and reuse related content across your application.
+The List model organizes collections of entities into meaningful groups. A single list can contain many entities, and an entity can belong to many lists. This many-to-many relationship is managed through a dedicated [ListEntityRelation](#list-entity-relation-model) model, enabling fine-grained control over each association. Lists themselves are also records that can hold arbitrary data and can be categorized by kind—such as "favorites," "watchlist," or "top_picks." Whether you're modeling playlists, reading lists, or campaign groupings, lists make it easy to structure and reuse related content across your application.
 
 **Base Endpoint**: `/lists`  
 **Entities under a list**: `/lists/{listId}/entities`  
