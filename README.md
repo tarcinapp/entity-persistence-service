@@ -448,13 +448,13 @@ You can use logical operators (`and`, `or`) and comparison operators (`gt`, `inq
 
 **Examples:**
 
-~~~http
+```http
 GET /entities?filter[where][_kind]=product
 GET /entities?filter[where][and][0][_kind]=product&filter[where][and][1][_visibility]=public
 GET /entities?filter[where][views][gte]=100
 GET /entities?filter[where][metadata.createdBy]=user123
 GET /entities?filter[where][score][between][]=10&filter[where][score][between][]=20
-~~~
+```
 
 You can use comparison operators within `filter[where]` to match complex conditions:
 
@@ -482,10 +482,10 @@ Controls which fields are included in the response. Fields not listed will be ex
 
 **Examples:**
 
-~~~http
+```http
 GET /entities?filter[fields][name]=true&filter[fields][score]=true
 GET /lists?filter[fields][_id]=false&filter[fields][title]=false
-~~~
+```
 
 You can use this to reduce payload size or limit data exposure. See [2. Field Selection with Arbitrary Fields](#2-field-selection-with-arbitrary-fields) for the limitation with the arbitrary fields.
 
@@ -495,26 +495,22 @@ The `filter[include]` option allows you to include related records (such as reac
 
 The available relations to include depend on the endpoint being queried. Each inclusion adds a new field (prefixed with `_`) to the response, populated with related data.
 
----
-
 **Available Relations by Resource**
 
 - **For Lists (`/lists`)**
   - `_entities`: All entities contained in the list
   - `_reactions`: All reactions attached to the list
 
-  ~~~http
+  ```http
   GET /lists?filter[include][0][relation]=_entities&filter[include][1][relation]=_reactions
-  ~~~
+  ```
 
 - **For Entities (`/entities`)**
   - `_reactions`: All reactions attached to the entity
 
-  ~~~http
+  ```http
   GET /entities?filter[include][0][relation]=_reactions
-  ~~~
-
----
+  ```
 
 **Response Behavior**
 
@@ -522,21 +518,24 @@ When `include` is used, the resulting records will have additional fields named 
 
 **Example Response for `/lists` with `_entities` and `_reactions` included:**
 
-~~~json
+```json
 [
   {
     "_id": "list123",
-    "name": "Top Picks",
+    "_name": "Top Picks",
+    "_slug": "top-picks",
     "_kind": "playlist",
     "_entities": [
       {
         "_id": "ent1",
-        "title": "Item A",
+        "_name": "Item A",
+        "_slug": "item-a",
         "_kind": "product"
       },
       {
         "_id": "ent2",
-        "title": "Item B",
+        "_name": "Item B",
+        "_slug": "item-b",
         "_kind": "product"
       }
     ],
@@ -549,7 +548,7 @@ When `include` is used, the resulting records will have additional fields named 
     ]
   }
 ]
-~~~
+```
 
 **Scoped Includes with `scope`**
 
@@ -557,15 +556,15 @@ You can apply filters to the related records using a `scope` sub-filter. This al
 
 **Example: Return lists with their contained entities, but only if the entity's `_kind` is `product`:**
 
-~~~http
+```http
 GET /lists?filter[include][0][relation]=_entities&filter[include][0][scope][where][_kind]=product
-~~~
+```
 
 **Example: Include only public reactions on each entity:**
 
-~~~http
+```http
 GET /entities?filter[include][0][relation]=_reactions&filter[include][0][scope][where][_visibility]=public
-~~~
+```
 
 **Scope supports all standard filters**, including:
 - `where`
@@ -586,16 +585,16 @@ Sort results by one or more fields in ascending (`ASC`) or descending (`DESC`) o
 
 **Examples:**
 
-~~~http
+```http
 GET /entities?filter[order]=_createdDateTime DESC
 GET /lists?filter[order]=title ASC
-~~~
+```
 
 Multiple sorting levels can be chained:
 
-~~~http
+```http
 GET /entities?filter[order]=_kind ASC&filter[order]=name DESC
-~~~
+```
 
 ---
 
@@ -605,9 +604,9 @@ Restricts the number of records returned in the response.
 
 **Example:**
 
-~~~http
+```http
 GET /entities?filter[limit]=10
-~~~
+```
 
 ---
 
@@ -617,9 +616,9 @@ Skips a number of records. Commonly used for pagination in combination with `lim
 
 **Example:**
 
-~~~http
+```http
 GET /entities?filter[skip]=20&filter[limit]=10
-~~~
+```
 
 This would return the third "page" if your page size is 10.
 
@@ -627,9 +626,9 @@ You can freely combine all of these filters in the same query to express powerfu
 
 **Example combining all:**
 
-~~~http
+```http
 GET /entities?filter[where][and][0][_kind]=article&filter[where][and][1][_visibility]=public&filter[fields][title]=true&filter[fields][summary]=true&filter[order]=_createdDateTime DESC&filter[limit]=5&filter[skip]=10
-~~~
+```
 
 ### Sets
 
