@@ -10,8 +10,7 @@
     - [Using `_kind` to Organize Data Variants](#using-_kind-to-organize-data-variants)
     - [Build Hierarchical Structures Across Models](#build-hierarchical-structures-across-models)
     - [Data Relations](#data-relations)
-      - [Supported Relations](#supported-relations)
-      - [Lookups (Reference Resolution)](#lookups-reference-resolution)
+      - [Types of Relationships](#types-of-relationships)
     - [Entity Model](#entity-model)
     - [List Model](#list-model)
     - [List-Entity Relation Model](#list-entity-relation-model)
@@ -260,59 +259,32 @@ Tarcinapp takes a comprehensive and opinionated approach to handling data relati
 
 Tarcinapp embraces relationships as a **first-class concept**, supporting them out of the box with built-in behavior and authorization logic.
 
-#### Supported Relations
+#### Types of Relationships
 
-Tarcinapp currently supports these relationship types:
+Tarcinapp supports several types of relationships out of the box:
 
-- **Parent-child hierarchies**  
-  - Supported for: `entities`, `lists`, and `reactions`  
-  - Enables modeling of structures like categories, subgroups, and content hierarchies  
-  - Query examples:
-    - `/entities/{id}/parents`, `/entities/{id}/children`
-    - `/lists/{id}/parents`, `/reactions/{id}/children`, etc.
-- **List-to-Entity Relations**  
-  - Managed through a dedicated `ListEntityRelation` model  
-  - Many-to-many: an entity can be in multiple lists, a list can contain multiple entities  
-  - Each relation is its own record and **can store arbitrary metadata**  
-  - Visibility is derived from both sides—**user must be able to see both the list and the entity** to see the relation  
-  - To **create a relation**, user must:
-    - Have ownership rights on the **list**
-    - Have at least view access to the **entity**
-  - Configurable limits such as: max entities per list
-  - Querying support:
-    - `/lists/{listId}/entities` with filters and pagination
-    - `/entities/{id}/lists`
-    - Advanced filtering with relation metadata:
-      - `/lists/{id}/entities?filterThrough[where][_relationField]=value`
-      - `/list-entity-relations?listFilter[where][foo]=bar&entityFilter[where][baz]=qux`
-- **Reactions on Lists and Entities**  
-  - User must be able to **see** the list or entity to react (ownership not required)
-  - Configurable limits on number of reactions per target
-  - Separate endpoints for reactions tied to lists or entities:
-    - `/entities/{id}/reactions`, `/lists/{id}/reactions`
+- **Hierarchical Relations**  
+  Entities, lists, and reactions can each reference parent records of the same type. This enables nested structures such as categories, folders, workflows, or threaded comments.  
+  > Example: `/entities/{id}/parents`, `/lists/{id}/children`
 
-#### Lookups (Reference Resolution)
+- **List-Entity Relations**  
+  Lists can contain multiple entities, and an entity can belong to many lists. These many-to-many connections are handled by a dedicated `ListEntityRelation` model that also allows storing metadata (e.g., addedAt, position). See [List-Entity Relation Model](#list-entity-relation-model) for more information.
+  - Visibility and access are derived from both the list and the entity.  
+  - Gateway enforces: user must **own the list** and **see the entity** to create a relation.  
+  > Example: `/lists/{id}/entities`, `/entities/{id}/lists`
 
-Tarcinapp supports a **powerful lookup mechanism** to resolve references embedded in records—effectively allowing JSON objects to link to other records by URI and query them as if they were joined.
+- **Reactions**  
+  Reactions are flexible data records used to represent interactions or events associated with entities or lists. While they can model familiar actions like likes, ratings, and comments, they can also used to represent more technical or domain-specific use cases—such as status updates, event logs, or signals from IoT devices.  
+  Users must be able to **view** the target entity or list to create or access a reaction.  
+  > Example: `/entities/{id}/reactions`, `/lists/{id}/reactions`
 
-Example reference format:
-```
-"parent": "tapp://localhost/entities/{entityId}"
-```
-
-Features:
-- Supports **nested paths**, arrays, and scalar reference fields
-- Resolves only if **caller is authorized** (enforced by the gateway)
-- Follows familiar filter syntax, similar to relations:
-```
-/entities?filter[lookup][0][prop]=parents
-/entities?filter[lookup][0][prop]=metadata.references.parent
-```
-- Lookup `scope` supports:
-  - `fields`: include only certain fields
-  - `where`: filter resolved records
-  - `lookup`: nested lookups
-  - `set`, `order`, `limit`, `skip`
+- **Lookups (Reference Resolution)**  
+  Any field in a record can act as a pointer to another record using `tapp://` URIs. This supports lightweight references (similar to foreign keys) and can resolve those references at query time, applying filters and access controls.  
+  - Works for nested paths, arrays, and scalar fields  
+  - Gateway enforces authorization during resolution  
+  > Example:  
+  > `/entities?filter[lookup][0][prop]=company`  
+  > `/lists?filter[lookup][0][prop]=entities&filter[lookup][0][scope][lookup][0][prop]=parents`
 
 
 ### Entity Model
@@ -430,7 +402,8 @@ The **entity-persistence-gateway** performs all access-related responsibilities:
 **Query Scope Enforcement**  
 - Restricts results to only those records the user is authorized to see  
 - Evaluates fields like `_visibility`, `_ownerUsers`, `_viewerGroups`, etc.  
-- Ensures that even if a user requests all entities, lists, or reactions, they only receive records visible to them  
+- Ensures that even if a user requests all entities, lists, or reactions, they only receive records visible to them
+- Even for the included relations or resolved lookups, the gateway will filter the records based on what the user is authorized to see
 
 **Field-Level Access Control**  
 - Removes fields from the response that the user is not authorized to see  
