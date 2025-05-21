@@ -639,20 +639,20 @@ They are useful for quickly retrieving commonly scoped data like public items, a
 
 #### Available Sets
 
-| Set Name   | Description                                                                                              |
-|------------|----------------------------------------------------------------------------------------------------------|
-| `publics`  | Records where `_visibility` is `public`                                                                  |
-| `actives`  | Records where `_validFromDateTime` is not null and in the past, and `_validUntilDateTime` is null or in the future |
-| `inactives`| Records where `_validUntilDateTime` is in the past                                                       |
-| `pendings` | Records where `_validFromDateTime` is null or in the future                                              |
-| `owners`   | Records where `_ownerUsers` or `_ownerGroups` contain the given user or group IDs                        |
-| `viewers`  | Records where `_viewerUsers` or `_viewerGroups` contain the given user or group IDs                      |
-| `audience` | Combines `actives`, `publics`, and ownership/viewership filters. Requires `userIds` and `groupIds`       |
-| `day`      | Records created within the last 24 hours                                                                 |
-| `week`     | Records created within the last 7 days                                                                   |
-| `month`    | Records created within the last 30 days                                                                  |
-| `roots`    | Records where `_parentsCount` is 0 (i.e., not a child of any other record)                              |
-| `expired30`| Records where `_validUntilDateTime` is more than 30 days in the past                                     |
+| Set Name    | Description                                                                                                        |
+| ----------- | ------------------------------------------------------------------------------------------------------------------ |
+| `publics`   | Records where `_visibility` is `public`                                                                            |
+| `actives`   | Records where `_validFromDateTime` is not null and in the past, and `_validUntilDateTime` is null or in the future |
+| `expired`   | Records where `_validUntilDateTime` is in the past                                                                 |
+| `pendings`  | Records where `_validFromDateTime` is null or in the future                                                        |
+| `owners`    | Records where `_ownerUsers` or `_ownerGroups` contain the given user or group IDs                                  |
+| `viewers`   | Records where `_viewerUsers` or `_viewerGroups` contain the given user or group IDs                                |
+| `audience`  | Combines `actives`, `publics`, and ownership/viewership filters. Requires `userIds` and `groupIds`                 |
+| `day`       | Records created within the last 24 hours                                                                           |
+| `week`      | Records created within the last 7 days                                                                             |
+| `month`     | Records created within the last 30 days                                                                            |
+| `roots`     | Records where `_parentsCount` is 0 (i.e., not a child of any other record)                                         |
+| `expired30` | Records where `_validUntilDateTime` is more than 30 days in the past                                               |
 
 #### Features of Sets
 
