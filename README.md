@@ -26,7 +26,6 @@
       - [`filter[order]` — Sorting](#filterorder--sorting)
       - [`filter[limit]` — Pagination Limit](#filterlimit--pagination-limit)
       - [`filter[skip]` — Offset](#filterskip--offset)
-      - [Comparison Operators](#comparison-operators)
     - [Sets](#sets)
     - [Including and Querying Relations](#including-and-querying-relations)
     - [Including Lookups](#including-lookups)
@@ -457,7 +456,25 @@ GET /entities?filter[where][metadata.createdBy]=user123
 GET /entities?filter[where][score][between][]=10&filter[where][score][between][]=20
 ~~~
 
-For a full list of supported operators, see the [Comparison Operators Table](#comparison-operators).
+You can use comparison operators within `filter[where]` to match complex conditions:
+
+| Operator    | Description                              | Example                                                                 |
+|-------------|------------------------------------------|-------------------------------------------------------------------------|
+| `eq`        | Equal to (implicit)                      | `filter[where][status]=active`                                         |
+| `neq`       | Not equal to                             | `filter[where][status][neq]=archived`                                  |
+| `gt`        | Greater than                             | `filter[where][score][gt]=100`                                         |
+| `gte`       | Greater than or equal to                 | `filter[where][score][gte]=100`                                        |
+| `lt`        | Less than                                | `filter[where][score][lt]=100`                                         |
+| `lte`       | Less than or equal to                    | `filter[where][score][lte]=100`                                        |
+| `inq`       | Value is in the list                     | `filter[where][tag][inq][]=foo&filter[where][tag][inq][]=bar`          |
+| `nin`       | Value is not in the list                 | `filter[where][status][nin][]=archived`                                |
+| `between`   | Between two values                       | `filter[where][score][between][]=10&filter[where][score][between][]=20`|
+| `like`      | Case-sensitive pattern match             | `filter[where][name][like]=admin%25`                                   |
+| `nlike`     | Not like (case-sensitive)                | `filter[where][name][nlike]=test%25`                                   |
+| `ilike`     | Case-insensitive like                    | `filter[where][name][ilike]=hello%25`                                  |
+| `nilike`    | Case-insensitive not like                | `filter[where][name][nilike]=demo%25`                                  |
+| `exists`    | Field exists or not                      | `filter[where][metadata.field][exists]=true`                           |
+| `regexp`    | Regular expression match                 | `filter[where][email][regexp]=^.+@domain.com$`                         |
 
 #### `filter[fields]` — Field Selection
 
@@ -529,32 +546,6 @@ GET /entities?filter[skip]=20&filter[limit]=10
 ~~~
 
 This would return the third "page" if your page size is 10.
-
----
-
-#### Comparison Operators
-
-You can use comparison operators within `filter[where]` to match complex conditions:
-
-| Operator    | Description                              | Example                                                                 |
-|-------------|------------------------------------------|-------------------------------------------------------------------------|
-| `eq`        | Equal to (implicit)                      | `filter[where][status]=active`                                         |
-| `neq`       | Not equal to                             | `filter[where][status][neq]=archived`                                  |
-| `gt`        | Greater than                             | `filter[where][score][gt]=100`                                         |
-| `gte`       | Greater than or equal to                 | `filter[where][score][gte]=100`                                        |
-| `lt`        | Less than                                | `filter[where][score][lt]=100`                                         |
-| `lte`       | Less than or equal to                    | `filter[where][score][lte]=100`                                        |
-| `inq`       | Value is in the list                     | `filter[where][tag][inq][]=foo&filter[where][tag][inq][]=bar`          |
-| `nin`       | Value is not in the list                 | `filter[where][status][nin][]=archived`                                |
-| `between`   | Between two values                       | `filter[where][score][between][]=10&filter[where][score][between][]=20`|
-| `like`      | Case-sensitive pattern match             | `filter[where][name][like]=admin%25`                                   |
-| `nlike`     | Not like (case-sensitive)                | `filter[where][name][nlike]=test%25`                                   |
-| `ilike`     | Case-insensitive like                    | `filter[where][name][ilike]=hello%25`                                  |
-| `nilike`    | Case-insensitive not like                | `filter[where][name][nilike]=demo%25`                                  |
-| `exists`    | Field exists or not                      | `filter[where][metadata.field][exists]=true`                           |
-| `regexp`    | Regular expression match                 | `filter[where][email][regexp]=^.+@domain.com$`                         |
-
----
 
 You can freely combine all of these filters in the same query to express powerful and precise logic.
 
