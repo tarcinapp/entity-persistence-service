@@ -18,7 +18,7 @@
     - [Reactions Model](#reactions-model)
       - [List Reactions](#list-reactions)
       - [Entity Reactions](#entity-reactions)
-  - [Role \& Responsibilities of entity-persistence-gateway](#role--responsibilities-of-entity-persistence-gateway)
+  - [Role \& Responsibilities of the Gateway Component](#role--responsibilities-of-the-gateway-component)
   - [Querying Data](#querying-data)
     - [Standard Filtering Syntax](#standard-filtering-syntax)
     - [Sets](#sets)
@@ -406,7 +406,7 @@ See [Endpoints Reference - EntityReactionController](#entityreactioncontroller)
 See [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/dev/openapi.json#tag/EntityReactionController)
 
 
-## Role & Responsibilities of entity-persistence-gateway
+## Role & Responsibilities of the Gateway Component
 The entity-persistence-service is designed to be a generic and flexible data store. By design, it does not handle access control, authentication, or any user-specific filtering. It responds to all valid queries with matching records, regardless of who the caller is or whether they are authorized to see the data.
 
 Security, access control, and response shaping are handled by the entity-persistence-gateway, which sits in front of this service and evaluates incoming requests against authorization policies.
