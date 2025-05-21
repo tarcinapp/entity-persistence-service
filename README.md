@@ -484,10 +484,10 @@ Controls which fields are included in the response. Fields not listed will be ex
 
 ~~~http
 GET /entities?filter[fields][name]=true&filter[fields][score]=true
-GET /lists?filter[fields][_id]=true&filter[fields][title]=true
+GET /lists?filter[fields][_id]=false&filter[fields][title]=false
 ~~~
 
-You can use this to reduce payload size or limit data exposure.
+You can use this to reduce payload size or limit data exposure. See [2. Field Selection with Arbitrary Fields](#2-field-selection-with-arbitrary-fields) for the limitation with the arbitrary fields.
 
 #### `filter[include]` — Related Models
 
