@@ -479,6 +479,49 @@ You can use comparison operators within `filter[where]` to match complex conditi
 | `exists`  | Field exists or not          | `filter[where][metadata.field][exists]=true`                            |
 | `regexp`  | Regular expression match     | `filter[where][email][regexp]=^.+@domain.com$`                          |
 
+**Type Hinting for Non-String Fields**
+
+Since all query string values are interpreted as strings by default, filtering on numeric or boolean fields requires explicit type annotation—unless the field is managed or the request passes through the gateway.
+
+For example, the query below **will not work correctly** if `views` is a numeric field, because `"100"` is a string:
+
+```http
+?filter[where][views][gt]=100
+```
+
+To ensure correct type conversion, include a type hint alongside the field:
+
+```http
+?filter[where][views][gt]=100&filter[where][views][type]=number
+```
+
+Supported type hints:
+- `number`
+- `boolean`
+
+If the request is made through the **gateway**, the gateway will automatically detect unmanaged field types based on the JSON schema for the `_kind`, and apply the necessary type conversions on behalf of the caller.
+
+This automatic conversion allows clients to submit simplified queries while still benefiting from correct backend filtering.
+
+---
+
+**Special Case: Boolean and Null Literals**
+
+Equality conditions involving certain literal values behave differently:
+
+- If the right-hand side is the string `true` or `false`, it is **always interpreted as a boolean**.
+  ```http
+  ?filter[where][isActive]=true
+  ```
+
+- If the right-hand side is the string `"null"`, it is **interpreted as an actual `null` value** in filtering.
+  ```http
+  ?filter[where][deletedBy]=null
+  ```
+
+These behaviors allow for more natural and predictable querying, especially when checking for presence or absence of values.
+
+
 #### `filter[fields]` — Field Selection
 
 Controls which fields are included in the response. Fields not listed will be excluded.
