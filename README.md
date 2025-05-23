@@ -503,8 +503,6 @@ If the request is made through the **gateway**, the gateway will automatically d
 
 This automatic conversion allows clients to submit simplified queries while still benefiting from correct backend filtering.
 
----
-
 **Special Case: Boolean and Null Literals**
 
 Equality conditions involving certain literal values behave differently:
@@ -528,10 +526,10 @@ Controls which fields are included in the response. Fields not listed will be ex
 
 **Examples:**
 
-```http
+~~~http
 GET /entities?filter[fields][name]=true&filter[fields][score]=true
 GET /lists?filter[fields][_id]=false&filter[fields][title]=false
-```
+~~~
 
 You can use this to reduce payload size or limit data exposure. See [2. Field Selection with Arbitrary Fields](#2-field-selection-with-arbitrary-fields) for the limitation with the arbitrary fields.
 
