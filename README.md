@@ -259,6 +259,8 @@ This allows applications to store diverse schemas under a shared model—for exa
 
 The `_kind` field is especially helpful when the application needs to apply different logic, limits, or schema validations per subtype. Admins can configure allowed `_kind` values for each model to enforce consistency and avoid accidental misuse.
 
+> In gateway-based deployments, `_kind` also enables **endpoint-level abstraction**. For example, the gateway can expose `/books` and route it to the `/entities` model while automatically scoping all operations to records where `_kind` is `book`. This makes the API feel more domain-specific without duplicating storage or code.
+
 ### Build Hierarchical Structures Across Models
 
 Each core model — Entity, List, EntityReaction, ListReaction — supports hierarchy out of the box. A record can define one or more parents using special reference fields (`_parents`), enabling the creation of nested structures.
