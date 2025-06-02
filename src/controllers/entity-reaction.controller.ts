@@ -24,6 +24,7 @@ import { EntityReaction, HttpErrorResponse } from '../models';
 import {
   UNMODIFIABLE_COMMON_FIELDS,
   UnmodifiableCommonFields,
+  ALWAYS_HIDDEN_FIELDS,
 } from '../models/base-types/unmodifiable-common-fields';
 import { getFilterSchemaFor } from '../openapi/filter-schemas';
 import { EntityReactionsRepository } from '../repositories';
@@ -42,7 +43,11 @@ export class EntityReactionController {
       '200': {
         description: 'EntityReaction model instance',
         content: {
-          'application/json': { schema: getModelSchemaRef(EntityReaction) },
+          'application/json': {
+            schema: getModelSchemaRef(EntityReaction, {
+              exclude: ALWAYS_HIDDEN_FIELDS as (keyof EntityReaction)[],
+            }),
+          },
         },
       },
       '429': {
@@ -100,7 +105,7 @@ export class EntityReactionController {
     @param.query.object('set') set?: Set,
     @param.where(EntityReaction) where?: Where<EntityReaction>,
     @param.query.object('entitySet') entitySet?: Set,
-    @param.where(EntityReaction) entityWhere?: Where<EntityReaction>,
+    @param.query.object('entityWhere') entityWhere?: Where<EntityReaction>,
   ): Promise<Count> {
     const filterBuilder = new FilterBuilder<EntityReaction>();
 
@@ -148,6 +153,7 @@ export class EntityReactionController {
               type: 'array',
               items: getModelSchemaRef(EntityReaction, {
                 includeRelations: true,
+                exclude: ALWAYS_HIDDEN_FIELDS as (keyof EntityReaction)[],
               }),
             },
           },
@@ -256,6 +262,7 @@ export class EntityReactionController {
           'application/json': {
             schema: getModelSchemaRef(EntityReaction, {
               includeRelations: true,
+              exclude: ALWAYS_HIDDEN_FIELDS as (keyof EntityReaction)[],
             }),
           },
         },
@@ -393,6 +400,7 @@ export class EntityReactionController {
               type: 'array',
               items: getModelSchemaRef(EntityReaction, {
                 includeRelations: true,
+                exclude: ALWAYS_HIDDEN_FIELDS as (keyof EntityReaction)[],
               }),
             },
           },
@@ -450,6 +458,7 @@ export class EntityReactionController {
               type: 'array',
               items: getModelSchemaRef(EntityReaction, {
                 includeRelations: true,
+                exclude: ALWAYS_HIDDEN_FIELDS as (keyof EntityReaction)[],
               }),
             },
           },
@@ -502,7 +511,11 @@ export class EntityReactionController {
       '200': {
         description: 'Child EntityReaction model instance',
         content: {
-          'application/json': { schema: getModelSchemaRef(EntityReaction) },
+          'application/json': {
+            schema: getModelSchemaRef(EntityReaction, {
+              exclude: ALWAYS_HIDDEN_FIELDS as (keyof EntityReaction)[],
+            }),
+          },
         },
       },
       '429': {

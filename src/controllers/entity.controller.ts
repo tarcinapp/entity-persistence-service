@@ -26,6 +26,7 @@ import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
 import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
 import { GenericEntity, HttpErrorResponse } from '../models';
 import {
+  ALWAYS_HIDDEN_FIELDS,
   UNMODIFIABLE_COMMON_FIELDS,
   UnmodifiableCommonFields,
 } from '../models/base-types/unmodifiable-common-fields';
@@ -46,7 +47,11 @@ export class EntityController {
       '200': {
         description: 'Entity model instance',
         content: {
-          'application/json': { schema: getModelSchemaRef(GenericEntity) },
+          'application/json': {
+            schema: getModelSchemaRef(GenericEntity, {
+              exclude: ALWAYS_HIDDEN_FIELDS as (keyof GenericEntity)[],
+            }),
+          },
         },
       },
       '429': {
@@ -145,6 +150,7 @@ export class EntityController {
               type: 'array',
               items: getModelSchemaRef(GenericEntity, {
                 includeRelations: true,
+                exclude: ALWAYS_HIDDEN_FIELDS as (keyof GenericEntity)[],
               }),
             },
           },
@@ -222,6 +228,7 @@ export class EntityController {
           'application/json': {
             schema: getModelSchemaRef(GenericEntity, {
               includeRelations: true,
+              exclude: ALWAYS_HIDDEN_FIELDS as (keyof GenericEntity)[],
             }),
           },
         },
@@ -384,6 +391,7 @@ export class EntityController {
               type: 'array',
               items: getModelSchemaRef(GenericEntity, {
                 includeRelations: true,
+                exclude: ALWAYS_HIDDEN_FIELDS as (keyof GenericEntity)[],
               }),
             },
           },
@@ -431,6 +439,7 @@ export class EntityController {
               type: 'array',
               items: getModelSchemaRef(GenericEntity, {
                 includeRelations: true,
+                exclude: ALWAYS_HIDDEN_FIELDS as (keyof GenericEntity)[],
               }),
             },
           },
@@ -473,7 +482,11 @@ export class EntityController {
       '200': {
         description: 'Child Entity model instance',
         content: {
-          'application/json': { schema: getModelSchemaRef(GenericEntity) },
+          'application/json': {
+            schema: getModelSchemaRef(GenericEntity, {
+              exclude: ALWAYS_HIDDEN_FIELDS as (keyof GenericEntity)[],
+            }),
+          },
         },
       },
       '429': {

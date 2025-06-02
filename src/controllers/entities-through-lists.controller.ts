@@ -31,6 +31,7 @@ import {
 import {
   UNMODIFIABLE_COMMON_FIELDS,
   UnmodifiableCommonFields,
+  ALWAYS_HIDDEN_FIELDS,
 } from '../models/base-types/unmodifiable-common-fields';
 import { ListRepository } from '../repositories';
 import { LoggingService } from '../services/logging.service';
@@ -53,6 +54,7 @@ export class EntitiesThroughListController {
               type: 'array',
               items: getModelSchemaRef(GenericEntity, {
                 includeRelations: true,
+                exclude: ALWAYS_HIDDEN_FIELDS as (keyof GenericEntity)[],
               }),
             },
           },
@@ -105,7 +107,11 @@ export class EntitiesThroughListController {
       '200': {
         description: 'Entity model instance',
         content: {
-          'application/json': { schema: getModelSchemaRef(GenericEntity) },
+          'application/json': {
+            schema: getModelSchemaRef(GenericEntity, {
+              exclude: ALWAYS_HIDDEN_FIELDS as (keyof GenericEntity)[],
+            }),
+          },
         },
       },
       '429': {

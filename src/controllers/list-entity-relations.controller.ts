@@ -27,6 +27,7 @@ import { ListToEntityRelation, HttpErrorResponse } from '../models';
 import {
   UNMODIFIABLE_COMMON_FIELDS,
   UnmodifiableCommonFields,
+  ALWAYS_HIDDEN_FIELDS,
 } from '../models/base-types/unmodifiable-common-fields';
 import { getFilterSchemaFor } from '../openapi/filter-schemas';
 import { ListEntityRelationRepository } from '../repositories';
@@ -48,7 +49,9 @@ export class ListEntityRelController {
         description: '  ListEntityRelation model instance',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(ListToEntityRelation),
+            schema: getModelSchemaRef(ListToEntityRelation, {
+              exclude: ALWAYS_HIDDEN_FIELDS as (keyof ListToEntityRelation)[],
+            }),
           },
         },
       },
@@ -132,11 +135,11 @@ export class ListEntityRelController {
     @param.query.object('set') set?: Set,
     @param.where(ListToEntityRelation)
     where?: Where<ListToEntityRelation>,
-    @param.where(ListToEntityRelation)
+    @param.query.object('listWhere')
     listWhere?: Where<ListToEntityRelation>,
     @param.query.object('listSet')
     listSet?: Set,
-    @param.where(ListToEntityRelation)
+    @param.query.object('entityWhere')
     entityWhere?: Where<ListToEntityRelation>,
     @param.query.object('entitySet')
     entitySet?: Set,
@@ -202,6 +205,7 @@ export class ListEntityRelController {
               type: 'array',
               items: getModelSchemaRef(ListToEntityRelation, {
                 includeRelations: true,
+                exclude: ALWAYS_HIDDEN_FIELDS as (keyof ListToEntityRelation)[],
               }),
             },
           },
@@ -308,6 +312,7 @@ export class ListEntityRelController {
           'application/json': {
             schema: getModelSchemaRef(ListToEntityRelation, {
               includeRelations: true,
+              exclude: ALWAYS_HIDDEN_FIELDS as (keyof ListToEntityRelation)[],
             }),
           },
         },

@@ -22,6 +22,7 @@ import { EntityReaction, HttpErrorResponse } from '../models';
 import {
   UNMODIFIABLE_COMMON_FIELDS,
   UnmodifiableCommonFields,
+  ALWAYS_HIDDEN_FIELDS,
 } from '../models/base-types/unmodifiable-common-fields';
 import { CustomReactionThroughEntityRepository } from '../repositories/custom-reaction-through-entity.repository';
 import { LoggingService } from '../services/logging.service';
@@ -44,7 +45,10 @@ export class ReactionsThroughEntitiesController {
               type: 'array',
               items: getModelSchemaRef(EntityReaction, {
                 includeRelations: true,
-                exclude: ['_relationMetadata'],
+                exclude: [
+                  '_relationMetadata',
+                  ...(ALWAYS_HIDDEN_FIELDS as (keyof EntityReaction)[]),
+                ],
               }),
             },
           },
@@ -90,7 +94,10 @@ export class ReactionsThroughEntitiesController {
         content: {
           'application/json': {
             schema: getModelSchemaRef(EntityReaction, {
-              exclude: ['_relationMetadata'],
+              exclude: [
+                '_relationMetadata',
+                ...(ALWAYS_HIDDEN_FIELDS as (keyof EntityReaction)[]),
+              ],
             }),
           },
         },

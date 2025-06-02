@@ -48,7 +48,7 @@ export interface Condition {
   /** Selects all data where validFromDateTime is valid and not expired */
   actives?: string;
   /** Selects data where validUntilDateTime is in the past */
-  inactives?: string;
+  expired?: string;
   /** Selects data where validFromDateTime is empty */
   pendings?: string;
   /** Selects all data with public visibility */
@@ -274,8 +274,8 @@ class SetToFilterTransformer {
       return this.produceWhereClauseForActives();
     }
 
-    if (setName === 'inactives') {
-      return this.produceWhereClauseForInactives();
+    if (setName === 'expired') {
+      return this.produceWhereClauseForExpired();
     }
 
     if (setName === 'pendings') {
@@ -381,7 +381,7 @@ class SetToFilterTransformer {
     };
   }
 
-  produceWhereClauseForInactives(): Where<AnyObject> {
+  produceWhereClauseForExpired(): Where<AnyObject> {
     const now = new Date();
     const nowISOString = now.toISOString();
 
@@ -680,7 +680,7 @@ class SetToFilterTransformer {
         },
         {
           _validUntilDateTime: {
-            between: [thirtyDaysAgo.toISOString(), now.toISOString()],
+            lt: thirtyDaysAgo.toISOString(),
           },
         },
       ],

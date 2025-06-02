@@ -28,6 +28,7 @@ import { List, HttpErrorResponse } from '../models';
 import {
   UNMODIFIABLE_COMMON_FIELDS,
   UnmodifiableCommonFields,
+  ALWAYS_HIDDEN_FIELDS,
 } from '../models/base-types/unmodifiable-common-fields';
 import { getFilterSchemaFor } from '../openapi/filter-schemas';
 import { ListRepository } from '../repositories';
@@ -48,7 +49,11 @@ export class ListController {
       '200': {
         description: 'List model instance',
         content: {
-          'application/json': { schema: getModelSchemaRef(List) },
+          'application/json': {
+            schema: getModelSchemaRef(List, {
+              exclude: ALWAYS_HIDDEN_FIELDS as (keyof List)[],
+            }),
+          },
         },
       },
       '429': {
@@ -143,7 +148,10 @@ export class ListController {
           'application/json': {
             schema: {
               type: 'array',
-              items: getModelSchemaRef(List, { includeRelations: true }),
+              items: getModelSchemaRef(List, {
+                includeRelations: true,
+                exclude: ALWAYS_HIDDEN_FIELDS as (keyof List)[],
+              }),
             },
           },
         },
@@ -215,7 +223,10 @@ export class ListController {
         description: 'List model instance',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(List, { includeRelations: true }),
+            schema: getModelSchemaRef(List, {
+              includeRelations: true,
+              exclude: ALWAYS_HIDDEN_FIELDS as (keyof List)[],
+            }),
           },
         },
       },
@@ -379,7 +390,11 @@ export class ListController {
       '200': {
         description: 'Child List model instance',
         content: {
-          'application/json': { schema: getModelSchemaRef(List) },
+          'application/json': {
+            schema: getModelSchemaRef(List, {
+              exclude: ALWAYS_HIDDEN_FIELDS as (keyof List)[],
+            }),
+          },
         },
       },
       '429': {
@@ -463,6 +478,7 @@ export class ListController {
               type: 'array',
               items: getModelSchemaRef(List, {
                 includeRelations: true,
+                exclude: ALWAYS_HIDDEN_FIELDS as (keyof List)[],
               }),
             },
           },
@@ -510,6 +526,7 @@ export class ListController {
               type: 'array',
               items: getModelSchemaRef(List, {
                 includeRelations: true,
+                exclude: ALWAYS_HIDDEN_FIELDS as (keyof List)[],
               }),
             },
           },
