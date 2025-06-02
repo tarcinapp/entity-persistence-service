@@ -20,7 +20,7 @@
   - [Role \& Responsibilities of the Gateway Component](#role--responsibilities-of-the-gateway-component)
   - [Querying Data](#querying-data)
     - [Standard Filtering Syntax](#standard-filtering-syntax)
-      - [`filter[where]` — Conditional Filtering](#filterwhere--conditional-filtering)
+      - [`filter[where]` and `where[...]` — Conditional Filtering](#filterwhere-and-where--conditional-filtering)
       - [`filter[fields]` — Field Selection](#filterfields--field-selection)
       - [`filter[include]` — Related Models](#filterinclude--related-models)
       - [`filter[order]` — Sorting](#filterorder--sorting)
@@ -31,8 +31,18 @@
       - [Usage of Sets](#usage-of-sets)
       - [Example Use Cases](#example-use-cases)
     - [Including and Querying Relations](#including-and-querying-relations)
-    - [Including Lookups](#including-lookups)
-    - [Querying the Relation](#querying-the-relation)
+      - [What Can Be Included](#what-can-be-included)
+      - [Apply Scope to Included Relations](#apply-scope-to-included-relations)
+      - [Notes](#notes)
+    - [Lookup References](#lookup-references)
+      - [How Lookups Work in Tarcinapp](#how-lookups-work-in-tarcinapp)
+      - [Arrays and Nested Lookups](#arrays-and-nested-lookups)
+      - [Lookup Scope](#lookup-scope)
+      - [Admin Constraints](#admin-constraints)
+      - [System Limits](#system-limits)
+      - [Lookups and Hierarchies](#lookups-and-hierarchies)
+      - [Summary](#summary)
+    - [Querying the List-Entity-Relation Record](#querying-the-list-entity-relation-record)
     - [Using `through` Filters](#using-through-filters)
   - [Relations](#relations)
     - [Lookups](#lookups)
@@ -445,7 +455,7 @@ All endpoints support advanced, structured querying via query string parameters.
 
 The API supports a powerful and expressive query system using structured query string syntax. Standard filters are passed using the `filter[...]` parameter and can be combined to control which records are returned, which fields are included, how results are sorted, and more.
 
-#### `filter[where]` — Conditional Filtering
+#### `filter[where]` and `where[...]` — Conditional Filtering
 
 Defines constraints on which records to include in the result set.
 
@@ -460,6 +470,19 @@ GET /entities?filter[where][views][gte]=100
 GET /entities?filter[where][metadata.createdBy]=user123
 GET /entities?filter[where][score][between][]=10&filter[where][score][between][]=20
 ```
+
+**Note on where[...] for Count, UpdateAll, and DeleteAll**
+In some operations where the filter object is not supported—such as count, updateAll, or deleteAll—you can use the shorthand syntax where[...] directly in the query string. This syntax uses the same operators and structure as filter[where], just without the wrapping filter.
+
+**Examples:**
+
+```http
+GET /entities/count?where[status]=active
+PATCH /entities?where[status]=draft
+DELETE /entities?where[_kind]=temporary
+```
+
+This provides consistent filtering logic across all endpoints, regardless of whether a full filter object is accepted.
 
 You can use comparison operators within `filter[where]` to match complex conditions:
 
@@ -781,9 +804,236 @@ They are useful for quickly retrieving commonly scoped data like public items, a
 
 Sets provide a convenient and secure abstraction for filtering data while keeping API requests short and expressive.
 ### Including and Querying Relations
-Scope usage
-### Including Lookups
-### Querying the Relation
+
+Tarcinapp allows you to include related records in the response of a query—so that one HTTP request can return not only the main resource but also its associated data. This is called **inclusion**, and it helps reduce the number of API calls required by your frontend or client.
+
+For example, when querying a list, you can include its related entities and reactions in the same response:
+
+```json
+{
+  "_id": "list-id",
+  "_name": "My List",
+  "_entities": [
+    { "_id": "entity-1", "title": "Example Entity" }
+  ],
+  "_reactions": [
+    { "_id": "reaction-1", "type": "like" }
+  ]
+}
+```
+
+This is done using `filter[include]` parameters in your request.
+
+#### What Can Be Included
+
+The following inclusions are supported:
+
+* **When querying lists: `GET /lists`**
+  * "_entities" — include entities under the list
+  * "_reactions" — include reactions posted to the list
+* **When querying entities: `GET /entities`**
+  * "_reactions" — include reactions posted to the entity
+
+**Example: Include Reactions in Entity Query**  
+```http
+GET /entities?filter[include][][relation]=_reactions
+```
+
+**Example: Include Reactions and Entities in List Query**  
+```http
+GET /lists?filter[include][0][relation]=_entities&filter[include][1][relation]=_reactions
+```
+
+**Example: Include Reactions in Single Entity Fetch**  
+```http
+GET /entities/{entityId}?filter[include][][relation]=_reactions
+```
+
+**Filtering Included Relations with scope**  
+You can also filter the included related data using the scope parameter. This applies a filter to the included relation, similar to how you filter the main resource.
+
+**Example: Include only reactions of type like**  
+
+```http
+GET /entities?filter[include][0][relation]=_reactions&filter[include][0][scope][where][type]=like
+```
+
+**Example: Include related entities sorted by name**  
+```http
+GET /lists?filter[include][0][relation]=_entities&filter[include][0][scope][order]=name ASC
+```
+
+#### Apply Scope to Included Relations
+
+* **where** — filter the included records
+* **fields** — include only selected fields
+* **order** — sort the included records
+* **limit**, **skip** — pagination of included records
+* **set** — predefined sets
+* **lookup** — resolve references inside the included relation
+* **include** — include nested related records (lists → entities → reactions)
+
+See [Standard Filter Syntax](#standard-filter-syntax) for more details.
+
+#### Notes
+
+* Relation names like _entities and _reactions are predefined by Tarcinapp for inclusion.
+* Inclusion works with both GET /{model} (list) and GET /{model}/{id} (single record).
+* Use scope to narrow or customize the included related data.
+
+### Lookup References
+
+In JSON-based APIs, it's common to relate one record to another by storing an identifier as a field. For example:
+
+~~~json
+{
+  "title": "Laptop",
+  "supplierId": "abc123"
+}
+~~~
+
+This `supplierId` acts as a foreign key to another object (e.g., a supplier entity). However, such references alone are not useful unless they can be **resolved**—i.e., turned into full objects on demand.
+
+Tarcinapp provides a powerful **lookup mechanism** to enable this.
+
+#### How Lookups Work in Tarcinapp
+
+Instead of plain string IDs, Tarcinapp uses a standardized URI-like reference format:
+
+~~~json
+{
+  "supplierCompany": "tapp://localhost/entities/abc123"
+}
+~~~
+
+- `tapp://` is the protocol
+- `localhost` is the host (future-proofing for resolving across instances)
+- `entities` is the resource type (`entities`, `lists`, `entity-reactions`, or `list-reactions`)
+- `abc123` is the unique ID of the referenced record
+
+When querying, you can **resolve** such references into full objects using the `filter[lookup]` query parameter:
+
+~~~http
+GET /entities?filter[lookup][0][prop]=supplierCompany
+~~~
+
+Response:
+
+~~~json
+{
+  "_id": "product-id",
+  "supplierCompany": {
+    "_id": "abc123",
+    "_name": "ACME Inc."
+  }
+}
+~~~
+
+#### Arrays and Nested Lookups
+
+References can also be stored as arrays or nested fields. Tarcinapp resolves these too:
+
+~~~json
+{
+  "suppliers": [
+    "tapp://localhost/entities/supplier1",
+    "tapp://localhost/entities/supplier2"
+  ]
+}
+~~~
+
+Query:
+
+~~~http
+GET /entities?filter[lookup][0][prop]=suppliers
+~~~
+
+Or for a nested property:
+
+~~~http
+GET /entities?filter[lookup][0][prop]=metadata.references.parent
+~~~
+
+#### Lookup Scope
+
+Lookups support advanced query options via the `scope` parameter, similar to relation includes. This allows filtering, selecting fields, pagination, sorting, and even nested lookups within the resolved objects.
+
+**Examples**:
+
+- **Filter resolved objects**:
+
+  ~~~http
+  GET /entities?filter[lookup][0][prop]=suppliers&filter[lookup][0][scope][where][_kind]=company
+  ~~~
+
+- **Only include selected fields**:
+
+  ~~~http
+  GET /entities?filter[lookup][0][prop]=suppliers&filter[lookup][0][scope][fields][name]=true
+  ~~~
+
+- **Sort resolved results**:
+
+  ~~~http
+  GET /entities?filter[lookup][0][prop]=suppliers&filter[lookup][0][scope][order]=name ASC
+  ~~~
+
+- **Nested lookups**:
+
+  ~~~http
+  GET /entities?filter[lookup][0][prop]=suppliers&filter[lookup][0][scope][lookup][0][prop]=parent
+  ~~~
+
+#### Admin Constraints
+
+Admins can configure **lookup constraints** for specific fields:
+
+- Limit **what types** of records a property can reference (e.g., only `entities`).
+- Enforce **specific `_kind` values** on the target objects (e.g., only entities of kind `company`).
+- Specify **which fields** are allowed to contain lookups.
+
+This ensures schema integrity while maintaining flexibility.
+
+See [Lookup Configuration](#lookup-configuration) for constraint options.
+
+#### System Limits
+
+- Lookup resolution is subject to the **response size limits** defined for the entity kind.
+
+#### Lookups and Hierarchies
+
+Tarcinapp uses lookups internally to manage **parent-child hierarchies** between records. Every record can contain a `_parents` array of references:
+
+~~~json
+{
+  "_parents": [
+    "tapp://localhost/entities/parent-id-1",
+    "tapp://localhost/entities/parent-id-2"
+  ]
+}
+~~~
+
+When you call:
+
+~~~http
+GET /entities/{id}/parents
+~~~
+
+The system performs a lookup on the `_parents` field and returns the resolved objects. This enables tree-like structures, category hierarchies, and nested relationships.
+
+#### Summary
+
+- Tarcinapp allows you to define and resolve rich object relationships using tapp:// reference strings.
+- Lookups are safe, secure (via gateway-based access control), and flexible.
+- Powerful query syntax lets you shape resolved data exactly as needed.
+- The same mechanism powers internal features like hierarchy traversal.
+- Admins can restrict and validate lookup behavior via configuration.
+
+
+### Querying the List-Entity-Relation Record
+
+
+
 ### Using `through` Filters
 
 Query parameters are passed using standard and extended filter syntaxes described below.
@@ -909,7 +1159,6 @@ The `scope` parameter in lookups supports various options:
 - Lookups are resolved in batches to minimize database queries
 - Field selection helps reduce data transfer
 - Nested lookups are processed recursively
-- Results are cached when possible
 
 ## Programming Conventions
 
