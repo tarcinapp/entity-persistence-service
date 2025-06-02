@@ -564,6 +564,8 @@ The `filter[include]` option allows you to include related records (such as reac
 
 The available relations to include depend on the endpoint being queried. Each inclusion adds a new field (prefixed with `_`) to the response, populated with related data.
 
+Find the detailed information about the `filter[include]` parameter in the [Including and Querying Relations](#including-and-querying-relations) section.
+
 **Available Relations by Resource**
 
 - **For Lists (`/lists`)**
@@ -873,7 +875,7 @@ GET /lists?filter[include][0][relation]=_entities&filter[include][0][scope][orde
 * **lookup** — resolve references inside the included relation
 * **include** — include nested related records (lists → entities → reactions)
 
-See [Standard Filter Syntax](#standard-filter-syntax) for more details.
+See [Standard Filtering Syntax](#standard-filtering-syntax) for more details.
 
 #### Notes
 
