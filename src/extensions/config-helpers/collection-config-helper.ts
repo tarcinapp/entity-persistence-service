@@ -1,43 +1,30 @@
+import { EnvConfigHelper } from './env-config-helper';
+
 export class CollectionConfigHelper {
   private static instance: CollectionConfigHelper;
-  private collectionNames: { [key: string]: string } = {};
 
-  private constructor() {
-    this.initializeCollectionNames();
-  }
+  private constructor() {}
 
   public static getInstance(): CollectionConfigHelper {
     if (!CollectionConfigHelper.instance) {
       CollectionConfigHelper.instance = new CollectionConfigHelper();
     }
-
     return CollectionConfigHelper.instance;
   }
 
-  private initializeCollectionNames(): void {
-    this.collectionNames = {
-      entity: process.env.collection_entity ?? 'Entity',
-      list: process.env.collection_list ?? 'List',
-      listEntityRelation:
-        process.env.collection_list_entity_rel ?? 'ListToEntityRelation',
-      entityReactions:
-        process.env.collection_entity_reactions ?? 'EntityReaction',
-    };
-  }
-
   public getEntityCollectionName(): string {
-    return this.collectionNames.entity;
+    return EnvConfigHelper.getInstance().COLLECTION_ENTITY ?? 'Entity';
   }
 
   public getListCollectionName(): string {
-    return this.collectionNames.list;
+    return EnvConfigHelper.getInstance().COLLECTION_LIST ?? 'List';
   }
 
   public getListEntityRelationCollectionName(): string {
-    return this.collectionNames.listEntityRelation;
+    return EnvConfigHelper.getInstance().COLLECTION_LIST_ENTITY_REL ?? 'ListToEntityRelation';
   }
 
   public getEntityReactionsCollectionName(): string {
-    return this.collectionNames.entityReactions;
+    return EnvConfigHelper.getInstance().COLLECTION_ENTITY_REACTIONS ?? 'EntityReaction';
   }
 }
