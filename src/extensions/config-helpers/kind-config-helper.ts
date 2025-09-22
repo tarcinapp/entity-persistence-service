@@ -1,5 +1,6 @@
 import { BindingKey } from '@loopback/core';
 import slugify from 'slugify';
+import { EnvConfigHelper } from './env-config-helper';
 
 export const KindBindings = {
   CONFIG_READER: BindingKey.create<KindConfigurationReader>(
@@ -43,36 +44,32 @@ export class KindConfiguration {
   }
 
   private loadConfigurations() {
+    const env = EnvConfigHelper.getInstance();
+
     // Update default kinds from environment variables if specified
-    if (process.env.default_entity_kind) {
-      this.entityConfig.defaultKind = process.env.default_entity_kind;
+    if (env.DEFAULT_ENTITY_KIND) {
+      this.entityConfig.defaultKind = env.DEFAULT_ENTITY_KIND;
     }
-
-    if (process.env.default_list_kind) {
-      this.listConfig.defaultKind = process.env.default_list_kind;
+    if (env.DEFAULT_LIST_KIND) {
+      this.listConfig.defaultKind = env.DEFAULT_LIST_KIND;
     }
-
-    if (process.env.default_relation_kind) {
-      this.relationConfig.defaultKind = process.env.default_relation_kind;
+    if (env.DEFAULT_RELATION_KIND) {
+      this.relationConfig.defaultKind = env.DEFAULT_RELATION_KIND;
     }
-
-    if (process.env.default_entity_reaction_kind) {
-      this.entityReactionConfig.defaultKind =
-        process.env.default_entity_reaction_kind;
+    if (env.DEFAULT_ENTITY_REACTION_KIND) {
+      this.entityReactionConfig.defaultKind = env.DEFAULT_ENTITY_REACTION_KIND;
     }
-
-    if (process.env.default_list_reaction_kind) {
-      this.listReactionConfig.defaultKind =
-        process.env.default_list_reaction_kind;
+    if (env.DEFAULT_LIST_REACTION_KIND) {
+      this.listReactionConfig.defaultKind = env.DEFAULT_LIST_REACTION_KIND;
     }
 
     // Load entity kinds if specified
-    if (process.env.entity_kinds) {
-      const kinds = process.env.entity_kinds.split(',').map((k) => k.trim());
+    if (env.ENTITY_KINDS.length > 0) {
+      const kinds = env.ENTITY_KINDS;
       this.entityConfig.allowedKinds = [...new Set(kinds)];
       // Only add default kind to allowed kinds if it's explicitly configured
-      if (process.env.default_entity_kind) {
-        this.entityConfig.allowedKinds.push(process.env.default_entity_kind);
+      if (env.DEFAULT_ENTITY_KIND) {
+        this.entityConfig.allowedKinds.push(env.DEFAULT_ENTITY_KIND);
       }
     } else {
       // If no allowed kinds specified, allow all kinds
@@ -80,56 +77,44 @@ export class KindConfiguration {
     }
 
     // Load list kinds if specified
-    if (process.env.list_kinds) {
-      const kinds = process.env.list_kinds.split(',').map((k) => k.trim());
+    if (env.LIST_KINDS.length > 0) {
+      const kinds = env.LIST_KINDS;
       this.listConfig.allowedKinds = [...new Set(kinds)];
-      if (process.env.default_list_kind) {
-        this.listConfig.allowedKinds.push(process.env.default_list_kind);
+      if (env.DEFAULT_LIST_KIND) {
+        this.listConfig.allowedKinds.push(env.DEFAULT_LIST_KIND);
       }
     } else {
       this.listConfig.allowedKinds = [];
     }
 
     // Load relation kinds if specified
-    if (process.env.list_entity_rel_kinds) {
-      const kinds = process.env.list_entity_rel_kinds
-        .split(',')
-        .map((k) => k.trim());
+    if (env.LIST_ENTITY_REL_KINDS.length > 0) {
+      const kinds = env.LIST_ENTITY_REL_KINDS;
       this.relationConfig.allowedKinds = [...new Set(kinds)];
-      if (process.env.default_relation_kind) {
-        this.relationConfig.allowedKinds.push(
-          process.env.default_relation_kind,
-        );
+      if (env.DEFAULT_RELATION_KIND) {
+        this.relationConfig.allowedKinds.push(env.DEFAULT_RELATION_KIND);
       }
     } else {
       this.relationConfig.allowedKinds = [];
     }
 
     // Load entity reaction kinds if specified
-    if (process.env.entity_reaction_kinds) {
-      const kinds = process.env.entity_reaction_kinds
-        .split(',')
-        .map((k) => k.trim());
+    if (env.ENTITY_REACTION_KINDS.length > 0) {
+      const kinds = env.ENTITY_REACTION_KINDS;
       this.entityReactionConfig.allowedKinds = [...new Set(kinds)];
-      if (process.env.default_entity_reaction_kind) {
-        this.entityReactionConfig.allowedKinds.push(
-          process.env.default_entity_reaction_kind,
-        );
+      if (env.DEFAULT_ENTITY_REACTION_KIND) {
+        this.entityReactionConfig.allowedKinds.push(env.DEFAULT_ENTITY_REACTION_KIND);
       }
     } else {
       this.entityReactionConfig.allowedKinds = [];
     }
 
     // Load list reaction kinds if specified
-    if (process.env.list_reaction_kinds) {
-      const kinds = process.env.list_reaction_kinds
-        .split(',')
-        .map((k) => k.trim());
+    if (env.LIST_REACTION_KINDS.length > 0) {
+      const kinds = env.LIST_REACTION_KINDS;
       this.listReactionConfig.allowedKinds = [...new Set(kinds)];
-      if (process.env.default_list_reaction_kind) {
-        this.listReactionConfig.allowedKinds.push(
-          process.env.default_list_reaction_kind,
-        );
+      if (env.DEFAULT_LIST_REACTION_KIND) {
+        this.listReactionConfig.allowedKinds.push(env.DEFAULT_LIST_REACTION_KIND);
       }
     } else {
       this.listReactionConfig.allowedKinds = [];
