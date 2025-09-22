@@ -1,5 +1,7 @@
 import { BindingKey } from '@loopback/core';
+
 import _ from 'lodash';
+import { EnvConfigHelper } from './env-config-helper';
 
 export const ValidFromConfigBindings = {
   CONFIG_READER: BindingKey.create<ValidfromConfigurationReader>(
@@ -8,6 +10,7 @@ export const ValidFromConfigBindings = {
 };
 
 export class ValidfromConfigurationReader {
+  private env = EnvConfigHelper.getInstance();
   defaultEntityAutoApprove: boolean = false;
   defaultListAutoApprove: boolean = false;
   defaultListEntityAutoApprove: boolean = false;
@@ -15,69 +18,57 @@ export class ValidfromConfigurationReader {
   defaultListReactionAutoApprove: boolean = false;
 
   public getValidFromForEntities(kind?: string) {
-    if (_.has(process.env, `autoapprove_entity_for_${kind}`)) {
-      return _.get(process.env, `autoapprove_entity_for_${kind}`) === 'true';
+    if (kind) {
+      const kindVal = this.env.getAutoApproveEntityForKind(kind);
+      if (kindVal !== undefined) return kindVal;
     }
-
-    if (_.has(process.env, `autoapprove_entity`)) {
-      return _.get(process.env, `autoapprove_entity`) === 'true';
+    if (this.env.AUTOAPPROVE_ENTITY !== undefined) {
+      return this.env.AUTOAPPROVE_ENTITY;
     }
-
     return this.defaultEntityAutoApprove;
   }
 
   public getValidFromForLists(kind?: string) {
-    if (_.has(process.env, `autoapprove_list_for_${kind}`)) {
-      return _.get(process.env, `autoapprove_list_for_${kind}`) === 'true';
+    if (kind) {
+      const kindVal = this.env.getAutoApproveListForKind(kind);
+      if (kindVal !== undefined) return kindVal;
     }
-
-    if (_.has(process.env, `autoapprove_list`)) {
-      return _.get(process.env, `autoapprove_list`) === 'true';
+    if (this.env.AUTOAPPROVE_LIST !== undefined) {
+      return this.env.AUTOAPPROVE_LIST;
     }
-
     return this.defaultListAutoApprove;
   }
 
   public getValidFromForListEntityRelations(kind?: string) {
-    if (_.has(process.env, `autoapprove_list_entity_relations_for_${kind}`)) {
-      return (
-        _.get(process.env, `autoapprove_list_entity_relations_for_${kind}`) ===
-        'true'
-      );
+    if (kind) {
+      const kindVal = this.env.getAutoApproveListEntityRelationsForKind(kind);
+      if (kindVal !== undefined) return kindVal;
     }
-
-    if (_.has(process.env, `autoapprove_list_entity_relations`)) {
-      return _.get(process.env, `autoapprove_list_entity_relations`) === 'true';
+    if (this.env.AUTOAPPROVE_LIST_ENTITY_RELATIONS !== undefined) {
+      return this.env.AUTOAPPROVE_LIST_ENTITY_RELATIONS;
     }
-
     return this.defaultListEntityAutoApprove;
   }
 
   public getValidFromForEntityReactions(kind?: string) {
-    if (_.has(process.env, `autoapprove_entity_reaction_for_${kind}`)) {
-      return (
-        _.get(process.env, `autoapprove_entity_reaction_for_${kind}`) === 'true'
-      );
+    if (kind) {
+      const kindVal = this.env.getAutoApproveEntityReactionForKind(kind);
+      if (kindVal !== undefined) return kindVal;
     }
-
-    if (_.has(process.env, `autoapprove_entity_reaction`)) {
-      return _.get(process.env, `autoapprove_entity_reaction`) === 'true';
+    if (this.env.AUTOAPPROVE_ENTITY_REACTION !== undefined) {
+      return this.env.AUTOAPPROVE_ENTITY_REACTION;
     }
-
     return this.defaultEntityReactionAutoApprove;
   }
 
   public getValidFromForListReactions(kind?: string) {
-    if (_.has(process.env, `autoapprove_list_reaction_for_${kind}`)) {
-      return (
-        _.get(process.env, `autoapprove_list_reaction_for_${kind}`) === 'true'
-      );
+    if (kind) {
+      const kindVal = this.env.getAutoApproveListReactionForKind(kind);
+      if (kindVal !== undefined) return kindVal;
     }
-
-    if (_.has(process.env, `autoapprove_list_reaction`)) {
-      return _.get(process.env, `autoapprove_list_reaction`) === 'true';
+    if (this.env.AUTOAPPROVE_LIST_REACTION !== undefined) {
+      return this.env.AUTOAPPROVE_LIST_REACTION;
     }
-
     return this.defaultListReactionAutoApprove;
   }
 }

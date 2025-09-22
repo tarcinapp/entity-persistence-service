@@ -385,5 +385,56 @@ export class EnvConfigHelper {
       `uniqueness_list_entity_rel_scope_for_${kind}`
     ]);
   }
+  // Autoapprove config getters
+  getAutoApproveEntityForKind(kind?: string): boolean | undefined {
+    if (!kind) return undefined;
+    const val = this.get([
+      `AUTOAPPROVE_ENTITY_FOR_${kind.toUpperCase()}`,
+      `autoapprove_entity_for_${kind}`
+    ]);
+    if (val === undefined) return undefined;
+    return val === 'true';
+  }
+  getAutoApproveListForKind(kind?: string): boolean | undefined {
+    if (!kind) return undefined;
+    const val = this.get([
+      `AUTOAPPROVE_LIST_FOR_${kind.toUpperCase()}`,
+      `autoapprove_list_for_${kind}`
+    ]);
+    if (val === undefined) return undefined;
+    return val === 'true';
+  }
+  getAutoApproveListEntityRelationsForKind(kind?: string): boolean | undefined {
+    if (!kind) return undefined;
+    const val = this.get([
+      `AUTOAPPROVE_LIST_ENTITY_RELATIONS_FOR_${kind.toUpperCase()}`,
+      `autoapprove_list_entity_relations_for_${kind}`
+    ]);
+    if (val === undefined) return undefined;
+    return val === 'true';
+  }
+  get AUTOAPPROVE_LIST_ENTITY_RELATIONS(): boolean | undefined {
+    const val = this.get(['AUTOAPPROVE_LIST_ENTITY_RELATIONS', 'autoapprove_list_entity_relations']);
+    if (val === undefined) return undefined;
+    return val === 'true';
+  }
+  getAutoApproveEntityReactionForKind(kind?: string): boolean | undefined {
+    if (!kind) return undefined;
+    const val = this.get([
+      `AUTOAPPROVE_ENTITY_REACTION_FOR_${kind.toUpperCase()}`,
+      `autoapprove_entity_reaction_for_${kind}`
+    ]);
+    if (val === undefined) return undefined;
+    return val === 'true';
+  }
+  getAutoApproveListReactionForKind(kind?: string): boolean | undefined {
+    if (!kind) return undefined;
+    const val = this.get([
+      `AUTOAPPROVE_LIST_REACTION_FOR_${kind.toUpperCase()}`,
+      `autoapprove_list_reaction_for_${kind}`
+    ]);
+    if (val === undefined) return undefined;
+    return val === 'true';
+  }
   // Add more strongly-typed getters as needed for new env variables
 }
