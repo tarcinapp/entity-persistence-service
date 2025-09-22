@@ -175,7 +175,7 @@ describe('POST /entities', () => {
     appWithClient = await setupApplication({
       entity_kinds: 'book',
       ENTITY_UNIQUENESS:
-        'where[_slug]=${_slug}&where[_kind]=${_kind}&set[owners][userIds]=${_ownerUsers[0]}',
+        'where[_slug]=${_slug}&where[_kind]=${_kind}&set[owners][userIds]=${_ownerUsers}',
     });
     ({ client } = appWithClient);
 
