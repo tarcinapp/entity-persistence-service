@@ -13,6 +13,7 @@ export const EnvConfigHelperBindings = {
 
 export class EnvConfigHelper {
   private static instance: EnvConfigHelper;
+  
   private envMap: Map<string, string>;
 
   private constructor() {
@@ -29,6 +30,13 @@ export class EnvConfigHelper {
       EnvConfigHelper.instance = new EnvConfigHelper();
     }
     return EnvConfigHelper.instance;
+  }
+
+  /**
+   * Reset the singleton instance (for testing)
+   */
+  public static reset(): void {
+    EnvConfigHelper.instance = undefined as any;
   }
 
   /**

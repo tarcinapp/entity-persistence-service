@@ -39,6 +39,7 @@ import { LookupConstraintBindings } from '../../services/lookup-constraint.bindi
 import { LookupConstraintService } from '../../services/lookup-constraint.service';
 import { RecordLimitCheckerBindings } from '../../services/record-limit-checker.bindings';
 import { RecordLimitCheckerService } from '../../services/record-limit-checker.service';
+import {EnvConfigHelper} from '../../extensions/config-helpers/env-config-helper';
 
 /**
  * Utility function to verify that all fields in two responses match exactly
@@ -353,6 +354,7 @@ export async function setupApplication(
     delete process.env[key];
   });
 
+
   // Set new environment variables
   if (envVars) {
     Object.entries(envVars).forEach(([key, value]) => {
@@ -361,6 +363,9 @@ export async function setupApplication(
       }
     });
   }
+
+  // Reset EnvConfigHelper singleton after setting env vars
+  EnvConfigHelper.reset();
 
   const mongod = await MongoMemoryServer.create();
 
