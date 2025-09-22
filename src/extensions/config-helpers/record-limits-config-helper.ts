@@ -1,7 +1,9 @@
 import { BindingKey } from '@loopback/core';
+
 import _, { cloneDeepWith, isEmpty } from 'lodash';
 import { parse } from 'qs';
 import type { Set, UserAndGroupInfo } from '../utils/set-helper';
+import { EnvConfigHelper } from './env-config-helper';
 
 export const RecordLimitsBindings = {
   CONFIG_READER: BindingKey.create<RecordLimitsConfigurationReader>(
@@ -16,27 +18,31 @@ export const RecordLimitsBindings = {
  * to where the limit needs to be applied (set), and to get the limit integer.
  */
 export class RecordLimitsConfigurationReader {
+
+  private env = EnvConfigHelper.getInstance();
+
   public isRecordLimitsConfiguredForEntities(kind?: string) {
     return (
-      _.has(process.env, 'record_limit_entity_count') ||
+      !!this.env.RECORD_LIMIT_ENTITY_COUNT ||
       this.isLimitConfiguredForKindForEntities(kind)
     );
   }
 
   public isLimitConfiguredForKindForEntities(kind?: string) {
-    return _.has(process.env, `record_limit_entity_count_for_${kind}`);
+    if (!kind) return false;
+    return !!this.env.getRecordLimitEntityCountForKind(kind);
   }
 
   public getRecordLimitsCountForEntities(kind?: string) {
-    if (_.has(process.env, `record_limit_entity_count_for_${kind}`)) {
-      return _.toInteger(
-        _.get(process.env, `record_limit_entity_count_for_${kind}`),
-      );
+    const kindVal = kind ? this.env.getRecordLimitEntityCountForKind(kind) : undefined;
+    if (kindVal !== undefined) {
+      return Number(kindVal);
     }
-
-    if (_.has(process.env, `record_limit_entity_count`)) {
-      return _.toInteger(_.get(process.env, `record_limit_entity_count`));
+    const generalVal = this.env.RECORD_LIMIT_ENTITY_COUNT;
+    if (generalVal !== undefined) {
+      return Number(generalVal);
     }
+    return undefined;
   }
 
   public getRecordLimitsSetForEntities(
@@ -45,65 +51,57 @@ export class RecordLimitsConfigurationReader {
     kind?: string,
   ): Set | undefined {
     let setStr = '';
-    // Check if there is a kind specific configuration
-    if (_.has(process.env, `record_limit_entity_scope_for_${kind}`)) {
-      const value = _.get(process.env, `record_limit_entity_scope_for_${kind}`);
-      if (value) {
-        setStr = value;
-      }
+    // Kind-specific
+    if (kind) {
+      setStr = this.env.getRecordLimitEntityScopeForKind(kind) || '';
     }
-
-    // If there is no kind specific configuration, check if there is a general configuration
-    if (!setStr && process.env.record_limit_entity_scope) {
-      setStr = process.env.record_limit_entity_scope;
+    // General
+    if (!setStr) {
+      setStr = this.env.RECORD_LIMIT_ENTITY_SCOPE || '';
     }
-
     if (setStr) {
       const set = parse(setStr).set as Set;
       const userAndGroupInfo: UserAndGroupInfo = {};
-
       if (!isEmpty(ownerUsers)) {
         userAndGroupInfo.userIds = ownerUsers?.join(',');
       }
-
       if (!isEmpty(ownerGroups)) {
         userAndGroupInfo.groupIds = ownerGroups?.join(',');
       }
-
-      // Use _.cloneDeepWith for inline recursive replacement
       const updatedSet = cloneDeepWith(set, (v, k) => {
         if (k === 'owners' || k === 'audience') {
           return userAndGroupInfo;
         }
       });
-
       return updatedSet as Set;
     }
+    return undefined;
   }
 
   /////
 
   public isRecordLimitsConfiguredForLists(kind?: string) {
     return (
-      _.has(process.env, 'record_limit_list_count') ||
+      !!this.env.RECORD_LIMIT_LIST_COUNT ||
       this.isLimitConfiguredForKindForLists(kind)
     );
   }
 
   public isLimitConfiguredForKindForLists(kind?: string) {
-    return _.has(process.env, `record_limit_list_count_for_${kind}`);
+    if (!kind) return false;
+    return !!this.env.getRecordLimitListCountForKind(kind);
   }
 
   public getRecordLimitsCountForLists(kind?: string) {
-    if (_.has(process.env, `record_limit_list_count_for_${kind}`)) {
-      return _.toInteger(
-        _.get(process.env, `record_limit_list_count_for_${kind}`),
-      );
+    const kindVal = kind ? this.env.getRecordLimitListCountForKind(kind) : undefined;
+    if (kindVal !== undefined) {
+      return Number(kindVal);
     }
-
-    if (_.has(process.env, `record_limit_list_count`)) {
-      return _.toInteger(_.get(process.env, `record_limit_list_count`));
+    const generalVal = this.env.RECORD_LIMIT_LIST_COUNT;
+    if (generalVal !== undefined) {
+      return Number(generalVal);
     }
+    return undefined;
   }
 
   public getRecordLimitsSetForLists(
@@ -112,116 +110,95 @@ export class RecordLimitsConfigurationReader {
     kind?: string,
   ): Set | undefined {
     let setStr = '';
-    // Check if there is a kind specific configuration
-    if (_.has(process.env, `record_limit_list_scope_for_${kind}`)) {
-      const value = _.get(process.env, `record_limit_list_scope_for_${kind}`);
-      if (value) {
-        setStr = value;
-      }
+    if (kind) {
+      setStr = this.env.getRecordLimitListScopeForKind(kind) || '';
     }
-
-    // If there is no kind specific configuration, check if there is a general configuration
-    if (!setStr && process.env.record_limit_list_scope) {
-      setStr = process.env.record_limit_list_scope;
+    if (!setStr) {
+      setStr = this.env.RECORD_LIMIT_LIST_SCOPE || '';
     }
-
     if (setStr) {
       const set = parse(setStr).set as Set;
       const userAndGroupInfo: UserAndGroupInfo = {};
-
       if (!isEmpty(ownerUsers)) {
         userAndGroupInfo.userIds = ownerUsers?.join(',');
       }
-
       if (!isEmpty(ownerGroups)) {
         userAndGroupInfo.groupIds = ownerGroups?.join(',');
       }
-
-      // Use _.cloneDeepWith for inline recursive replacement
       const updatedSet = cloneDeepWith(set, (v, k) => {
         if (k === 'owners' || k === 'audience') {
           return userAndGroupInfo;
         }
       });
-
       return updatedSet as Set;
     }
+    return undefined;
   }
 
   ///
   public isRecordLimitsConfiguredForListEntityCount(kind?: string) {
     return (
-      _.has(process.env, 'record_limit_list_entity_count') ||
+      !!this.env.RECORD_LIMIT_LIST_ENTITY_COUNT ||
       this.isLimitConfiguredForKindForListEntityCount(kind)
     );
   }
 
   public isLimitConfiguredForKindForListEntityCount(kind?: string) {
-    return _.has(process.env, `record_limit_list_entity_count_for_${kind}`);
+    if (!kind) return false;
+    return !!this.env.getRecordLimitListEntityCountForKind(kind);
   }
 
   public getRecordLimitsCountForListEntityCount(kind?: string) {
-    if (_.has(process.env, `record_limit_list_entity_count_for_${kind}`)) {
-      return _.toInteger(
-        _.get(process.env, `record_limit_list_entity_count_for_${kind}`),
-      );
+    const kindVal = kind ? this.env.getRecordLimitListEntityCountForKind(kind) : undefined;
+    if (kindVal !== undefined) {
+      return Number(kindVal);
     }
-
-    if (_.has(process.env, `record_limit_list_entity_count`)) {
-      return _.toInteger(_.get(process.env, `record_limit_list_entity_count`));
+    const generalVal = this.env.RECORD_LIMIT_LIST_ENTITY_COUNT;
+    if (generalVal !== undefined) {
+      return Number(generalVal);
     }
+    return undefined;
   }
 
   ///
   public isRecordLimitsConfiguredForListEntityRelations(kind?: string) {
     return (
-      _.has(process.env, 'record_limit_list_entity_rel_count') ||
+      !!this.env.RECORD_LIMIT_LIST_ENTITY_REL_COUNT ||
       this.isLimitConfiguredForKindForListEntityRelations(kind)
     );
   }
 
   public isLimitConfiguredForKindForListEntityRelations(kind?: string) {
-    return _.has(process.env, `record_limit_list_entity_rel_count_for_${kind}`);
+    if (!kind) return false;
+    return !!this.env.getRecordLimitListEntityRelCountForKind(kind);
   }
 
   public getRecordLimitsCountForListEntityRelations(kind?: string) {
-    if (_.has(process.env, `record_limit_list_entity_rel_count_for_${kind}`)) {
-      return _.toInteger(
-        _.get(process.env, `record_limit_list_entity_rel_count_for_${kind}`),
-      );
+    const kindVal = kind ? this.env.getRecordLimitListEntityRelCountForKind(kind) : undefined;
+    if (kindVal !== undefined) {
+      return Number(kindVal);
     }
-
-    if (_.has(process.env, `record_limit_list_entity_rel_count`)) {
-      return _.toInteger(
-        _.get(process.env, `record_limit_list_entity_rel_count`),
-      );
+    const generalVal = this.env.RECORD_LIMIT_LIST_ENTITY_REL_COUNT;
+    if (generalVal !== undefined) {
+      return Number(generalVal);
     }
+    return undefined;
   }
 
   public getRecordLimitsSetForListEntityRelations(
     kind?: string,
   ): Set | undefined {
     let setStr = '';
-    // Check if there is a kind specific configuration
-    if (_.has(process.env, `record_limit_list_entity_rel_scope_for_${kind}`)) {
-      const value = _.get(
-        process.env,
-        `record_limit_list_entity_rel_scope_for_${kind}`,
-      );
-      if (value) {
-        setStr = value;
-      }
+    if (kind) {
+      setStr = this.env.getRecordLimitListEntityRelScopeForKind(kind) || '';
     }
-
-    // If there is no kind specific configuration, check if there is a general configuration
-    if (!setStr && process.env.record_limit_list_entity_rel_scope) {
-      setStr = process.env.record_limit_list_entity_rel_scope;
+    if (!setStr) {
+      setStr = this.env.RECORD_LIMIT_LIST_ENTITY_REL_SCOPE || '';
     }
-
     if (setStr) {
       const set = parse(setStr).set as Set;
-
       return set;
     }
+    return undefined;
   }
 }

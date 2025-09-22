@@ -247,5 +247,80 @@ export class EnvConfigHelper {
   get LIST_REACTION_RECORD_LIMITS(): string | undefined {
     return this.get(['LIST_REACTION_RECORD_LIMITS', 'list_reaction_record_limits']);
   }
+
+  // Record limits config getters
+  get RECORD_LIMIT_ENTITY_COUNT(): string | undefined {
+    return this.get(['RECORD_LIMIT_ENTITY_COUNT', 'record_limit_entity_count']);
+  }
+  getRecordLimitEntityCountForKind(kind?: string): string | undefined {
+    if (!kind) return undefined;
+    return this.get([
+      `RECORD_LIMIT_ENTITY_COUNT_FOR_${kind.toUpperCase()}`,
+      `record_limit_entity_count_for_${kind}`
+    ]);
+  }
+  get RECORD_LIMIT_ENTITY_SCOPE(): string | undefined {
+    return this.get(['RECORD_LIMIT_ENTITY_SCOPE', 'record_limit_entity_scope']);
+  }
+  getRecordLimitEntityScopeForKind(kind?: string): string | undefined {
+    if (!kind) return undefined;
+    return this.get([
+      `RECORD_LIMIT_ENTITY_SCOPE_FOR_${kind.toUpperCase()}`,
+      `record_limit_entity_scope_for_${kind}`
+    ]);
+  }
+
+  get RECORD_LIMIT_LIST_COUNT(): string | undefined {
+    return this.get(['RECORD_LIMIT_LIST_COUNT', 'record_limit_list_count']);
+  }
+  getRecordLimitListCountForKind(kind?: string): string | undefined {
+    if (!kind) return undefined;
+    return this.get([
+      `RECORD_LIMIT_LIST_COUNT_FOR_${kind.toUpperCase()}`,
+      `record_limit_list_count_for_${kind}`
+    ]);
+  }
+  get RECORD_LIMIT_LIST_SCOPE(): string | undefined {
+    return this.get(['RECORD_LIMIT_LIST_SCOPE', 'record_limit_list_scope']);
+  }
+  getRecordLimitListScopeForKind(kind?: string): string | undefined {
+    if (!kind) return undefined;
+    return this.get([
+      `RECORD_LIMIT_LIST_SCOPE_FOR_${kind.toUpperCase()}`,
+      `record_limit_list_scope_for_${kind}`
+    ]);
+  }
+
+  get RECORD_LIMIT_LIST_ENTITY_COUNT(): string | undefined {
+    return this.get(['RECORD_LIMIT_LIST_ENTITY_COUNT', 'record_limit_list_entity_count']);
+  }
+  getRecordLimitListEntityCountForKind(kind?: string): string | undefined {
+    if (!kind) return undefined;
+    return this.get([
+      `RECORD_LIMIT_LIST_ENTITY_COUNT_FOR_${kind.toUpperCase()}`,
+      `record_limit_list_entity_count_for_${kind}`
+    ]);
+  }
+
+  get RECORD_LIMIT_LIST_ENTITY_REL_COUNT(): string | undefined {
+    return this.get(['RECORD_LIMIT_LIST_ENTITY_REL_COUNT', 'record_limit_list_entity_rel_count']);
+  }
+  getRecordLimitListEntityRelCountForKind(kind?: string): string | undefined {
+    if (!kind) return undefined;
+    return this.get([
+      `RECORD_LIMIT_LIST_ENTITY_REL_COUNT_FOR_${kind.toUpperCase()}`,
+      `record_limit_list_entity_rel_count_for_${kind}`
+    ]);
+  }
+  get RECORD_LIMIT_LIST_ENTITY_REL_SCOPE(): string | undefined {
+    return this.get(['RECORD_LIMIT_LIST_ENTITY_REL_SCOPE', 'record_limit_list_entity_rel_scope']);
+  }
+  getRecordLimitListEntityRelScopeForKind(kind?: string): string | undefined {
+    if (!kind) return undefined;
+    return this.get([
+      `RECORD_LIMIT_LIST_ENTITY_REL_SCOPE_FOR_${kind.toUpperCase()}`,
+      `record_limit_list_entity_rel_scope_for_${kind}`
+    ]);
+  }
   // Add more strongly-typed getters as needed for new env variables
 }
