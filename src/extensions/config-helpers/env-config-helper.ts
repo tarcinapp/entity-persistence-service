@@ -53,6 +53,58 @@ export class EnvConfigHelper {
   }
 
   // Strongly-typed getters for known environment variables
+  // Idempotency config getters
+  get IDEMPOTENCY_ENTITY(): string | undefined {
+    return this.get(['IDEMPOTENCY_ENTITY', 'idempotency_entity']);
+  }
+  get IDEMPOTENCY_LIST(): string | undefined {
+    return this.get(['IDEMPOTENCY_LIST', 'idempotency_list']);
+  }
+  get IDEMPOTENCY_ENTITY_REACTION(): string | undefined {
+    return this.get(['IDEMPOTENCY_ENTITY_REACTION', 'idempotency_entity_reaction']);
+  }
+  get IDEMPOTENCY_LIST_REACTION(): string | undefined {
+    return this.get(['IDEMPOTENCY_LIST_REACTION', 'idempotency_list_reaction']);
+  }
+  get IDEMPOTENCY_LIST_ENTITY_REL(): string | undefined {
+    return this.get(['IDEMPOTENCY_LIST_ENTITY_REL', 'idempotency_list_entity_rel']);
+  }
+
+  getIdempotencyEntityForKind(kind?: string): string | undefined {
+    if (!kind) return undefined;
+    return this.get([
+      `IDEMPOTENCY_ENTITY_FOR_${kind.toUpperCase()}`,
+      `idempotency_entity_for_${kind}`
+    ]);
+  }
+  getIdempotencyListForKind(kind?: string): string | undefined {
+    if (!kind) return undefined;
+    return this.get([
+      `IDEMPOTENCY_LIST_FOR_${kind.toUpperCase()}`,
+      `idempotency_list_for_${kind}`
+    ]);
+  }
+  getIdempotencyEntityReactionForKind(kind?: string): string | undefined {
+    if (!kind) return undefined;
+    return this.get([
+      `IDEMPOTENCY_ENTITY_REACTION_FOR_${kind.toUpperCase()}`,
+      `idempotency_entity_reaction_for_${kind}`
+    ]);
+  }
+  getIdempotencyListReactionForKind(kind?: string): string | undefined {
+    if (!kind) return undefined;
+    return this.get([
+      `IDEMPOTENCY_LIST_REACTION_FOR_${kind.toUpperCase()}`,
+      `idempotency_list_reaction_for_${kind}`
+    ]);
+  }
+  getIdempotencyListEntityRelForKind(kind?: string): string | undefined {
+    if (!kind) return undefined;
+    return this.get([
+      `IDEMPOTENCY_LIST_ENTITY_REL_FOR_${kind.toUpperCase()}`,
+      `idempotency_list_entity_rel_for_${kind}`
+    ]);
+  }
   get NODE_ENV(): string | undefined {
     return this.get(['NODE_ENV', 'node_env']);
   }
