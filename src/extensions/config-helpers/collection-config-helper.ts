@@ -19,7 +19,7 @@ export class CollectionConfigHelper {
       entity: process.env.collection_entity ?? 'Entity',
       list: process.env.collection_list ?? 'List',
       listEntityRelation:
-        process.env.collection_list_list_entity_rel ?? 'ListToEntityRelation',
+        process.env.collection_list_entity_rel ?? 'ListToEntityRelation',
       entityReactions:
         process.env.collection_entity_reactions ?? 'EntityReaction',
     };
