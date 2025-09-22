@@ -1,3 +1,5 @@
+import { EnvConfigHelper } from './env-config-helper';
+
 export class CollectionConfig {
   private static instance: CollectionConfig;
   private collectionNames: { [key: string]: string } = {};
@@ -15,13 +17,12 @@ export class CollectionConfig {
   }
 
   private initializeCollectionNames(): void {
+    const env = EnvConfigHelper.getInstance();
     this.collectionNames = {
-      entity: process.env.collection_entity ?? 'Entity',
-      list: process.env.collection_list ?? 'List',
-      listEntityRelation:
-        process.env.collection_list_entity_rel ?? 'ListToEntityRelation',
-      entityReactions:
-        process.env.collection_entity_reactions ?? 'EntityReaction',
+      entity: env.COLLECTION_ENTITY ?? 'Entity',
+      list: env.COLLECTION_LIST ?? 'List',
+      listEntityRelation: env.COLLECTION_LIST_ENTITY_REL ?? 'ListToEntityRelation',
+      entityReactions: env.COLLECTION_ENTITY_REACTIONS ?? 'EntityReaction',
     };
   }
 
