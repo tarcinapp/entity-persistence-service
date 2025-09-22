@@ -1,5 +1,7 @@
 import { BindingKey } from '@loopback/core';
+
 import _ from 'lodash';
+import { EnvConfigHelper } from './env-config-helper';
 
 export const ResponseLimitConfigBindings = {
   CONFIG_READER: BindingKey.create<ResponseLimitConfigurationReader>(
@@ -8,58 +10,28 @@ export const ResponseLimitConfigBindings = {
 } as const;
 
 export class ResponseLimitConfigurationReader {
+
   private readonly defaultResponseLimit = 50;
-  private entityResponseLimit: number;
-  private listResponseLimit: number;
-  private listEntityRelResponseLimit: number;
-  private entityReactionResponseLimit: number;
-  private listReactionResponseLimit: number;
-
-  constructor() {
-    this.initResponseLimits();
-  }
-
-  private initResponseLimits() {
-    const envEntityLimit = process.env.response_limit_entity;
-    const envListLimit = process.env.response_limit_list;
-    const envListEntityRelLimit = process.env.response_limit_list_entity_rel;
-    const envEntityReactionLimit = process.env.response_limit_entity_reaction;
-    const envListReactionLimit = process.env.response_limit_list_reaction;
-
-    this.entityResponseLimit = envEntityLimit
-      ? _.parseInt(envEntityLimit)
-      : this.defaultResponseLimit;
-    this.listResponseLimit = envListLimit
-      ? _.parseInt(envListLimit)
-      : this.defaultResponseLimit;
-    this.listEntityRelResponseLimit = envListEntityRelLimit
-      ? _.parseInt(envListEntityRelLimit)
-      : this.defaultResponseLimit;
-    this.entityReactionResponseLimit = envEntityReactionLimit
-      ? _.parseInt(envEntityReactionLimit)
-      : this.defaultResponseLimit;
-    this.listReactionResponseLimit = envListReactionLimit
-      ? _.parseInt(envListReactionLimit)
-      : this.defaultResponseLimit;
-  }
+  private env = EnvConfigHelper.getInstance();
 
   public getEntityResponseLimit(): number {
-    return this.entityResponseLimit;
+    return this.env.RESPONSE_LIMIT_ENTITY ?? this.defaultResponseLimit;
   }
 
   public getListResponseLimit(): number {
-    return this.listResponseLimit;
+    return this.env.RESPONSE_LIMIT_LIST ?? this.defaultResponseLimit;
   }
 
   public getListEntityRelResponseLimit(): number {
-    return this.listEntityRelResponseLimit;
+    return this.env.RESPONSE_LIMIT_LIST_ENTITY_REL ?? this.defaultResponseLimit;
   }
 
   public getEntityReactionResponseLimit(): number {
-    return this.entityReactionResponseLimit;
+    return this.env.RESPONSE_LIMIT_ENTITY_REACTION ?? this.defaultResponseLimit;
   }
 
   public getListReactionResponseLimit(): number {
-    return this.listReactionResponseLimit;
+    return this.env.RESPONSE_LIMIT_LIST_REACTION ?? this.defaultResponseLimit;
   }
+
 }
