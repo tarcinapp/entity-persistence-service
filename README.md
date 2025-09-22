@@ -1224,7 +1224,6 @@ We can divide configurations into 9 categories:
 * [Uniqueness configurations](#uniqueness)
 * [Auto approve configurations](#auto-approve)
 * [Default visibility configuration](#visibility)
-* [Validation configurations](#validation)
 * [Response limits configurations](#response-limits)
 * [Record limit configurations](#record-limits)
 * [Idempotency configurations](#idempotency)
@@ -1241,7 +1240,7 @@ We can divide configurations into 9 categories:
 | **mongodb_url**                     | Connection URL can be used instead of host, port and user                        | localhost           |
 | **collection_entity**               | Name of the collection which generic entities are persisted                      | GenericEntities     |
 | **collection_list**                 | Name of the collection which generic lists are persisted                         | Lists               |
-| **collection_list_list_entity_rel** | Name of the collection which relationships between list and entity are persisted | ListEntityRelations |
+| **collection_list_entity_rel** | Name of the collection which relationships between list and entity are persisted | ListEntityRelations |
 | **collection_entity_reactions**     | Name of the collection which entity reactions are persisted                      | EntityReactions     |
 | **collection_list_reactions**       | Name of the collection which list reactions are persisted                        | ListReactions       |
 
@@ -1421,7 +1420,6 @@ These setting limits the number of record can be returned for each data model. I
 | **response_limit_list_entity_rel** | Max items can be returned from list response.            | 50            |
 | **response_limit_entity_reaction** | Max items can be returned from entity reaction response. | 50            |
 | **response_limit_list_reaction**   | Max items can be returned from list reaction response.   | 50            |
-| **response_limit_tag**             | Max items can be returned from tags response.            | 50            |
 
 ### Record Limits
 
