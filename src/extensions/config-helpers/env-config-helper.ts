@@ -1,3 +1,4 @@
+  // Visibility config getters
 import {BindingKey} from '@loopback/core';
 
 /**
@@ -437,4 +438,33 @@ export class EnvConfigHelper {
     return val === 'true';
   }
   // Add more strongly-typed getters as needed for new env variables
+  // Visibility config getters
+  getVisibilityEntityForKind(kind?: string): string | undefined {
+    if (!kind) return undefined;
+    return this.get([
+      `VISIBILITY_ENTITY_FOR_${kind.toUpperCase()}`,
+      `visibility_entity_for_${kind}`
+    ]);
+  }
+  getVisibilityListForKind(kind?: string): string | undefined {
+    if (!kind) return undefined;
+    return this.get([
+      `VISIBILITY_LIST_FOR_${kind.toUpperCase()}`,
+      `visibility_list_for_${kind}`
+    ]);
+  }
+  getVisibilityEntityReactionForKind(kind?: string): string | undefined {
+    if (!kind) return undefined;
+    return this.get([
+      `VISIBILITY_ENTITY_REACTION_FOR_${kind.toUpperCase()}`,
+      `visibility_entity_reaction_for_${kind}`
+    ]);
+  }
+  getVisibilityListReactionForKind(kind?: string): string | undefined {
+    if (!kind) return undefined;
+    return this.get([
+      `VISIBILITY_LIST_REACTION_FOR_${kind.toUpperCase()}`,
+      `visibility_list_reaction_for_${kind}`
+    ]);
+  }
 }

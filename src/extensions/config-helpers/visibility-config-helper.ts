@@ -1,5 +1,7 @@
 import { BindingKey } from '@loopback/core';
+
 import _ from 'lodash';
+import { EnvConfigHelper } from './env-config-helper';
 
 export const VisibilityConfigBindings = {
   CONFIG_READER: BindingKey.create<VisibilityConfigurationReader>(
@@ -8,6 +10,7 @@ export const VisibilityConfigBindings = {
 };
 
 export class VisibilityConfigurationReader {
+  private env = EnvConfigHelper.getInstance();
   defaultEntityVisibility: string = 'protected';
   defaultListVisibility: string = 'protected';
   defaultEntityReactionVisibility: string = 'protected';
@@ -15,53 +18,53 @@ export class VisibilityConfigurationReader {
 
   public isVisibilityConfiguredForEntities(kind?: string) {
     return (
-      _.has(process.env, 'visibility_entity') ||
+      !!this.env.VISIBILITY_ENTITY ||
       this.isVisibilityConfiguredForKindForEntities(kind)
     );
   }
 
   public isVisibilityConfiguredForKindForEntities(kind?: string): boolean {
-    return _.has(process.env, `visibility_entity_for_${kind}`);
+  if (!kind) return false;
+  return !!this.env.getVisibilityEntityForKind(kind);
   }
 
   public getVisibilityForEntities(kind?: string) {
-    if (_.has(process.env, `visibility_entity_for_${kind}`)) {
-      return _.get(process.env, `visibility_entity_for_${kind}`);
+    if (kind) {
+      const kindVal = this.env.getVisibilityEntityForKind(kind);
+      if (kindVal !== undefined) return kindVal;
     }
-
-    if (_.has(process.env, `visibility_entity`)) {
-      return _.get(process.env, `visibility_entity`);
+    if (this.env.VISIBILITY_ENTITY !== undefined) {
+      return this.env.VISIBILITY_ENTITY;
     }
-
     return this.defaultEntityVisibility;
   }
 
   public isVisibilityConfiguredForLists(kind?: string) {
     return (
-      _.has(process.env, 'visibility_list') ||
+      !!this.env.VISIBILITY_LIST ||
       this.isVisibilityConfiguredForKindForLists(kind)
     );
   }
 
   public isVisibilityConfiguredForKindForLists(kind?: string): boolean {
-    return _.has(process.env, `visibility_list_for_${kind}`);
+  if (!kind) return false;
+  return !!this.env.getVisibilityListForKind(kind);
   }
 
   public getVisibilityForLists(kind?: string) {
-    if (_.has(process.env, `visibility_list_for_${kind}`)) {
-      return _.get(process.env, `visibility_list_for_${kind}`);
+    if (kind) {
+      const kindVal = this.env.getVisibilityListForKind(kind);
+      if (kindVal !== undefined) return kindVal;
     }
-
-    if (_.has(process.env, `visibility_list`)) {
-      return _.get(process.env, `visibility_list`);
+    if (this.env.VISIBILITY_LIST !== undefined) {
+      return this.env.VISIBILITY_LIST;
     }
-
     return this.defaultListVisibility;
   }
 
   public isVisibilityConfiguredForEntityReactions(kind?: string) {
     return (
-      _.has(process.env, 'visibility_entity_reaction') ||
+      !!this.env.VISIBILITY_ENTITY_REACTION ||
       this.isVisibilityConfiguredForKindForEntityReactions(kind)
     );
   }
@@ -69,41 +72,41 @@ export class VisibilityConfigurationReader {
   public isVisibilityConfiguredForKindForEntityReactions(
     kind?: string,
   ): boolean {
-    return _.has(process.env, `visibility_entity_reaction_for_${kind}`);
+    if (!kind) return false;
+    return !!this.env.getVisibilityEntityReactionForKind(kind);
   }
 
   public getVisibilityForEntityReactions(kind?: string) {
-    if (_.has(process.env, `visibility_entity_reaction_for_${kind}`)) {
-      return _.get(process.env, `visibility_entity_reaction_for_${kind}`);
+    if (kind) {
+      const kindVal = this.env.getVisibilityEntityReactionForKind(kind);
+      if (kindVal !== undefined) return kindVal;
     }
-
-    if (_.has(process.env, `visibility_entity_reaction`)) {
-      return _.get(process.env, `visibility_entity_reaction`);
+    if (this.env.VISIBILITY_ENTITY_REACTION !== undefined) {
+      return this.env.VISIBILITY_ENTITY_REACTION;
     }
-
     return this.defaultEntityReactionVisibility;
   }
 
   public isVisibilityConfiguredForListReactions(kind?: string) {
     return (
-      _.has(process.env, 'visibility_list_reaction') ||
+      !!this.env.VISIBILITY_LIST_REACTION ||
       this.isVisibilityConfiguredForKindForListReactions(kind)
     );
   }
 
   public isVisibilityConfiguredForKindForListReactions(kind?: string): boolean {
-    return _.has(process.env, `visibility_list_reaction_for_${kind}`);
+  if (!kind) return false;
+  return !!this.env.getVisibilityListReactionForKind(kind);
   }
 
   public getVisibilityForListReactions(kind?: string) {
-    if (_.has(process.env, `visibility_list_reaction_for_${kind}`)) {
-      return _.get(process.env, `visibility_list_reaction_for_${kind}`);
+    if (kind) {
+      const kindVal = this.env.getVisibilityListReactionForKind(kind);
+      if (kindVal !== undefined) return kindVal;
     }
-
-    if (_.has(process.env, `visibility_list_reaction`)) {
-      return _.get(process.env, `visibility_list_reaction`);
+    if (this.env.VISIBILITY_LIST_REACTION !== undefined) {
+      return this.env.VISIBILITY_LIST_REACTION;
     }
-
     return this.defaultListReactionVisibility;
   }
 }
