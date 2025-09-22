@@ -322,5 +322,68 @@ export class EnvConfigHelper {
       `record_limit_list_entity_rel_scope_for_${kind}`
     ]);
   }
+  // Uniqueness config getters
+  get UNIQUENESS_ENTITY_FIELDS(): string | undefined {
+    return this.get(['UNIQUENESS_ENTITY_FIELDS', 'uniqueness_entity_fields']);
+  }
+  getUniquenessEntityFieldsForKind(kind?: string): string | undefined {
+    if (!kind) return undefined;
+    return this.get([
+      `UNIQUENESS_ENTITY_FIELDS_FOR_${kind.toUpperCase()}`,
+      `uniqueness_entity_fields_for_${kind}`
+    ]);
+  }
+  get UNIQUENESS_ENTITY_SCOPE(): string | undefined {
+    return this.get(['UNIQUENESS_ENTITY_SCOPE', 'uniqueness_entity_scope']);
+  }
+  getUniquenessEntityScopeForKind(kind?: string): string | undefined {
+    if (!kind) return undefined;
+    return this.get([
+      `UNIQUENESS_ENTITY_SCOPE_FOR_${kind.toUpperCase()}`,
+      `uniqueness_entity_scope_for_${kind}`
+    ]);
+  }
+
+  get UNIQUENESS_LIST_FIELDS(): string | undefined {
+    return this.get(['UNIQUENESS_LIST_FIELDS', 'uniqueness_list_fields']);
+  }
+  getUniquenessListFieldsForKind(kind?: string): string | undefined {
+    if (!kind) return undefined;
+    return this.get([
+      `UNIQUENESS_LIST_FIELDS_FOR_${kind.toUpperCase()}`,
+      `uniqueness_list_fields_for_${kind}`
+    ]);
+  }
+  get UNIQUENESS_LIST_SCOPE(): string | undefined {
+    return this.get(['UNIQUENESS_LIST_SCOPE', 'uniqueness_list_scope']);
+  }
+  getUniquenessListScopeForKind(kind?: string): string | undefined {
+    if (!kind) return undefined;
+    return this.get([
+      `UNIQUENESS_LIST_SCOPE_FOR_${kind.toUpperCase()}`,
+      `uniqueness_list_scope_for_${kind}`
+    ]);
+  }
+
+  get UNIQUENESS_LIST_ENTITY_REL_FIELDS(): string | undefined {
+    return this.get(['UNIQUENESS_LIST_ENTITY_REL_FIELDS', 'uniqueness_list_entity_rel_fields']);
+  }
+  getUniquenessListEntityRelFieldsForKind(kind?: string): string | undefined {
+    if (!kind) return undefined;
+    return this.get([
+      `UNIQUENESS_LIST_ENTITY_REL_FIELDS_FOR_${kind.toUpperCase()}`,
+      `uniqueness_list_entity_rel_fields_for_${kind}`
+    ]);
+  }
+  get UNIQUENESS_LIST_ENTITY_REL_SCOPE(): string | undefined {
+    return this.get(['UNIQUENESS_LIST_ENTITY_REL_SCOPE', 'uniqueness_list_entity_rel_scope']);
+  }
+  getUniquenessListEntityRelScopeForKind(kind?: string): string | undefined {
+    if (!kind) return undefined;
+    return this.get([
+      `UNIQUENESS_LIST_ENTITY_REL_SCOPE_FOR_${kind.toUpperCase()}`,
+      `uniqueness_list_entity_rel_scope_for_${kind}`
+    ]);
+  }
   // Add more strongly-typed getters as needed for new env variables
 }
