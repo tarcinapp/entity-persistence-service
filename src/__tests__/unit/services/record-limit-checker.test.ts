@@ -3,6 +3,7 @@ import { Entity } from '@loopback/repository';
 import { expect } from '@loopback/testlab';
 import type { LoggingService } from '../../../services/logging.service';
 import { RecordLimitCheckerService } from '../../../services/record-limit-checker.service';
+import { EnvConfigHelper } from '../../../extensions/config-helpers/env-config-helper';
 
 describe('Utilities: RecordLimitChecker', () => {
   let service: RecordLimitCheckerService;
@@ -31,6 +32,8 @@ describe('Utilities: RecordLimitChecker', () => {
       count: async () => ({ count: 0 }),
     };
 
+    // Reset EnvConfigHelper singleton to ensure fresh env values
+    EnvConfigHelper.reset();
     // Create service instance
     service = new RecordLimitCheckerService(
       mockLoggingService as LoggingService,
@@ -55,6 +58,8 @@ describe('Utilities: RecordLimitChecker', () => {
 
       process.env.ENTITY_RECORD_LIMITS = JSON.stringify(limits);
 
+      // Reset EnvConfigHelper singleton to ensure fresh env values
+      EnvConfigHelper.reset();
       // Create a new service instance after setting the environment variable
       service = new RecordLimitCheckerService(
         mockLoggingService as LoggingService,
@@ -146,7 +151,7 @@ describe('Utilities: RecordLimitChecker', () => {
 
     it('should handle invalid JSON in environment variables', () => {
       process.env.ENTITY_RECORD_LIMITS = 'invalid json';
-
+      EnvConfigHelper.reset();
       expect(() => {
         new RecordLimitCheckerService(mockLoggingService as LoggingService);
       }).to.throw('Invalid configuration');
@@ -158,6 +163,7 @@ describe('Utilities: RecordLimitChecker', () => {
       const limits = [{ scope: 'where[_kind]=${_kind}', limit: 10 }];
 
       process.env.ENTITY_RECORD_LIMITS = JSON.stringify(limits);
+      EnvConfigHelper.reset();
       service = new RecordLimitCheckerService(
         mockLoggingService as LoggingService,
       );
@@ -193,6 +199,7 @@ describe('Utilities: RecordLimitChecker', () => {
       ];
 
       process.env.ENTITY_RECORD_LIMITS = JSON.stringify(limits);
+      EnvConfigHelper.reset();
       service = new RecordLimitCheckerService(
         mockLoggingService as LoggingService,
       );
@@ -219,6 +226,7 @@ describe('Utilities: RecordLimitChecker', () => {
       const limits = [{ scope: 'where[missing]=${nonexistent}', limit: 10 }];
 
       process.env.ENTITY_RECORD_LIMITS = JSON.stringify(limits);
+      EnvConfigHelper.reset();
       service = new RecordLimitCheckerService(
         mockLoggingService as LoggingService,
       );
@@ -243,6 +251,7 @@ describe('Utilities: RecordLimitChecker', () => {
       ];
 
       process.env.ENTITY_RECORD_LIMITS = JSON.stringify(limits);
+      EnvConfigHelper.reset();
       service = new RecordLimitCheckerService(
         mockLoggingService as LoggingService,
       );
@@ -288,6 +297,7 @@ describe('Utilities: RecordLimitChecker', () => {
       ];
 
       process.env.ENTITY_RECORD_LIMITS = JSON.stringify(limits);
+      EnvConfigHelper.reset();
       service = new RecordLimitCheckerService(
         mockLoggingService as LoggingService,
       );
@@ -333,6 +343,7 @@ describe('Utilities: RecordLimitChecker', () => {
       const limits = [{ scope: 'where[_kind]=book', limit: 10 }];
 
       process.env.ENTITY_RECORD_LIMITS = JSON.stringify(limits);
+      EnvConfigHelper.reset();
       service = new RecordLimitCheckerService(
         mockLoggingService as LoggingService,
       );
@@ -352,6 +363,9 @@ describe('Utilities: RecordLimitChecker', () => {
       const limits = [{ scope: 'where[_kind]=book', limit: 10 }];
 
       process.env.ENTITY_RECORD_LIMITS = JSON.stringify(limits);
+
+      EnvConfigHelper.reset();
+
       service = new RecordLimitCheckerService(
         mockLoggingService as LoggingService,
       );
@@ -374,6 +388,9 @@ describe('Utilities: RecordLimitChecker', () => {
       ];
 
       process.env.ENTITY_RECORD_LIMITS = JSON.stringify(limits);
+
+      EnvConfigHelper.reset();
+
       service = new RecordLimitCheckerService(
         mockLoggingService as LoggingService,
       );

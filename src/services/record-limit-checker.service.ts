@@ -11,6 +11,7 @@ import {
 import _ from 'lodash';
 import { parse } from 'qs';
 import { LoggingService } from './logging.service';
+import { EnvConfigHelper } from '../extensions/config-helpers/env-config-helper';
 import { FilterMatcher } from '../extensions/utils/filter-matcher';
 import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
 import { HttpErrorResponse, SingleError } from '../models';
@@ -84,76 +85,39 @@ export class RecordLimitCheckerService {
     this.config = {};
 
     try {
+      const env = EnvConfigHelper.getInstance();
       // Parse record limits
-      if (process.env[ENV_CONFIG_KEYS.ENTITY]) {
-        const envVar = process.env[ENV_CONFIG_KEYS.ENTITY];
-        if (typeof envVar === 'string') {
-          this.config.entityLimits = JSON.parse(envVar);
-        }
+      if (env.ENTITY_RECORD_LIMITS) {
+        this.config.entityLimits = JSON.parse(env.ENTITY_RECORD_LIMITS);
       }
-
-      if (process.env[ENV_CONFIG_KEYS.LIST]) {
-        const envVar = process.env[ENV_CONFIG_KEYS.LIST];
-        if (typeof envVar === 'string') {
-          this.config.listLimits = JSON.parse(envVar);
-        }
+      if (env.LIST_RECORD_LIMITS) {
+        this.config.listLimits = JSON.parse(env.LIST_RECORD_LIMITS);
       }
-
-      if (process.env[ENV_CONFIG_KEYS.RELATION]) {
-        const envVar = process.env[ENV_CONFIG_KEYS.RELATION];
-        if (typeof envVar === 'string') {
-          this.config.relationLimits = JSON.parse(envVar);
-        }
+      if (env.RELATION_RECORD_LIMITS) {
+        this.config.relationLimits = JSON.parse(env.RELATION_RECORD_LIMITS);
       }
-
-      if (process.env[ENV_CONFIG_KEYS.ENTITY_REACTION]) {
-        const envVar = process.env[ENV_CONFIG_KEYS.ENTITY_REACTION];
-        if (typeof envVar === 'string') {
-          this.config.entityReactionLimits = JSON.parse(envVar);
-        }
+      if (env.ENTITY_REACTION_RECORD_LIMITS) {
+        this.config.entityReactionLimits = JSON.parse(env.ENTITY_REACTION_RECORD_LIMITS);
       }
-
-      if (process.env[ENV_CONFIG_KEYS.LIST_REACTION]) {
-        const envVar = process.env[ENV_CONFIG_KEYS.LIST_REACTION];
-        if (typeof envVar === 'string') {
-          this.config.listReactionLimits = JSON.parse(envVar);
-        }
+      if (env.LIST_REACTION_RECORD_LIMITS) {
+        this.config.listReactionLimits = JSON.parse(env.LIST_REACTION_RECORD_LIMITS);
       }
 
       // Parse uniqueness scopes
-      if (process.env[ENV_CONFIG_KEYS.ENTITY_UNIQUENESS]) {
-        const envVar = process.env[ENV_CONFIG_KEYS.ENTITY_UNIQUENESS];
-        if (typeof envVar === 'string') {
-          this.config.entityUniqueness = envVar.split(',');
-        }
+      if (env.ENTITY_UNIQUENESS) {
+        this.config.entityUniqueness = env.ENTITY_UNIQUENESS.split(',');
       }
-
-      if (process.env[ENV_CONFIG_KEYS.LIST_UNIQUENESS]) {
-        const envVar = process.env[ENV_CONFIG_KEYS.LIST_UNIQUENESS];
-        if (typeof envVar === 'string') {
-          this.config.listUniqueness = envVar.split(',');
-        }
+      if (env.LIST_UNIQUENESS) {
+        this.config.listUniqueness = env.LIST_UNIQUENESS.split(',');
       }
-
-      if (process.env[ENV_CONFIG_KEYS.RELATION_UNIQUENESS]) {
-        const envVar = process.env[ENV_CONFIG_KEYS.RELATION_UNIQUENESS];
-        if (typeof envVar === 'string') {
-          this.config.relationUniqueness = envVar.split(',');
-        }
+      if (env.RELATION_UNIQUENESS) {
+        this.config.relationUniqueness = env.RELATION_UNIQUENESS.split(',');
       }
-
-      if (process.env[ENV_CONFIG_KEYS.ENTITY_REACTION_UNIQUENESS]) {
-        const envVar = process.env[ENV_CONFIG_KEYS.ENTITY_REACTION_UNIQUENESS];
-        if (typeof envVar === 'string') {
-          this.config.entityReactionUniqueness = envVar.split(',');
-        }
+      if (env.ENTITY_REACTION_UNIQUENESS) {
+        this.config.entityReactionUniqueness = env.ENTITY_REACTION_UNIQUENESS.split(',');
       }
-
-      if (process.env[ENV_CONFIG_KEYS.LIST_REACTION_UNIQUENESS]) {
-        const envVar = process.env[ENV_CONFIG_KEYS.LIST_REACTION_UNIQUENESS];
-        if (typeof envVar === 'string') {
-          this.config.listReactionUniqueness = envVar.split(',');
-        }
+      if (env.LIST_REACTION_UNIQUENESS) {
+        this.config.listReactionUniqueness = env.LIST_REACTION_UNIQUENESS.split(',');
       }
 
       this.loggingService.debug(
