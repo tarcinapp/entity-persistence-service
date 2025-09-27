@@ -116,6 +116,9 @@ export class EnvConfigHelper {
   get NODE_ENV(): string | undefined {
     return this.get(['NODE_ENV', 'node_env']);
   }
+  get LOG_LEVEL(): string | undefined {
+    return this.get(['LOG_LEVEL', 'log_level']);
+  }
   get PORT(): number | undefined {
     const val = this.get(['PORT', 'port']);
     return val ? Number(val) : undefined;

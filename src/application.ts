@@ -13,6 +13,7 @@ import {
   LoggingBindings,
   getLoggingConfig,
 } from './config/logging.config';
+import { EnvConfigHelper } from './extensions/config-helpers/env-config-helper';
 import { MongoPipelineHelper } from './extensions/utils/mongo-pipeline-helper';
 import { MySequence } from './sequence';
 import { LoggingService } from './services/logging.service';
@@ -38,10 +39,9 @@ export class EntityPersistenceApplication extends BootMixin(
     this.component(RestExplorerComponent);
 
     // Configure logging
+    const env = EnvConfigHelper.getInstance();
     const config = getLoggingConfig();
-    config.level =
-      process.env.LOG_LEVEL ??
-      (process.env.NODE_ENV === 'production' ? 'info' : 'debug');
+    config.level = env.LOG_LEVEL ?? (env.NODE_ENV === 'production' ? 'info' : 'debug');
     const logger = createLoggerInstance(config);
     this.bind(LoggingBindings.LOGGER).to(logger);
 
@@ -67,7 +67,7 @@ export class EntityPersistenceApplication extends BootMixin(
       },
       datasources: {
         // Skip default datasource binding in test mode
-        dirs: process.env.NODE_ENV === 'test' ? [] : ['datasources'],
+        dirs: env.NODE_ENV === 'test' ? [] : ['datasources'],
         extensions: ['.datasource.js'],
         nested: true,
       },

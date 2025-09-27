@@ -51,7 +51,7 @@ async function setupInMemoryMongoDB() {
     const uri = mongod.getUri();
 
     // Set MongoDB environment variables
-  // Set via EnvConfigHelper for test, but also set process.env for compatibility
+  // Set via EnvConfigHelper and also set process.env for compatibility
   env.set('mongodb_url', uri);
   env.set('mongodb_database', 'memory-db');
   process.env['mongodb_url'] = uri;
