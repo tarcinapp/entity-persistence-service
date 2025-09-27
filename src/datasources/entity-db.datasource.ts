@@ -1,5 +1,6 @@
 import { inject, lifeCycleObserver, LifeCycleObserver } from '@loopback/core';
 import { juggler } from '@loopback/repository';
+import { EnvConfigHelper } from '../extensions/config-helpers/env-config-helper';
 
 @lifeCycleObserver('datasource')
 export class EntityDbDataSource
@@ -12,20 +13,21 @@ export class EntityDbDataSource
     @inject('datasources.config.EntityDb', { optional: true })
     dsConfig: object = {},
   ) {
+    const env = EnvConfigHelper.getInstance();
     const config = {
       name: 'EntityDb',
       connector: 'mongodb',
-      url: process.env['mongodb_url'],
-      database: process.env['mongodb_database'],
+      url: env.MONGODB_URL,
+      database: env.MONGODB_DATABASE,
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      ...(process.env['mongodb_url']
+      ...(env.MONGODB_URL
         ? {}
         : {
-            host: process.env['mongodb_host'],
-            port: process.env['mongodb_port'],
-            user: process.env['mongodb_user'],
-            password: process.env['mongodb_password'],
+            host: env.MONGODB_HOST,
+            port: env.MONGODB_PORT,
+            user: env.MONGODB_USER,
+            password: env.MONGODB_PASSWORD,
           }),
     };
 

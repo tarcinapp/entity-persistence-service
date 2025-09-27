@@ -1,4 +1,3 @@
-  // Visibility config getters
 import {BindingKey} from '@loopback/core';
 
 /**
@@ -121,8 +120,27 @@ export class EnvConfigHelper {
     const val = this.get(['PORT', 'port']);
     return val ? Number(val) : undefined;
   }
+
+  get HOST(): string | undefined {
+    return this.get(['HOST', 'host']);
+  }
   get MONGODB_URL(): string | undefined {
     return this.get(['MONGODB_URL', 'mongodb_url']);
+  }
+  get MONGODB_DATABASE(): string | undefined {
+    return this.get(['MONGODB_DATABASE', 'mongodb_database']);
+  }
+  get MONGODB_HOST(): string | undefined {
+    return this.get(['MONGODB_HOST', 'mongodb_host']);
+  }
+  get MONGODB_PORT(): string | undefined {
+    return this.get(['MONGODB_PORT', 'mongodb_port']);
+  }
+  get MONGODB_USER(): string | undefined {
+    return this.get(['MONGODB_USER', 'mongodb_user']);
+  }
+  get MONGODB_PASSWORD(): string | undefined {
+    return this.get(['MONGODB_PASSWORD', 'mongodb_password']);
   }
   get COLLECTION_ENTITY(): string | undefined {
     return this.get(['COLLECTION_ENTITY', 'collection_entity']);

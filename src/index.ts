@@ -1,4 +1,7 @@
 import type {} from './extensions/types/inclusion-augmentation';
+import { EnvConfigHelper } from './extensions/config-helpers/env-config-helper';
+
+const env = EnvConfigHelper.getInstance();
 import { RestBindings } from '@loopback/rest';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { parse } from 'qs';
@@ -37,22 +40,22 @@ let mongod: MongoMemoryServer | undefined;
 async function setupInMemoryMongoDB() {
   // Check if we're in production or if MongoDB config is provided
   const hasMongoConfig = !!(
-    process.env['mongodb_url'] ??
-    (process.env['mongodb_host'] &&
-      process.env['mongodb_port'] &&
-      process.env['mongodb_user'] &&
-      process.env['mongodb_password'])
+    env.MONGODB_URL ??
+    (env.MONGODB_HOST && env.MONGODB_PORT && env.MONGODB_USER && env.MONGODB_PASSWORD)
   );
 
-  if (process.env.NODE_ENV !== 'production' && !hasMongoConfig) {
+  if (env.NODE_ENV !== 'production' && !hasMongoConfig) {
     // Create and start in-memory MongoDB instance
     mongod = new MongoMemoryServer();
     await mongod.start();
     const uri = mongod.getUri();
 
     // Set MongoDB environment variables
-    process.env['mongodb_url'] = uri;
-    process.env['mongodb_database'] = 'memory-db';
+  // Set via EnvConfigHelper for test, but also set process.env for compatibility
+  env.set('mongodb_url', uri);
+  env.set('mongodb_database', 'memory-db');
+  process.env['mongodb_url'] = uri;
+  process.env['mongodb_database'] = 'memory-db';
   }
 }
 
@@ -63,7 +66,7 @@ export async function main(options: ApplicationConfig = {}) {
   const app = new EntityPersistenceApplication(options);
 
   app.bind(RestBindings.ERROR_WRITER_OPTIONS).to({
-    debug: process.env.NODE_ENV !== 'production',
+    debug: env.NODE_ENV !== 'production',
     safeFields: ['errorCode', 'message'],
   });
 
@@ -128,8 +131,8 @@ if (require.main === module) {
   // Run the application
   const config = {
     rest: {
-      port: +(process.env.PORT ?? 3000),
-      host: process.env.HOST,
+      port: +(env.PORT ?? 3000),
+      host: env.HOST,
       // The `gracePeriodForClose` provides a graceful close for http/https
       // servers with keep-alive clients. The default value is `Infinity`
       // (don't force-close). If you want to immediately destroy all sockets
