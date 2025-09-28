@@ -11,8 +11,6 @@ import { parse } from 'qs';
 import { EntityPersistenceApplication } from '../..';
 import { EntityDbDataSource } from '../../datasources/entity-db.datasource';
 import {
-  UniquenessBindings,
-  UniquenessConfigurationReader,
   RecordLimitsBindings,
   RecordLimitsConfigurationReader,
   VisibilityConfigBindings,
@@ -421,11 +419,6 @@ export async function setupApplication(
     debug: true,
     safeFields: ['errorCode', 'message'],
   });
-
-  // add uniqueness configuration reader to context
-  app
-    .bind(UniquenessBindings.CONFIG_READER)
-    .toClass(UniquenessConfigurationReader);
 
   // add record limits configuration reader to context
   app

@@ -8,8 +8,6 @@ import { parse } from 'qs';
 import type { ApplicationConfig } from './application';
 import { EntityPersistenceApplication } from './application';
 import {
-  UniquenessBindings,
-  UniquenessConfigurationReader,
   VisibilityConfigBindings,
   VisibilityConfigurationReader,
   IdempotencyConfigBindings,
@@ -69,11 +67,6 @@ export async function main(options: ApplicationConfig = {}) {
     debug: env.NODE_ENV !== 'production',
     safeFields: ['errorCode', 'message'],
   });
-
-  // add uniqueness configuration reader to context
-  app
-    .bind(UniquenessBindings.CONFIG_READER)
-    .toClass(UniquenessConfigurationReader);
 
   // add record limits configuration reader to context
   app

@@ -16,7 +16,6 @@ import { EntityDbDataSource } from '../datasources';
 import {
   IdempotencyConfigurationReader,
   KindConfigurationReader,
-  UniquenessConfigurationReader,
   ValidfromConfigurationReader,
 } from '../extensions';
 import { MongoPipelineHelper } from '../extensions/utils/mongo-pipeline-helper';
@@ -57,9 +56,6 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
 
     @inject('extensions.validfrom.configurationreader')
     private validfromConfigReader: ValidfromConfigurationReader,
-
-    @inject('extensions.uniqueness.configurationreader')
-    private uniquenessConfigReader: UniquenessConfigurationReader,
 
     @inject('extensions.response-limit.configurationreader')
     private responseLimitConfigReader: ResponseLimitConfigurationReader,
