@@ -1,12 +1,13 @@
 import { model, property } from '@loopback/repository';
 import { ReactionsCommonBase } from './base-models/reactions-common-base.model';
 import { ListWithRelations } from './list.model';
+import {CollectionConfigHelper} from '../extensions/config-helpers/collection-config-helper';
 
 @model({
   settings: {
     strict: false,
     mongodb: {
-      collection: process.env.collection_list_reactions ?? 'ListReactions',
+      collection: CollectionConfigHelper.getInstance().getListReactionsCollectionName(),
     },
   },
 })

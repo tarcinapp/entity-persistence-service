@@ -27,4 +27,8 @@ export class CollectionConfigHelper {
   public getEntityReactionsCollectionName(): string {
     return EnvConfigHelper.getInstance().COLLECTION_ENTITY_REACTIONS ?? 'EntityReaction';
   }
+
+  public getListReactionsCollectionName(): string {
+    return EnvConfigHelper.getInstance().COLLECTION_LIST_REACTIONS ?? 'ListReactions';
+  }
 }
