@@ -1,6 +1,7 @@
 import type { Logger } from 'winston';
 import { format, createLogger, transports } from 'winston';
 import type { LoggingConfig } from '../types/logging.types';
+import { EnvConfigHelper } from '../extensions/config-helpers/env-config-helper';
 
 export const LoggingBindings = {
   LOGGER: 'logging.logger',
@@ -58,13 +59,14 @@ export function createLoggerInstance(config: LoggingConfig): Logger {
 }
 
 export const getLoggingConfig = (): LoggingConfig => {
-  const isTest = process.env.NODE_ENV === 'test';
+  const configHelper = EnvConfigHelper.getInstance();
+  const isTest = configHelper.NODE_ENV === 'test';
 
   return {
-    level: process.env.LOG_LEVEL ?? (isTest ? 'error' : 'info'),
-    format: process.env.LOG_FORMAT === 'text' ? 'text' : 'json',
-    timestamp: process.env.LOG_TIMESTAMP === 'true',
-    service: process.env.LOG_SERVICE ?? 'entity-persistence-service',
-    environment: process.env.NODE_ENV ?? 'development',
+    level: configHelper.LOG_LEVEL ?? (isTest ? 'error' : 'info'),
+    format: configHelper.LOG_FORMAT === 'text' ? 'text' : 'json',
+    timestamp: configHelper.LOG_TIMESTAMP === 'true',
+    service: configHelper.LOG_SERVICE ?? 'entity-persistence-service',
+    environment: configHelper.NODE_ENV ?? 'development',
   };
 };

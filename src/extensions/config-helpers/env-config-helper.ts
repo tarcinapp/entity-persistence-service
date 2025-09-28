@@ -132,6 +132,15 @@ export class EnvConfigHelper {
   get LOG_LEVEL(): string | undefined {
     return this.get(['LOG_LEVEL', 'log_level']);
   }
+  get LOG_FORMAT(): string | undefined {
+    return this.get(['LOG_FORMAT', 'log_format']);
+  }
+  get LOG_TIMESTAMP(): string | undefined {
+    return this.get(['LOG_TIMESTAMP', 'log_timestamp']);
+  }
+  get LOG_SERVICE(): string | undefined {
+    return this.get(['LOG_SERVICE', 'log_service']);
+  }
   get PORT(): number | undefined {
     const val = this.get(['PORT', 'port']);
     return val ? Number(val) : undefined;
