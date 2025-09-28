@@ -61,6 +61,19 @@ export class EnvConfigHelper {
   }
 
   // Strongly-typed getters for known environment variables
+  // Lookup constraint config getters
+  get ENTITY_LOOKUP_CONSTRAINT(): string | undefined {
+    return this.get(['ENTITY_LOOKUP_CONSTRAINT', 'entity_lookup_constraint']);
+  }
+  get LIST_LOOKUP_CONSTRAINT(): string | undefined {
+    return this.get(['LIST_LOOKUP_CONSTRAINT', 'list_lookup_constraint']);
+  }
+  get ENTITY_REACTION_LOOKUP_CONSTRAINT(): string | undefined {
+    return this.get(['ENTITY_REACTION_LOOKUP_CONSTRAINT', 'entity_reaction_lookup_constraint']);
+  }
+  get LIST_REACTION_LOOKUP_CONSTRAINT(): string | undefined {
+    return this.get(['LIST_REACTION_LOOKUP_CONSTRAINT', 'list_reaction_lookup_constraint']);
+  }
   // Idempotency config getters
   get IDEMPOTENCY_ENTITY(): string | undefined {
     return this.get(['IDEMPOTENCY_ENTITY', 'idempotency_entity']);

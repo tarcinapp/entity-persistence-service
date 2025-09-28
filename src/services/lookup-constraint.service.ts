@@ -1,6 +1,7 @@
 import { inject, injectable, Getter } from '@loopback/core';
 import { get, every, isString } from 'lodash';
 import { LoggingService } from './logging.service';
+import { EnvConfigHelper } from '../extensions/config-helpers/env-config-helper';
 import { RecordsCommonBase } from '../models/base-models/records-common-base.model';
 import { HttpErrorResponse } from '../models/http-error-response.model';
 import { EntityReactionsRepository } from '../repositories/entity-reactions.repository';
@@ -63,12 +64,11 @@ export class LookupConstraintService {
   }
 
   private loadConstraints() {
-    const entityConstraintsJson = process.env.ENTITY_LOOKUP_CONSTRAINT;
-    const listConstraintsJson = process.env.LIST_LOOKUP_CONSTRAINT;
-    const entityReactionConstraintsJson =
-      process.env.ENTITY_REACTION_LOOKUP_CONSTRAINT;
-    const listReactionConstraintsJson =
-      process.env.LIST_REACTION_LOOKUP_CONSTRAINT;
+    const env = EnvConfigHelper.getInstance();
+    const entityConstraintsJson = env.ENTITY_LOOKUP_CONSTRAINT;
+    const listConstraintsJson = env.LIST_LOOKUP_CONSTRAINT;
+    const entityReactionConstraintsJson = env.ENTITY_REACTION_LOOKUP_CONSTRAINT;
+    const listReactionConstraintsJson = env.LIST_REACTION_LOOKUP_CONSTRAINT;
 
     // Load user-configured constraints
     let userEntityConstraints: LookupConstraint[] = [];

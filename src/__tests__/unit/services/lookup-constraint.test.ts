@@ -9,6 +9,7 @@ import { ListReactionsRepository } from '../../../repositories/list-reactions.re
 import { ListRepository } from '../../../repositories/list.repository';
 import type { LoggingService } from '../../../services/logging.service';
 import { LookupConstraintService } from '../../../services/lookup-constraint.service';
+import { EnvConfigHelper } from '../../../extensions/config-helpers/env-config-helper';
 
 describe('Utilities: LookupConstraint', () => {
   let service: LookupConstraintService;
@@ -76,7 +77,8 @@ describe('Utilities: LookupConstraint', () => {
         },
       ];
 
-      process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify(constraints);
+  process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify(constraints);
+  EnvConfigHelper.reset();
 
       // Create a new service instance after setting the environment variable
       service = new LookupConstraintService(
@@ -101,7 +103,8 @@ describe('Utilities: LookupConstraint', () => {
         },
       ];
 
-      process.env.LIST_LOOKUP_CONSTRAINT = JSON.stringify(constraints);
+  process.env.LIST_LOOKUP_CONSTRAINT = JSON.stringify(constraints);
+  EnvConfigHelper.reset();
 
       // Create a new service instance after setting the environment variable
       service = new LookupConstraintService(
@@ -117,7 +120,8 @@ describe('Utilities: LookupConstraint', () => {
     });
 
     it('should handle invalid JSON in environment variables', () => {
-      process.env.ENTITY_LOOKUP_CONSTRAINT = 'invalid json';
+  process.env.ENTITY_LOOKUP_CONSTRAINT = 'invalid json';
+  EnvConfigHelper.reset();
 
       // Should not throw, just log warning
       expect(() => {
@@ -141,6 +145,7 @@ describe('Utilities: LookupConstraint', () => {
             record: 'entity',
           },
         ]);
+        EnvConfigHelper.reset();
 
         // Create new service instance after setting environment variables
         service = new LookupConstraintService(
@@ -170,6 +175,7 @@ describe('Utilities: LookupConstraint', () => {
             record: 'entity',
           },
         ]);
+        EnvConfigHelper.reset();
 
         // Create new service instance after setting environment variables
         service = new LookupConstraintService(
@@ -202,6 +208,7 @@ describe('Utilities: LookupConstraint', () => {
               record: 'entity',
             },
           ]);
+          EnvConfigHelper.reset();
 
           // Create new service instance after setting environment variables
           service = new LookupConstraintService(
@@ -236,6 +243,7 @@ describe('Utilities: LookupConstraint', () => {
               targetKind: 'target',
             },
           ]);
+          EnvConfigHelper.reset();
 
           // Create new service instance after setting environment variables
           service = new LookupConstraintService(
@@ -276,6 +284,7 @@ describe('Utilities: LookupConstraint', () => {
               targetKind: 'target',
             },
           ]);
+          EnvConfigHelper.reset();
 
           // Create new service instance after setting environment variables
           service = new LookupConstraintService(
@@ -330,6 +339,7 @@ describe('Utilities: LookupConstraint', () => {
               record: 'entity',
             },
           ]);
+          EnvConfigHelper.reset();
 
           // Create new service instance after setting environment variables
           service = new LookupConstraintService(
@@ -361,6 +371,7 @@ describe('Utilities: LookupConstraint', () => {
               record: 'entity',
             },
           ]);
+          EnvConfigHelper.reset();
 
           // Create new service instance after setting environment variables
           service = new LookupConstraintService(
@@ -390,6 +401,7 @@ describe('Utilities: LookupConstraint', () => {
               record: 'entity',
             },
           ]);
+          EnvConfigHelper.reset();
 
           // Create new service instance after setting environment variables
           service = new LookupConstraintService(
@@ -423,6 +435,7 @@ describe('Utilities: LookupConstraint', () => {
               targetKind: 'target',
             },
           ]);
+          EnvConfigHelper.reset();
 
           // Create new service instance after setting environment variables
           service = new LookupConstraintService(
@@ -463,6 +476,7 @@ describe('Utilities: LookupConstraint', () => {
               targetKind: 'target',
             },
           ]);
+          EnvConfigHelper.reset();
 
           // Create new service instance after setting environment variables
           service = new LookupConstraintService(
@@ -511,6 +525,7 @@ describe('Utilities: LookupConstraint', () => {
               targetKind: 'target2',
             },
           ]);
+          EnvConfigHelper.reset();
 
           // Create new service instance after setting environment variables
           service = new LookupConstraintService(
@@ -568,6 +583,7 @@ describe('Utilities: LookupConstraint', () => {
               targetKind: 'target2',
             },
           ]);
+          EnvConfigHelper.reset();
 
           // Create new service instance after setting environment variables
           service = new LookupConstraintService(
@@ -618,6 +634,7 @@ describe('Utilities: LookupConstraint', () => {
             record: 'list', // Only list references are allowed
           },
         ]);
+        EnvConfigHelper.reset();
 
         // Create new service instance after setting environment variables
         service = new LookupConstraintService(
@@ -650,6 +667,7 @@ describe('Utilities: LookupConstraint', () => {
               record: 'list',
             },
           ]);
+          EnvConfigHelper.reset();
 
           // Create new service instance after setting environment variables
           service = new LookupConstraintService(
@@ -684,6 +702,7 @@ describe('Utilities: LookupConstraint', () => {
               record: 'list',
             },
           ]);
+          EnvConfigHelper.reset();
 
           // Create new service instance after setting environment variables
           service = new LookupConstraintService(
@@ -777,6 +796,7 @@ describe('Utilities: LookupConstraint', () => {
               targetKind: 'target',
             },
           ]);
+          EnvConfigHelper.reset();
 
           // Create new service instance after setting environment variables
           service = new LookupConstraintService(
@@ -817,6 +837,7 @@ describe('Utilities: LookupConstraint', () => {
               targetKind: 'target',
             },
           ]);
+          EnvConfigHelper.reset();
 
           // Create new service instance after setting environment variables
           service = new LookupConstraintService(
@@ -865,6 +886,7 @@ describe('Utilities: LookupConstraint', () => {
               targetKind: 'target2',
             },
           ]);
+          EnvConfigHelper.reset();
 
           // Create new service instance after setting environment variables
           service = new LookupConstraintService(
@@ -922,6 +944,7 @@ describe('Utilities: LookupConstraint', () => {
               targetKind: 'target2',
             },
           ]);
+          EnvConfigHelper.reset();
 
           // Create new service instance after setting environment variables
           service = new LookupConstraintService(
@@ -972,6 +995,8 @@ describe('Utilities: LookupConstraint', () => {
             record: 'entity', // Only entity references are allowed
           },
         ]);
+
+        EnvConfigHelper.reset();
 
         // Create new service instance after setting environment variables
         service = new LookupConstraintService(
@@ -1099,6 +1124,8 @@ describe('Utilities: LookupConstraint', () => {
             },
           ]);
 
+          EnvConfigHelper.reset();
+
           // Create new service instance after setting environment variables
           service = new LookupConstraintService(
             mockLoggingService as LoggingService,
@@ -1172,6 +1199,8 @@ describe('Utilities: LookupConstraint', () => {
             },
           ]);
 
+          EnvConfigHelper.reset();
+
           // Create new service instance after setting environment variables
           service = new LookupConstraintService(
             mockLoggingService as LoggingService,
@@ -1211,6 +1240,8 @@ describe('Utilities: LookupConstraint', () => {
               targetKind: 'target',
             },
           ]);
+
+          EnvConfigHelper.reset();
 
           // Create new service instance after setting environment variables
           service = new LookupConstraintService(
@@ -1331,6 +1362,8 @@ describe('Utilities: LookupConstraint', () => {
             },
           ]);
 
+          EnvConfigHelper.reset();
+
           // Create new service instance after setting environment variables
           service = new LookupConstraintService(
             mockLoggingService as LoggingService,
@@ -1383,6 +1416,7 @@ describe('Utilities: LookupConstraint', () => {
               record: 'list',
             },
           ]);
+          EnvConfigHelper.reset();
 
           // Create new service instance after setting environment variables
           service = new LookupConstraintService(
@@ -1414,6 +1448,7 @@ describe('Utilities: LookupConstraint', () => {
               record: 'list',
             },
           ]);
+          EnvConfigHelper.reset();
 
           // Create new service instance after setting environment variables
           service = new LookupConstraintService(
@@ -1548,6 +1583,8 @@ describe('Utilities: LookupConstraint', () => {
             },
           ]);
 
+          EnvConfigHelper.reset();
+
           // Create new service instance after setting environment variables
           service = new LookupConstraintService(
             mockLoggingService as LoggingService,
@@ -1650,6 +1687,8 @@ describe('Utilities: LookupConstraint', () => {
             },
           ]);
 
+          EnvConfigHelper.reset();
+
           // Create new service instance after setting environment variables
           service = new LookupConstraintService(
             mockLoggingService as LoggingService,
@@ -1706,6 +1745,8 @@ describe('Utilities: LookupConstraint', () => {
               targetKind: 'target2',
             },
           ]);
+
+          EnvConfigHelper.reset();
 
           // Create new service instance after setting environment variables
           service = new LookupConstraintService(
