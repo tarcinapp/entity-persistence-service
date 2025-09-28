@@ -11,8 +11,6 @@ import { parse } from 'qs';
 import { EntityPersistenceApplication } from '../..';
 import { EntityDbDataSource } from '../../datasources/entity-db.datasource';
 import {
-  RecordLimitsBindings,
-  RecordLimitsConfigurationReader,
   VisibilityConfigBindings,
   VisibilityConfigurationReader,
   IdempotencyConfigBindings,
@@ -419,11 +417,6 @@ export async function setupApplication(
     debug: true,
     safeFields: ['errorCode', 'message'],
   });
-
-  // add record limits configuration reader to context
-  app
-    .bind(RecordLimitsBindings.CONFIG_READER)
-    .toClass(RecordLimitsConfigurationReader);
 
   // add kind limits configuration reader to context
   app.bind(KindBindings.CONFIG_READER).toClass(KindConfigurationReader);

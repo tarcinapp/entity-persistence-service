@@ -4,7 +4,6 @@ import type { EntityDbDataSource } from '../../../datasources';
 import {
   IdempotencyConfigurationReader,
   KindConfigurationReader,
-  RecordLimitsConfigurationReader,
   ResponseLimitConfigurationReader,
   ValidfromConfigurationReader,
   VisibilityConfigurationReader,
@@ -18,7 +17,6 @@ export async function setupRepositoryTest(): Promise<{
   app: EntityPersistenceApplication;
   dataSource: juggler.DataSource;
   configReaders: {
-    recordLimitConfigReader: RecordLimitsConfigurationReader;
     kindConfigReader: KindConfigurationReader;
     visibilityConfigReader: VisibilityConfigurationReader;
     validfromConfigReader: ValidfromConfigurationReader;
@@ -41,7 +39,6 @@ export async function setupRepositoryTest(): Promise<{
   const dataSource = new juggler.DataSource(testConfig) as EntityDbDataSource;
 
   // Create configuration readers with default test settings
-  const recordLimitConfigReader = new RecordLimitsConfigurationReader();
   const kindConfigReader = new KindConfigurationReader();
   const visibilityConfigReader = new VisibilityConfigurationReader();
   const validfromConfigReader = new ValidfromConfigurationReader();
@@ -55,7 +52,6 @@ export async function setupRepositoryTest(): Promise<{
     app,
     dataSource,
     configReaders: {
-      recordLimitConfigReader,
       kindConfigReader,
       visibilityConfigReader,
       validfromConfigReader,

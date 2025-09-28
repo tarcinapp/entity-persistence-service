@@ -1,5 +1,4 @@
 export * from './config-helpers/idempotency-config-helper';
-export * from './config-helpers/record-limits-config-helper';
 export * from './config-helpers/response-limit-config-helper';
 export * from './utils/set-helper';
 export * from './config-helpers/validfrom-config-helper';

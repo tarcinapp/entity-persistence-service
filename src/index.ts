@@ -12,8 +12,6 @@ import {
   VisibilityConfigurationReader,
   IdempotencyConfigBindings,
   IdempotencyConfigurationReader,
-  RecordLimitsBindings,
-  RecordLimitsConfigurationReader,
   ValidFromConfigBindings,
   ValidfromConfigurationReader,
   ResponseLimitConfigBindings,
@@ -67,11 +65,6 @@ export async function main(options: ApplicationConfig = {}) {
     debug: env.NODE_ENV !== 'production',
     safeFields: ['errorCode', 'message'],
   });
-
-  // add record limits configuration reader to context
-  app
-    .bind(RecordLimitsBindings.CONFIG_READER)
-    .toClass(RecordLimitsConfigurationReader);
 
   // add kind limits configuration reader to context
 
