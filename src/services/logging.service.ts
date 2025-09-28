@@ -2,6 +2,7 @@ import { inject, injectable } from '@loopback/core';
 import { Request } from '@loopback/rest';
 import winston from 'winston';
 import { LoggingBindings } from '../config/logging.config';
+import {EnvConfigHelper} from '../extensions/config-helpers/env-config-helper';
 
 interface RequestContext {
   method: string;
@@ -61,7 +62,7 @@ export class LoggingService {
     const meta = {
       ...context,
       timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV,
+      environment: EnvConfigHelper.getInstance().NODE_ENV ?? 'development',
       service: 'entity-persistence-service',
     };
 

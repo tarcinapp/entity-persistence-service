@@ -1,14 +1,17 @@
 import type { ApplicationConfig } from '@loopback/core';
 import { EntityPersistenceApplication } from './application';
+import {EnvConfigHelper} from './extensions/config-helpers/env-config-helper';
 
 /**
  * Export the OpenAPI spec from the application
  */
 async function exportOpenApiSpec(): Promise<void> {
+  const env = EnvConfigHelper.getInstance();
+
   const config: ApplicationConfig = {
     rest: {
-      port: +(process.env.PORT ?? 3000),
-      host: process.env.HOST ?? 'localhost',
+      port: +(env.PORT ?? 3000),
+      host: env.HOST ?? 'localhost',
     },
   };
   const outFile = process.argv[2] ?? '';

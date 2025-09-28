@@ -143,11 +143,11 @@ export class EnvConfigHelper {
   }
   get PORT(): number | undefined {
     const val = this.get(['PORT', 'port']);
-    return val ? Number(val) : undefined;
+    return val ? Number(val) : 3000;
   }
 
   get HOST(): string | undefined {
-    return this.get(['HOST', 'host']);
+    return this.get(['HOST', 'host']) ?? 'localhost';
   }
   get MONGODB_URL(): string | undefined {
     return this.get(['MONGODB_URL', 'mongodb_url']);

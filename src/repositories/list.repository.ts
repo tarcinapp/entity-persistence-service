@@ -572,7 +572,6 @@ export class ListRepository extends DefaultCrudRepository<
   ): Promise<DataObject<List>> {
     data._kind =
       data._kind ??
-      process.env.default_list_kind ??
       this.kindConfigReader.defaultListKind;
 
     // take the date of now to make sure we have exactly the same date in all date fields

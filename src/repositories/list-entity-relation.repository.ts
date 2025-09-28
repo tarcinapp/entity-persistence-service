@@ -538,7 +538,6 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
 
     data._kind =
       data._kind ??
-      process.env.default_relation_kind ??
       this.kindConfigReader.defaultRelationKind;
     data._createdDateTime = data._createdDateTime ?? now;
     data._lastUpdatedDateTime = data._lastUpdatedDateTime ?? now;

@@ -280,7 +280,6 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
   ): Promise<DataObject<EntityReaction>> {
     data._kind =
       data._kind ??
-      process.env.default_entity_reaction_kind ??
       this.kindConfigReader.defaultEntityReactionKind;
 
     const now = new Date().toISOString();
