@@ -34,7 +34,7 @@ import { getFilterSchemaFor } from '../openapi/filter-schemas';
 import { EntityRepository } from '../repositories';
 import { LoggingService } from '../services/logging.service';
 
-export class EntityController {
+export class EntitiesController {
   constructor(
     @repository(EntityRepository)
     public entityRepository: EntityRepository,

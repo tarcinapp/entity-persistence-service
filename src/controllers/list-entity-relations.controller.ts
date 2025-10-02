@@ -33,7 +33,7 @@ import { getFilterSchemaFor } from '../openapi/filter-schemas';
 import { ListEntityRelationRepository } from '../repositories';
 import { LoggingService } from '../services/logging.service';
 
-export class ListEntityRelController {
+export class ListEntityRelsController {
   constructor(
     @repository(ListEntityRelationRepository)
     public listEntityRelationRepository: ListEntityRelationRepository,

@@ -27,7 +27,7 @@ import {
 import { CustomReactionThroughEntityRepository } from '../repositories/custom-reaction-through-entity.repository';
 import { LoggingService } from '../services/logging.service';
 
-export class ReactionsThroughEntitiesController {
+export class ReactionsThroughEntityController {
   constructor(
     @repository(CustomReactionThroughEntityRepository)
     protected reactionRepository: CustomReactionThroughEntityRepository,

@@ -25,7 +25,7 @@ import {
 } from '../models/base-types/unmodifiable-common-fields';
 import { ListReactionsRepository } from '../repositories';
 
-export class ListReactionController {
+export class ListReactionsController {
   constructor(
     @repository(ListReactionsRepository)
     public listReactionsRepository: ListReactionsRepository,

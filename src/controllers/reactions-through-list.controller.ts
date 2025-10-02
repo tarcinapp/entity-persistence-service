@@ -18,7 +18,7 @@ import {
 import { List, ListReaction } from '../models';
 import { ListRepository } from '../repositories';
 
-export class ReactionsThroughListsController {
+export class ReactionsThroughListController {
   constructor(
     @repository(ListRepository)
     protected listRepository: ListRepository,

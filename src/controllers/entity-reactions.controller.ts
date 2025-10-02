@@ -30,7 +30,7 @@ import { getFilterSchemaFor } from '../openapi/filter-schemas';
 import { EntityReactionsRepository } from '../repositories';
 import { LoggingService } from '../services/logging.service';
 
-export class EntityReactionController {
+export class EntityReactionsController {
   constructor(
     @repository(EntityReactionsRepository)
     public entityReactionsRepository: EntityReactionsRepository,

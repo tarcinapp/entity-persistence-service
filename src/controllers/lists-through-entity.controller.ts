@@ -6,7 +6,7 @@ import { List, ListToEntityRelation } from '../models';
 import { ALWAYS_HIDDEN_FIELDS } from '../models/base-types/unmodifiable-common-fields';
 import { EntityRepository } from '../repositories';
 
-export class ListsThroughEntitiesController {
+export class ListsThroughEntityController {
   constructor(
     @repository(EntityRepository)
     protected entityRepository: EntityRepository,

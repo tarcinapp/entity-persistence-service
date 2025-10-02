@@ -384,10 +384,10 @@
     },
     "/entities/{id}/reactions": {
       "post": {
-        "x-controller-name": "ReactionsThroughEntitiesController",
+        "x-controller-name": "ReactionsThroughEntityController",
         "x-operation-name": "create",
         "tags": [
-          "ReactionsThroughEntitiesController"
+          "ReactionsThroughEntityController"
         ],
         "responses": {
           "200": {
@@ -497,13 +497,13 @@
           },
           "x-parameter-index": 1
         },
-        "operationId": "ReactionsThroughEntitiesController.create"
+        "operationId": "ReactionsThroughEntityController.create"
       },
       "patch": {
-        "x-controller-name": "ReactionsThroughEntitiesController",
+        "x-controller-name": "ReactionsThroughEntityController",
         "x-operation-name": "updateAll",
         "tags": [
-          "ReactionsThroughEntitiesController"
+          "ReactionsThroughEntityController"
         ],
         "responses": {
           "200": {
@@ -599,13 +599,13 @@
           },
           "x-parameter-index": 1
         },
-        "operationId": "ReactionsThroughEntitiesController.updateAll"
+        "operationId": "ReactionsThroughEntityController.updateAll"
       },
       "get": {
-        "x-controller-name": "ReactionsThroughEntitiesController",
+        "x-controller-name": "ReactionsThroughEntityController",
         "x-operation-name": "find",
         "tags": [
-          "ReactionsThroughEntitiesController"
+          "ReactionsThroughEntityController"
         ],
         "responses": {
           "200": {
@@ -675,13 +675,13 @@
             }
           }
         ],
-        "operationId": "ReactionsThroughEntitiesController.find"
+        "operationId": "ReactionsThroughEntityController.find"
       },
       "delete": {
-        "x-controller-name": "ReactionsThroughEntitiesController",
+        "x-controller-name": "ReactionsThroughEntityController",
         "x-operation-name": "deleteAll",
         "tags": [
-          "ReactionsThroughEntitiesController"
+          "ReactionsThroughEntityController"
         ],
         "responses": {
           "200": {
@@ -748,7 +748,7 @@
             }
           }
         ],
-        "operationId": "ReactionsThroughEntitiesController.deleteAll"
+        "operationId": "ReactionsThroughEntityController.deleteAll"
       }
     },
     "/entities/{id}": {

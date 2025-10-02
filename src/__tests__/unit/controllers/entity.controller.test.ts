@@ -3,7 +3,7 @@ import type { Request } from '@loopback/rest';
 import { expect, sinon } from '@loopback/testlab';
 import { setupApplication, teardownApplication } from './test-helper';
 import type { EntityPersistenceApplication } from '../../..';
-import { EntityController } from '../../../controllers';
+import { EntitiesController } from '../../../controllers';
 import type { Set } from '../../../extensions/utils/set-helper';
 import { GenericEntity } from '../../../models';
 import { EntityRepository } from '../../../repositories';
@@ -14,9 +14,9 @@ import { LoggingService } from '../../../services/logging.service';
  * Tests all CRUD operations and their error cases.
  * Uses sinon stubs to isolate the controller from the repository layer.
  */
-describe('EntityController', () => {
+describe('EntitiesController', () => {
   let app: EntityPersistenceApplication;
-  let controller: EntityController;
+  let controller: EntitiesController;
   let repository: sinon.SinonStubbedInstance<EntityRepository>;
   let mockRequest: Partial<Request> & { requestId?: string };
   let mockLogger: sinon.SinonStubbedInstance<LoggingService>;
@@ -43,7 +43,7 @@ describe('EntityController', () => {
     };
     mockLogger = sinon.createStubInstance(LoggingService);
 
-    controller = new EntityController(
+    controller = new EntitiesController(
       repository,
       mockRequest as Request,
       mockLogger,

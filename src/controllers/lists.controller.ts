@@ -34,7 +34,7 @@ import { getFilterSchemaFor } from '../openapi/filter-schemas';
 import { ListRepository } from '../repositories';
 import { LoggingService } from '../services/logging.service';
 
-export class ListController {
+export class ListsController {
   constructor(
     @repository(ListRepository)
     public listRepository: ListRepository,

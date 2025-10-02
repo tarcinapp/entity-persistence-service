@@ -87,7 +87,7 @@
     - [EntitiesThroughListController](#entitiesthroughlistcontroller)
     - [ListsThroughEntitiesController](#liststhroughentitiescontroller)
     - [EntityReactionController](#entityreactioncontroller)
-    - [ReactionsThroughEntitiesController](#reactionsthroughentitiescontroller)
+    - [ReactionsThroughEntityController](#ReactionsThroughEntityController)
     - [ListReactionController](#listreactioncontroller)
     - [ReactionsThroughListsController](#reactionsthroughlistscontroller)
     - [PingController](#pingcontroller)
@@ -1723,7 +1723,7 @@ When querying list-entity relations, dot notation filtering (e.g., `metadata.sta
   | GET    | `/entity-reactions/{id}/parents`  | Get entity reaction parents      |
   | DELETE | `/entity-reactions/{id}`          | Delete entity reaction           |
 
-  ### ReactionsThroughEntitiesController
+  ### ReactionsThroughEntityController
   | Method | Endpoint                   | Description             |
   | ------ | -------------------------- | ----------------------- |
   | POST   | `/entities/{id}/reactions` | Add reaction to entity  |
