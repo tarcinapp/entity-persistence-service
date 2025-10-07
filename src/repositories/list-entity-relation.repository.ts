@@ -86,8 +86,9 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
       CollectionConfigHelper.getInstance().getListEntityRelationCollectionName();
 
     // Get the MongoDB collection for executing the aggregation
-    const relationCollection = this.dataSource.connector?.collection(
-      relationCollectionName,
+    // Pass the model name (not collection name) so the connector can look it up
+    const relationCollection = (this.dataSource.connector as any)?.collection(
+      'ListToEntityRelation',
     );
 
     if (!relationCollection) {
@@ -149,8 +150,9 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
       CollectionConfigHelper.getInstance().getListEntityRelationCollectionName();
 
     // Get the MongoDB collection for executing the aggregation
-    const relationCollection = this.dataSource.connector?.collection(
-      relationCollectionName,
+    // Pass the model name (not collection name) so the connector can look it up
+    const relationCollection = (this.dataSource.connector as any)?.collection(
+      'ListToEntityRelation',
     );
 
     if (!relationCollection) {
