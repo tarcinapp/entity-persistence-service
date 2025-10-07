@@ -82,8 +82,6 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
       CollectionConfigHelper.getInstance().getListCollectionName();
     const entityCollectionName =
       CollectionConfigHelper.getInstance().getEntityCollectionName();
-    const relationCollectionName =
-      CollectionConfigHelper.getInstance().getListEntityRelationCollectionName();
 
     // Get the MongoDB collection for executing the aggregation
     // Pass the model name (not collection name) so the connector can look it up
