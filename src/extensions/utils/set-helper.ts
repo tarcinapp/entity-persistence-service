@@ -438,12 +438,15 @@ class SetToFilterTransformer {
      * If there is both user ids and group names provided
      * we returning all records matching either of them
      */
-    const userIdsGiven = _.get(setValue, 'userIds.length');
-    const groupIdsGiven = _.get(setValue, 'groupIds.length');
+    // Ensure userIds and groupIds are strings before checking length
+    const userIdsStr = typeof setValue.userIds === 'string' ? setValue.userIds : String(setValue.userIds || '');
+    const groupIdsStr = typeof setValue.groupIds === 'string' ? setValue.groupIds : String(setValue.groupIds || '');
+    const userIdsGiven = userIdsStr.length > 0;
+    const groupIdsGiven = groupIdsStr.length > 0;
 
     if (userIdsGiven && groupIdsGiven) {
-      const userIdsArr = setValue?.userIds!.split(',');
-      const groupIdsArr = setValue?.groupIds!.split(',');
+      const userIdsArr = userIdsStr.split(',');
+      const groupIdsArr = groupIdsStr.split(',');
 
       return {
         or: [
@@ -454,13 +457,13 @@ class SetToFilterTransformer {
     }
 
     if (userIdsGiven) {
-      const userIdsArr = setValue?.userIds!.split(',');
+      const userIdsArr = userIdsStr.split(',');
 
       return this.prepareOwnerUsersClause(userIdsArr);
     }
 
     if (groupIdsGiven) {
-      const groupIdsArr = setValue?.groupIds!.split(',');
+      const groupIdsArr = groupIdsStr.split(',');
 
       return this.prepareOwnerGroupsClause(groupIdsArr);
     }
@@ -493,12 +496,15 @@ class SetToFilterTransformer {
      * If there is both user ids and group names provided
      * we returning all records matching either of them
      */
-    const userIdsGiven = _.get(setValue, 'userIds.length');
-    const groupIdsGiven = _.get(setValue, 'groupIds.length');
+    // Ensure userIds and groupIds are strings before checking length
+    const userIdsStr = typeof setValue.userIds === 'string' ? setValue.userIds : String(setValue.userIds || '');
+    const groupIdsStr = typeof setValue.groupIds === 'string' ? setValue.groupIds : String(setValue.groupIds || '');
+    const userIdsGiven = userIdsStr.length > 0;
+    const groupIdsGiven = groupIdsStr.length > 0;
 
     if (userIdsGiven && groupIdsGiven) {
-      const userIdsArr = setValue?.userIds!.split(',');
-      const groupIdsArr = setValue?.groupIds!.split(',');
+      const userIdsArr = userIdsStr.split(',');
+      const groupIdsArr = groupIdsStr.split(',');
 
       return {
         or: [
@@ -509,13 +515,13 @@ class SetToFilterTransformer {
     }
 
     if (userIdsGiven) {
-      const userIdsArr = setValue?.userIds!.split(',');
+      const userIdsArr = userIdsStr.split(',');
 
       return this.prepareViewerUsersClause(userIdsArr);
     }
 
     if (groupIdsGiven) {
-      const groupIdsArr = setValue?.groupIds!.split(',');
+      const groupIdsArr = groupIdsStr.split(',');
 
       return this.prepareViewerGroupsClause(groupIdsArr);
     }
