@@ -2049,6 +2049,740 @@ describe('GET /entities', () => {
     expect(book.readingLists).to.be.Array().and.have.length(0);
   });
 
+  // Lookup Set Filter Tests
+  it('lookup-set: filters looked-up entities using set filters', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book,author',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 7);
+
+    // Create active author
+    const activeAuthorId = await createTestEntity(client, {
+      _name: 'Active Author',
+      _kind: 'author',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      biography: 'Active author biography',
+    });
+
+    // Create inactive author (expired)
+    const inactiveAuthorId = await createTestEntity(client, {
+      _name: 'Inactive Author',
+      _kind: 'author',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(),
+      biography: 'Inactive author biography',
+    });
+
+    // Create private author (active but private)
+    const privateAuthorId = await createTestEntity(client, {
+      _name: 'Private Author',
+      _kind: 'author',
+      _visibility: 'private',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      biography: 'Private author biography',
+    });
+
+    // Create books that reference the authors
+    await createTestEntity(client, {
+      _name: 'Book with Active Author',
+      _kind: 'book',
+      author: `tapp://localhost/entities/${activeAuthorId}`,
+      description: 'Book by active author',
+    });
+
+    await createTestEntity(client, {
+      _name: 'Book with Inactive Author',
+      _kind: 'book',
+      author: `tapp://localhost/entities/${inactiveAuthorId}`,
+      description: 'Book by inactive author',
+    });
+
+    await createTestEntity(client, {
+      _name: 'Book with Private Author',
+      _kind: 'book',
+      author: `tapp://localhost/entities/${privateAuthorId}`,
+      description: 'Book by private author',
+    });
+
+    // Get books with author lookup, filtering for active authors only
+    const filterStr = 'filter[lookup][0][prop]=author&filter[lookup][0][set][actives]=true';
+    const response = await client.get('/entities').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array();
+
+    // Find books in the response
+    const books = response.body.filter((e: GenericEntity) => e._kind === 'book');
+    expect(books).to.have.length(3);
+
+    // Find the book with active author
+    const bookWithActiveAuthor = books.find((book: any) => 
+      book._name === 'Book with Active Author'
+    );
+    expect(bookWithActiveAuthor).to.not.be.undefined();
+    expect(bookWithActiveAuthor.author).to.be.an.Object();
+    expect(bookWithActiveAuthor.author._name).to.equal('Active Author');
+    expect(bookWithActiveAuthor.author._kind).to.equal('author');
+
+    // Verify that books with inactive authors have null author (filtered out)
+    const bookWithInactiveAuthor = books.find((book: any) => 
+      book._name === 'Book with Inactive Author'
+    );
+    expect(bookWithInactiveAuthor).to.not.be.undefined();
+    expect(bookWithInactiveAuthor.author).to.be.null();
+
+    // Verify that books with private authors still have the author (actives set only filters by dates, not visibility)
+    const bookWithPrivateAuthor = books.find((book: any) => 
+      book._name === 'Book with Private Author'
+    );
+    expect(bookWithPrivateAuthor).to.not.be.undefined();
+    expect(bookWithPrivateAuthor.author).to.be.an.Object();
+    expect(bookWithPrivateAuthor.author._name).to.equal('Private Author');
+    expect(bookWithPrivateAuthor.author._kind).to.equal('author');
+  });
+
+  it('lookup-set: filters looked-up entities using public set filter', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book,author',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 7);
+
+    // Create public author
+    const publicAuthorId = await createTestEntity(client, {
+      _name: 'Public Author',
+      _kind: 'author',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      biography: 'Public author biography',
+    });
+
+    // Create private author
+    const privateAuthorId = await createTestEntity(client, {
+      _name: 'Private Author',
+      _kind: 'author',
+      _visibility: 'private',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      biography: 'Private author biography',
+    });
+
+    // Create protected author
+    const protectedAuthorId = await createTestEntity(client, {
+      _name: 'Protected Author',
+      _kind: 'author',
+      _visibility: 'protected',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      biography: 'Protected author biography',
+    });
+
+    // Create books that reference the authors
+    await createTestEntity(client, {
+      _name: 'Book with Public Author',
+      _kind: 'book',
+      author: `tapp://localhost/entities/${publicAuthorId}`,
+      description: 'Book by public author',
+    });
+
+    await createTestEntity(client, {
+      _name: 'Book with Private Author',
+      _kind: 'book',
+      author: `tapp://localhost/entities/${privateAuthorId}`,
+      description: 'Book by private author',
+    });
+
+    await createTestEntity(client, {
+      _name: 'Book with Protected Author',
+      _kind: 'book',
+      author: `tapp://localhost/entities/${protectedAuthorId}`,
+      description: 'Book by protected author',
+    });
+
+    // Get books with author lookup, filtering for public authors only
+    const filterStr = 'filter[lookup][0][prop]=author&filter[lookup][0][set][publics]=true';
+    const response = await client.get('/entities').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array();
+
+    // Find books in the response
+    const books = response.body.filter((e: GenericEntity) => e._kind === 'book');
+    expect(books).to.have.length(3);
+
+    // Find the book with public author
+    const bookWithPublicAuthor = books.find((book: any) => 
+      book._name === 'Book with Public Author'
+    );
+    expect(bookWithPublicAuthor).to.not.be.undefined();
+    expect(bookWithPublicAuthor.author).to.be.an.Object();
+    expect(bookWithPublicAuthor.author._name).to.equal('Public Author');
+    expect(bookWithPublicAuthor.author._visibility).to.equal('public');
+
+    // Verify that books with non-public authors have null author (filtered out)
+    const bookWithPrivateAuthor = books.find((book: any) => 
+      book._name === 'Book with Private Author'
+    );
+    expect(bookWithPrivateAuthor).to.not.be.undefined();
+    expect(bookWithPrivateAuthor.author).to.be.null();
+
+    const bookWithProtectedAuthor = books.find((book: any) => 
+      book._name === 'Book with Protected Author'
+    );
+    expect(bookWithProtectedAuthor).to.not.be.undefined();
+    expect(bookWithProtectedAuthor.author).to.be.null();
+  });
+
+  it('lookup-set: combines multiple sets with AND operator in lookups', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book,author',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 7);
+
+    // Create active and public author
+    const activePublicAuthorId = await createTestEntity(client, {
+      _name: 'Active Public Author',
+      _kind: 'author',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      biography: 'Active and public author',
+    });
+
+    // Create active but private author
+    const activePrivateAuthorId = await createTestEntity(client, {
+      _name: 'Active Private Author',
+      _kind: 'author',
+      _visibility: 'private',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      biography: 'Active but private author',
+    });
+
+    // Create inactive but public author
+    const inactivePublicAuthorId = await createTestEntity(client, {
+      _name: 'Inactive Public Author',
+      _kind: 'author',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(),
+      biography: 'Inactive but public author',
+    });
+
+    // Create books that reference the authors
+    await createTestEntity(client, {
+      _name: 'Book with Active Public Author',
+      _kind: 'book',
+      author: `tapp://localhost/entities/${activePublicAuthorId}`,
+      description: 'Book by active public author',
+    });
+
+    await createTestEntity(client, {
+      _name: 'Book with Active Private Author',
+      _kind: 'book',
+      author: `tapp://localhost/entities/${activePrivateAuthorId}`,
+      description: 'Book by active private author',
+    });
+
+    await createTestEntity(client, {
+      _name: 'Book with Inactive Public Author',
+      _kind: 'book',
+      author: `tapp://localhost/entities/${inactivePublicAuthorId}`,
+      description: 'Book by inactive public author',
+    });
+
+    // Get books with author lookup, filtering for authors that are both active AND public
+    const filterStr = 'filter[lookup][0][prop]=author&filter[lookup][0][set][and][0][actives]=true&filter[lookup][0][set][and][1][publics]=true';
+    const response = await client.get('/entities').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array();
+
+    // Find books in the response
+    const books = response.body.filter((e: GenericEntity) => e._kind === 'book');
+    expect(books).to.have.length(3);
+
+    // Find the book with active public author
+    const bookWithActivePublicAuthor = books.find((book: any) => 
+      book._name === 'Book with Active Public Author'
+    );
+    expect(bookWithActivePublicAuthor).to.not.be.undefined();
+    expect(bookWithActivePublicAuthor.author).to.be.an.Object();
+    expect(bookWithActivePublicAuthor.author._name).to.equal('Active Public Author');
+    expect(bookWithActivePublicAuthor.author._visibility).to.equal('public');
+
+    // Verify that books with authors that don't match both conditions have null author
+    const bookWithActivePrivateAuthor = books.find((book: any) => 
+      book._name === 'Book with Active Private Author'
+    );
+    expect(bookWithActivePrivateAuthor).to.not.be.undefined();
+    expect(bookWithActivePrivateAuthor.author).to.be.null();
+
+    const bookWithInactivePublicAuthor = books.find((book: any) => 
+      book._name === 'Book with Inactive Public Author'
+    );
+    expect(bookWithInactivePublicAuthor).to.not.be.undefined();
+    expect(bookWithInactivePublicAuthor.author).to.be.null();
+  });
+
+  it('lookup-set: filters array lookups using set filters', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book,author',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 7);
+
+    // Create active authors
+    const activeAuthor1Id = await createTestEntity(client, {
+      _name: 'Active Author 1',
+      _kind: 'author',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      biography: 'First active author',
+    });
+
+    const activeAuthor2Id = await createTestEntity(client, {
+      _name: 'Active Author 2',
+      _kind: 'author',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      biography: 'Second active author',
+    });
+
+    // Create inactive author
+    const inactiveAuthorId = await createTestEntity(client, {
+      _name: 'Inactive Author',
+      _kind: 'author',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(),
+      biography: 'Inactive author',
+    });
+
+    // Create book with array of author references
+    await createTestEntity(client, {
+      _name: 'Book with Multiple Authors',
+      _kind: 'book',
+      authors: [
+        `tapp://localhost/entities/${activeAuthor1Id}`,
+        `tapp://localhost/entities/${inactiveAuthorId}`,
+        `tapp://localhost/entities/${activeAuthor2Id}`,
+      ],
+      description: 'Book by multiple authors',
+    });
+
+    // Get the book with authors lookup, filtering for active authors only
+    const filterStr = 'filter[lookup][0][prop]=authors&filter[lookup][0][set][actives]=true';
+    const response = await client.get('/entities').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array();
+
+    // Find the book in the response
+    const book = response.body.find((e: GenericEntity) => e._kind === 'book');
+    expect(book).to.not.be.undefined();
+    expect(book._name).to.equal('Book with Multiple Authors');
+
+    // Verify the authors array contains only active authors
+    expect(book.authors).to.be.an.Array().and.have.length(2);
+
+    const authorNames = book.authors.map((a: any) => a._name).sort();
+    expect(authorNames).to.eql(['Active Author 1', 'Active Author 2']);
+
+    // Verify all returned authors are active
+    book.authors.forEach((author: any) => {
+      expect(author._kind).to.equal('author');
+      expect(new Date(author._validFromDateTime).getTime()).to.be.lessThan(now.getTime());
+      expect(new Date(author._validUntilDateTime).getTime()).to.be.greaterThan(now.getTime());
+    });
+  });
+
+  it('lookup-set: filters array lookups using audience set filters', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book,author',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 7);
+
+    // Create authors with different ownership/viewer permissions
+    const ownedByUserAuthorId = await createTestEntity(client, {
+      _name: 'Owned by User Author',
+      _kind: 'author',
+      _visibility: 'private',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      _ownerUsers: ['current-user'],
+      biography: 'Author owned by current user',
+    });
+
+    const ownedByGroupAuthorId = await createTestEntity(client, {
+      _name: 'Owned by Group Author',
+      _kind: 'author',
+      _visibility: 'protected',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      _ownerGroups: ['current-group'],
+      biography: 'Author owned by current group',
+    });
+
+    const viewableByUserAuthorId = await createTestEntity(client, {
+      _name: 'Viewable by User Author',
+      _kind: 'author',
+      _visibility: 'protected',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      _viewerUsers: ['current-user'],
+      biography: 'Author viewable by current user',
+    });
+
+    const viewableByGroupAuthorId = await createTestEntity(client, {
+      _name: 'Viewable by Group Author',
+      _kind: 'author',
+      _visibility: 'protected',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      _viewerGroups: ['current-group'],
+      biography: 'Author viewable by current group',
+    });
+
+    const publicAuthorId = await createTestEntity(client, {
+      _name: 'Public Author',
+      _kind: 'author',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      biography: 'Public author accessible to everyone',
+    });
+
+    const inaccessibleAuthorId = await createTestEntity(client, {
+      _name: 'Inaccessible Author',
+      _kind: 'author',
+      _visibility: 'private',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      _ownerUsers: ['other-user'],
+      _ownerGroups: ['other-group'],
+      _viewerUsers: ['other-user'],
+      _viewerGroups: ['other-group'],
+      biography: 'Private author not accessible to current user or group',
+    });
+
+    // Create book with array of author references
+    await createTestEntity(client, {
+      _name: 'Book with Multiple Authors',
+      _kind: 'book',
+      authors: [
+        `tapp://localhost/entities/${ownedByUserAuthorId}`,
+        `tapp://localhost/entities/${ownedByGroupAuthorId}`,
+        `tapp://localhost/entities/${viewableByUserAuthorId}`,
+        `tapp://localhost/entities/${viewableByGroupAuthorId}`,
+        `tapp://localhost/entities/${publicAuthorId}`,
+        `tapp://localhost/entities/${inaccessibleAuthorId}`,
+      ],
+      description: 'Book by multiple authors with different permissions',
+    });
+
+    // Get the book with authors lookup, filtering for audience (current-user and current-group)
+    const filterStr = 'filter[lookup][0][prop]=authors&filter[lookup][0][set][audience][userIds]=current-user&filter[lookup][0][set][audience][groupIds]=current-group';
+    const response = await client.get('/entities').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array();
+
+    // Find the book in the response
+    const book = response.body.find((e: GenericEntity) => e._kind === 'book');
+    expect(book).to.not.be.undefined();
+    expect(book._name).to.equal('Book with Multiple Authors');
+
+    // Verify the authors array contains only authors accessible to current-user or current-group
+    // Should include: owned by user, owned by group, viewable by user, viewable by group, and public authors (5 total)
+    // Should exclude: inaccessible author (1 excluded)
+    expect(book.authors).to.be.an.Array().and.have.length(5);
+
+    const authorNames = book.authors.map((a: any) => a._name).sort();
+    expect(authorNames).to.eql([
+      'Owned by Group Author',
+      'Owned by User Author', 
+      'Public Author',
+      'Viewable by Group Author',
+      'Viewable by User Author'
+    ]);
+
+    // Verify each returned author is accessible to current-user or current-group
+    const ownedByUserAuthor = book.authors.find((a: any) => a._name === 'Owned by User Author');
+    expect(ownedByUserAuthor).to.not.be.undefined();
+    expect(ownedByUserAuthor._ownerUsers).to.be.an.Array().and.containEql('current-user');
+
+    const ownedByGroupAuthor = book.authors.find((a: any) => a._name === 'Owned by Group Author');
+    expect(ownedByGroupAuthor).to.not.be.undefined();
+    expect(ownedByGroupAuthor._ownerGroups).to.be.an.Array().and.containEql('current-group');
+
+    const viewableByUserAuthor = book.authors.find((a: any) => a._name === 'Viewable by User Author');
+    expect(viewableByUserAuthor).to.not.be.undefined();
+    expect(viewableByUserAuthor._viewerUsers).to.be.an.Array().and.containEql('current-user');
+
+    const viewableByGroupAuthor = book.authors.find((a: any) => a._name === 'Viewable by Group Author');
+    expect(viewableByGroupAuthor).to.not.be.undefined();
+    expect(viewableByGroupAuthor._viewerGroups).to.be.an.Array().and.containEql('current-group');
+
+    const publicAuthor = book.authors.find((a: any) => a._name === 'Public Author');
+    expect(publicAuthor).to.not.be.undefined();
+    expect(publicAuthor._visibility).to.equal('public');
+
+    // Verify inaccessible author is filtered out
+    const inaccessibleAuthor = book.authors.find((a: any) => a._name === 'Inaccessible Author');
+    expect(inaccessibleAuthor).to.be.undefined();
+  });
+
+  it('lookup-set: combines sets with scope filters in lookups', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book,author',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 7);
+
+    // Create active authors with different kinds
+    const activeAuthorId = await createTestEntity(client, {
+      _name: 'Active Author',
+      _kind: 'author',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      biography: 'Active author',
+      category: 'fiction',
+    });
+
+    const activeEditorId = await createTestEntity(client, {
+      _name: 'Active Editor',
+      _kind: 'author', // same entity kind but different category
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      biography: 'Active editor',
+      category: 'editor',
+    });
+
+    // Create inactive author
+    const inactiveAuthorId = await createTestEntity(client, {
+      _name: 'Inactive Author',
+      _kind: 'author',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(),
+      biography: 'Inactive author',
+      category: 'fiction',
+    });
+
+    // Create books that reference the authors
+    await createTestEntity(client, {
+      _name: 'Book with Active Author',
+      _kind: 'book',
+      author: `tapp://localhost/entities/${activeAuthorId}`,
+      description: 'Book by active author',
+    });
+
+    await createTestEntity(client, {
+      _name: 'Book with Active Editor',
+      _kind: 'book',
+      author: `tapp://localhost/entities/${activeEditorId}`,
+      description: 'Book by active editor',
+    });
+
+    await createTestEntity(client, {
+      _name: 'Book with Inactive Author',
+      _kind: 'book',
+      author: `tapp://localhost/entities/${inactiveAuthorId}`,
+      description: 'Book by inactive author',
+    });
+
+    // Get books with author lookup, filtering for active authors in fiction category
+    const filterStr = 
+      'filter[lookup][0][prop]=author&' +
+      'filter[lookup][0][set][actives]=true&' +
+      'filter[lookup][0][scope][where][category]=fiction';
+    
+    const response = await client.get('/entities').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array();
+
+    // Find books in the response
+    const books = response.body.filter((e: GenericEntity) => e._kind === 'book');
+    expect(books).to.have.length(3);
+
+    // Find the book with active fiction author
+    const bookWithActiveAuthor = books.find((book: any) => 
+      book._name === 'Book with Active Author'
+    );
+    expect(bookWithActiveAuthor).to.not.be.undefined();
+    expect(bookWithActiveAuthor.author).to.be.an.Object();
+    expect(bookWithActiveAuthor.author._name).to.equal('Active Author');
+    expect(bookWithActiveAuthor.author.category).to.equal('fiction');
+
+    // Verify that books with authors that don't match both set and scope filters have null author
+    const bookWithActiveEditor = books.find((book: any) => 
+      book._name === 'Book with Active Editor'
+    );
+    expect(bookWithActiveEditor).to.not.be.undefined();
+    expect(bookWithActiveEditor.author).to.be.null(); // filtered out by scope (category != 'fiction')
+
+    const bookWithInactiveAuthor = books.find((book: any) => 
+      book._name === 'Book with Inactive Author'
+    );
+    expect(bookWithInactiveAuthor).to.not.be.undefined();
+    expect(bookWithInactiveAuthor.author).to.be.null(); // filtered out by set (not active)
+  });
+
+  it('lookup-set: supports nested lookups with sets', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      entity_kinds: 'book,author,publisher',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 7);
+
+    // Create active publisher
+    const activePublisherId = await createTestEntity(client, {
+      _name: 'Active Publisher',
+      _kind: 'publisher',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      location: 'New York',
+    });
+
+    // Create inactive publisher
+    const inactivePublisherId = await createTestEntity(client, {
+      _name: 'Inactive Publisher',
+      _kind: 'publisher',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(),
+      location: 'London',
+    });
+
+    // Create authors that reference publishers
+    const authorWithActivePublisherId = await createTestEntity(client, {
+      _name: 'Author with Active Publisher',
+      _kind: 'author',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      publisher: `tapp://localhost/entities/${activePublisherId}`,
+      biography: 'Author with active publisher',
+    });
+
+    const authorWithInactivePublisherId = await createTestEntity(client, {
+      _name: 'Author with Inactive Publisher',
+      _kind: 'author',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      publisher: `tapp://localhost/entities/${inactivePublisherId}`,
+      biography: 'Author with inactive publisher',
+    });
+
+    // Create books that reference the authors
+    await createTestEntity(client, {
+      _name: 'Book with Author with Active Publisher',
+      _kind: 'book',
+      author: `tapp://localhost/entities/${authorWithActivePublisherId}`,
+      description: 'Book by author with active publisher',
+    });
+
+    await createTestEntity(client, {
+      _name: 'Book with Author with Inactive Publisher',
+      _kind: 'book',
+      author: `tapp://localhost/entities/${authorWithInactivePublisherId}`,
+      description: 'Book by author with inactive publisher',
+    });
+
+    // Get books with nested lookup: author -> publisher, filtering for active publishers
+    const filterStr = 
+      'filter[lookup][0][prop]=author&' +
+      'filter[lookup][0][scope][lookup][0][prop]=publisher&' +
+      'filter[lookup][0][scope][lookup][0][set][actives]=true';
+    
+    const response = await client.get('/entities').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array();
+
+    // Find books in the response
+    const books = response.body.filter((e: GenericEntity) => e._kind === 'book');
+    expect(books).to.have.length(2);
+
+    // Find the book with author with active publisher
+    const bookWithActivePublisher = books.find((book: any) => 
+      book._name === 'Book with Author with Active Publisher'
+    );
+    expect(bookWithActivePublisher).to.not.be.undefined();
+    expect(bookWithActivePublisher.author).to.be.an.Object();
+    expect(bookWithActivePublisher.author._name).to.equal('Author with Active Publisher');
+    expect(bookWithActivePublisher.author.publisher).to.be.an.Object();
+    expect(bookWithActivePublisher.author.publisher._name).to.equal('Active Publisher');
+    expect(bookWithActivePublisher.author.publisher.location).to.equal('New York');
+
+    // Verify that book with author with inactive publisher has null nested publisher
+    const bookWithInactivePublisher = books.find((book: any) => 
+      book._name === 'Book with Author with Inactive Publisher'
+    );
+    expect(bookWithInactivePublisher).to.not.be.undefined();
+    expect(bookWithInactivePublisher.author).to.be.an.Object();
+    expect(bookWithInactivePublisher.author._name).to.equal('Author with Inactive Publisher');
+    expect(bookWithInactivePublisher.author.publisher).to.be.null(); // filtered out by nested set
+  });
+
   it('include: includes reactions in entity response', async () => {
     // Set up the application with default configuration
     appWithClient = await setupApplication({
