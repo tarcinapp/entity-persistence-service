@@ -1473,4 +1473,738 @@ describe('GET /lists', () => {
     // Verify the books array is empty since all references were not found
     expect(list.books).to.be.Array().and.have.length(0);
   });
+
+  // Lookup Set Filter Tests
+  it('lookup-set: filters looked-up lists using set filters', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading,collection',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 7);
+
+    // Create active reading list
+    const activeReadingListId = await createTestList({
+      _name: 'Active Reading List',
+      _kind: 'reading',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      description: 'Active reading list',
+    });
+
+    // Create inactive reading list (expired)
+    const inactiveReadingListId = await createTestList({
+      _name: 'Inactive Reading List',
+      _kind: 'reading',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(),
+      description: 'Inactive reading list',
+    });
+
+    // Create private reading list (active but private)
+    const privateReadingListId = await createTestList({
+      _name: 'Private Reading List',
+      _kind: 'reading',
+      _visibility: 'private',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      description: 'Private reading list',
+    });
+
+    // Create collections that reference the reading lists
+    await createTestList({
+      _name: 'Collection with Active List',
+      _kind: 'collection',
+      readingList: `tapp://localhost/lists/${activeReadingListId}`,
+      description: 'Collection by active list',
+    });
+
+    await createTestList({
+      _name: 'Collection with Inactive List',
+      _kind: 'collection',
+      readingList: `tapp://localhost/lists/${inactiveReadingListId}`,
+      description: 'Collection by inactive list',
+    });
+
+    await createTestList({
+      _name: 'Collection with Private List',
+      _kind: 'collection',
+      readingList: `tapp://localhost/lists/${privateReadingListId}`,
+      description: 'Collection by private list',
+    });
+
+    // Get collections with readingList lookup, filtering for active lists only
+    const filterStr = 'filter[lookup][0][prop]=readingList&filter[lookup][0][set][actives]=true';
+    const response = await client.get('/lists').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array();
+
+    // Find collections in the response
+    const collections = response.body.filter((l: List) => l._kind === 'collection');
+    expect(collections).to.have.length(3);
+
+    // Find the collection with active list
+    const collectionWithActiveList = collections.find((collection: any) => 
+      collection._name === 'Collection with Active List'
+    );
+    expect(collectionWithActiveList).to.not.be.undefined();
+    expect(collectionWithActiveList.readingList).to.be.an.Object();
+    expect(collectionWithActiveList.readingList._name).to.equal('Active Reading List');
+    expect(collectionWithActiveList.readingList._kind).to.equal('reading');
+
+    // Verify that collections with inactive lists have null readingList (filtered out)
+    const collectionWithInactiveList = collections.find((collection: any) => 
+      collection._name === 'Collection with Inactive List'
+    );
+    expect(collectionWithInactiveList).to.not.be.undefined();
+    expect(collectionWithInactiveList.readingList).to.be.null();
+
+    // Verify that collections with private lists still have the list (actives set only filters by dates, not visibility)
+    const collectionWithPrivateList = collections.find((collection: any) => 
+      collection._name === 'Collection with Private List'
+    );
+    expect(collectionWithPrivateList).to.not.be.undefined();
+    expect(collectionWithPrivateList.readingList).to.be.an.Object();
+    expect(collectionWithPrivateList.readingList._name).to.equal('Private Reading List');
+    expect(collectionWithPrivateList.readingList._kind).to.equal('reading');
+  });
+
+  it('lookup-set: filters looked-up lists using public set filter', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading,collection',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 7);
+
+    // Create public reading list
+    const publicReadingListId = await createTestList({
+      _name: 'Public Reading List',
+      _kind: 'reading',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      description: 'Public reading list',
+    });
+
+    // Create private reading list
+    const privateReadingListId = await createTestList({
+      _name: 'Private Reading List',
+      _kind: 'reading',
+      _visibility: 'private',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      description: 'Private reading list',
+    });
+
+    // Create protected reading list
+    const protectedReadingListId = await createTestList({
+      _name: 'Protected Reading List',
+      _kind: 'reading',
+      _visibility: 'protected',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      description: 'Protected reading list',
+    });
+
+    // Create collections that reference the reading lists
+    await createTestList({
+      _name: 'Collection with Public List',
+      _kind: 'collection',
+      readingList: `tapp://localhost/lists/${publicReadingListId}`,
+      description: 'Collection by public list',
+    });
+
+    await createTestList({
+      _name: 'Collection with Private List',
+      _kind: 'collection',
+      readingList: `tapp://localhost/lists/${privateReadingListId}`,
+      description: 'Collection by private list',
+    });
+
+    await createTestList({
+      _name: 'Collection with Protected List',
+      _kind: 'collection',
+      readingList: `tapp://localhost/lists/${protectedReadingListId}`,
+      description: 'Collection by protected list',
+    });
+
+    // Get collections with readingList lookup, filtering for public lists only
+    const filterStr = 'filter[lookup][0][prop]=readingList&filter[lookup][0][set][publics]=true';
+    const response = await client.get('/lists').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array();
+
+    // Find collections in the response
+    const collections = response.body.filter((l: List) => l._kind === 'collection');
+    expect(collections).to.have.length(3);
+
+    // Find the collection with public list
+    const collectionWithPublicList = collections.find((collection: any) => 
+      collection._name === 'Collection with Public List'
+    );
+    expect(collectionWithPublicList).to.not.be.undefined();
+    expect(collectionWithPublicList.readingList).to.be.an.Object();
+    expect(collectionWithPublicList.readingList._name).to.equal('Public Reading List');
+    expect(collectionWithPublicList.readingList._visibility).to.equal('public');
+
+    // Verify that collections with non-public lists have null readingList (filtered out)
+    const collectionWithPrivateList = collections.find((collection: any) => 
+      collection._name === 'Collection with Private List'
+    );
+    expect(collectionWithPrivateList).to.not.be.undefined();
+    expect(collectionWithPrivateList.readingList).to.be.null();
+
+    const collectionWithProtectedList = collections.find((collection: any) => 
+      collection._name === 'Collection with Protected List'
+    );
+    expect(collectionWithProtectedList).to.not.be.undefined();
+    expect(collectionWithProtectedList.readingList).to.be.null();
+  });
+
+  it('lookup-set: combines multiple sets with AND operator in lookups', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading,collection',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 7);
+
+    // Create active and public reading list
+    const activePublicReadingListId = await createTestList({
+      _name: 'Active Public Reading List',
+      _kind: 'reading',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      description: 'Active and public reading list',
+    });
+
+    // Create active but private reading list
+    const activePrivateReadingListId = await createTestList({
+      _name: 'Active Private Reading List',
+      _kind: 'reading',
+      _visibility: 'private',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      description: 'Active but private reading list',
+    });
+
+    // Create inactive but public reading list
+    const inactivePublicReadingListId = await createTestList({
+      _name: 'Inactive Public Reading List',
+      _kind: 'reading',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(),
+      description: 'Inactive but public reading list',
+    });
+
+    // Create collections that reference the reading lists
+    await createTestList({
+      _name: 'Collection with Active Public List',
+      _kind: 'collection',
+      readingList: `tapp://localhost/lists/${activePublicReadingListId}`,
+      description: 'Collection by active public list',
+    });
+
+    await createTestList({
+      _name: 'Collection with Active Private List',
+      _kind: 'collection',
+      readingList: `tapp://localhost/lists/${activePrivateReadingListId}`,
+      description: 'Collection by active private list',
+    });
+
+    await createTestList({
+      _name: 'Collection with Inactive Public List',
+      _kind: 'collection',
+      readingList: `tapp://localhost/lists/${inactivePublicReadingListId}`,
+      description: 'Collection by inactive public list',
+    });
+
+    // Get collections with readingList lookup, filtering for lists that are both active AND public
+    const filterStr = 'filter[lookup][0][prop]=readingList&filter[lookup][0][set][and][0][actives]=true&filter[lookup][0][set][and][1][publics]=true';
+    const response = await client.get('/lists').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array();
+
+    // Find collections in the response
+    const collections = response.body.filter((l: List) => l._kind === 'collection');
+    expect(collections).to.have.length(3);
+
+    // Find the collection with active public list
+    const collectionWithActivePublicList = collections.find((collection: any) => 
+      collection._name === 'Collection with Active Public List'
+    );
+    expect(collectionWithActivePublicList).to.not.be.undefined();
+    expect(collectionWithActivePublicList.readingList).to.be.an.Object();
+    expect(collectionWithActivePublicList.readingList._name).to.equal('Active Public Reading List');
+    expect(collectionWithActivePublicList.readingList._visibility).to.equal('public');
+
+    // Verify that collections with lists that don't match both conditions have null readingList
+    const collectionWithActivePrivateList = collections.find((collection: any) => 
+      collection._name === 'Collection with Active Private List'
+    );
+    expect(collectionWithActivePrivateList).to.not.be.undefined();
+    expect(collectionWithActivePrivateList.readingList).to.be.null();
+
+    const collectionWithInactivePublicList = collections.find((collection: any) => 
+      collection._name === 'Collection with Inactive Public List'
+    );
+    expect(collectionWithInactivePublicList).to.not.be.undefined();
+    expect(collectionWithInactivePublicList.readingList).to.be.null();
+  });
+
+  it('lookup-set: filters array lookups using set filters', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading,collection',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 7);
+
+    // Create active reading lists
+    const activeReadingList1Id = await createTestList({
+      _name: 'Active Reading List 1',
+      _kind: 'reading',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      description: 'First active reading list',
+    });
+
+    const activeReadingList2Id = await createTestList({
+      _name: 'Active Reading List 2',
+      _kind: 'reading',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      description: 'Second active reading list',
+    });
+
+    // Create inactive reading list
+    const inactiveReadingListId = await createTestList({
+      _name: 'Inactive Reading List',
+      _kind: 'reading',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(),
+      description: 'Inactive reading list',
+    });
+
+    // Create collection with array of reading list references
+    await createTestList({
+      _name: 'Collection with Multiple Lists',
+      _kind: 'collection',
+      readingLists: [
+        `tapp://localhost/lists/${activeReadingList1Id}`,
+        `tapp://localhost/lists/${inactiveReadingListId}`,
+        `tapp://localhost/lists/${activeReadingList2Id}`,
+      ],
+      description: 'Collection by multiple lists',
+    });
+
+    // Get the collection with readingLists lookup, filtering for active lists only
+    const filterStr = 'filter[lookup][0][prop]=readingLists&filter[lookup][0][set][actives]=true';
+    const response = await client.get('/lists').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array();
+
+    // Find the collection in the response
+    const collection = response.body.find((l: List) => l._kind === 'collection');
+    expect(collection).to.not.be.undefined();
+    expect(collection._name).to.equal('Collection with Multiple Lists');
+
+    // Verify the readingLists array contains only active lists
+    expect(collection.readingLists).to.be.an.Array().and.have.length(2);
+
+    const listNames = collection.readingLists.map((l: any) => l._name).sort();
+    expect(listNames).to.eql(['Active Reading List 1', 'Active Reading List 2']);
+
+    // Verify all returned lists are active
+    collection.readingLists.forEach((list: any) => {
+      expect(list._kind).to.equal('reading');
+      expect(new Date(list._validFromDateTime).getTime()).to.be.lessThan(now.getTime());
+      expect(new Date(list._validUntilDateTime).getTime()).to.be.greaterThan(now.getTime());
+    });
+  });
+
+  it('lookup-set: filters array lookups using audience set filters', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading,collection',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 7);
+
+    // Create reading lists with different ownership/viewer permissions
+    const ownedByUserListId = await createTestList({
+      _name: 'Owned by User List',
+      _kind: 'reading',
+      _visibility: 'private',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      _ownerUsers: ['current-user'],
+      description: 'List owned by current user',
+    });
+
+    const ownedByGroupListId = await createTestList({
+      _name: 'Owned by Group List',
+      _kind: 'reading',
+      _visibility: 'protected',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      _ownerGroups: ['current-group'],
+      description: 'List owned by current group',
+    });
+
+    const viewableByUserListId = await createTestList({
+      _name: 'Viewable by User List',
+      _kind: 'reading',
+      _visibility: 'protected',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      _viewerUsers: ['current-user'],
+      description: 'List viewable by current user',
+    });
+
+    const viewableByGroupListId = await createTestList({
+      _name: 'Viewable by Group List',
+      _kind: 'reading',
+      _visibility: 'protected',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      _viewerGroups: ['current-group'],
+      description: 'List viewable by current group',
+    });
+
+    const publicListId = await createTestList({
+      _name: 'Public List',
+      _kind: 'reading',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      description: 'Public list accessible to everyone',
+    });
+
+    const inaccessibleListId = await createTestList({
+      _name: 'Inaccessible List',
+      _kind: 'reading',
+      _visibility: 'private',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      _ownerUsers: ['other-user'],
+      _ownerGroups: ['other-group'],
+      _viewerUsers: ['other-user'],
+      _viewerGroups: ['other-group'],
+      description: 'Private list not accessible to current user or group',
+    });
+
+    // Create collection with array of reading list references
+    await createTestList({
+      _name: 'Collection with Multiple Lists',
+      _kind: 'collection',
+      readingLists: [
+        `tapp://localhost/lists/${ownedByUserListId}`,
+        `tapp://localhost/lists/${ownedByGroupListId}`,
+        `tapp://localhost/lists/${viewableByUserListId}`,
+        `tapp://localhost/lists/${viewableByGroupListId}`,
+        `tapp://localhost/lists/${publicListId}`,
+        `tapp://localhost/lists/${inaccessibleListId}`,
+      ],
+      description: 'Collection by multiple lists with different permissions',
+    });
+
+    // Get the collection with readingLists lookup, filtering for audience (current-user and current-group)
+    const filterStr = 'filter[lookup][0][prop]=readingLists&filter[lookup][0][set][audience][userIds]=current-user&filter[lookup][0][set][audience][groupIds]=current-group';
+    const response = await client.get('/lists').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array();
+
+    // Find the collection in the response
+    const collection = response.body.find((l: List) => l._kind === 'collection');
+    expect(collection).to.not.be.undefined();
+    expect(collection._name).to.equal('Collection with Multiple Lists');
+
+    // Verify the readingLists array contains only lists accessible to current-user or current-group
+    // Should include: owned by user, owned by group, viewable by user, viewable by group, and public lists (5 total)
+    // Should exclude: inaccessible list (1 excluded)
+    expect(collection.readingLists).to.be.an.Array().and.have.length(5);
+
+    const listNames = collection.readingLists.map((l: any) => l._name).sort();
+    expect(listNames).to.eql([
+      'Owned by Group List',
+      'Owned by User List', 
+      'Public List',
+      'Viewable by Group List',
+      'Viewable by User List'
+    ]);
+
+    // Verify each returned list is accessible to current-user or current-group
+    const ownedByUserList = collection.readingLists.find((l: any) => l._name === 'Owned by User List');
+    expect(ownedByUserList).to.not.be.undefined();
+    expect(ownedByUserList._ownerUsers).to.be.an.Array().and.containEql('current-user');
+
+    const ownedByGroupList = collection.readingLists.find((l: any) => l._name === 'Owned by Group List');
+    expect(ownedByGroupList).to.not.be.undefined();
+    expect(ownedByGroupList._ownerGroups).to.be.an.Array().and.containEql('current-group');
+
+    const viewableByUserList = collection.readingLists.find((l: any) => l._name === 'Viewable by User List');
+    expect(viewableByUserList).to.not.be.undefined();
+    expect(viewableByUserList._viewerUsers).to.be.an.Array().and.containEql('current-user');
+
+    const viewableByGroupList = collection.readingLists.find((l: any) => l._name === 'Viewable by Group List');
+    expect(viewableByGroupList).to.not.be.undefined();
+    expect(viewableByGroupList._viewerGroups).to.be.an.Array().and.containEql('current-group');
+
+    const publicList = collection.readingLists.find((l: any) => l._name === 'Public List');
+    expect(publicList).to.not.be.undefined();
+    expect(publicList._visibility).to.equal('public');
+
+    // Verify inaccessible list is filtered out
+    const inaccessibleList = collection.readingLists.find((l: any) => l._name === 'Inaccessible List');
+    expect(inaccessibleList).to.be.undefined();
+  });
+
+  it('lookup-set: combines sets with scope filters in lookups', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading,collection',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 7);
+
+    // Create active reading lists with different categories
+    const activeReadingListId = await createTestList({
+      _name: 'Active Reading List',
+      _kind: 'reading',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      description: 'Active reading list',
+      category: 'fiction',
+    });
+
+    const activeWishlistId = await createTestList({
+      _name: 'Active Wishlist',
+      _kind: 'reading', // same list kind but different category
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      description: 'Active wishlist',
+      category: 'wishlist',
+    });
+
+    // Create inactive reading list
+    const inactiveReadingListId = await createTestList({
+      _name: 'Inactive Reading List',
+      _kind: 'reading',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(),
+      description: 'Inactive reading list',
+      category: 'fiction',
+    });
+
+    // Create collections that reference the reading lists
+    await createTestList({
+      _name: 'Collection with Active Reading List',
+      _kind: 'collection',
+      readingList: `tapp://localhost/lists/${activeReadingListId}`,
+      description: 'Collection by active reading list',
+    });
+
+    await createTestList({
+      _name: 'Collection with Active Wishlist',
+      _kind: 'collection',
+      readingList: `tapp://localhost/lists/${activeWishlistId}`,
+      description: 'Collection by active wishlist',
+    });
+
+    await createTestList({
+      _name: 'Collection with Inactive Reading List',
+      _kind: 'collection',
+      readingList: `tapp://localhost/lists/${inactiveReadingListId}`,
+      description: 'Collection by inactive reading list',
+    });
+
+    // Get collections with readingList lookup, filtering for active lists in fiction category
+    const filterStr = 
+      'filter[lookup][0][prop]=readingList&' +
+      'filter[lookup][0][set][actives]=true&' +
+      'filter[lookup][0][scope][where][category]=fiction';
+    
+    const response = await client.get('/lists').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array();
+
+    // Find collections in the response
+    const collections = response.body.filter((l: List) => l._kind === 'collection');
+    expect(collections).to.have.length(3);
+
+    // Find the collection with active fiction reading list
+    const collectionWithActiveReadingList = collections.find((collection: any) => 
+      collection._name === 'Collection with Active Reading List'
+    );
+    expect(collectionWithActiveReadingList).to.not.be.undefined();
+    expect(collectionWithActiveReadingList.readingList).to.be.an.Object();
+    expect(collectionWithActiveReadingList.readingList._name).to.equal('Active Reading List');
+    expect(collectionWithActiveReadingList.readingList.category).to.equal('fiction');
+
+    // Verify that collections with lists that don't match both set and scope filters have null readingList
+    const collectionWithActiveWishlist = collections.find((collection: any) => 
+      collection._name === 'Collection with Active Wishlist'
+    );
+    expect(collectionWithActiveWishlist).to.not.be.undefined();
+    expect(collectionWithActiveWishlist.readingList).to.be.null(); // filtered out by scope (category != 'fiction')
+
+    const collectionWithInactiveReadingList = collections.find((collection: any) => 
+      collection._name === 'Collection with Inactive Reading List'
+    );
+    expect(collectionWithInactiveReadingList).to.not.be.undefined();
+    expect(collectionWithInactiveReadingList.readingList).to.be.null(); // filtered out by set (not active)
+  });
+
+  it('lookup-set: supports nested lookups with sets', async () => {
+    // Set up the application with default configuration
+    appWithClient = await setupApplication({
+      list_kinds: 'reading,collection,category',
+    });
+    ({ client } = appWithClient);
+
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(pastDate.getDate() - 1);
+
+    const futureDate = new Date(now);
+    futureDate.setDate(futureDate.getDate() + 7);
+
+    // Create active category list
+    const activeCategoryId = await createTestList({
+      _name: 'Active Category',
+      _kind: 'category',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      description: 'Active category',
+    });
+
+    // Create inactive category list
+    const inactiveCategoryId = await createTestList({
+      _name: 'Inactive Category',
+      _kind: 'category',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: pastDate.toISOString(),
+      description: 'Inactive category',
+    });
+
+    // Create reading lists that reference categories
+    const readingListWithActiveCategoryId = await createTestList({
+      _name: 'Reading List with Active Category',
+      _kind: 'reading',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      category: `tapp://localhost/lists/${activeCategoryId}`,
+      description: 'Reading list with active category',
+    });
+
+    const readingListWithInactiveCategoryId = await createTestList({
+      _name: 'Reading List with Inactive Category',
+      _kind: 'reading',
+      _visibility: 'public',
+      _validFromDateTime: pastDate.toISOString(),
+      _validUntilDateTime: futureDate.toISOString(),
+      category: `tapp://localhost/lists/${inactiveCategoryId}`,
+      description: 'Reading list with inactive category',
+    });
+
+    // Create collections that reference the reading lists
+    await createTestList({
+      _name: 'Collection with Reading List with Active Category',
+      _kind: 'collection',
+      readingList: `tapp://localhost/lists/${readingListWithActiveCategoryId}`,
+      description: 'Collection by reading list with active category',
+    });
+
+    await createTestList({
+      _name: 'Collection with Reading List with Inactive Category',
+      _kind: 'collection',
+      readingList: `tapp://localhost/lists/${readingListWithInactiveCategoryId}`,
+      description: 'Collection by reading list with inactive category',
+    });
+
+    // Get collections with nested lookup: readingList -> category, filtering for active categories
+    const filterStr = 
+      'filter[lookup][0][prop]=readingList&' +
+      'filter[lookup][0][scope][lookup][0][prop]=category&' +
+      'filter[lookup][0][scope][lookup][0][set][actives]=true';
+    
+    const response = await client.get('/lists').query(filterStr).expect(200);
+
+    expect(response.body).to.be.Array();
+
+    // Find collections in the response
+    const collections = response.body.filter((l: List) => l._kind === 'collection');
+    expect(collections).to.have.length(2);
+
+    // Find the collection with reading list with active category
+    const collectionWithActiveCategory = collections.find((collection: any) => 
+      collection._name === 'Collection with Reading List with Active Category'
+    );
+    expect(collectionWithActiveCategory).to.not.be.undefined();
+    expect(collectionWithActiveCategory.readingList).to.be.an.Object();
+    expect(collectionWithActiveCategory.readingList._name).to.equal('Reading List with Active Category');
+    expect(collectionWithActiveCategory.readingList.category).to.be.an.Object();
+    expect(collectionWithActiveCategory.readingList.category._name).to.equal('Active Category');
+    expect(collectionWithActiveCategory.readingList.category.description).to.equal('Active category');
+
+    // Verify that collection with reading list with inactive category has null nested category
+    const collectionWithInactiveCategory = collections.find((collection: any) => 
+      collection._name === 'Collection with Reading List with Inactive Category'
+    );
+    expect(collectionWithInactiveCategory).to.not.be.undefined();
+    expect(collectionWithInactiveCategory.readingList).to.be.an.Object();
+    expect(collectionWithInactiveCategory.readingList._name).to.equal('Reading List with Inactive Category');
+    expect(collectionWithInactiveCategory.readingList.category).to.be.null(); // filtered out by nested set
+  });
 });
