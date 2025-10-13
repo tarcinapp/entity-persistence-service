@@ -23,6 +23,7 @@ import {
 } from '@loopback/rest';
 import { Set, SetFilterBuilder } from '../extensions';
 import { processIncludes } from '../extensions/types/sets-in-inclusions';
+import { processLookups } from '../extensions/types/sets-in-lookups';
 import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
 import { List, HttpErrorResponse } from '../models';
 import {
@@ -170,6 +171,7 @@ export class ListsController {
     }
 
     processIncludes<List>(filter);
+    processLookups<List>(filter);
     sanitizeFilterFields(filter);
 
     return this.listRepository.find(filter);
@@ -257,6 +259,7 @@ export class ListsController {
     //    e.g., ?filter[include][0][relation]=_entities&filter[include][0][whereThrough][foo]=bar
     //    This filters the relations themselves, not the entities or lists
     processIncludes<List>(filter);
+    processLookups<List>(filter);
     sanitizeFilterFields(filter);
 
     return this.listRepository.findById(id, filter);
@@ -512,6 +515,7 @@ export class ListsController {
 
     sanitizeFilterFields(filter);
     processIncludes<List>(filter);
+    processLookups<List>(filter);
 
     return this.listRepository.findParents(id, filter);
   }
@@ -560,6 +564,7 @@ export class ListsController {
 
     sanitizeFilterFields(filter);
     processIncludes<List>(filter);
+    processLookups<List>(filter);
 
     return this.listRepository.findChildren(id, filter);
   }

@@ -22,6 +22,7 @@ import {
   Request,
 } from '@loopback/rest';
 import { processIncludes } from '../extensions/types/sets-in-inclusions';
+import { processLookups } from '../extensions/types/sets-in-lookups';
 import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
 import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
 import { GenericEntity, HttpErrorResponse } from '../models';
@@ -171,6 +172,7 @@ export class EntitiesController {
 
     sanitizeFilterFields(filter);
     processIncludes<GenericEntity>(filter);
+    processLookups<GenericEntity>(filter);
 
     return this.entityRepository.find(filter);
   }
@@ -254,6 +256,7 @@ export class EntitiesController {
   ): Promise<GenericEntity> {
     sanitizeFilterFields(filter);
     processIncludes<GenericEntity>(filter);
+    processLookups<GenericEntity>(filter);
 
     return this.entityRepository.findById(id, filter);
   }
@@ -425,6 +428,7 @@ export class EntitiesController {
 
     sanitizeFilterFields(filter);
     processIncludes<GenericEntity>(filter);
+    processLookups<GenericEntity>(filter);
 
     return this.entityRepository.findParents(id, filter);
   }
@@ -473,6 +477,7 @@ export class EntitiesController {
 
     sanitizeFilterFields(filter);
     processIncludes<GenericEntity>(filter);
+    processLookups<GenericEntity>(filter);
 
     return this.entityRepository.findChildren(id, filter);
   }

@@ -1091,7 +1091,7 @@ Lookups can be specified in the filter query string using the `lookup` parameter
 ?filter[lookup][0][prop]=parents&filter[lookup][0][scope][where][_kind]=category
 
 // Lookup with sets
-?filter[lookup][0][prop]=parents&filter[lookup][0][scope][set][actives]
+?filter[lookup][0][prop]=parents&filter[lookup][0][set][actives]
 
 // Multiple lookups
 ?filter[lookup][0][prop]=parents&filter[lookup][1][prop]=children
@@ -1129,7 +1129,7 @@ GET /entities?filter[lookup][0][prop]=parents&filter[lookup][0][scope][fields][n
 5. **Lookup with Conditions**
 ```typescript
 // Get entities with active parents only
-GET /entities?filter[lookup][0][prop]=parents&filter[lookup][0][scope][set][actives]
+GET /entities?filter[lookup][0][prop]=parents&filter[lookup][0][set][actives]
 ```
 
 6. **Multiple Lookups**
