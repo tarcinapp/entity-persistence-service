@@ -46,7 +46,7 @@ export class ListEntityRelsController {
   @post('/list-entity-relations', {
     responses: {
       '200': {
-        description: '  ListEntityRelation model instance',
+        description: 'ListEntityRelation model instance',
         content: {
           'application/json': {
             schema: getModelSchemaRef(ListToEntityRelation, {
