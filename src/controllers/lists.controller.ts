@@ -46,6 +46,7 @@ export class ListsController {
   ) {}
 
   @post('/lists', {
+    operationId: 'createList',
     responses: {
       '200': {
         description: 'List model instance',
@@ -113,6 +114,7 @@ export class ListsController {
   }
 
   @get('/lists/count', {
+    operationId: 'countLists',
     responses: {
       '200': {
         description: 'List model count',
@@ -142,6 +144,7 @@ export class ListsController {
   }
 
   @get('/lists', {
+    operationId: 'findLists',
     responses: {
       '200': {
         description: 'Array of List model instances',
@@ -178,6 +181,7 @@ export class ListsController {
   }
 
   @patch('/lists', {
+    operationId: 'updateLists',
     responses: {
       '200': {
         description: 'List PATCH success count',
@@ -220,6 +224,7 @@ export class ListsController {
   }
 
   @get('/lists/{id}', {
+    operationId: 'findListById',
     responses: {
       '200': {
         description: 'List model instance',
@@ -266,6 +271,7 @@ export class ListsController {
   }
 
   @patch('/lists/{id}', {
+    operationId: 'updateListById',
     responses: {
       '204': {
         description: 'List PATCH success',
@@ -316,6 +322,7 @@ export class ListsController {
   }
 
   @put('/lists/{id}', {
+    operationId: 'replaceListById',
     responses: {
       '204': {
         description: 'List PUT success',
@@ -365,6 +372,7 @@ export class ListsController {
   }
 
   @del('/lists/{id}', {
+    operationId: 'deleteListById',
     responses: {
       '204': {
         description: 'List DELETE success',
@@ -388,9 +396,10 @@ export class ListsController {
   }
 
   @post('/lists/{id}/children', {
+    operationId: 'createChildList',
     responses: {
       '200': {
-        description: 'Child List model instance',
+        description: 'List model instance',
         content: {
           'application/json': {
             schema: getModelSchemaRef(List, {
@@ -471,6 +480,7 @@ export class ListsController {
   }
 
   @get('/lists/{id}/parents', {
+    operationId: 'findParentsByListId',
     responses: {
       '200': {
         description: 'Array of parent List model instances',
@@ -520,6 +530,7 @@ export class ListsController {
   }
 
   @get('/lists/{id}/children', {
+    operationId: 'findChildrenByListId',
     responses: {
       '200': {
         description: 'Array of child List model instances',

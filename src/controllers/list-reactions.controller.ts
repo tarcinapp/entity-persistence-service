@@ -32,6 +32,7 @@ export class ListReactionsController {
   ) {}
 
   @post('/list-reactions', {
+    operationId: 'createListReaction',
     responses: {
       '200': {
         description: 'ListReaction model instance',
@@ -94,10 +95,14 @@ export class ListReactionsController {
     return this.listReactionsRepository.create(listReaction);
   }
 
-  @get('/list-reactions/count')
-  @response(200, {
-    description: 'ListReaction model count',
-    content: { 'application/json': { schema: CountSchema } },
+  @get('/list-reactions/count', {
+    operationId: 'countListReactions',
+    responses: {
+      '200': {
+        description: 'ListReaction model count',
+        content: { 'application/json': { schema: CountSchema } },
+      },
+    },
   })
   async count(
     @param.where(ListReaction) where?: Where<ListReaction>,
@@ -105,14 +110,18 @@ export class ListReactionsController {
     return this.listReactionsRepository.count(where);
   }
 
-  @get('/list-reactions')
-  @response(200, {
-    description: 'Array of ListReaction model instances',
-    content: {
-      'application/json': {
-        schema: {
-          type: 'array',
-          items: getModelSchemaRef(ListReaction, { includeRelations: true }),
+  @get('/list-reactions', {
+    operationId: 'findListReactions',
+    responses: {
+      '200': {
+        description: 'Array of ListReaction model instances',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'array',
+              items: getModelSchemaRef(ListReaction, { includeRelations: true }),
+            },
+          },
         },
       },
     },
@@ -123,10 +132,14 @@ export class ListReactionsController {
     return this.listReactionsRepository.find(filter);
   }
 
-  @patch('/list-reactions')
-  @response(200, {
-    description: 'ListReaction PATCH success count',
-    content: { 'application/json': { schema: CountSchema } },
+  @patch('/list-reactions', {
+    operationId: 'updateListReactions',
+    responses: {
+      '200': {
+        description: 'ListReaction PATCH success count',
+        content: { 'application/json': { schema: CountSchema } },
+      },
+    },
   })
   async updateAll(
     @requestBody({
@@ -142,12 +155,16 @@ export class ListReactionsController {
     return this.listReactionsRepository.updateAll(listReaction, where);
   }
 
-  @get('/list-reactions/{id}')
-  @response(200, {
-    description: 'ListReaction model instance',
-    content: {
-      'application/json': {
-        schema: getModelSchemaRef(ListReaction, { includeRelations: true }),
+  @get('/list-reactions/{id}', {
+    operationId: 'findListReactionById',
+    responses: {
+      '200': {
+        description: 'ListReaction model instance',
+        content: {
+          'application/json': {
+            schema: getModelSchemaRef(ListReaction, { includeRelations: true }),
+          },
+        },
       },
     },
   })
@@ -159,9 +176,13 @@ export class ListReactionsController {
     return this.listReactionsRepository.findById(id, filter);
   }
 
-  @patch('/list-reactions/{id}')
-  @response(204, {
-    description: 'ListReaction PATCH success',
+  @patch('/list-reactions/{id}', {
+    operationId: 'updateListReactionById',
+    responses: {
+      '204': {
+        description: 'ListReaction PATCH success',
+      },
+    },
   })
   async updateById(
     @param.path.string('id') id: string,
@@ -177,9 +198,13 @@ export class ListReactionsController {
     await this.listReactionsRepository.updateById(id, listReaction);
   }
 
-  @put('/list-reactions/{id}')
-  @response(204, {
-    description: 'ListReaction PUT success',
+  @put('/list-reactions/{id}', {
+    operationId: 'replaceListReactionById',
+    responses: {
+      '204': {
+        description: 'ListReaction PUT success',
+      },
+    },
   })
   async replaceById(
     @param.path.string('id') id: string,
@@ -188,9 +213,13 @@ export class ListReactionsController {
     await this.listReactionsRepository.replaceById(id, listReaction);
   }
 
-  @del('/list-reactions/{id}')
-  @response(204, {
-    description: 'ListReaction DELETE success',
+  @del('/list-reactions/{id}', {
+    operationId: 'deleteListReactionById',
+    responses: {
+      '204': {
+        description: 'ListReaction DELETE success',
+      },
+    },
   })
   async deleteById(@param.path.string('id') id: string): Promise<void> {
     await this.listReactionsRepository.deleteById(id);

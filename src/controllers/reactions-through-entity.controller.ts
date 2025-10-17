@@ -36,6 +36,7 @@ export class ReactionsThroughEntityController {
   ) {}
 
   @get('/entities/{id}/reactions', {
+    operationId: 'findReactionsByEntityId',
     responses: {
       '200': {
         description: 'Array of EntityReaction model instances',
@@ -88,16 +89,14 @@ export class ReactionsThroughEntityController {
   }
 
   @post('/entities/{id}/reactions', {
+    operationId: 'createReactionByEntityId',
     responses: {
       '200': {
         description: 'EntityReaction model instance',
         content: {
           'application/json': {
             schema: getModelSchemaRef(EntityReaction, {
-              exclude: [
-                '_relationMetadata',
-                ...(ALWAYS_HIDDEN_FIELDS as (keyof EntityReaction)[]),
-              ],
+              exclude: ALWAYS_HIDDEN_FIELDS as (keyof EntityReaction)[],
             }),
           },
         },
@@ -175,6 +174,7 @@ export class ReactionsThroughEntityController {
   }
 
   @patch('/entities/{id}/reactions', {
+    operationId: 'updateReactionsByEntityId',
     responses: {
       '200': {
         description: 'Entity.Reaction PATCH success count',
@@ -247,6 +247,7 @@ export class ReactionsThroughEntityController {
   }
 
   @del('/entities/{id}/reactions', {
+    operationId: 'deleteReactionsByEntityId',
     responses: {
       '200': {
         description: 'Entity.Reaction DELETE success count',

@@ -12,17 +12,16 @@ export class ListsThroughEntityController {
     protected entityRepository: EntityRepository,
   ) {}
 
-  @get('/entities/{id}/lists', {
+    @get('/entities/{id}/lists', {
+    operationId: 'findListsByEntityId',
     responses: {
       '200': {
-        description: 'Array of Lists through ListEntityRelation',
+        description: 'Array of List model instances through Entity',
         content: {
           'application/json': {
             schema: {
               type: 'array',
-              items: getModelSchemaRef(List, {
-                exclude: ALWAYS_HIDDEN_FIELDS as (keyof List)[],
-              }),
+              items: getModelSchemaRef(List, { includeRelations: true }),
             },
           },
         },

@@ -39,6 +39,7 @@ export class EntityReactionsController {
   ) {}
 
   @post('/entity-reactions', {
+    operationId: 'createEntityReaction',
     responses: {
       '200': {
         description: 'EntityReaction model instance',
@@ -94,6 +95,7 @@ export class EntityReactionsController {
   }
 
   @get('/entity-reactions/count', {
+    operationId: 'countEntityReactions',
     responses: {
       '200': {
         description: 'EntityReaction model count',
@@ -144,6 +146,7 @@ export class EntityReactionsController {
   }
 
   @get('/entity-reactions', {
+    operationId: 'findEntityReactions',
     responses: {
       '200': {
         description: 'Array of EntityReaction model instances',
@@ -190,6 +193,7 @@ export class EntityReactionsController {
   }
 
   @patch('/entity-reactions', {
+    operationId: 'updateEntityReactions',
     responses: {
       '200': {
         description: 'EntityReaction PATCH success count',
@@ -255,6 +259,7 @@ export class EntityReactionsController {
   }
 
   @get('/entity-reactions/{id}', {
+    operationId: 'findEntityReactionById',
     responses: {
       '200': {
         description: 'EntityReaction model instance',
@@ -288,6 +293,7 @@ export class EntityReactionsController {
   }
 
   @patch('/entity-reactions/{id}', {
+    operationId: 'updateEntityReactionById',
     responses: {
       '204': {
         description: 'EntityReaction PATCH success',
@@ -331,6 +337,7 @@ export class EntityReactionsController {
   }
 
   @put('/entity-reactions/{id}', {
+    operationId: 'replaceEntityReactionById',
     responses: {
       '204': {
         description: 'EntityReaction PUT success',
@@ -372,6 +379,7 @@ export class EntityReactionsController {
   }
 
   @del('/entity-reactions/{id}', {
+    operationId: 'deleteEntityReactionById',
     responses: {
       '204': {
         description: 'EntityReaction DELETE success',
@@ -391,6 +399,7 @@ export class EntityReactionsController {
   }
 
   @get('/entity-reactions/{id}/parents', {
+    operationId: 'findParentsByEntityReactionId',
     responses: {
       '200': {
         description: 'Array of parent EntityReaction model instances',
@@ -449,6 +458,7 @@ export class EntityReactionsController {
   }
 
   @get('/entity-reactions/{id}/children', {
+    operationId: 'findChildrenByEntityReactionId',
     responses: {
       '200': {
         description: 'Array of child EntityReaction model instances',
@@ -507,9 +517,10 @@ export class EntityReactionsController {
   }
 
   @post('/entity-reactions/{id}/children', {
+    operationId: 'createChildEntityReaction',
     responses: {
       '200': {
-        description: 'Child EntityReaction model instance',
+        description: 'EntityReaction model instance',
         content: {
           'application/json': {
             schema: getModelSchemaRef(EntityReaction, {

@@ -44,6 +44,7 @@ export class EntitiesController {
   ) {}
 
   @post('/entities', {
+    operationId: 'createEntity',
     responses: {
       '200': {
         description: 'Entity model instance',
@@ -111,6 +112,7 @@ export class EntitiesController {
   }
 
   @get('/entities/count', {
+    operationId: 'countEntities',
     responses: {
       '200': {
         description: 'Entity model count',
@@ -142,6 +144,7 @@ export class EntitiesController {
   }
 
   @get('/entities', {
+    operationId: 'findEntities',
     responses: {
       '200': {
         description: 'Array of Entity model instances',
@@ -178,6 +181,7 @@ export class EntitiesController {
   }
 
   @patch('/entities', {
+    operationId: 'updateEntities',
     responses: {
       '200': {
         description: 'Entity PATCH success count',
@@ -222,6 +226,7 @@ export class EntitiesController {
   }
 
   @get('/entities/{id}', {
+    operationId: 'findEntityById',
     responses: {
       '200': {
         description: 'Entity model instance',
@@ -261,6 +266,7 @@ export class EntitiesController {
   }
 
   @patch('/entities/{id}', {
+    operationId: 'updateEntityById',
     responses: {
       '204': {
         description: 'Entity PATCH success',
@@ -311,6 +317,7 @@ export class EntitiesController {
   }
 
   @put('/entities/{id}', {
+    operationId: 'replaceEntityById',
     responses: {
       '204': {
         description: 'Entity PUT success',
@@ -360,6 +367,7 @@ export class EntitiesController {
   }
 
   @del('/entities/{id}', {
+    operationId: 'deleteEntityById',
     responses: {
       '204': {
         description: 'Entity DELETE success',
@@ -383,6 +391,7 @@ export class EntitiesController {
   }
 
   @get('/entities/{id}/parents', {
+    operationId: 'findParentsByEntityId',
     responses: {
       '200': {
         description: 'Array of parent Entity model instances',
@@ -432,6 +441,7 @@ export class EntitiesController {
   }
 
   @get('/entities/{id}/children', {
+    operationId: 'findChildrenByEntityId',
     responses: {
       '200': {
         description: 'Array of child Entity model instances',
@@ -481,6 +491,7 @@ export class EntitiesController {
   }
 
   @post('/entities/{id}/children', {
+    operationId: 'createChildEntity',
     responses: {
       '200': {
         description: 'Child Entity model instance',

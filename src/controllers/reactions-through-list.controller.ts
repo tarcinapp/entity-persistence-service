@@ -25,9 +25,10 @@ export class ReactionsThroughListController {
   ) {}
 
   @get('/lists/{id}/reactions', {
+    operationId: 'findReactionsByListId',
     responses: {
       '200': {
-        description: 'Array of List has many ListReactions',
+        description: 'Array of List has many ListReaction',
         content: {
           'application/json': {
             schema: { type: 'array', items: getModelSchemaRef(ListReaction) },
@@ -44,6 +45,7 @@ export class ReactionsThroughListController {
   }
 
   @post('/lists/{id}/reactions', {
+    operationId: 'createReactionByListId',
     responses: {
       '200': {
         description: 'List model instance',
@@ -72,9 +74,10 @@ export class ReactionsThroughListController {
   }
 
   @patch('/lists/{id}/reactions', {
+    operationId: 'updateReactionsByListId',
     responses: {
       '200': {
-        description: 'List.ListReactions PATCH success count',
+        description: 'List.ListReaction PATCH success count',
         content: { 'application/json': { schema: CountSchema } },
       },
     },
@@ -96,9 +99,10 @@ export class ReactionsThroughListController {
   }
 
   @del('/lists/{id}/reactions', {
+    operationId: 'deleteReactionsByListId',
     responses: {
       '200': {
-        description: 'List.ListReactions DELETE success count',
+        description: 'List.ListReaction DELETE success count',
         content: { 'application/json': { schema: CountSchema } },
       },
     },

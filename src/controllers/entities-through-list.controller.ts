@@ -45,6 +45,7 @@ export class EntitiesThroughListController {
   ) {}
 
   @get('/lists/{id}/entities', {
+    operationId: 'findEntitiesByListId',
     responses: {
       '200': {
         description: 'Array of Entity model instances through List',
@@ -103,6 +104,7 @@ export class EntitiesThroughListController {
   }
 
   @post('/lists/{id}/entities', {
+    operationId: 'createEntityByListId',
     responses: {
       '200': {
         description: 'Entity model instance',
@@ -184,35 +186,12 @@ export class EntitiesThroughListController {
     return repo.create(entity);
   }
 
-  @patch('/lists/{id}/entities', {
+    @patch('/lists/{id}/entities', {
+    operationId: 'updateEntitiesByListId',
     responses: {
       '200': {
-        description: 'List.Entity PATCH success count',
+        description: 'List.entities PATCH success count',
         content: { 'application/json': { schema: CountSchema } },
-      },
-      '404': {
-        description: 'List not found',
-        content: {
-          'application/json': {
-            schema: {
-              properties: {
-                error: getJsonSchema(HttpErrorResponse),
-              },
-            },
-          },
-        },
-      },
-      '422': {
-        description: 'Unprocessable entity',
-        content: {
-          'application/json': {
-            schema: {
-              properties: {
-                error: getJsonSchema(HttpErrorResponse),
-              },
-            },
-          },
-        },
       },
     },
   })
@@ -278,6 +257,7 @@ export class EntitiesThroughListController {
   }
 
   @del('/lists/{id}/entities', {
+    operationId: 'deleteEntitiesByListId',
     responses: {
       '200': {
         description: 'List.Entity DELETE success count',

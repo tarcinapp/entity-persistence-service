@@ -44,6 +44,7 @@ export class ListEntityRelsController {
   ) {}
 
   @post('/list-entity-relations', {
+    operationId: 'createRelation',
     responses: {
       '200': {
         description: 'ListEntityRelation model instance',
@@ -124,6 +125,7 @@ export class ListEntityRelsController {
   }
 
   @get('/list-entity-relations/count', {
+    operationId: 'countRelations',
     responses: {
       '200': {
         description: 'ListEntityRelation model count',
@@ -196,6 +198,7 @@ export class ListEntityRelsController {
   }
 
   @get('/list-entity-relations', {
+    operationId: 'findRelations',
     responses: {
       '200': {
         description: 'Array of ListEntityRelation model instances',
@@ -259,6 +262,7 @@ export class ListEntityRelsController {
   }
 
   @patch('/list-entity-relations', {
+    operationId: 'updateRelations',
     responses: {
       '200': {
         description: 'ListEntityRelation PATCH success count',
@@ -305,6 +309,7 @@ export class ListEntityRelsController {
   }
 
   @get('/list-entity-relations/{id}', {
+    operationId: 'findRelationById',
     responses: {
       '200': {
         description: 'ListEntityRelation model instance',
@@ -342,6 +347,7 @@ export class ListEntityRelsController {
   }
 
   @patch('/list-entity-relations/{id}', {
+    operationId: 'updateRelationById',
     responses: {
       '204': {
         description: 'ListEntityRelation PATCH success',
@@ -393,6 +399,7 @@ export class ListEntityRelsController {
   }
 
   @put('/list-entity-relations/{id}', {
+    operationId: 'replaceRelationById',
     responses: {
       '204': {
         description: 'ListEntityRelation PUT success',
@@ -443,6 +450,7 @@ export class ListEntityRelsController {
   }
 
   @del('/list-entity-relations/{id}', {
+    operationId: 'deleteRelationById',
     responses: {
       '204': {
         description: 'ListEntityRelation DELETE success',
