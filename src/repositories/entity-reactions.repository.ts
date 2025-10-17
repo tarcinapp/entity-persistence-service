@@ -141,7 +141,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
 
     // Execute pipeline
     const collection = this.dataSource.connector?.collection(
-      reactionCollectionName,
+      EntityReaction.modelName || 'EntityReaction',
     );
 
     if (!collection) {
@@ -574,7 +574,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
 
     // Execute pipeline to get IDs
     const collection = this.dataSource.connector?.collection(
-      reactionCollectionName,
+      EntityReaction.modelName || 'EntityReaction',
     );
 
     if (!collection) {
@@ -728,7 +728,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
 
       // Execute pipeline
       const collection = this.dataSource.connector?.collection(
-        reactionCollectionName,
+        EntityReaction.modelName || 'EntityReaction',
       );
 
       if (!collection) {
@@ -770,7 +770,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
 
       // Execute pipeline
       const collection = this.dataSource.connector?.collection(
-        reactionCollectionName,
+        EntityReaction.modelName || 'EntityReaction',
       );
 
       if (!collection) {
