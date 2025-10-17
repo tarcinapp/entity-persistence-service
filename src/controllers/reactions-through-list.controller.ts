@@ -61,7 +61,7 @@ export class ReactionsThroughListController {
           schema: getModelSchemaRef(ListReaction, {
             title: 'NewListReactionsInList',
             exclude: ['id'],
-            optional: ['listId'],
+            optional: ['_listId'],
           }),
         },
       },

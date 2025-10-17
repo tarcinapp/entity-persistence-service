@@ -161,7 +161,7 @@ export class ReactionsThroughEntityController {
             title: 'NewReactionInEntity',
             exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof EntityReaction)[],
             includeRelations: false,
-            
+            optional: ['_entityId'],
           }),
         },
       },
