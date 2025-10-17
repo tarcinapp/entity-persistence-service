@@ -306,7 +306,6 @@ export class ListsController {
             partial: true,
             exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof List)[],
             includeRelations: false,
-            optional: ['_name'],
           }),
         },
       },

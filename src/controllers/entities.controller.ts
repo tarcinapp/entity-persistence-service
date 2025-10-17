@@ -193,8 +193,7 @@ export class EntitiesController {
             title: 'PartialEntity',
             partial: true,
             exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof GenericEntity)[],
-            includeRelations: false,
-            optional: ['_name'],
+            includeRelations: false
           }),
         },
       },
@@ -302,7 +301,6 @@ export class EntitiesController {
             partial: true,
             exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof GenericEntity)[],
             includeRelations: false,
-            optional: ['_name'],
           }),
         },
       },
