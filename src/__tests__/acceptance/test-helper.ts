@@ -30,7 +30,7 @@ import {
   MongoPipelineHelperBindings,
   MongoPipelineHelper,
 } from '../../extensions/utils/mongo-pipeline-helper';
-import type { GenericEntity, List, EntityReaction } from '../../models';
+import type { GenericEntity, List, EntityReaction, ListReaction } from '../../models';
 import { LookupConstraintBindings } from '../../services/lookup-constraint.bindings';
 import { LookupConstraintService } from '../../services/lookup-constraint.service';
 import { RecordLimitCheckerBindings } from '../../services/record-limit-checker.bindings';
@@ -496,6 +496,8 @@ export async function teardownApplication(appWithClient: AppWithClient) {
 
 // Store created entity IDs for cleanup
 let createdEntityIds: string[] = [];
+// Store created list IDs for cleanup
+let createdListIds: string[] = [];
 
 /**
  * Creates a test entity and returns its ID
@@ -519,8 +521,10 @@ export async function createTestList(
   listData: Partial<List>,
 ): Promise<string> {
   const response = await client.post('/lists').send(listData).expect(200);
+  const listId = response.body._id;
+  createdListIds.push(listId);
 
-  return response.body._id;
+  return listId;
 }
 
 /**
@@ -536,6 +540,21 @@ export async function cleanupCreatedEntities(client: Client): Promise<void> {
   }
 
   createdEntityIds = [];
+}
+
+/**
+ * Cleans up all created lists
+ */
+export async function cleanupCreatedLists(client: Client): Promise<void> {
+  for (const id of createdListIds) {
+    try {
+      await client.delete(`/lists/${id}`);
+    } catch (error) {
+      console.error(`Failed to delete list ${id}:`, error);
+    }
+  }
+
+  createdListIds = [];
 }
 
 export async function createTestEntityReaction(
@@ -558,5 +577,28 @@ export async function cleanupCreatedEntityReactions(
 
   for (const entityReaction of entityReactions) {
     await client.delete(`/entity-reactions/${entityReaction._id}`).expect(204);
+  }
+}
+
+export async function createTestListReaction(
+  client: Client,
+  listReaction: Partial<ListReaction>,
+): Promise<string> {
+  const response = await client
+    .post('/list-reactions')
+    .send(listReaction)
+    .expect(200);
+
+  return response.body._id;
+}
+
+export async function cleanupCreatedListReactions(
+  client: Client,
+): Promise<void> {
+  const response = await client.get('/list-reactions').expect(200);
+  const listReactions = response.body;
+
+  for (const listReaction of listReactions) {
+    await client.delete(`/list-reactions/${listReaction._id}`).expect(204);
   }
 }
