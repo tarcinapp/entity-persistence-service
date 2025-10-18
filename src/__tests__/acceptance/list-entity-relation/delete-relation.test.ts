@@ -8,7 +8,7 @@ import {
   createTestEntity,
 } from '../test-helper';
 
-describe('DELETE /list-entity-relations/{id}', () => {
+describe('DELETE /relations/{id}', () => {
   let client: Client;
   let appWithClient: AppWithClient | undefined;
 
@@ -66,7 +66,7 @@ describe('DELETE /list-entity-relations/{id}', () => {
 
     // Create relation
     const relationResponse = await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: listId,
         _entityId: entityId,
@@ -77,9 +77,9 @@ describe('DELETE /list-entity-relations/{id}', () => {
     const relationId = relationResponse.body._id;
 
     // Delete relation
-    await client.delete(`/list-entity-relations/${relationId}`).expect(204);
+    await client.delete(`/relations/${relationId}`).expect(204);
 
     // Verify relation is deleted by attempting to get it
-    await client.get(`/list-entity-relations/${relationId}`).expect(404);
+    await client.get(`/relations/${relationId}`).expect(404);
   });
 });

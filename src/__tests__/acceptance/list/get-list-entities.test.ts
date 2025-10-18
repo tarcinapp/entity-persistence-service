@@ -72,7 +72,7 @@ describe('GET /lists/{id}/entities', () => {
 
     // Create relations
     await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: listId,
         _entityId: entity1Id,
@@ -80,7 +80,7 @@ describe('GET /lists/{id}/entities', () => {
       .expect(200);
 
     await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: listId,
         _entityId: entity2Id,

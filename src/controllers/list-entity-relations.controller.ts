@@ -43,7 +43,7 @@ export class ListEntityRelsController {
     private req: Request,
   ) {}
 
-  @post('/list-entity-relations', {
+  @post('/relations', {
     operationId: 'createRelation',
     responses: {
       '200': {
@@ -124,7 +124,7 @@ export class ListEntityRelsController {
     return this.listEntityRelationRepository.create(listEntityRelation);
   }
 
-  @get('/list-entity-relations/count', {
+  @get('/relations/count', {
     operationId: 'countRelations',
     responses: {
       '200': {
@@ -197,7 +197,7 @@ export class ListEntityRelsController {
     );
   }
 
-  @get('/list-entity-relations', {
+  @get('/relations', {
     operationId: 'findRelations',
     responses: {
       '200': {
@@ -261,7 +261,7 @@ export class ListEntityRelsController {
     );
   }
 
-  @patch('/list-entity-relations', {
+  @patch('/relations', {
     operationId: 'updateRelations',
     responses: {
       '200': {
@@ -308,7 +308,7 @@ export class ListEntityRelsController {
     );
   }
 
-  @get('/list-entity-relations/{id}', {
+  @get('/relations/{id}', {
     operationId: 'findRelationById',
     responses: {
       '200': {
@@ -346,7 +346,7 @@ export class ListEntityRelsController {
     return this.listEntityRelationRepository.findById(id, filter);
   }
 
-  @patch('/list-entity-relations/{id}', {
+  @patch('/relations/{id}', {
     operationId: 'updateRelationById',
     responses: {
       '204': {
@@ -398,7 +398,7 @@ export class ListEntityRelsController {
     await this.listEntityRelationRepository.updateById(id, listEntityRelation);
   }
 
-  @put('/list-entity-relations/{id}', {
+  @put('/relations/{id}', {
     operationId: 'replaceRelationById',
     responses: {
       '204': {
@@ -449,7 +449,7 @@ export class ListEntityRelsController {
     await this.listEntityRelationRepository.replaceById(id, listEntityRelation);
   }
 
-  @del('/list-entity-relations/{id}', {
+  @del('/relations/{id}', {
     operationId: 'deleteRelationById',
     responses: {
       '204': {

@@ -104,7 +104,7 @@ describe('POST /lists/{id}/entities', () => {
 
     // Add first entity to the list
     await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: listId,
         _entityId: entity1Id,
@@ -114,7 +114,7 @@ describe('POST /lists/{id}/entities', () => {
 
     // Add second entity to the list
     await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: listId,
         _entityId: entity2Id,
@@ -124,7 +124,7 @@ describe('POST /lists/{id}/entities', () => {
 
     // Verify relations were created
     const relationsResponse = await client
-      .get(`/list-entity-relations?filter[where][_listId]=${listId}`)
+      .get(`/relations?filter[where][_listId]=${listId}`)
       .expect(200);
 
     expect(relationsResponse.body).to.be.an.Array();

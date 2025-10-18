@@ -8,7 +8,7 @@ import {
   createTestEntity,
 } from '../test-helper';
 
-describe('PUT /list-entity-relations/{id}', () => {
+describe('PUT /relations/{id}', () => {
   let client: Client;
   let appWithClient: AppWithClient | undefined;
 
@@ -66,7 +66,7 @@ describe('PUT /list-entity-relations/{id}', () => {
 
     // Create relation
     const relationResponse = await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: listId,
         _entityId: entityId,
@@ -78,7 +78,7 @@ describe('PUT /list-entity-relations/{id}', () => {
 
     // Replace relation with new data
     await client
-      .put(`/list-entity-relations/${relationId}`)
+      .put(`/relations/${relationId}`)
       .send({
         _listId: listId,
         _entityId: entityId,
@@ -89,7 +89,7 @@ describe('PUT /list-entity-relations/{id}', () => {
 
     // Verify changes by getting the updated relation
     const response = await client
-      .get(`/list-entity-relations/${relationId}`)
+      .get(`/relations/${relationId}`)
       .expect(200);
 
     // Verify response
@@ -128,7 +128,7 @@ describe('PUT /list-entity-relations/{id}', () => {
 
     // Create relation
     const relationResponse = await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: listId,
         _entityId: entityId,
@@ -140,7 +140,7 @@ describe('PUT /list-entity-relations/{id}', () => {
 
     // Attempt to replace relation with different _kind
     const response = await client
-      .put(`/list-entity-relations/${relationId}`)
+      .put(`/relations/${relationId}`)
       .send({
         _listId: listId,
         _entityId: entityId,
@@ -165,7 +165,7 @@ describe('PUT /list-entity-relations/{id}', () => {
 
     // Verify _kind remains unchanged by getting the relation
     const getResponse = await client
-      .get(`/list-entity-relations/${relationId}`)
+      .get(`/relations/${relationId}`)
       .expect(200);
     expect(getResponse.body).to.have.property('_kind', 'relation');
   });

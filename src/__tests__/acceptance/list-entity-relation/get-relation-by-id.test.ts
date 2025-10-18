@@ -8,7 +8,7 @@ import {
   createTestEntity,
 } from '../test-helper';
 
-describe('GET /list-entity-relations/{id}', () => {
+describe('GET /relations/{id}', () => {
   let client: Client;
   let appWithClient: AppWithClient | undefined;
 
@@ -66,7 +66,7 @@ describe('GET /list-entity-relations/{id}', () => {
 
     // Create relation
     const relationResponse = await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: listId,
         _entityId: entityId,
@@ -77,7 +77,7 @@ describe('GET /list-entity-relations/{id}', () => {
 
     // Get relation by id
     const response = await client
-      .get(`/list-entity-relations/${relationId}`)
+      .get(`/relations/${relationId}`)
       .expect(200);
 
     // Verify response

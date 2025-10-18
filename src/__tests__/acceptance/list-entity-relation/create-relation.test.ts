@@ -7,7 +7,7 @@ import {
   type AppWithClient,
 } from '../test-helper';
 
-describe('POST /list-entity-relations', () => {
+describe('POST /relations', () => {
   let client: Client;
   let appWithClient: AppWithClient;
 
@@ -36,7 +36,7 @@ describe('POST /list-entity-relations', () => {
     const entity = entityResponse.body;
 
     // Finally create the relation
-    const relationResponse = await client.post('/list-entity-relations').send({
+    const relationResponse = await client.post('/relations').send({
       _listId: list._id,
       _entityId: entity._id,
     });
@@ -81,7 +81,7 @@ describe('POST /list-entity-relations', () => {
     };
 
     const response = await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send(newRelation)
       .expect(200);
 
@@ -124,7 +124,7 @@ describe('POST /list-entity-relations', () => {
     };
 
     const response = await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send(newRelation)
       .expect(422);
 
@@ -170,7 +170,7 @@ describe('POST /list-entity-relations', () => {
 
     // Create first relation - should succeed
     await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _kind: 'consists',
         _listId: list._id,
@@ -180,7 +180,7 @@ describe('POST /list-entity-relations', () => {
 
     // Create second relation - should succeed
     await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _kind: 'consists',
         _listId: list._id,
@@ -190,7 +190,7 @@ describe('POST /list-entity-relations', () => {
 
     // Try to create third relation - should fail due to limit
     const response = await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: list._id,
         _entityId: entities[2]._id,
@@ -245,7 +245,7 @@ describe('POST /list-entity-relations', () => {
 
     // Create first 'consists' relation - should succeed
     await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: list._id,
         _entityId: entities[0]._id,
@@ -255,7 +255,7 @@ describe('POST /list-entity-relations', () => {
 
     // Try to create second 'consists' relation - should fail due to kind-specific limit
     const consistsResponse = await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: list._id,
         _entityId: entities[1]._id,
@@ -283,7 +283,7 @@ describe('POST /list-entity-relations', () => {
 
     // Create first 'references' relation - should succeed
     await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: list._id,
         _entityId: entities[1]._id,
@@ -293,7 +293,7 @@ describe('POST /list-entity-relations', () => {
 
     // Create second 'references' relation - should succeed
     await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: list._id,
         _entityId: entities[2]._id,
@@ -303,7 +303,7 @@ describe('POST /list-entity-relations', () => {
 
     // Try to create third 'references' relation - should fail due to kind-specific limit
     const referencesResponse = await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: list._id,
         _entityId: entities[0]._id,
@@ -364,7 +364,7 @@ describe('POST /list-entity-relations', () => {
 
   //   // Create first active relation - should succeed
   //   await client
-  //     .post('/list-entity-relations')
+  //     .post('/relations')
   //     .send({
   //       _listId: list._id,
   //       _entityId: entities[0]._id,
@@ -375,7 +375,7 @@ describe('POST /list-entity-relations', () => {
 
   //   // Create second active relation - should succeed
   //   await client
-  //     .post('/list-entity-relations')
+  //     .post('/relations')
   //     .send({
   //       _listId: list._id,
   //       _entityId: entities[1]._id,
@@ -386,7 +386,7 @@ describe('POST /list-entity-relations', () => {
 
   //   // Create inactive relation - should succeed despite active records limit
   //   await client
-  //     .post('/list-entity-relations')
+  //     .post('/relations')
   //     .send({
   //       _listId: list._id,
   //       _entityId: entities[2]._id,
@@ -397,7 +397,7 @@ describe('POST /list-entity-relations', () => {
 
   //   // Try to create third active relation - should fail due to active records limit
   //   const response = await client
-  //     .post('/list-entity-relations')
+  //     .post('/relations')
   //     .send({
   //       _listId: list._id,
   //       _entityId: entities[3]._id,
@@ -452,7 +452,7 @@ describe('POST /list-entity-relations', () => {
 
     // Create first relation - should succeed
     await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _kind: 'consists',
         _listId: list._id,
@@ -462,7 +462,7 @@ describe('POST /list-entity-relations', () => {
 
     // Create second relation - should succeed
     await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _kind: 'consists',
         _listId: list._id,
@@ -472,7 +472,7 @@ describe('POST /list-entity-relations', () => {
 
     // Try to create third relation - should fail due to list entity count limit
     const response = await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: list._id,
         _entityId: entities[2]._id,
@@ -539,7 +539,7 @@ describe('POST /list-entity-relations', () => {
     // Test reading-list (limit: 1)
     // Add first entity to reading list - should succeed
     await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: readingList._id,
         _entityId: entities[0]._id,
@@ -548,7 +548,7 @@ describe('POST /list-entity-relations', () => {
 
     // Try to add second entity to reading list - should fail due to kind-specific limit
     const readingListResponse = await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: readingList._id,
         _entityId: entities[1]._id,
@@ -576,7 +576,7 @@ describe('POST /list-entity-relations', () => {
     // Test watch-list (limit: 2)
     // Add first entity to watch list - should succeed
     await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: watchList._id,
         _entityId: entities[0]._id,
@@ -585,7 +585,7 @@ describe('POST /list-entity-relations', () => {
 
     // Add second entity to watch list - should succeed
     await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: watchList._id,
         _entityId: entities[1]._id,
@@ -594,7 +594,7 @@ describe('POST /list-entity-relations', () => {
 
     // Try to add third entity to watch list - should fail due to kind-specific limit
     const watchListResponse = await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: watchList._id,
         _entityId: entities[2]._id,
@@ -646,7 +646,7 @@ describe('POST /list-entity-relations', () => {
 
     // Create first relation with quarter=q1 - should succeed
     await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: list._id,
         _entityId: entities[0]._id,
@@ -656,7 +656,7 @@ describe('POST /list-entity-relations', () => {
 
     // Try to create second relation with quarter=q1 - should fail due to uniqueness constraint
     const response = await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: list._id,
         _entityId: entities[1]._id,
@@ -683,7 +683,7 @@ describe('POST /list-entity-relations', () => {
 
     // Create relation with quarter=q2 - should succeed
     await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: list._id,
         _entityId: entities[1]._id,

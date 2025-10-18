@@ -10,7 +10,7 @@ import {
   cleanupCreatedEntities,
 } from '../test-helper';
 
-describe('GET /list-entity-relations', () => {
+describe('GET /relations', () => {
   let client: Client;
   let appWithClient: AppWithClient | undefined;
 
@@ -38,7 +38,7 @@ describe('GET /list-entity-relations', () => {
       // Clean up created relations
       for (const id of createdRelationIds) {
         try {
-          await client.delete(`/list-entity-relations/${id}`);
+          await client.delete(`/relations/${id}`);
         } catch (error) {
           console.error(`Failed to delete relation ${id}:`, error);
         }
@@ -65,7 +65,7 @@ describe('GET /list-entity-relations', () => {
     relationData: Partial<ListToEntityRelation>,
   ): Promise<string> {
     const response = await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send(relationData)
       .expect(200);
     const relationId = response.body._id;
@@ -110,7 +110,7 @@ describe('GET /list-entity-relations', () => {
     });
 
     // Get all relations
-    const response = await client.get('/list-entity-relations').expect(200);
+    const response = await client.get('/relations').expect(200);
 
     expect(response.body).to.be.Array().and.have.length(1);
     const relation = response.body[0];
@@ -182,7 +182,7 @@ describe('GET /list-entity-relations', () => {
 
     // Get only reading-list-book relations
     const response = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query({ filter: { where: { _kind: 'reading-list-book' } } })
       .expect(200);
 
@@ -243,7 +243,7 @@ describe('GET /list-entity-relations', () => {
       `filter[where][and][2][_validFromDateTime][lt]=${encodeURIComponent(now.toISOString())}`;
 
     const response = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(filterStr)
       .expect(200);
 
@@ -288,7 +288,7 @@ describe('GET /list-entity-relations', () => {
 
     // Get only public relations
     const response = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query({ filter: { where: { _visibility: 'public' } } })
       .expect(200);
 
@@ -341,7 +341,7 @@ describe('GET /list-entity-relations', () => {
     // Get relations with validFromDateTime in the past
     const filterStr = `filter[where][_validFromDateTime][lt]=${encodeURIComponent(now.toISOString())}`;
     const response = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(filterStr)
       .expect(200);
 
@@ -402,7 +402,7 @@ describe('GET /list-entity-relations', () => {
     // Get relations published before now
     const filterStr = `filter[where][and][0][publishedDate][lt]=${encodeURIComponent(now.toISOString())}&filter[where][and][1][publishedDate][neq]=null`;
     const response = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(filterStr)
       .expect(200);
 
@@ -462,7 +462,7 @@ describe('GET /list-entity-relations', () => {
       `filter[where][weight][type]=number`;
 
     const response = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(filterStr)
       .expect(200);
 
@@ -479,7 +479,7 @@ describe('GET /list-entity-relations', () => {
       `filter[where][weight][type]=number`;
 
     const rangeResponse = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(rangeFilterStr)
       .expect(200);
 
@@ -537,7 +537,7 @@ describe('GET /list-entity-relations', () => {
     // Get relations with specific nested status
     const filterStr = `filter[where][metadata.status.current]=reading`;
     const response = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(filterStr)
       .expect(200);
 
@@ -551,7 +551,7 @@ describe('GET /list-entity-relations', () => {
       `filter[where][metadata.status.progress][type]=number`;
 
     const progressResponse = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(progressFilterStr)
       .expect(200);
 
@@ -605,7 +605,7 @@ describe('GET /list-entity-relations', () => {
     });
 
     // Get relations with limit
-    const response = await client.get('/list-entity-relations').expect(200);
+    const response = await client.get('/relations').expect(200);
 
     expect(response.body).to.be.Array().and.have.length(2);
   });
@@ -654,7 +654,7 @@ describe('GET /list-entity-relations', () => {
 
     // Get first page of reading list relations
     const firstPage = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(
         'filter[limit]=2&' +
           'filter[skip]=0&' +
@@ -673,7 +673,7 @@ describe('GET /list-entity-relations', () => {
 
     // Get second page of reading list relations
     const secondPage = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(
         'filter[limit]=2&' +
           'filter[skip]=2&' +
@@ -690,7 +690,7 @@ describe('GET /list-entity-relations', () => {
 
     // Test with different list filter to verify filtering is working
     const watchListPage = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(
         'filter[limit]=2&' +
           'filter[skip]=0&' +
@@ -705,7 +705,7 @@ describe('GET /list-entity-relations', () => {
 
     // Test combining list filter with relation filter
     const combinedFilterPage = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(
         'filter[where][order][lt]=3&' +
           'filter[where][order][type]=number&' +
@@ -772,7 +772,7 @@ describe('GET /list-entity-relations', () => {
 
     // Get relations sorted by order ascending
     const ascResponse = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query({ filter: { order: ['order ASC'] } })
       .expect(200);
 
@@ -783,7 +783,7 @@ describe('GET /list-entity-relations', () => {
 
     // Get relations sorted by order descending
     const descResponse = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query({ filter: { order: ['order DESC'] } })
       .expect(200);
 
@@ -794,7 +794,7 @@ describe('GET /list-entity-relations', () => {
 
     // Test sorting by multiple fields
     const multiSortResponse = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query({
         filter: {
           order: ['_kind ASC', 'order DESC'],
@@ -868,7 +868,7 @@ describe('GET /list-entity-relations', () => {
 
     // Get only active relations using set filter
     const response = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query({ set: { actives: true } })
       .expect(200);
 
@@ -935,7 +935,7 @@ describe('GET /list-entity-relations', () => {
 
     // Get active relations using set[actives]
     const response = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query({ set: { actives: true } })
       .expect(200);
 
@@ -982,7 +982,7 @@ describe('GET /list-entity-relations', () => {
 
     // Get public relations using set[publics]
     const response = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query({ set: { publics: true } })
       .expect(200);
 
@@ -1049,7 +1049,7 @@ describe('GET /list-entity-relations', () => {
     // Get relations that are both active AND public using set[and]
     const filterStr = 'set[and][0][actives]=true&set[and][1][publics]=true';
     const response = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(filterStr)
       .expect(200);
 
@@ -1120,7 +1120,7 @@ describe('GET /list-entity-relations', () => {
     const filterStr =
       'set[actives]=true&filter[where][priority][eq]=1&filter[where][priority][type]=number';
     const response = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(filterStr)
       .expect(200);
 
@@ -1224,7 +1224,7 @@ describe('GET /list-entity-relations', () => {
 
     // Test filtering by list visibility
     const response = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query({
         filter: {
           where: {
@@ -1252,7 +1252,7 @@ describe('GET /list-entity-relations', () => {
 
     // Test filtering by list kind
     const kindResponse = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query({
         listFilter: {
           where: {
@@ -1273,7 +1273,7 @@ describe('GET /list-entity-relations', () => {
 
     // Test combining relation and list filters
     const combinedResponse = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query({
         filter: {
           where: {
@@ -1377,7 +1377,7 @@ describe('GET /list-entity-relations', () => {
 
     // Get first page of reading list relations
     const firstPage = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(
         'filter[limit]=2&' +
           'filter[skip]=0&' +
@@ -1396,7 +1396,7 @@ describe('GET /list-entity-relations', () => {
 
     // Get second page of reading list relations
     const secondPage = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(
         'filter[limit]=2&' +
           'filter[skip]=2&' +
@@ -1413,7 +1413,7 @@ describe('GET /list-entity-relations', () => {
 
     // Test with different list filter to verify filtering is working
     const watchListPage = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(
         'filter[limit]=2&' +
           'filter[skip]=0&' +
@@ -1432,7 +1432,7 @@ describe('GET /list-entity-relations', () => {
 
     // Test combining list filter with relation filter
     const combinedFilterPage = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(
         'filter[where][order][lt]=3&' +
           'filter[where][order][type]=number&' +
@@ -1497,7 +1497,7 @@ describe('GET /list-entity-relations', () => {
       'filter[fields][notes]=true';
 
     const response = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(filterStr)
       .expect(200);
 
@@ -1564,7 +1564,7 @@ describe('GET /list-entity-relations', () => {
       'filter[fields][_validUntilDateTime]=false';
 
     const response = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(filterStr)
       .expect(200);
 
@@ -1680,7 +1680,7 @@ describe('GET /list-entity-relations', () => {
       '&listFilter[where][or][1][_visibility][eq]=public';
 
     const response = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(filterStr)
       .expect(200);
 
@@ -1786,7 +1786,7 @@ describe('GET /list-entity-relations', () => {
       '&listFilter[where][or][1][_createdDateTime][type]=date';
 
     const response = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(filterStr)
       .expect(200);
 
@@ -1909,7 +1909,7 @@ describe('GET /list-entity-relations', () => {
       '&listFilter[where][and][1][or][1][_validUntilDateTime][type]=date';
 
     const response = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(filterStr)
       .expect(200);
 
@@ -1999,7 +1999,7 @@ describe('GET /list-entity-relations', () => {
 
     // Filter for active lists using listSet[actives]
     const response = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query({ listSet: { actives: true } })
       .expect(200);
 
@@ -2095,7 +2095,7 @@ describe('GET /list-entity-relations', () => {
     const filterStr =
       'listSet[and][0][actives]=true&listSet[and][1][publics]=true';
     const response = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(filterStr)
       .expect(200);
 
@@ -2202,7 +2202,7 @@ describe('GET /list-entity-relations', () => {
     const filterStr =
       'listSet[actives]=true&listSet[publics]=true&set[actives]=true';
     const response = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(filterStr)
       .expect(200);
 
@@ -2356,7 +2356,7 @@ describe('GET /list-entity-relations', () => {
     // Test 1: Filter for lists accessible to user-123
     const userFilterStr = 'listSet[audience][userIds]=user-123';
     const userResponse = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(userFilterStr)
       .expect(200);
 
@@ -2377,7 +2377,7 @@ describe('GET /list-entity-relations', () => {
     // Test 2: Filter for lists accessible to a member of group-456
     const groupFilterStr = 'listSet[audience][groupIds]=group-456';
     const groupResponse = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(groupFilterStr)
       .expect(200);
 
@@ -2399,7 +2399,7 @@ describe('GET /list-entity-relations', () => {
     const combinedFilterStr =
       'listSet[audience][userIds]=user-123&listSet[audience][groupIds]=group-456';
     const combinedResponse = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(combinedFilterStr)
       .expect(200);
 
@@ -2530,7 +2530,7 @@ describe('GET /list-entity-relations', () => {
       'set[actives]=true&' +
       'entitySet[audience][userIds]=user-123';
     const userResponse = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(userFilterStr)
       .expect(200);
 
@@ -2548,7 +2548,7 @@ describe('GET /list-entity-relations', () => {
       'set[actives]=true&' +
       'entitySet[audience][groupIds]=group-456';
     const groupResponse = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(groupFilterStr)
       .expect(200);
 
@@ -2568,7 +2568,7 @@ describe('GET /list-entity-relations', () => {
       'set[actives]=true&' +
       'entitySet[audience][groupIds]=group-456';
     const mixedResponse = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(mixedFilterStr)
       .expect(200);
 
@@ -2583,7 +2583,7 @@ describe('GET /list-entity-relations', () => {
       'entitySet[audience][userIds]=user-123&' +
       'entitySet[audience][groupIds]=group-456';
     const combinedResponse = await client
-      .get('/list-entity-relations')
+      .get('/relations')
       .query(combinedFilterStr)
       .expect(200);
 

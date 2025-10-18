@@ -67,7 +67,7 @@ describe('PATCH /lists/{id}/entities', () => {
 
     // Create relation
     await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: listId,
         _entityId: entityId,
@@ -139,7 +139,7 @@ describe('PATCH /lists/{id}/entities', () => {
 
     // Create relation
     await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: listId,
         _entityId: entityId,
@@ -203,7 +203,7 @@ describe('PATCH /lists/{id}/entities', () => {
 
     // Create relation
     await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: listId,
         _entityId: entityId,

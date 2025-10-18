@@ -8,7 +8,7 @@ import {
   createTestEntity,
 } from '../test-helper';
 
-describe('GET /list-entity-relations/count', () => {
+describe('GET /relations/count', () => {
   let client: Client;
   let appWithClient: AppWithClient | undefined;
 
@@ -71,19 +71,19 @@ describe('GET /list-entity-relations/count', () => {
     });
 
     // Create relations
-    await client.post('/list-entity-relations').send({
+    await client.post('/relations').send({
       _listId: listId,
       _entityId: entity1Id,
     });
 
-    await client.post('/list-entity-relations').send({
+    await client.post('/relations').send({
       _listId: listId,
       _entityId: entity2Id,
     });
 
     // Get count of relations
     const response = await client
-      .get('/list-entity-relations/count')
+      .get('/relations/count')
       .expect(200);
 
     expect(response.body).to.have.property('count', 2);

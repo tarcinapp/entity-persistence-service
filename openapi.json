@@ -1888,7 +1888,7 @@
         "operationId": "EntityReactionController.find"
       }
     },
-    "/list-entity-relations/count": {
+    "/relations/count": {
       "get": {
         "x-controller-name": "ListEntityRelController",
         "x-operation-name": "count",
@@ -1986,7 +1986,7 @@
         "operationId": "ListEntityRelController.count"
       }
     },
-    "/list-entity-relations/{id}": {
+    "/relations/{id}": {
       "put": {
         "x-controller-name": "ListEntityRelController",
         "x-operation-name": "replaceById",
@@ -2202,7 +2202,7 @@
         "operationId": "ListEntityRelController.deleteById"
       }
     },
-    "/list-entity-relations": {
+    "/relations": {
       "post": {
         "x-controller-name": "ListEntityRelController",
         "x-operation-name": "create",

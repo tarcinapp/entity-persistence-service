@@ -72,7 +72,7 @@ describe('DELETE /lists/{id}/entities', () => {
 
     // Create relations
     await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: listId,
         _entityId: entity1Id,
@@ -80,7 +80,7 @@ describe('DELETE /lists/{id}/entities', () => {
       .expect(200);
 
     await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: listId,
         _entityId: entity2Id,
@@ -95,7 +95,7 @@ describe('DELETE /lists/{id}/entities', () => {
 
     // Verify relations were deleted
     const relationsResponse = await client
-      .get(`/list-entity-relations?filter[where][_listId]=${listId}`)
+      .get(`/relations?filter[where][_listId]=${listId}`)
       .expect(200);
 
     expect(relationsResponse.body).to.be.an.Array();

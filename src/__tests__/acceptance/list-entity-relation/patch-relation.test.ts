@@ -8,7 +8,7 @@ import {
   createTestEntity,
 } from '../test-helper';
 
-describe('PATCH /list-entity-relations/{id}', () => {
+describe('PATCH /relations/{id}', () => {
   let client: Client;
   let appWithClient: AppWithClient | undefined;
 
@@ -66,7 +66,7 @@ describe('PATCH /list-entity-relations/{id}', () => {
 
     // Create relation
     const relationResponse = await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: listId,
         _entityId: entityId,
@@ -78,7 +78,7 @@ describe('PATCH /list-entity-relations/{id}', () => {
 
     // Update relation properties
     await client
-      .patch(`/list-entity-relations/${relationId}`)
+      .patch(`/relations/${relationId}`)
       .send({
         _visibility: 'public',
       })
@@ -86,7 +86,7 @@ describe('PATCH /list-entity-relations/{id}', () => {
 
     // Verify changes by getting the updated relation
     const response = await client
-      .get(`/list-entity-relations/${relationId}`)
+      .get(`/relations/${relationId}`)
       .expect(200);
 
     // Verify response
@@ -126,7 +126,7 @@ describe('PATCH /list-entity-relations/{id}', () => {
 
     // Create relation
     const relationResponse = await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: listId,
         _entityId: entityId,
@@ -138,7 +138,7 @@ describe('PATCH /list-entity-relations/{id}', () => {
 
     // Attempt to update _kind field
     const response = await client
-      .patch(`/list-entity-relations/${relationId}`)
+      .patch(`/relations/${relationId}`)
       .send({
         _kind: 'custom-relation',
       })
@@ -160,7 +160,7 @@ describe('PATCH /list-entity-relations/{id}', () => {
 
     // Verify _kind remains unchanged by getting the relation
     const getResponse = await client
-      .get(`/list-entity-relations/${relationId}`)
+      .get(`/relations/${relationId}`)
       .expect(200);
     expect(getResponse.body).to.have.property('_kind', 'relation');
   });
@@ -190,7 +190,7 @@ describe('PATCH /list-entity-relations/{id}', () => {
 
     // Create relation
     const relationResponse = await client
-      .post('/list-entity-relations')
+      .post('/relations')
       .send({
         _listId: listId,
         _entityId: entityId,
@@ -202,7 +202,7 @@ describe('PATCH /list-entity-relations/{id}', () => {
 
     // Update other fields
     await client
-      .patch(`/list-entity-relations/${relationId}`)
+      .patch(`/relations/${relationId}`)
       .send({
         _visibility: 'public',
       })
@@ -210,7 +210,7 @@ describe('PATCH /list-entity-relations/{id}', () => {
 
     // Verify _kind remains unchanged while other fields are updated
     const response = await client
-      .get(`/list-entity-relations/${relationId}`)
+      .get(`/relations/${relationId}`)
       .expect(200);
     expect(response.body).to.have.property('_kind', 'relation');
     expect(response.body).to.have.property('_visibility', 'public');

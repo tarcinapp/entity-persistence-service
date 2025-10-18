@@ -352,7 +352,7 @@ Thanks to ListToEntityRelation, you can:
 
 Additionally, responses for these queries include `_fromMetadata` and `_toMetadata` fields that expose the metadata attached to the relation from both sides (list → entity and entity → list), making it easy to customize display logic and behaviors based on relation context.
 
-**Base Endpoint:** /list-entity-relations  
+**Base Endpoint:** /relations  
 **Entities under a list:** /lists/{listId}/entities  
 **Lists containing an entity:** /entities/{entityId}/lists  
 
@@ -1686,14 +1686,14 @@ When querying list-entity relations, dot notation filtering (e.g., `metadata.sta
   ### ListEntityRelController
   | Method | Endpoint                       | Description                           |
   | ------ | ------------------------------ | ------------------------------------- |
-  | POST   | `/list-entity-relations`       | Create new list-entity relation       |
-  | GET    | `/list-entity-relations`       | List all list-entity relations        |
-  | GET    | `/list-entity-relations/{id}`  | Get list-entity relation by ID        |
-  | PATCH  | `/list-entity-relations/{id}`  | Update list-entity relation partially |
-  | PUT    | `/list-entity-relations/{id}`  | Replace list-entity relation          |
-  | PATCH  | `/list-entity-relations`       | Update multiple list-entity relations |
-  | GET    | `/list-entity-relations/count` | Get list-entity relation count        |
-  | DELETE | `/list-entity-relations/{id}`  | Delete list-entity relation           |
+  | POST   | `/relations`       | Create new list-entity relation       |
+  | GET    | `/relations`       | List all list-entity relations        |
+  | GET    | `/relations/{id}`  | Get list-entity relation by ID        |
+  | PATCH  | `/relations/{id}`  | Update list-entity relation partially |
+  | PUT    | `/relations/{id}`  | Replace list-entity relation          |
+  | PATCH  | `/relations`       | Update multiple list-entity relations |
+  | GET    | `/relations/count` | Get list-entity relation count        |
+  | DELETE | `/relations/{id}`  | Delete list-entity relation           |
 
   ### EntitiesThroughListController
   | Method | Endpoint               | Description          |
