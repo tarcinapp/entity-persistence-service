@@ -718,11 +718,43 @@ They are useful for quickly retrieving commonly scoped data like public items, a
 | `owners`    | Records where `_ownerUsers` or `_ownerGroups` contain the given user or group IDs. Requires `userIds` and `groupIds`   |
 | `viewers`   | Records where `_viewerUsers` or `_viewerGroups` contain the given user or group IDs. Requires `userIds` and `groupIds` |
 | `audience`  | Combines `actives`, `publics`, and ownership/viewership filters. Requires `userIds` and `groupIds`                     |
-| `day`       | Records created within the last 24 hours                                                                               |
-| `week`      | Records created within the last 7 days                                                                                 |
-| `month`     | Records created within the last 30 days                                                                                |
 | `roots`     | Records where `_parentsCount` is 0 (i.e., not a child of any other record)                                             |
-| `expired30` | Records where `_validUntilDateTime` is more than 30 days in the past                                                   |
+
+
+#### Dynamic Sets
+
+Dynamic sets let you express time-bounded queries with flexible durations. Use the syntax:
+
+```text
+set[<base>-<N><unit>]=true
+```
+
+Where:
+- `<base>` is one of `createds`, `expireds`, `actives`, `pendings`
+- `<N>` is a positive integer
+ - `<unit>` is one of (synonyms accepted):
+   - `min` or `m` — minutes
+   - `d` or `day`   — days
+   - `w`   — weeks
+   - `mon` or `mo` — months
+
+Semantics:
+- `createds-Nunit` — records created within the last N units
+- `expireds-Nunit` — records that expired within the last N units (`_validUntilDateTime` in past and within the window)
+- `actives-Nunit` — records that are currently active and whose `_validFromDateTime` falls within the last N units
+- `pendings-Nunit` — records that are pending now (no validFrom or start is in future) and were created within the last N units
+
+Examples:
+```http
+GET /entities?set[expireds-10min]=true    # expired in the last 10 minutes
+GET /entities?set[expireds-10m]=true      # expired in the last 10 minutes (shortcut unit `m`)
+GET /lists?set[createds-7d]=true          # created within the last 7 days
+GET /lists?set[createds-7day]=true        # created within the last 7 days (synonym `day`)
+GET /entities?set[actives-30d]=true       # became active within the last 30 days
+GET /entities?set[createds-1mon]=true     # created within the last 1 calendar month
+GET /entities?set[createds-1mo]=true      # created within the last 1 calendar month (synonym `mo`)
+GET /entities?set[pendings-2w]=true       # pending and created within the last 2 weeks
+```
 
 #### Usage of Sets
 
@@ -784,7 +816,7 @@ They are useful for quickly retrieving commonly scoped data like public items, a
 - **Retrieve lists created in the last week**
 
   ```http
-  GET /lists?set[week]
+  GET /lists?set[createds-7d]=true
   ```
 
 - **Fetch entities owned by specific users or groups**
