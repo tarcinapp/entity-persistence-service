@@ -1080,26 +1080,112 @@ The system performs a lookup on the `_parents` field and returns the resolved ob
 
 ### Querying the List-Entity-Relation Record
 
+List-Entity-Relation records (model `ListToEntityRelation`) represent the membership of an `Entity` in a `List`. Each relation is a first-class record with at least `_listId` and `_entityId` and can store arbitrary metadata (for example, position, reason, addedAt, or a relation `_kind`).
+
+You can query relations directly via `/relations`, or use "through" endpoints to query one side via the relation (for example, `/lists/{id}/entities` and `/entities/{id}/lists`). The relation query surface exposes two layers of filters:
+
+- relation-level filters: filter the relation documents themselves (fields like `_listId`, `_entityId`, `_kind`, or any custom metadata stored on the relation)
+- connected-resource filters: filter the joined `list` or `entity` documents that the relation refers to
+
+Key parameters and their semantics:
+
+- `filter` (or `where` for non-GET operations) — filter the primary resource returned by the endpoint (e.g., when calling `/lists/{id}/entities` this filters the `Entity` documents)
+- `filterThrough` / `whereThrough` — filter the relation document that connects the resources (applies to through endpoints such as `/lists/{id}/entities`)
+- `listFilter` / `listWhere` / `listSet` — when querying `/relations`, use these to filter properties of the connected `List` documents
+- `entityFilter` / `entityWhere` / `entitySet` — when querying `/relations` or reactions endpoints, use these to filter properties of the connected `Entity` documents
+
+Examples
+
+- Get relations where the connected entity is public:
+
+```http
+GET /relations?entityFilter[where][_visibility]=public
+```
+
+- Get entity reactions that are tied to public entities ("get me reactions of public entities"):
+
+```http
+GET /entity-reactions?entityFilter[where][_visibility]=public
+```
+
+- Combine reaction-level and entity-level conditions (likes on public entities):
+
+```http
+GET /entity-reactions?filter[where][_kind]=like&entityFilter[where][_visibility]=public&filter[limit]=20
+```
+
+- Get entities inside a list but only where the relation record has `_kind=consists`:
+
+```http
+GET /lists/{listId}/entities?filterThrough[where][_kind]=consists
+```
+
+- Update all entities in a list where the relation kind is `consists` and the entity has `status=draft` (PATCH uses `where` / `whereThrough`):
+
+```http
+PATCH /lists/{listId}/entities?where[status]=draft&whereThrough[_kind]=consists
+Body: { "status": "published" }
+```
+
+Notes and tips
+
+- `filterThrough` / `whereThrough` only filter fields present on the relation document (they run before lookups in the aggregation pipeline). To filter by properties of the connected `List` or `Entity`, use `listFilter` / `entityFilter` instead.
+- For `GET` endpoints the controllers accept `filter` and `filterThrough` objects. For bulk update or delete operations the controllers accept `where` and `whereThrough` shorthand variants that behave the same but fit LoopBack's update/delete API patterns.
+- Use `listSet` / `entitySet` or `setThrough` to apply predefined named sets (for example `publics`, `actives`) to connected resources or to the relation itself.
 
 
 ### Using `through` Filters
 
-Query parameters are passed using standard and extended filter syntaxes described below.
+Through endpoints and relation-aware endpoints accept both the standard LoopBack-style `filter`/`where` parameters and a set of extended parameters that allow targeting the relation layer or the connected resource layer explicitly. Below is a concise map of the parameters you will encounter and when to use each one.
 
-where
-  dot notation
-  operators
-filter
-  where
-  include
-  lookup
-filterThrough
-entityFilter
-listFilter
-set
-entitySet
-listSet
-setThrough
+- `filter` (GET) / `where` (PATCH/DELETE): filters applied to the primary resource returned by the endpoint.
+- `filterThrough` (GET) / `whereThrough` (PATCH/DELETE): filters applied to the through/relation record. Use to restrict results by relation metadata (for example relation `_kind`, timestamps on the relation, or custom relation fields).
+- `listFilter`, `listWhere`, `listSet`: apply filters or sets to the connected `List` documents when querying relations or performing counts against relations.
+- `entityFilter`, `entityWhere`, `entitySet`: apply filters or sets to the connected `Entity` documents when querying relations or reactions.
+- `set`, `setThrough`: use predefined named sets (for example `publics`, `actives`, `roots`) to apply common scopes. `setThrough` applies these named sets to relation records; `entitySet`/`listSet` apply to connected resources.
+
+Examples (common patterns):
+
+- Filter by relation metadata (relation-level filter):
+
+```http
+GET /lists/{listId}/entities?filterThrough[where][_kind]=positioned
+```
+
+- Filter by target resource properties (target-level filter):
+
+```http
+GET /lists/{listId}/entities?filter[where][_visibility]=public
+```
+
+- Filter relations by connected list properties (useful when listing relations themselves):
+
+```http
+GET /relations?listFilter[where][_kind]=featured
+```
+
+- Filter reactions by properties of the connected entity (get reactions on public entities):
+
+```http
+GET /entity-reactions?entityFilter[where][_visibility]=public
+```
+
+Encoding nested properties in query strings
+
+When you need to target nested properties prefer the nested-object query form rather than raw dot-notation in the query key. For example, to filter by `metadata.status.current` on an entity prefer:
+
+```http
+GET /entities?filter[where][metadata][status][current]=active
+```
+
+This form is reliably parsed into a nested `where` object by the server. In some endpoints and clients direct dot-notation keys (for example `filter[where][metadata.status.current]`) may not be parsed consistently—see Known Issue #4 for details about limitations when using dot-notation against connected models in relation queries.
+
+Summary (quick cheat-sheet):
+
+- GET /relations — use `filter` for relation fields, `entityFilter` to filter the connected entity, `listFilter` to filter the connected list.
+- GET /lists/{id}/entities — use `filter` to filter the returned entities, `filterThrough` to filter the relation records that connect the list and entities.
+- GET /entities/{id}/lists — same as above with roles swapped.
+
 
 
 
@@ -1302,6 +1388,7 @@ We can divide configurations into 9 categories:
 * [Default visibility configuration](#visibility)
 * [Response limits configurations](#response-limits)
 * [Record limit configurations](#record-limits)
+* [Lookup Configuration](#lookup-configuration)
 * [Idempotency configurations](#idempotency)
 
 ### Database
@@ -1644,6 +1731,64 @@ When a limit is exceeded, the service returns a 429 error with details:
 ```
 
 Where `[type]` is one of: entity, list, relation, entity-reaction, list-reaction.
+
+### Lookup Configuration
+
+You can restrict and validate tapp:// lookup references using environment-driven constraints. The service reads JSON arrays from environment variables and validates referenced records during create/replace operations.
+
+Environment variables (JSON array of constraint objects):
+
+| Environment Variable                          | Applies to | Description |
+| --------------------------------------------- | ---------- | ----------- |
+| `ENTITY_LOOKUP_CONSTRAINT`                    | Entities   | Lookup constraints for entity records. |
+| `LIST_LOOKUP_CONSTRAINT`                      | Lists      | Lookup constraints for list records. |
+| `ENTITY_REACTION_LOOKUP_CONSTRAINT`           | Entity reactions | Lookup constraints for entity-reaction records. |
+| `LIST_REACTION_LOOKUP_CONSTRAINT`             | List reactions   | Lookup constraints for list-reaction records. |
+
+Constraint object shape (examples):
+
+```json
+[
+  {
+    "propertyPath": "_parents",
+    "record": "entity",
+    "targetKind": "category"
+  },
+  {
+    "propertyPath": "metadata.supplier.company",
+    "record": "entity",
+    "sourceKind": "product",
+    "targetKind": "company"
+  }
+]
+```
+
+Keys and semantics:
+- `propertyPath` (string): path to the field on the source record that contains tapp:// references (for example `_parents`, `supplier.company`, or `metadata.references.parent`). Property paths support dot-notation and bracket-notation (e.g. `items[0].supplier`) and are evaluated using lodash.get semantics — nested fields and arrays are handled transparently.
+- `record` (optional): identifies the expected target resource type for the tapp:// references found at `propertyPath`. Valid values: `entity`, `list`, `entity-reaction`, `list-reaction`.
+  - When provided the service validates the reference format (for example `tapp://localhost/entities/{id}` for `entity`) and uses the corresponding repository to fetch referenced records for `targetKind` checks and parent-specific validations.
+  - If omitted, format validation is skipped. If `targetKind` is present but `record` is omitted, the service currently defaults to the `entity` repository for kind checks — therefore it is recommended to always specify `record` when constraining target kinds.
+- `sourceKind` (optional): apply this constraint only when the source record has this `_kind` value.
+- `targetKind` (optional): require the referenced target record to have this `_kind` value. When present the service will resolve referenced records (using the repository chosen by `record`) and verify their `_kind`. If `propertyPath` points to an array of references, every referenced record must satisfy the constraint.
+
+Notes:
+- The service automatically merges a default `_parents` constraint for the relevant record types if the administrator does not provide one.
+- When a constraint targets `_parents` for reaction records the service performs additional checks to ensure the referenced parent reaction matches the expected `_entityId` or `_listId` (depending on whether it is an entity-reaction or list-reaction).
+- Invalid or non-conforming references will result in `422` responses with error names such as `InvalidLookupReferenceError`, `InvalidLookupConstraintError`, or `InvalidParentEntityIdError`. Error codes are prefixed by the affected record type (for example `ENTITY-INVALID-LOOKUP-KIND`).
+- Always prefer to explicitly set `record` when using `targetKind` or when the property path may contain heterogeneous reference types.
+
+Examples:
+- Constrain `_parents` to reference only entities of kind `category`:
+
+```json
+[{"propertyPath":"_parents","record":"entity","targetKind":"category"}]
+```
+
+- Validate nested references stored at `metadata.references.company` that must point to kind `company`:
+
+```json
+[{"propertyPath":"metadata.references.company","record":"entity","targetKind":"company"}]
+```
 
 ### Idempotency
 
