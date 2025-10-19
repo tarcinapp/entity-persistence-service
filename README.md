@@ -1126,67 +1126,97 @@ The lookup mechanism supports different types of references based on the referen
 
 Lookups can be specified in the filter query string using the `lookup` parameter. The structure is similar to Loopback's relation queries:
 
+Basic lookup:
+
 ```http
-// Basic lookup
 GET /entities?filter[lookup][0][prop]=parents
+```
 
-// Lookup with field selection
+Lookup with field selection:
+
+```http
 GET /entities?filter[lookup][0][prop]=parents&filter[lookup][0][scope][fields][name]=true
+```
 
-// Lookup with where conditions
+Lookup with where conditions:
+
+```http
 GET /entities?filter[lookup][0][prop]=parents&filter[lookup][0][scope][where][_kind]=category
+```
 
-// Lookup with sets
+Lookup with sets:
+
+```http
 GET /entities?filter[lookup][0][prop]=parents&filter[lookup][0][set][actives]
+```
 
-// Multiple lookups
+Multiple lookups:
+
+```http
 GET /entities?filter[lookup][0][prop]=parents&filter[lookup][1][prop]=children
+```
 
-// Nested lookups
+Nested lookups:
+
+```http
 GET /entities?filter[lookup][0][prop]=parents.foo.bar
 ```
 
 #### Examples
 
 1. **Basic Entity Lookup**
+
+Get entities with their parent entities resolved:
+
 ```http
-// Get entities with their parent entities resolved
 GET /entities?filter[lookup][0][prop]=parents
 ```
 
 2. **List-Entity Lookup**
+
+Get lists with their entities resolved:
+
 ```http
-// Get lists with their entities resolved
 GET /lists?filter[lookup][0][prop]=entities
 ```
 
 3. **Nested Property Lookup**
-```typescript
-// Get entities with nested references resolved
+
+Get entities with nested references resolved:
+
+```http
 GET /entities?filter[lookup][0][prop]=metadata.references.parent
 ```
 
 4. **Lookup with Field Selection**
-```typescript
-// Get entities with specific fields from their parents
+
+Get entities with specific fields from their parents:
+
+```http
 GET /entities?filter[lookup][0][prop]=parents&filter[lookup][0][scope][fields][name]=true
 ```
 
 5. **Lookup with Conditions**
-```typescript
-// Get entities with active parents only
+
+Get entities with active parents only:
+
+```http
 GET /entities?filter[lookup][0][prop]=parents&filter[lookup][0][set][actives]
 ```
 
 6. **Multiple Lookups**
-```typescript
-// Get entities with both parents and children resolved
+
+Get entities with both parents and children resolved:
+
+```http
 GET /entities?filter[lookup][0][prop]=parents&filter[lookup][1][prop]=children
 ```
 
 7. **List with Entity Lookups**
-```typescript
-// Get lists with their entities and entity parents resolved
+
+Get lists with their entities and entity parents resolved:
+
+```http
 GET /lists?filter[lookup][0][prop]=entities&filter[lookup][0][scope][lookup][0][prop]=parents
 ```
 
@@ -1674,20 +1704,20 @@ All models in the application (entities, lists, relations, and reactions) allow 
 - Built-in fields (those defined in the model schema, like `_id`, `_name`, `_kind`, etc.) are not affected by this behavior.
 
 Example:
-```typescript
-// All models allow arbitrary fields
+
+All models allow arbitrary fields. The following client call requests that `customField` be excluded from the response:
+
+```javascript
 const response = await client.get('/entities').query({
   filter: {
     fields: {
-      customField: false    // Setting any arbitrary field to false...
+      customField: false
     }
   }
 });
-
-// Result: All arbitrary fields (customField, description, and any other custom fields)
-// will be excluded from the response, even if not explicitly mentioned in the filter.
-// All built-in fields defined in the model schema will be returned by default
 ```
+
+Result: All arbitrary fields (customField, description, and any other custom fields) will be excluded from the response, even if not explicitly mentioned in the filter. Built-in fields defined in the model schema will be returned by default.
 
 This is a known limitation in Loopback's implementation of field selection when dealing with models that allow arbitrary fields.
 
