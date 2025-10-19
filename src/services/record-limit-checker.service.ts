@@ -322,6 +322,28 @@ export class RecordLimitCheckerService {
           return; // Skip if record wouldn't be counted in this scope
         }
 
+        // If this looks like an update (has an _id), exclude the record itself
+        // from the counting so updates don't incorrectly trigger the limit.
+        const idToExclude = _.get(newData as any, '_id') ?? _.get(newData as any, 'id');
+        if (idToExclude) {
+          // Ensure we don't mutate original filter objects from callers; clone
+          // only the where clause as that's what we pass to repository.count.
+          const where = filter.where ? _.cloneDeep(filter.where) : undefined;
+          // Merge exclusion into where: if existing where is present, combine
+          // using an 'and' clause to keep semantics.
+          const exclusion = { _id: { neq: idToExclude } };
+          if (!where) {
+            filter.where = exclusion as Where<any>;
+          } else if ((where as any).and) {
+            (where as any).and = Array.isArray((where as any).and)
+              ? [...(where as any).and, exclusion]
+              : [(where as any).and, exclusion];
+            filter.where = where;
+          } else {
+            filter.where = { and: [where, exclusion] } as Where<any>;
+          }
+        }
+
         // Count existing records in scope
         let count: Count;
         if (repository instanceof ListEntityRelationRepository) {
@@ -389,6 +411,25 @@ export class RecordLimitCheckerService {
 
         if (!this.recordMatchesFilter(newData, filter)) {
           return;
+        }
+
+        // If this looks like an update (has an _id), exclude the record itself
+        // from the uniqueness check so updating a record doesn't trigger a
+        // uniqueness violation against itself.
+        const idToExclude = _.get(newData as any, '_id') ?? _.get(newData as any, 'id');
+        if (idToExclude) {
+          const where = filter.where ? _.cloneDeep(filter.where) : undefined;
+          const exclusion = { _id: { neq: idToExclude } };
+          if (!where) {
+            filter.where = exclusion as Where<any>;
+          } else if ((where as any).and) {
+            (where as any).and = Array.isArray((where as any).and)
+              ? [...(where as any).and, exclusion]
+              : [(where as any).and, exclusion];
+            filter.where = where;
+          } else {
+            filter.where = { and: [where, exclusion] } as Where<any>;
+          }
         }
 
         let count: Count;

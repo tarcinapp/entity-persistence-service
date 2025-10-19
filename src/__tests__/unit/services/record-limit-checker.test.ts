@@ -411,5 +411,69 @@ describe('Utilities: RecordLimitChecker', () => {
       // Should only check the matching limit
       expect(checkCount).to.equal(1);
     });
+
+    it('should not throw when updating and only the existing record matches the limit (self-exclusion)', async () => {
+      const limits = [{ scope: 'where[_kind]=book', limit: 10 }];
+
+      process.env.ENTITY_RECORD_LIMITS = JSON.stringify(limits);
+      EnvConfigHelper.reset();
+      service = new RecordLimitCheckerService(
+        mockLoggingService as LoggingService,
+      );
+
+      let capturedWhere: any;
+      mockRepository.count = async (where) => {
+        capturedWhere = where;
+        // Simulate count after excluding the existing record
+        return { count: 9 };
+      };
+
+      await expect(
+        service.checkLimits(
+          GenericEntity,
+          { _id: 'existing-id', _kind: 'book' },
+          mockRepository as DefaultCrudRepository<any, any, any>,
+        ),
+      ).to.not.be.rejected();
+
+      // Ensure exclusion clause was injected
+      expect(capturedWhere).to.not.be.undefined();
+      expect(capturedWhere).to.have.property('and');
+      expect(capturedWhere.and).to.be.Array();
+      // The last clause should be the exclusion on _id
+      const lastClause = capturedWhere.and[capturedWhere.and.length - 1];
+      expect(lastClause).to.deepEqual({ _id: { neq: 'existing-id' } });
+    });
+  });
+
+  describe('uniqueness checking', () => {
+    it('should not flag uniqueness violation when updating the same record (self-exclusion)', async () => {
+      process.env.ENTITY_UNIQUENESS = 'where[_name]=${_name}';
+      EnvConfigHelper.reset();
+      service = new RecordLimitCheckerService(
+        mockLoggingService as LoggingService,
+      );
+
+      let capturedWhere: any;
+      mockRepository.count = async (where) => {
+        capturedWhere = where;
+        // If exclusion was applied, simulate zero matches
+        const hasExclusion = !!(where && (where as any).and && (where as any).and.some((w: any) => w && w._id && w._id.neq === 'existing-id'));
+        return { count: hasExclusion ? 0 : 1 };
+      };
+
+      await expect(
+        service.checkUniqueness(
+          GenericEntity,
+          { _id: 'existing-id', _name: 'duplicate' },
+          mockRepository as DefaultCrudRepository<any, any, any>,
+        ),
+      ).to.not.be.rejected();
+
+      expect(capturedWhere).to.not.be.undefined();
+      expect(capturedWhere).to.have.property('and');
+      const lastClause = capturedWhere.and[capturedWhere.and.length - 1];
+      expect(lastClause).to.deepEqual({ _id: { neq: 'existing-id' } });
+    });
   });
 });
