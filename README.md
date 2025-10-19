@@ -97,7 +97,7 @@
 
 📌 **Entity Persistence Service** is a REST-based backend microservice and a **core component** of the **Tarcinapp** ([What is Tarcinapp?](#what-is-tarcinapp)).
 
-📌 It is built on a simple yet powerful data model composed of **entities**, **lists**, and **reactions**, each represented as JSON documents stored in MongoDB. See [Data Model](#data-model) or take a look at the [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/dev/openapi.json) for more information.
+📌 It is built on a simple yet powerful data model composed of **entities**, **lists**, and **reactions**, each represented as JSON documents stored in MongoDB. See [Data Model](#data-model) or take a look at the [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/main/openapi.json) for more information.
 
 📌 This generic, extensible model allows developers to represent a wide variety of use cases across different domains by reusing and configuring the same foundational components.
 
@@ -198,7 +198,7 @@ Once the application is up and running:
 - If database is not provided, it spins up an in-memory MongoDB instance, for non-production environments
 - Ready to integrate with entity-persistence-gateway
 - Resources created through gateway are kept private to the creator users, and visible only to the creators
-- Ready to create and query resources. See [Endpoints Reference](#endpoints-reference) or take a look at the [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/dev/openapi.json) for more information about the endpoints. 
+- Ready to create and query resources. See [Endpoints Reference](#endpoints-reference) or take a look at the [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/main/openapi.json) for more information about the endpoints. 
 - An empty request to `POST /entities` will create a new entity with following properties:
   <p align="left">
     <img src="./doc/img/request-response.png" alt="Tarcinapp Data Model">
@@ -326,7 +326,7 @@ The Entity is the core data model that represents the primary objects in your ap
 
 
 See [Endpoints Reference - EntityController](#entitycontroller) for overview about the endpoints.  
-See [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/dev/openapi.json#tag/EntityController) for more information about the endpoints.
+See [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/main/openapi.json#tag/EntityController) for more information about the endpoints.
 
 ### List Model
 
@@ -338,7 +338,7 @@ The List model organizes collections of entities into meaningful groups. A singl
 **Children of a list**: `/lists/{listId}/children`
 
 See [Endpoints Reference - ListController](#listcontroller) for overview about the endpoints.  
-See [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/dev/openapi.json#tag/ListController) for more information about the endpoints.
+See [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/main/openapi.json#tag/ListController) for more information about the endpoints.
 
 ### List-Entity Relation Model
 
@@ -357,7 +357,7 @@ Additionally, responses for these queries include `_fromMetadata` and `_toMetada
 **Lists containing an entity:** /entities/{entityId}/lists  
 
 See [Endpoints Reference - ListEntityRelController](#listentityrelcontroller) for overview about the endpoints.  
-See [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/dev/openapi.json#tag/ListEntityRelController) for more information about the endpoints.
+See [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/main/openapi.json#tag/ListEntityRelController) for more information about the endpoints.
 
 ### Reactions Model
 
@@ -385,7 +385,7 @@ Each list reaction:
 **Child reactions**: `/list-reactions/{reactionId}/children`
 
 See [Endpoints Reference - ListReactionController](#listreactioncontroller)  
-See [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/dev/openapi.json#tag/ListReactionController)
+See [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/main/openapi.json#tag/ListReactionController)
 
 #### Entity Reactions
 
@@ -404,7 +404,7 @@ Each entity reaction:
 **Child reactions**: `/entity-reactions/{reactionId}/children`
 
 See [Endpoints Reference - EntityReactionController](#entityreactioncontroller)  
-See [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/dev/openapi.json#tag/EntityReactionController)
+See [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/main/openapi.json#tag/EntityReactionController)
 
 
 ## Role & Responsibilities of the Gateway Component
