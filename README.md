@@ -511,13 +511,13 @@ Since all query string values are interpreted as strings by default, filtering o
 For example, the query below **will not work correctly** if `views` is a numeric field, because `"100"` is a string:
 
 ```http
-?filter[where][views][gt]=100
+GET /entities?filter[where][views][gt]=100
 ```
 
 To ensure correct type conversion, include a type hint alongside the field:
 
 ```http
-?filter[where][views][gt]=100&filter[where][views][type]=number
+GET /entities?filter[where][views][gt]=100&filter[where][views][type]=number
 ```
 
 Supported type hints:
@@ -534,12 +534,12 @@ Equality conditions involving certain literal values behave differently:
 
 - If the right-hand side is the string `true` or `false`, it is **always interpreted as a boolean**.
   ```http
-  ?filter[where][isActive]=true
+  GET /entities?filter[where][isActive]=true
   ```
 
 - If the right-hand side is the string `"null"`, it is **interpreted as an actual `null` value** in filtering.
   ```http
-  ?filter[where][deletedBy]=null
+  GET /entities?filter[where][deletedBy]=null
   ```
 
 These behaviors allow for more natural and predictable querying, especially when checking for presence or absence of values.
@@ -765,14 +765,14 @@ GET /entities?set[pendings-2w]=true       # pending and created within the last 
   Use logical expressions like `and`, `or`, and `not` to compose multiple sets:
   
   ```http
-  ?set[and][0][actives]&set[and][1][publics]
+  GET /entities?set[and][0][actives]&set[and][1][publics]
   ```
 
 - **Mixing Sets with Other Filters**  
   Sets can be combined with standard filter clauses to refine results further:
   
   ```http
-  ?set[actives]&filter[where][_kind]=config
+  GET /entities?set[actives]&filter[where][_kind]=config
   ```
 
 - **Sets Inside Include Filters**  
@@ -780,7 +780,7 @@ GET /entities?set[pendings-2w]=true       # pending and created within the last 
   Example: Include only active and public entities in each list:
   
   ```http
-  ?filter[include][0][relation]=_entities&filter[include][0][set][and][0][actives]&filter[include][0][set][and][1][publics]
+  GET /lists?filter[include][0][relation]=_entities&filter[include][0][set][and][0][actives]&filter[include][0][set][and][1][publics]
   ```
 
 - **Sets with User and Group Context**  
@@ -788,9 +788,9 @@ GET /entities?set[pendings-2w]=true       # pending and created within the last 
   Use the following query parameters to provide those identifiers:
 
   ```http
-  ?set[owners][userIds]=user1,user2&set[owners][groupIds]=group1,group2
-  ?set[viewers][userIds]=user1&set[viewers][groupIds]=group1
-  ?set[audience][userIds]=user1&set[audience][groupIds]=group1
+  GET /entities?set[owners][userIds]=user1,user2&set[owners][groupIds]=group1,group2
+  GET /entities?set[viewers][userIds]=user1&set[viewers][groupIds]=group1
+  GET /entities?set[audience][userIds]=user1&set[audience][groupIds]=group1
   ```
 
   These parameters are used to check whether the caller is listed in the `_ownerUsers`, `_ownerGroups`, `_viewerUsers`, or `_viewerGroups` fields of a record.
@@ -1126,36 +1126,36 @@ The lookup mechanism supports different types of references based on the referen
 
 Lookups can be specified in the filter query string using the `lookup` parameter. The structure is similar to Loopback's relation queries:
 
-```typescript
+```http
 // Basic lookup
-?filter[lookup][0][prop]=parents
+GET /entities?filter[lookup][0][prop]=parents
 
 // Lookup with field selection
-?filter[lookup][0][prop]=parents&filter[lookup][0][scope][fields][name]=true
+GET /entities?filter[lookup][0][prop]=parents&filter[lookup][0][scope][fields][name]=true
 
 // Lookup with where conditions
-?filter[lookup][0][prop]=parents&filter[lookup][0][scope][where][_kind]=category
+GET /entities?filter[lookup][0][prop]=parents&filter[lookup][0][scope][where][_kind]=category
 
 // Lookup with sets
-?filter[lookup][0][prop]=parents&filter[lookup][0][set][actives]
+GET /entities?filter[lookup][0][prop]=parents&filter[lookup][0][set][actives]
 
 // Multiple lookups
-?filter[lookup][0][prop]=parents&filter[lookup][1][prop]=children
+GET /entities?filter[lookup][0][prop]=parents&filter[lookup][1][prop]=children
 
 // Nested lookups
-?filter[lookup][0][prop]=parents.foo.bar
+GET /entities?filter[lookup][0][prop]=parents.foo.bar
 ```
 
 #### Examples
 
 1. **Basic Entity Lookup**
-```typescript
+```http
 // Get entities with their parent entities resolved
 GET /entities?filter[lookup][0][prop]=parents
 ```
 
 2. **List-Entity Lookup**
-```typescript
+```http
 // Get lists with their entities resolved
 GET /lists?filter[lookup][0][prop]=entities
 ```
