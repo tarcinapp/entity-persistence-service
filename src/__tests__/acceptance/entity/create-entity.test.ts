@@ -592,7 +592,7 @@ describe('POST /entities', () => {
       name: 'UnprocessableEntityError',
       message:
         'The request body is invalid. See error object `details` property for more info.',
-      code: 'VALIDATION_FAILED',
+      code: 'VALIDATION-FAILED',
     });
   });
 
@@ -640,6 +640,7 @@ describe('POST /entities', () => {
       details: [
         {
           code: 'ENTITY-LIMIT-EXCEEDED',
+          message: 'Record limit exceeded for entity',
           info: {
             limit: 2,
             scope: '',

@@ -614,7 +614,7 @@ describe('POST /entity-reactions', () => {
     expect(errorResponse.body.error).to.containDeep({
       statusCode: 422,
       name: 'UnprocessableEntityError',
-      code: 'VALIDATION_FAILED',
+      code: 'VALIDATION-FAILED',
     });
   });
 

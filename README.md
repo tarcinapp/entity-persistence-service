@@ -1981,3 +1981,65 @@ When querying list-entity relations, dot notation filtering (e.g., `metadata.sta
   | GET    | `/ping`  | Ping endpoint |
 
   ## Error Codes Reference
+This section documents the common error codes returned by the service. Every error response follows the `HttpErrorResponse` shape with these top-level properties: `statusCode`, `name`, `message`, `code`, `status` and `details` (an array of `SingleError` objects).
+
+Example (uniqueness violation):
+
+```json
+{
+  "statusCode": 409,
+  "name": "UniquenessViolationError",
+  "message": "Entity already exists",
+  "code": "ENTITY-UNIQUENESS-VIOLATION",
+  "status": 409,
+  "details": [{ "code": "ENTITY-UNIQUENESS-VIOLATION", "message": "Entity already exists", "info": { "scope": "where[_name]=example&set[actives]" } }]
+}
+```
+
+Summary of common error categories and representative codes
+
+- Resource Not Found (404)
+  - `ENTITY-NOT-FOUND` — "Entity with id '{id}' could not be found." (Returned when an entity id lookup fails.)
+  - `LIST-NOT-FOUND` — "List with id '{id}' could not be found." (List id lookup fails.)
+  - `RELATION-NOT-FOUND` — Relation record not found.
+  - `ENTITY-REACTION-NOT-FOUND`, `LIST-REACTION-NOT-FOUND` — Reaction record not found.
+
+- Missing or Bad Request (400)
+  - `RELATION-MISSING-IDS` (400) — "Entity id and list id are required." (Sent when creating relations without both ids.)
+
+- Validation & Immutable Fields (422)
+  - `VALIDATION-FAILED` (422) — Generic model validation failure (framework or schema validation). The framework originally emits `VALIDATION_FAILED`; the service normalizes this to `VALIDATION-FAILED`.
+  - `INVALID-ENTITY-KIND`, `INVALID-LIST-KIND`, `INVALID-RELATION-KIND`, `INVALID-ENTITY-REACTION-KIND`, `INVALID-LIST-REACTION-KIND` (422) — Input `_kind` value is not accepted by configuration.
+  - `IMMUTABLE-ENTITY-KIND`, `IMMUTABLE-LIST-KIND`, `IMMUTABLE-RELATION-KIND`, `IMMUTABLE-ENTITY-REACTION-KIND`, `IMMUTABLE-LIST-REACTION-KIND` (422) — Attempt to change an immutable `_kind` after creation. Example message: "Entity kind cannot be changed after creation." Remediation: create a new record with the desired kind.
+  - `IMMUTABLE-ENTITY-ID`, `IMMUTABLE-LIST-ID` (422) — Attempt to change an immutable identifier field. These codes are raised when a caller attempts to change identifying id fields — for example modifying `_entityId` on an existing entity-reaction or `_listId` on an existing list-reaction — or when trying to change a record's `_id`.
+
+- Uniqueness (409)
+  - `<RESOURCE>-UNIQUENESS-VIOLATION` (409) — Pattern used for uniqueness errors. Examples: `ENTITY-UNIQUENESS-VIOLATION`, `LIST-UNIQUENESS-VIOLATION`, `RELATION-UNIQUENESS-VIOLATION`. Message typically: "<Resource> already exists" and `details.info.scope` contains the uniqueness scope.
+
+- Limits (429)
+  - `<RESOURCE>-LIMIT-EXCEEDED` (429) — Pattern used when record limits are hit. Examples: `ENTITY-LIMIT-EXCEEDED`, `LIST-LIMIT-EXCEEDED`, `RELATION-LIMIT-EXCEEDED`, `ENTITYREACTION-LIMIT-EXCEEDED` / `ENTITY-REACTION-LIMIT-EXCEEDED` (variants appear in tests). Message: "Record limit exceeded for [type]". `details.info` contains `limit` and `scope`.
+
+- Lookup & Reference Validation (422)
+  - `<PREFIX>-INVALID-LOOKUP-REFERENCE` (422) — Invalid tapp:// reference format in a constrained property. Example: `ENTITY-INVALID-LOOKUP-REFERENCE` or `ENTITY-REACTION-INVALID-LOOKUP-REFERENCE`. Message example: "Invalid reference format in property 'metadata.supplier'...".
+  - `<PREFIX>-INVALID-LOOKUP-KIND` (422) — Referenced target record(s) do not match the configured `targetKind`. Example: `ENTITY-INVALID-LOOKUP-KIND`.
+  - `<PREFIX>-INVALID-PARENT-ENTITY-ID` / `<PREFIX>-INVALID-PARENT-LIST-ID` (422) — Parent reaction validation failed: parent entry does not belong to the expected entity/list id.
+
+- Relation-specific errors
+  - `RELATION-MISSING-IDS` (400) — Relation creation without both `_entityId` and `_listId`.
+  - `RELATION-UNIQUENESS-VIOLATION` (409) — Duplicate relation detected.
+
+How to read pattern-based codes
+
+- Many codes follow the pattern `<RESOURCE>-<ERROR-TYPE>`. For example:
+  - `ENTITY-...` — errors related to entities
+  - `LIST-...` — errors related to lists
+  - `RELATION-...` — list-entity relation errors
+  - `ENTITY-REACTION-...` and `LIST-REACTION-...` — reaction-specific codes (some tests use concatenated variants like `ENTITYREACTION-...`)
+
+Tips for troubleshooting
+
+- Check `status` / `statusCode` to determine the error class (4xx vs 5xx).
+- Inspect `details[]` (SingleError entries) — they often contain a machine-readable `code` and `info` object with contextual data (for uniqueness and limit errors this includes `scope` and `limit`).
+- For lookup errors, check your tapp:// URIs and any configured lookup constraints (see Lookup Configuration). If `targetKind` is used, confirm that referenced documents have the expected `_kind`.
+
+

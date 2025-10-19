@@ -573,7 +573,7 @@ describe('POST /lists', () => {
       name: 'UnprocessableEntityError',
       message:
         'The request body is invalid. See error object `details` property for more info.',
-      code: 'VALIDATION_FAILED',
+      code: 'VALIDATION-FAILED',
     });
   });
 

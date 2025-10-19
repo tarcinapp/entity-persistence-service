@@ -66,6 +66,15 @@ export class MySequence implements SequenceHandler {
       const logger = await context.get<LoggingService>(
         'services.LoggingService',
       );
+      // Normalize framework validation error code (LoopBack uses VALIDATION_FAILED).
+      // We prefer hyphenated code for consistency with other codes used in this project.
+      try {
+        if (err && err.code === 'VALIDATION_FAILED') {
+          err.code = 'VALIDATION-FAILED';
+        }
+      } catch (_) {
+        // ignore any failure while normalizing error
+      }
       logger.error(
         `Request failed ${request.method} ${request.url} ${response.statusCode}`,
         {
