@@ -133,6 +133,18 @@ export class SetFilterBuilder<T extends object = AnyObject> {
       };
     }
 
+    if (this.set.privates) {
+      return {
+        _visibility: 'private',
+      };
+    }
+
+    if (this.set.protecteds) {
+      return {
+        _visibility: 'protected',
+      };
+    }
+
     return {};
   }
 

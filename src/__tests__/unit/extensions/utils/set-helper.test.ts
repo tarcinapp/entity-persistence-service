@@ -26,6 +26,46 @@ describe('Utilities: SetHelper', () => {
       ).to.be.false();
     });
 
+    it('should build filter for private set', () => {
+      const set: Set = {
+        privates: 'true',
+      };
+      const builder = new SetFilterBuilder(set);
+      const filter = builder.build();
+
+      expect(filter.where).to.deepEqual({
+        _visibility: 'private',
+      });
+
+      // Verify filter matches expected records
+      expect(
+        FilterMatcher.matches({ _visibility: 'private' }, filter.where),
+      ).to.be.true();
+      expect(
+        FilterMatcher.matches({ _visibility: 'public' }, filter.where),
+      ).to.be.false();
+    });
+
+    it('should build filter for protected set', () => {
+      const set: Set = {
+        protecteds: 'true',
+      };
+      const builder = new SetFilterBuilder(set);
+      const filter = builder.build();
+
+      expect(filter.where).to.deepEqual({
+        _visibility: 'protected',
+      });
+
+      // Verify filter matches expected records
+      expect(
+        FilterMatcher.matches({ _visibility: 'protected' }, filter.where),
+      ).to.be.true();
+      expect(
+        FilterMatcher.matches({ _visibility: 'public' }, filter.where),
+      ).to.be.false();
+    });
+
     it('should build filter for active set', () => {
       // Create a mock SetFilterBuilder that returns a predefined filter
       const mockBuilder = {

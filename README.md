@@ -710,6 +710,8 @@ They are useful for quickly retrieving commonly scoped data like public items, a
 | Set Name    | Description                                                                                                            |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `publics`   | Records where `_visibility` is `public`                                                                                |
+| `privates`  | Records where `_visibility` is `private`                                                                               |
+| `protecteds`| Records where `_visibility` is `protected`                                                                             |
 | `actives`   | Records where `_validFromDateTime` is not null and in the past, and `_validUntilDateTime` is null or in the future     |
 | `expired`   | Records where `_validUntilDateTime` is in the past                                                                     |
 | `pendings`  | Records where `_validFromDateTime` is null or in the future                                                            |
@@ -802,6 +804,18 @@ They are useful for quickly retrieving commonly scoped data like public items, a
   ```http
   GET /entities?set[audience][userIds]=user5&set[audience][groupIds]=groupZ
   ```
+
+  - **Fetch private items only**
+
+    ```http
+    GET /entities?set[privates]
+    ```
+
+  - **Fetch protected items only**
+
+    ```http
+    GET /entities?set[protecteds]
+    ```
 
 
 Sets provide a convenient and secure abstraction for filtering data while keeping API requests short and expressive.
@@ -1539,6 +1553,8 @@ Filter expressions use the Loopback query syntax:
 Available sets for filtering:
 - `set[actives]` - Currently active records (based on validity dates)
 - `set[publics]` - Public records
+- `set[privates]` - Private records
+- `set[protecteds]` - Protected records
 - `set[owners]` - Records by owner
 - `set[viewers]` - Records by viewer
 - `set[audience]` - Records by combined owners and viewers

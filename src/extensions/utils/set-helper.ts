@@ -53,6 +53,10 @@ export interface Condition {
   pendings?: string;
   /** Selects all data with public visibility */
   publics?: string;
+  /** Selects all data with private visibility */
+  privates?: string;
+  /** Selects all data with protected visibility */
+  protecteds?: string;
   /** Selects data owned by specific users/groups */
   owners?: UserAndGroupInfo;
   /** Selects data from the last 24 hours */
@@ -270,6 +274,14 @@ class SetToFilterTransformer {
       return this.produceWhereClauseForPublics();
     }
 
+    if (setName === 'privates') {
+      return this.produceWhereClauseForPrivates();
+    }
+
+    if (setName === 'protecteds') {
+      return this.produceWhereClauseForProtecteds();
+    }
+
     if (setName === 'actives') {
       return this.produceWhereClauseForActives();
     }
@@ -422,6 +434,18 @@ class SetToFilterTransformer {
   produceWhereClauseForPublics(): Where<AnyObject> {
     return {
       _visibility: 'public',
+    };
+  }
+
+  produceWhereClauseForPrivates(): Where<AnyObject> {
+    return {
+      _visibility: 'private',
+    };
+  }
+
+  produceWhereClauseForProtecteds(): Where<AnyObject> {
+    return {
+      _visibility: 'protected',
     };
   }
 
