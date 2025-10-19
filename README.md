@@ -713,7 +713,7 @@ They are useful for quickly retrieving commonly scoped data like public items, a
 | `privates`  | Records where `_visibility` is `private`                                                                               |
 | `protecteds`| Records where `_visibility` is `protected`                                                                             |
 | `actives`   | Records where `_validFromDateTime` is not null and in the past, and `_validUntilDateTime` is null or in the future     |
-| `expired`   | Records where `_validUntilDateTime` is in the past                                                                     |
+| `expireds`  | Records where `_validUntilDateTime` is in the past                                                                     |
 | `pendings`  | Records where `_validFromDateTime` is null or in the future                                                            |
 | `owners`    | Records where `_ownerUsers` or `_ownerGroups` contain the given user or group IDs. Requires `userIds` and `groupIds`   |
 | `viewers`   | Records where `_viewerUsers` or `_viewerGroups` contain the given user or group IDs. Requires `userIds` and `groupIds` |
@@ -1552,6 +1552,7 @@ Filter expressions use the Loopback query syntax:
 
 Available sets for filtering:
 - `set[actives]` - Currently active records (based on validity dates)
+- `set[expireds]` - Records where `_validUntilDateTime` is in the past
 - `set[publics]` - Public records
 - `set[privates]` - Private records
 - `set[protecteds]` - Protected records

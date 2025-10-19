@@ -1041,7 +1041,7 @@ describe('GET /list-reactions', () => {
 
     // Get inactive reactions created within the current month that have 'positive' sentiment
     const filterStr =
-      'set[and][0][expired]=true&set[and][1][month]=true&filter[where][sentiment]=positive';
+  'set[and][0][expireds]=true&set[and][1][month]=true&filter[where][sentiment]=positive';
     const response = await client
       .get('/list-reactions')
       .query(filterStr)
@@ -1123,8 +1123,8 @@ describe('GET /list-reactions', () => {
       _validUntilDateTime: null,
     });
 
-    // Get inactive reactions using set[expired]
-    const filterStr = 'set[expired]=true';
+  // Get inactive reactions using set[expireds]
+  const filterStr = 'set[expireds]=true';
     const response = await client
       .get('/list-reactions')
       .query(filterStr)

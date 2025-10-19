@@ -127,6 +127,33 @@ export class SetFilterBuilder<T extends object = AnyObject> {
       };
     }
 
+    if (this.set.expireds) {
+      const now = new Date().toISOString();
+
+      if (this.loggingService) {
+        this.loggingService.debug(
+          `Expireds set filter using current date: ${now}`,
+          {},
+          this.request,
+        );
+      }
+
+      return {
+        and: [
+          {
+            _validUntilDateTime: {
+              neq: null,
+            },
+          },
+          {
+            _validUntilDateTime: {
+              lt: now,
+            },
+          },
+        ],
+      };
+    }
+
     if (this.set.publics) {
       return {
         _visibility: 'public',

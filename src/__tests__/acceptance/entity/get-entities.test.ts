@@ -955,7 +955,7 @@ describe('GET /entities', () => {
 
     // Get inactive entities created within the current month that have 'science' in their description
     const filterStr =
-      'set[and][0][expired]=true&set[and][1][month]=true&filter[where][description]=science';
+  'set[and][0][expireds]=true&set[and][1][month]=true&filter[where][description]=science';
     const response = await client.get('/entities').query(filterStr).expect(200);
 
     expect(response.body).to.be.Array().and.have.length(1);
@@ -1030,8 +1030,8 @@ describe('GET /entities', () => {
       _validUntilDateTime: futureDate.toISOString(),
     });
 
-    // Get inactive entities using set[expired]
-    const filterStr = 'set[expired]=true';
+  // Get inactive entities using set[expireds]
+  const filterStr = 'set[expireds]=true';
     const response = await client.get('/entities').query(filterStr).expect(200);
 
     expect(response.body).to.be.Array().and.have.length(2);
