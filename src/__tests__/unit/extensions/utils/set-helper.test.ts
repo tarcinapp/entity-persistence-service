@@ -170,6 +170,70 @@ describe('Utilities: SetHelper', () => {
       }
     });
 
+    it('should build filter for expireds duration', () => {
+      // Set system time to 2024-01-15T10:00:00.000Z
+      const systemTime = new Date('2024-01-15T10:00:00.000Z').getTime();
+      const clock = sinon.useFakeTimers(systemTime);
+
+      try {
+        const set: Set = {
+          ['expireds-2d']: 'true',
+        };
+        const builder = new SetFilterBuilder(set);
+        const filter = builder.build();
+
+        const nowIso = new Date('2024-01-15T10:00:00.000Z').toISOString();
+        const startIso = new Date(
+          new Date('2024-01-15T10:00:00.000Z').getTime() - 2 * 24 * 60 * 60 * 1000,
+        ).toISOString();
+
+        expect(filter.where).to.deepEqual({
+          and: [
+            { _validUntilDateTime: { neq: null } },
+            { _validUntilDateTime: { between: [startIso, nowIso] } },
+          ],
+        });
+
+        const expiredWithin = { _validUntilDateTime: '2024-01-14T10:00:00.000Z' };
+        const expiredOlder = { _validUntilDateTime: '2024-01-12T09:00:00.000Z' };
+        const notExpired = { _validUntilDateTime: null };
+
+        expect(FilterMatcher.matches(expiredWithin, filter.where)).to.be.true();
+        expect(FilterMatcher.matches(expiredOlder, filter.where)).to.be.false();
+        expect(FilterMatcher.matches(notExpired, filter.where)).to.be.false();
+      } finally {
+        clock.restore();
+      }
+    });
+
+    it('should accept minute shorthand for expireds (expireds-10m)', () => {
+      // Set system time to 2024-01-15T10:00:00.000Z
+      const systemTime = new Date('2024-01-15T10:00:00.000Z').getTime();
+      const clock = sinon.useFakeTimers(systemTime);
+
+      try {
+        const set: Set = {
+          ['expireds-10m']: 'true',
+        };
+        const builder = new SetFilterBuilder(set);
+        const filter = builder.build();
+
+        const nowIso = new Date('2024-01-15T10:00:00.000Z').toISOString();
+        const startIso = new Date(
+          new Date('2024-01-15T10:00:00.000Z').getTime() - 10 * 60 * 1000,
+        ).toISOString();
+
+        expect(filter.where).to.deepEqual({
+          and: [
+            { _validUntilDateTime: { neq: null } },
+            { _validUntilDateTime: { between: [startIso, nowIso] } },
+          ],
+        });
+      } finally {
+        clock.restore();
+      }
+    });
+
     it('should build filter for owners set', () => {
       const set: Set = {
         owners: {
@@ -370,56 +434,54 @@ describe('Utilities: SetHelper', () => {
       ).to.be.false();
     });
 
-    it('should handle day set', () => {
+    it('should handle createds (last N duration) for 1 day', () => {
       // Set system time to 2024-01-14T21:00:00.000Z
       const systemTime = new Date('2024-01-14T21:00:00.000Z').getTime();
       const clock = sinon.useFakeTimers(systemTime);
 
       try {
         const set: Set = {
-          day: 'true',
+          ['createds-1d']: 'true',
         };
         const builder = new SetFilterBuilder(set);
         const filter = builder.build();
 
         expect(filter.where).to.deepEqual({
           _creationDateTime: {
-            between: ['2024-01-14T00:00:00.000Z', '2024-01-14T21:00:00.000Z'],
+            between: ['2024-01-13T21:00:00.000Z', '2024-01-14T21:00:00.000Z'],
           },
         });
 
-        // Test with records
+        // Test with records: within last 24 hours, and outside window
         const justCreated = { _creationDateTime: '2024-01-14T21:00:00.000Z' };
         const createdToday = { _creationDateTime: '2024-01-14T02:00:00.000Z' };
         const createdYesterday = {
-          _creationDateTime: '2024-01-13T21:00:00.000Z',
+          _creationDateTime: '2024-01-13T20:00:00.000Z',
         };
 
         expect(FilterMatcher.matches(justCreated, filter.where)).to.be.true();
         expect(FilterMatcher.matches(createdToday, filter.where)).to.be.true();
-        expect(
-          FilterMatcher.matches(createdYesterday, filter.where),
-        ).to.be.false();
+        expect(FilterMatcher.matches(createdYesterday, filter.where)).to.be.false();
       } finally {
         clock.restore();
       }
     });
 
-    it('should handle week set', () => {
+    it('should handle createds (last N duration) for 7 days (week)', () => {
       // Set system time to 2024-01-17T21:00:00.000Z (Wednesday)
       const systemTime = new Date('2024-01-17T21:00:00.000Z').getTime();
       const clock = sinon.useFakeTimers(systemTime);
 
       try {
         const set: Set = {
-          week: 'true',
+          ['createds-7d']: 'true',
         };
         const builder = new SetFilterBuilder(set);
         const filter = builder.build();
 
         expect(filter.where).to.deepEqual({
           _creationDateTime: {
-            between: ['2024-01-14T00:00:00.000Z', '2024-01-17T21:00:00.000Z'],
+            between: ['2024-01-10T21:00:00.000Z', '2024-01-17T21:00:00.000Z'],
           },
         });
 
@@ -429,36 +491,32 @@ describe('Utilities: SetHelper', () => {
           _creationDateTime: '2024-01-15T10:00:00.000Z',
         };
         const createdLastWeek = {
-          _creationDateTime: '2024-01-13T21:00:00.000Z',
+          _creationDateTime: '2024-01-09T21:00:00.000Z',
         };
 
         expect(FilterMatcher.matches(justCreated, filter.where)).to.be.true();
-        expect(
-          FilterMatcher.matches(createdThisWeek, filter.where),
-        ).to.be.true();
-        expect(
-          FilterMatcher.matches(createdLastWeek, filter.where),
-        ).to.be.false();
+        expect(FilterMatcher.matches(createdThisWeek, filter.where)).to.be.true();
+        expect(FilterMatcher.matches(createdLastWeek, filter.where)).to.be.false();
       } finally {
         clock.restore();
       }
     });
 
-    it('should handle month set', () => {
+    it('should handle createds (last N duration) for 30 days (month)', () => {
       // Set system time to 2024-01-15T21:00:00.000Z
       const systemTime = new Date('2024-01-15T21:00:00.000Z').getTime();
       const clock = sinon.useFakeTimers(systemTime);
 
       try {
         const set: Set = {
-          month: 'true',
+          ['createds-30d']: 'true',
         };
         const builder = new SetFilterBuilder(set);
         const filter = builder.build();
 
         expect(filter.where).to.deepEqual({
           _creationDateTime: {
-            between: ['2024-01-01T00:00:00.000Z', '2024-01-15T21:00:00.000Z'],
+            between: ['2023-12-16T21:00:00.000Z', '2024-01-15T21:00:00.000Z'],
           },
         });
 
@@ -468,16 +526,83 @@ describe('Utilities: SetHelper', () => {
           _creationDateTime: '2024-01-02T10:00:00.000Z',
         };
         const createdLastMonth = {
-          _creationDateTime: '2023-12-31T23:59:59.999Z',
+          _creationDateTime: '2023-12-15T21:00:00.000Z',
         };
 
         expect(FilterMatcher.matches(justCreated, filter.where)).to.be.true();
-        expect(
-          FilterMatcher.matches(createdThisMonth, filter.where),
-        ).to.be.true();
-        expect(
-          FilterMatcher.matches(createdLastMonth, filter.where),
-        ).to.be.false();
+        expect(FilterMatcher.matches(createdThisMonth, filter.where)).to.be.true();
+        expect(FilterMatcher.matches(createdLastMonth, filter.where)).to.be.false();
+      } finally {
+        clock.restore();
+      }
+    });
+
+    it('should accept day synonym for createds (createds-1day)', () => {
+      // Use the same system time as the 1d test
+      const systemTime = new Date('2024-01-14T21:00:00.000Z').getTime();
+      const clock = sinon.useFakeTimers(systemTime);
+
+      try {
+        const set: Set = {
+          ['createds-1day']: 'true',
+        };
+        const builder = new SetFilterBuilder(set);
+        const filter = builder.build();
+
+        expect(filter.where).to.deepEqual({
+          _creationDateTime: {
+            between: ['2024-01-13T21:00:00.000Z', '2024-01-14T21:00:00.000Z'],
+          },
+        });
+      } finally {
+        clock.restore();
+      }
+    });
+
+    it('should accept minute shorthand for createds (createds-10m)', () => {
+      const systemTime = new Date('2024-01-15T10:00:00.000Z').getTime();
+      const clock = sinon.useFakeTimers(systemTime);
+
+      try {
+        const set: Set = {
+          ['createds-10m']: 'true',
+        };
+        const builder = new SetFilterBuilder(set);
+        const filter = builder.build();
+
+        const nowIso = new Date('2024-01-15T10:00:00.000Z').toISOString();
+        const startIso = new Date(
+          new Date('2024-01-15T10:00:00.000Z').getTime() - 10 * 60 * 1000,
+        ).toISOString();
+
+        expect(filter.where).to.deepEqual({
+          _creationDateTime: {
+            between: [startIso, nowIso],
+          },
+        });
+      } finally {
+        clock.restore();
+      }
+    });
+
+    it('should accept month shorthand for createds (createds-1mo)', () => {
+      // Use a date that makes month subtraction straightforward
+      const systemTime = new Date('2024-03-15T21:00:00.000Z').getTime();
+      const clock = sinon.useFakeTimers(systemTime);
+
+      try {
+        const set: Set = {
+          ['createds-1mo']: 'true',
+        };
+        const builder = new SetFilterBuilder(set);
+        const filter = builder.build();
+
+        // Subtracting 1 calendar month from 2024-03-15T21:00:00Z gives 2024-02-15T21:00:00Z
+        expect(filter.where).to.deepEqual({
+          _creationDateTime: {
+            between: ['2024-02-15T21:00:00.000Z', '2024-03-15T21:00:00.000Z'],
+          },
+        });
       } finally {
         clock.restore();
       }

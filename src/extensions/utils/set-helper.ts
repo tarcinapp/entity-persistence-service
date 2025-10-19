@@ -59,20 +59,14 @@ export interface Condition {
   protecteds?: string;
   /** Selects data owned by specific users/groups */
   owners?: UserAndGroupInfo;
-  /** Selects data from the last 24 hours */
-  day?: string;
-  /** Selects data from the last 7 days */
-  week?: string;
-  /** Selects data from the last 30 days */
-  month?: string;
+  /** (removed) day/week/month: use dynamic duration sets instead (e.g. createds-7d) */
   /** Combines active & public records with user's own active/pending records */
   audience?: UserAndGroupInfo;
   /** Selects data viewable by specific users/groups */
   viewers?: UserAndGroupInfo;
   /** Selects root-level records (records with no parents) */
   roots?: string;
-  /** Selects records that expired within the last 30 days */
-  expired30?: string;
+  // expired30 removed in favor of dynamic-duration sets (e.g. expireds-30d)
 }
 
 /**
@@ -109,7 +103,9 @@ export interface OrClause {
  * 2. Logical combinations: ?set[and][0][actives]&set[and][1][publics]
  * 3. Owner/viewer filters: ?set[owners][userIds]=user1,user2
  */
-export interface Set extends Condition, AndClause, OrClause {}
+export interface Set extends Condition, AndClause, OrClause {
+  [key: string]: any;
+}
 
 /**
  * This interface is created to be used as a parameter of the constructor of the
@@ -136,6 +132,8 @@ export class SetFilterBuilder<T extends object = AnyObject> {
   ) {
     this.setTransformer = new SetToFilterTransformer();
   }
+
+  // computeStartDate moved to SetToFilterTransformer (used by dynamic-duration sets)
 
   build(): Filter<T> {
     const keys = _.keys(this.set);
@@ -270,63 +268,82 @@ class SetToFilterTransformer {
     setName: string,
     setValue?: string | UserAndGroupInfo,
   ): Where<AnyObject> {
-    if (setName === 'publics') {
-      return this.produceWhereClauseForPublics();
+    const normalized = (setName || '').toLowerCase();
+
+    // support dynamic duration sets like:
+    //   createds-10min, expireds-30d, actives-7d, pendings-2w
+    // units supported (with synonyms): min|m (minutes), d|day (days), w (weeks), mon|mo (months)
+    const durationRegex = /^(createds|actives|pendings|expireds)-(\d+)(min|m|d|day|w|mon|mo)$/i;
+    const dynamicMatch = normalized.match(durationRegex);
+
+    if (dynamicMatch) {
+      const base = dynamicMatch[1].toLowerCase();
+      const amount = parseInt(dynamicMatch[2], 10);
+      let unit = dynamicMatch[3].toLowerCase();
+
+      // Normalize unit synonyms to canonical units used by computeStartDate
+      if (unit === 'm') {
+        unit = 'min';
+      }
+
+      if (unit === 'day') {
+        unit = 'd';
+      }
+
+      if (unit === 'mo') {
+        unit = 'mon';
+      }
+
+      if (!Number.isFinite(amount) || amount <= 0) {
+        return {};
+      }
+
+      // Delegate each dynamic base to its dedicated helper
+      switch (base) {
+        case 'createds':
+          return this.produceWhereClauseForCreatedsDuration(amount, unit);
+        case 'expireds':
+          return this.produceWhereClauseForExpiredsDuration(amount, unit);
+        case 'actives':
+          return this.produceWhereClauseForActivesDuration(amount, unit);
+        case 'pendings':
+          return this.produceWhereClauseForPendingsDuration(amount, unit);
+        default:
+          return {};
+      }
     }
 
-    if (setName === 'privates') {
-      return this.produceWhereClauseForPrivates();
+    // Use a single switch for all static set names for consistency
+    switch (normalized) {
+      case 'publics':
+        return this.produceWhereClauseForPublics();
+      case 'privates':
+        return this.produceWhereClauseForPrivates();
+      case 'protecteds':
+        return this.produceWhereClauseForProtecteds();
+      case 'actives':
+        return this.produceWhereClauseForActives();
+      case 'expireds':
+        return this.produceWhereClauseForExpireds();
+      case 'pendings':
+        return this.produceWhereClauseForPendings();
+      case 'owners':
+        return _.isObject(setValue)
+          ? this.produceWhereClauseForOwners(setValue as UserAndGroupInfo)
+          : {};
+      case 'viewers':
+        return _.isObject(setValue)
+          ? this.produceWhereClauseForViewers(setValue as UserAndGroupInfo)
+          : {};
+      case 'audience':
+        return _.isObject(setValue)
+          ? this.produceWhereClauseForAudience(setValue as UserAndGroupInfo)
+          : {};
+      case 'roots':
+        return this.produceWhereClauseForRoots();
+      default:
+        return {};
     }
-
-    if (setName === 'protecteds') {
-      return this.produceWhereClauseForProtecteds();
-    }
-
-    if (setName === 'actives') {
-      return this.produceWhereClauseForActives();
-    }
-
-    if (setName === 'expireds') {
-      return this.produceWhereClauseForExpireds();
-    }
-
-    if (setName === 'pendings') {
-      return this.produceWhereClauseForPendings();
-    }
-
-    if (setName === 'owners' && _.isObject(setValue)) {
-      return this.produceWhereClauseForOwners(setValue);
-    }
-
-    if (setName === 'viewers' && _.isObject(setValue)) {
-      return this.produceWhereClauseForViewers(setValue);
-    }
-
-    if (setName === 'day') {
-      return this.produceWhereClauseForDay();
-    }
-
-    if (setName === 'week') {
-      return this.produceWhereClauseForWeek();
-    }
-
-    if (setName === 'month') {
-      return this.produceWhereClauseForMonth();
-    }
-
-    if (setName === 'audience' && _.isObject(setValue)) {
-      return this.produceWhereClauseForAudience(setValue);
-    }
-
-    if (setName === 'roots') {
-      return this.produceWhereClauseForRoots();
-    }
-
-    if (setName === 'expired30') {
-      return this.produceWhereClauseForExpired30();
-    }
-
-    return {};
   }
 
   produceWhereClauseForAudience(setValue: UserAndGroupInfo): Where<AnyObject> {
@@ -427,6 +444,79 @@ class SetToFilterTransformer {
             gt: nowISOString,
           },
         },
+      ],
+    };
+  }
+
+  // Dynamic-duration helpers (one per dynamic base)
+  private produceWhereClauseForCreatedsDuration(
+    amount: number,
+    unit: string,
+  ): Where<AnyObject> {
+    const now = new Date();
+    const start = this.computeStartDate(now, amount, unit);
+
+    return {
+      _creationDateTime: {
+        between: [start.toISOString(), now.toISOString()],
+      },
+    };
+  }
+
+  private produceWhereClauseForExpiredsDuration(
+    amount: number,
+    unit: string,
+  ): Where<AnyObject> {
+    const now = new Date();
+    const start = this.computeStartDate(now, amount, unit);
+
+    return {
+      and: [
+        { _validUntilDateTime: { neq: null } },
+        { _validUntilDateTime: { between: [start.toISOString(), now.toISOString()] } },
+      ],
+    };
+  }
+
+  private produceWhereClauseForActivesDuration(
+    amount: number,
+    unit: string,
+  ): Where<AnyObject> {
+    const now = new Date();
+    const nowIso = now.toISOString();
+    const start = this.computeStartDate(now, amount, unit);
+
+    return {
+      and: [
+        {
+          or: [
+            { _validUntilDateTime: null },
+            { _validUntilDateTime: { gt: nowIso } },
+          ],
+        },
+        { _validFromDateTime: { neq: null } },
+        { _validFromDateTime: { between: [start.toISOString(), nowIso] } },
+      ],
+    };
+  }
+
+  private produceWhereClauseForPendingsDuration(
+    amount: number,
+    unit: string,
+  ): Where<AnyObject> {
+    const now = new Date();
+    const nowIso = now.toISOString();
+    const start = this.computeStartDate(now, amount, unit);
+
+    return {
+      and: [
+        {
+          or: [
+            { _validFromDateTime: null },
+            { _validFromDateTime: { gt: nowIso } },
+          ],
+        },
+        { _creationDateTime: { between: [start.toISOString(), nowIso] } },
       ],
     };
   }
@@ -565,55 +655,7 @@ class SetToFilterTransformer {
     return filter;
   }
 
-  produceWhereClauseForDay(): Where<AnyObject> {
-    const now = new Date();
-    // Create start of day by using UTC methods to avoid timezone issues
-    const startOfDay = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-    );
-
-    return {
-      _creationDateTime: {
-        between: [startOfDay.toISOString(), now.toISOString()],
-      },
-    };
-  }
-
-  produceWhereClauseForWeek(): Where<AnyObject> {
-    const now = new Date();
-    // Create start of week using UTC methods
-    const startOfWeek = new Date(
-      Date.UTC(
-        now.getUTCFullYear(),
-        now.getUTCMonth(),
-        now.getUTCDate() - now.getUTCDay(), // Subtract days to get to Sunday
-      ),
-    );
-
-    return {
-      _creationDateTime: {
-        between: [startOfWeek.toISOString(), now.toISOString()],
-      },
-    };
-  }
-
-  produceWhereClauseForMonth(): Where<AnyObject> {
-    const now = new Date();
-    // Create start of month using UTC methods
-    const startOfMonth = new Date(
-      Date.UTC(
-        now.getUTCFullYear(),
-        now.getUTCMonth(),
-        1, // First day of the month
-      ),
-    );
-
-    return {
-      _creationDateTime: {
-        between: [startOfMonth.toISOString(), now.toISOString()],
-      },
-    };
-  }
+  // static day/week/month helpers were removed in favor of dynamic duration-based sets
 
   private prepareOwnerUsersClause(users: string[]): Where<AnyObject> {
     const ownerUsersClause: LbOrClause<AnyObject> = {
@@ -697,23 +739,29 @@ class SetToFilterTransformer {
     };
   }
 
-  produceWhereClauseForExpired30(): Where<AnyObject> {
-    const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  // expired30 helper removed. Use dynamic-duration sets such as expireds-30d instead.
 
-    return {
-      and: [
-        {
-          _validUntilDateTime: {
-            neq: null,
-          },
-        },
-        {
-          _validUntilDateTime: {
-            lt: thirtyDaysAgo.toISOString(),
-          },
-        },
-      ],
-    };
+  /**
+   * Compute start date by subtracting the given duration from `now`.
+   * Supported units (canonical): `min` (minutes), `d` (days), `w` (weeks), `mon` (months).
+   * Synonyms accepted by the parser: `m` => `min`, `day` => `d`, `mo` => `mon`.
+   */
+  private computeStartDate(now: Date, amount: number, unit: string): Date {
+    switch (unit) {
+      case 'min':
+        return new Date(now.getTime() - amount * 60 * 1000);
+      case 'd':
+        return new Date(now.getTime() - amount * 24 * 60 * 60 * 1000);
+      case 'w':
+        return new Date(now.getTime() - amount * 7 * 24 * 60 * 60 * 1000);
+      case 'mon': {
+        const start = new Date(now.getTime());
+        start.setUTCMonth(start.getUTCMonth() - amount);
+        return start;
+      }
+      default:
+        // fallback to days
+        return new Date(now.getTime() - amount * 24 * 60 * 60 * 1000);
+    }
   }
 }

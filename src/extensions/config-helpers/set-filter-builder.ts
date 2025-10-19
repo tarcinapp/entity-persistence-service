@@ -4,7 +4,7 @@ import { AnyObject } from '@loopback/repository/dist/common-types';
 import { RestBindings } from '@loopback/rest';
 import _ from 'lodash';
 import { LoggingService } from '../../services/logging.service';
-import { Set } from '../utils/set-helper';
+import { Set, SetFilterBuilder as UtilsSetFilterBuilder } from '../utils/set-helper';
 
 export class SetFilterBuilder<T extends object = AnyObject> {
   constructor(
@@ -62,9 +62,10 @@ export class SetFilterBuilder<T extends object = AnyObject> {
   }
 
   private buildWhere(): Where<AnyObject> {
+    // Handle logical combinators first
     if (this.set.and) {
       const andConditions = this.set.and.map((andSet) => {
-        const builder = new SetFilterBuilder<AnyObject>(andSet);
+        const builder = new UtilsSetFilterBuilder<AnyObject>(andSet);
 
         return builder.build().where;
       });
@@ -76,7 +77,7 @@ export class SetFilterBuilder<T extends object = AnyObject> {
 
     if (this.set.or) {
       const orConditions = this.set.or.map((orSet) => {
-        const builder = new SetFilterBuilder<AnyObject>(orSet);
+        const builder = new UtilsSetFilterBuilder<AnyObject>(orSet);
 
         return builder.build().where;
       });
@@ -86,93 +87,9 @@ export class SetFilterBuilder<T extends object = AnyObject> {
       };
     }
 
-    if (this.set.actives) {
-      // For 'actives' set, we're checking for active date-based records
-      const now = new Date().toISOString();
-
-      // Log the current date timestamp used for comparison
-      if (this.loggingService) {
-        this.loggingService.debug(
-          `Actives set filter using current date: ${now} (timestamp: ${new Date().getTime()})`,
-          {},
-          this.request,
-        );
-      }
-
-      return {
-        and: [
-          {
-            or: [
-              {
-                _validUntilDateTime: null,
-              },
-              {
-                _validUntilDateTime: {
-                  gt: now,
-                },
-              },
-            ],
-          },
-          {
-            _validFromDateTime: {
-              neq: null,
-            },
-          },
-          {
-            _validFromDateTime: {
-              lt: now,
-            },
-          },
-        ],
-      };
-    }
-
-    if (this.set.expireds) {
-      const now = new Date().toISOString();
-
-      if (this.loggingService) {
-        this.loggingService.debug(
-          `Expireds set filter using current date: ${now}`,
-          {},
-          this.request,
-        );
-      }
-
-      return {
-        and: [
-          {
-            _validUntilDateTime: {
-              neq: null,
-            },
-          },
-          {
-            _validUntilDateTime: {
-              lt: now,
-            },
-          },
-        ],
-      };
-    }
-
-    if (this.set.publics) {
-      return {
-        _visibility: 'public',
-      };
-    }
-
-    if (this.set.privates) {
-      return {
-        _visibility: 'private',
-      };
-    }
-
-    if (this.set.protecteds) {
-      return {
-        _visibility: 'protected',
-      };
-    }
-
-    return {};
+    // Delegate other single-key sets (including dynamic-duration sets)
+    const utilBuilder = new UtilsSetFilterBuilder<AnyObject>(this.set as AnyObject);
+    return utilBuilder.build().where as Where<AnyObject>;
   }
 
   private mergeWhere(whereA?: Where<T>, whereB?: Where<T>): Where<T> {
