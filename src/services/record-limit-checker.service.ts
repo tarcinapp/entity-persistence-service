@@ -20,6 +20,7 @@ import { ListEntityRelationRepository } from '../repositories/list-entity-relati
 export interface RecordLimit {
   scope: string;
   limit: number;
+  duration?: string;
 }
 
 export interface RecordLimitConfig {
@@ -79,6 +80,70 @@ export class RecordLimitCheckerService {
   }
 
   /**
+   * Parse duration string like '10m', '5min', '2h', '7d', '1M', '3mo' etc and
+   * compute the Date that is (now - duration).
+   * Returns undefined if parsing fails.
+   */
+  private parseDurationToDate(duration: string): Date | undefined {
+    if (!duration || typeof duration !== 'string') return undefined;
+
+    const trimmed = duration.trim();
+    const match = trimmed.match(/^(\d+)\s*([A-Za-z]+)$/);
+    if (!match) return undefined;
+
+    const amount = Number(match[1]);
+    let unit = match[2];
+
+    if (!Number.isFinite(amount) || amount <= 0) return undefined;
+
+    // Disambiguate single-letter 'm' (minute) vs uppercase 'M' (month)
+    // Normalize unit tokens mostly by lowercasing, but preserve 'M' -> month
+    if (unit === 'M') {
+      unit = 'mon';
+    } else {
+      unit = unit.toLowerCase();
+    }
+
+    const now = new Date();
+
+    // Map synonyms to canonical units
+    const secondsUnits = new Set(['s', 'sec', 'secs', 'second', 'seconds']);
+    const minutesUnits = new Set(['m', 'min', 'mins', 'minute', 'minutes']);
+    const hoursUnits = new Set(['h', 'hour', 'hours']);
+    const daysUnits = new Set(['d', 'day', 'days']);
+    const weeksUnits = new Set(['w', 'week', 'weeks']);
+    const monthsUnits = new Set(['mo', 'mon', 'month', 'months']);
+
+    if (secondsUnits.has(unit)) {
+      return new Date(now.getTime() - amount * 1000);
+    }
+
+    if (minutesUnits.has(unit)) {
+      return new Date(now.getTime() - amount * 60 * 1000);
+    }
+
+    if (hoursUnits.has(unit)) {
+      return new Date(now.getTime() - amount * 60 * 60 * 1000);
+    }
+
+    if (daysUnits.has(unit)) {
+      return new Date(now.getTime() - amount * 24 * 60 * 60 * 1000);
+    }
+
+    if (weeksUnits.has(unit)) {
+      return new Date(now.getTime() - amount * 7 * 24 * 60 * 60 * 1000);
+    }
+
+    if (monthsUnits.has(unit)) {
+      const start = new Date(now.getTime());
+      start.setUTCMonth(start.getUTCMonth() - amount);
+      return start;
+    }
+
+    return undefined;
+  }
+
+  /**
    * Initialize configuration by parsing environment variables
    */
   private initializeConfig(): void {
@@ -88,19 +153,39 @@ export class RecordLimitCheckerService {
       const env = EnvConfigHelper.getInstance();
       // Parse record limits
       if (env.ENTITY_RECORD_LIMITS) {
-        this.config.entityLimits = JSON.parse(env.ENTITY_RECORD_LIMITS);
+        const parsed = JSON.parse(env.ENTITY_RECORD_LIMITS);
+        this.config.entityLimits = this.sanitizeLimitsArray(
+          parsed,
+          'ENTITY_RECORD_LIMITS',
+        );
       }
       if (env.LIST_RECORD_LIMITS) {
-        this.config.listLimits = JSON.parse(env.LIST_RECORD_LIMITS);
+        const parsed = JSON.parse(env.LIST_RECORD_LIMITS);
+        this.config.listLimits = this.sanitizeLimitsArray(
+          parsed,
+          'LIST_RECORD_LIMITS',
+        );
       }
       if (env.RELATION_RECORD_LIMITS) {
-        this.config.relationLimits = JSON.parse(env.RELATION_RECORD_LIMITS);
+        const parsed = JSON.parse(env.RELATION_RECORD_LIMITS);
+        this.config.relationLimits = this.sanitizeLimitsArray(
+          parsed,
+          'RELATION_RECORD_LIMITS',
+        );
       }
       if (env.ENTITY_REACTION_RECORD_LIMITS) {
-        this.config.entityReactionLimits = JSON.parse(env.ENTITY_REACTION_RECORD_LIMITS);
+        const parsed = JSON.parse(env.ENTITY_REACTION_RECORD_LIMITS);
+        this.config.entityReactionLimits = this.sanitizeLimitsArray(
+          parsed,
+          'ENTITY_REACTION_RECORD_LIMITS',
+        );
       }
       if (env.LIST_REACTION_RECORD_LIMITS) {
-        this.config.listReactionLimits = JSON.parse(env.LIST_REACTION_RECORD_LIMITS);
+        const parsed = JSON.parse(env.LIST_REACTION_RECORD_LIMITS);
+        this.config.listReactionLimits = this.sanitizeLimitsArray(
+          parsed,
+          'LIST_REACTION_RECORD_LIMITS',
+        );
       }
 
       // Parse uniqueness scopes
@@ -130,6 +215,62 @@ export class RecordLimitCheckerService {
       this.loggingService.error('Failed to parse configuration:', error);
       throw new Error('Invalid configuration');
     }
+  }
+
+  /**
+   * Validate and sanitize an array of record limit objects parsed from env.
+   * Invalid duration strings are removed (with warning) but the limit entry
+   * itself is preserved when possible so existing limits don't get dropped
+   * inadvertently.
+   */
+  private sanitizeLimitsArray(
+    parsed: any,
+    envKeyName: string,
+  ): RecordLimit[] | undefined {
+    if (!Array.isArray(parsed)) {
+      this.loggingService.warn(
+        `Invalid ${envKeyName} value: expected JSON array, got ${typeof parsed}`,
+      );
+      return undefined;
+    }
+
+    const out: RecordLimit[] = [];
+    for (const item of parsed) {
+      if (!item || typeof item.scope !== 'string') {
+        this.loggingService.warn(
+          `Skipping invalid record limit entry in ${envKeyName}: missing or invalid scope`,
+        );
+        continue;
+      }
+
+      if (item.limit === undefined || !Number.isFinite(item.limit)) {
+        this.loggingService.warn(
+          `Skipping invalid record limit entry in ${envKeyName} for scope '${item.scope}': missing or invalid limit`,
+        );
+        continue;
+      }
+
+      // If a duration is provided, validate it now and warn if it's invalid.
+      if (item.duration && typeof item.duration === 'string') {
+        const start = this.parseDurationToDate(item.duration);
+        if (!start) {
+          this.loggingService.warn(
+            `Invalid duration '${item.duration}' for record limit scope '${item.scope}' in ${envKeyName}; ignoring duration.`,
+          );
+          // Remove the duration property so downstream logic behaves as before
+          // without causing a crash.
+          delete item.duration;
+        }
+      }
+
+      out.push({
+        scope: item.scope,
+        limit: Number(item.limit),
+        duration: item.duration,
+      });
+    }
+
+    return out.length > 0 ? out : undefined;
   }
 
   /**
@@ -309,7 +450,7 @@ export class RecordLimitCheckerService {
 
     // Process all limits in parallel
     await Promise.all(
-      limits.map(async ({ scope, limit }) => {
+      limits.map(async ({ scope, limit, duration }) => {
         // Interpolate values from newData into scope
         const interpolatedScope = this.interpolateScope(scope, newData);
 
@@ -320,6 +461,53 @@ export class RecordLimitCheckerService {
         // Check if new record would match this filter
         if (!this.recordMatchesFilter(newData, filter)) {
           return; // Skip if record wouldn't be counted in this scope
+        }
+        // If a duration is specified for this limit, restrict the counting to
+        // records created after (now - duration). This implements the
+        // "created data in duration" semantics.
+        // Note: the config array items are iterated already so `duration` is
+        // already available for the current item.
+        let startDate: Date | undefined;
+        if (duration) {
+          startDate = this.parseDurationToDate(duration);
+
+          if (startDate) {
+            // If the incoming data already has a _createdDateTime and it is
+            // outside the requested duration window (i.e. older or equal to
+            // the start), it cannot contribute to the duration-bounded
+            // count — skip counting for this limit.
+            const incomingCreated = _.get(newData as any, '_createdDateTime');
+
+            if (incomingCreated) {
+              const incomingCreatedDate = new Date(incomingCreated);
+
+              if (
+                !Number.isNaN(incomingCreatedDate.getTime()) &&
+                incomingCreatedDate.getTime() <= startDate.getTime()
+              ) {
+                // Skip this limit since the new record is outside the duration
+                return;
+              }
+            }
+            // Restrict by created date using the canonical field name.
+            const creationCond = { _createdDateTime: { gt: startDate.toISOString() } } as Where<any>;
+            const where = filter.where ? _.cloneDeep(filter.where) : undefined;
+            
+            if (!where) {
+              filter.where = creationCond as Where<any>;
+            } else if ((where as any).and) {
+              (where as any).and = Array.isArray((where as any).and)
+                ? [...(where as any).and, creationCond]
+                : [(where as any).and, creationCond];
+              filter.where = where;
+            } else {
+              filter.where = { and: [where, creationCond] } as Where<any>;
+            }
+          } else {
+            this.loggingService.warn(
+              `Invalid duration '${duration}' for record limit scope '${scope}', ignoring duration.`,
+            );
+          }
         }
 
         // If this looks like an update (has an _id), exclude the record itself
@@ -346,6 +534,15 @@ export class RecordLimitCheckerService {
 
         // Count existing records in scope
         let count: Count;
+        // Debug: log the exact filter/scope that will be used for counting
+        this.loggingService.debug('RecordLimitCheckerService.count - about to count records', {
+          model: modelClass.modelName,
+          limit,
+          scope: interpolatedScope,
+          duration,
+          startDate: startDate ? startDate.toISOString() : undefined,
+          filterWhere: filter.where,
+        });
         if (repository instanceof ListEntityRelationRepository) {
           // Special handling for ListEntityRelationRepository
           count = await (
@@ -360,6 +557,15 @@ export class RecordLimitCheckerService {
           // Standard handling for other repositories
           count = await repository.count(filter.where);
         }
+
+        // Debug: log the count observed from the repository
+        this.loggingService.debug('RecordLimitCheckerService.count - observed count', {
+          model: modelClass.modelName,
+          scope: interpolatedScope,
+          count: count.count,
+          limit,
+          filterWhere: filter.where,
+        });
 
         if (count.count >= limit) {
           const errorCodePrefix = this.getErrorCodePrefix(modelClass.modelName);

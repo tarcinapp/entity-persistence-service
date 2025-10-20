@@ -497,18 +497,18 @@ export class EntityRepository extends DefaultCrudRepository<
    * Modifies the incoming payload according to the managed fields policies and configuration.
    * ---
    * Sets these fields if absent:
-   * - slug
-   * - creationDateTime
-   * - lastUpdatedDateTime
-   * - validFromDateTime (according to the configuration)
+   * - _slug
+   * - _creationDateTime
+   * - _lastUpdatedDateTime
+   * - _validFromDateTime (according to the configuration)
    *
    * Always sets these fields ignoring their incoming values:
-   * - version
-   * - visibility (according to the configuration)
-   * - ownerGroupsCount
-   * - ownerUsersCount
-   * - viewerUsersCount
-   * - viewerGroupsCount
+   * - _version
+   * - _visibility (according to the configuration)
+   * - _ownerGroupsCount
+   * - _ownerUsersCount
+   * - _viewerUsersCount
+   * - _viewerGroupsCount
    *
    * Always clears these fields as they are readonly through relation.
    * - relationMetadata

@@ -968,8 +968,12 @@ export class MongoPipelineHelper {
    */
   private isDateField(field: string): boolean {
     return (
+      // Top-level date fields
       field === '_validFromDateTime' ||
       field === '_validUntilDateTime' ||
+      field === '_createdDateTime' ||
+      field === '_lastUpdatedDateTime' ||
+      // Nested/date fields on related documents (e.g. entity._createdDateTime)
       field.endsWith('._validFromDateTime') ||
       field.endsWith('._validUntilDateTime') ||
       field.endsWith('._createdDateTime') ||

@@ -447,16 +447,16 @@ describe('Utilities: SetHelper', () => {
         const filter = builder.build();
 
         expect(filter.where).to.deepEqual({
-          _creationDateTime: {
+          _createdDateTime: {
             between: ['2024-01-13T21:00:00.000Z', '2024-01-14T21:00:00.000Z'],
           },
         });
 
         // Test with records: within last 24 hours, and outside window
-        const justCreated = { _creationDateTime: '2024-01-14T21:00:00.000Z' };
-        const createdToday = { _creationDateTime: '2024-01-14T02:00:00.000Z' };
+  const justCreated = { _createdDateTime: '2024-01-14T21:00:00.000Z' };
+  const createdToday = { _createdDateTime: '2024-01-14T02:00:00.000Z' };
         const createdYesterday = {
-          _creationDateTime: '2024-01-13T20:00:00.000Z',
+          _createdDateTime: '2024-01-13T20:00:00.000Z',
         };
 
         expect(FilterMatcher.matches(justCreated, filter.where)).to.be.true();
@@ -480,18 +480,18 @@ describe('Utilities: SetHelper', () => {
         const filter = builder.build();
 
         expect(filter.where).to.deepEqual({
-          _creationDateTime: {
+          _createdDateTime: {
             between: ['2024-01-10T21:00:00.000Z', '2024-01-17T21:00:00.000Z'],
           },
         });
 
         // Test with records
-        const justCreated = { _creationDateTime: '2024-01-17T21:00:00.000Z' };
+  const justCreated = { _createdDateTime: '2024-01-17T21:00:00.000Z' };
         const createdThisWeek = {
-          _creationDateTime: '2024-01-15T10:00:00.000Z',
+          _createdDateTime: '2024-01-15T10:00:00.000Z',
         };
         const createdLastWeek = {
-          _creationDateTime: '2024-01-09T21:00:00.000Z',
+          _createdDateTime: '2024-01-09T21:00:00.000Z',
         };
 
         expect(FilterMatcher.matches(justCreated, filter.where)).to.be.true();
@@ -515,18 +515,18 @@ describe('Utilities: SetHelper', () => {
         const filter = builder.build();
 
         expect(filter.where).to.deepEqual({
-          _creationDateTime: {
+          _createdDateTime: {
             between: ['2023-12-16T21:00:00.000Z', '2024-01-15T21:00:00.000Z'],
           },
         });
 
         // Test with records
-        const justCreated = { _creationDateTime: '2024-01-15T21:00:00.000Z' };
+  const justCreated = { _createdDateTime: '2024-01-15T21:00:00.000Z' };
         const createdThisMonth = {
-          _creationDateTime: '2024-01-02T10:00:00.000Z',
+          _createdDateTime: '2024-01-02T10:00:00.000Z',
         };
         const createdLastMonth = {
-          _creationDateTime: '2023-12-15T21:00:00.000Z',
+          _createdDateTime: '2023-12-15T21:00:00.000Z',
         };
 
         expect(FilterMatcher.matches(justCreated, filter.where)).to.be.true();
@@ -550,7 +550,7 @@ describe('Utilities: SetHelper', () => {
         const filter = builder.build();
 
         expect(filter.where).to.deepEqual({
-          _creationDateTime: {
+          _createdDateTime: {
             between: ['2024-01-13T21:00:00.000Z', '2024-01-14T21:00:00.000Z'],
           },
         });
@@ -576,7 +576,7 @@ describe('Utilities: SetHelper', () => {
         ).toISOString();
 
         expect(filter.where).to.deepEqual({
-          _creationDateTime: {
+          _createdDateTime: {
             between: [startIso, nowIso],
           },
         });
@@ -599,7 +599,7 @@ describe('Utilities: SetHelper', () => {
 
         // Subtracting 1 calendar month from 2024-03-15T21:00:00Z gives 2024-02-15T21:00:00Z
         expect(filter.where).to.deepEqual({
-          _creationDateTime: {
+          _createdDateTime: {
             between: ['2024-02-15T21:00:00.000Z', '2024-03-15T21:00:00.000Z'],
           },
         });

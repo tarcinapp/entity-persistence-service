@@ -550,7 +550,7 @@ describe('GET /lists', () => {
     expect(list).to.not.have.property('_ownerUsers');
     expect(list).to.not.have.property('_viewerUsers');
     expect(list).to.not.have.property('_validFromDateTime');
-    expect(list).to.not.have.property('_creationDateTime');
+  expect(list).to.not.have.property('_createdDateTime');
     expect(list).to.not.have.property('_lastUpdatedDateTime');
   });
 

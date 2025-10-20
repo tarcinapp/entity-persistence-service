@@ -918,7 +918,7 @@ describe('GET /entities', () => {
       _name: 'Old Inactive Science Book',
       _kind: 'book',
       description: 'science',
-      _creationDateTime: previousMonth.toISOString(),
+  _createdDateTime: previousMonth.toISOString(),
       _validFromDateTime: previousMonth.toISOString(),
       _validUntilDateTime: previousMonth.toISOString(),
     });
@@ -928,7 +928,7 @@ describe('GET /entities', () => {
       _name: 'Recent Inactive Science Book',
       _kind: 'book',
       description: 'science',
-      _creationDateTime: definitelyPastDate.toISOString(), // Several hours in the past
+  _createdDateTime: definitelyPastDate.toISOString(), // Several hours in the past
       _validFromDateTime: definitelyPastDate.toISOString(),
       _validUntilDateTime: oneHourAgo.toISOString(), // Definitely inactive
     });
@@ -938,7 +938,7 @@ describe('GET /entities', () => {
       _name: 'Recent Inactive History Book',
       _kind: 'book',
       description: 'history',
-      _creationDateTime: firstDayOfMonth.toISOString(),
+  _createdDateTime: firstDayOfMonth.toISOString(),
       _validFromDateTime: firstDayOfMonth.toISOString(),
       _validUntilDateTime: oneHourAgo.toISOString(),
     });
@@ -948,7 +948,7 @@ describe('GET /entities', () => {
       _name: 'Recent Active Science Book',
       _kind: 'book',
       description: 'science',
-      _creationDateTime: firstDayOfMonth.toISOString(),
+  _createdDateTime: firstDayOfMonth.toISOString(),
       _validFromDateTime: firstDayOfMonth.toISOString(),
       _validUntilDateTime: new Date(now.getTime() + 86400000).toISOString(), // tomorrow
     });
@@ -963,7 +963,7 @@ describe('GET /entities', () => {
     expect(response.body[0].description).to.equal('science');
 
     // Verify it was created this month
-    const createdDate = new Date(response.body[0]._creationDateTime);
+  const createdDate = new Date(response.body[0]._createdDateTime);
     expect(createdDate.getMonth()).to.equal(now.getMonth());
     expect(createdDate.getFullYear()).to.equal(now.getFullYear());
 
@@ -1092,7 +1092,7 @@ describe('GET /entities', () => {
     expect(entity).to.not.have.property('_ownerUsers');
     expect(entity).to.not.have.property('_viewerUsers');
     expect(entity).to.not.have.property('_validFromDateTime');
-    expect(entity).to.not.have.property('_creationDateTime');
+  expect(entity).to.not.have.property('_createdDateTime');
     expect(entity).to.not.have.property('_lastUpdatedDateTime');
   });
 

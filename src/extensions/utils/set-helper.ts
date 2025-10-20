@@ -457,7 +457,7 @@ class SetToFilterTransformer {
     const start = this.computeStartDate(now, amount, unit);
 
     return {
-      _creationDateTime: {
+      _createdDateTime: {
         between: [start.toISOString(), now.toISOString()],
       },
     };
@@ -516,7 +516,7 @@ class SetToFilterTransformer {
             { _validFromDateTime: { gt: nowIso } },
           ],
         },
-        { _creationDateTime: { between: [start.toISOString(), nowIso] } },
+        { _createdDateTime: { between: [start.toISOString(), nowIso] } },
       ],
     };
   }

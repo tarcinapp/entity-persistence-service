@@ -247,7 +247,7 @@ When records are created or updated through **Entity Persistence Service**, the 
 
 Managed fields are either:
 - **Strictly controlled** by the application (e.g., `_version`, `_idempotencyKey`)
-- **Auto-filled** when missing (e.g., `_slug`, `_creationDateTime`)
+- **Auto-filled** when missing (e.g., `_slug`, `_createdDateTime`)
 - **Policy-controlled**: their visibility and mutability depend on security policies evaluated at the gateway level
 
 See the example below for a request to create an entity and the decorated data stored in the database:
@@ -1356,7 +1356,7 @@ Here are the list of common field names.
 | **_viewerGroupsCount**   | A number field keeps the number of items in viewerGroups array. Facilitates querying records with no-viewers with allowing queries like: `/lists?filter[where][_viewerGroupsCount]=0`                                                                                                                                                                                                                                                                           |
 | **_parentsCount**        | A number field keeps the number of parents of the record. Facilitates retrieving only parents by this usage: `/entities?filter[where][_parentsCount]=0`                                                                                                                                                                                                                                                                                                         |
 | **_createdBy**           | Id of the user who created the record. Gateway *may* allow caller to modify this field. By default only admin users can modify this field.                                                                                                                                                                                                                                                                                                                      |
-| **_creationDateTime**    | A date time object automatically filled with the datetime of entity create operation. Gateway *may* allow caller to modify this field. By default only admin users can modify this field.                                                                                                                                                                                                                                                                       |
+| **_createdDateTime**    | A date time object automatically filled with the datetime of entity create operation. Gateway *may* allow caller to modify this field. By default only admin users can modify this field.                                                                                                                                                                                                                                                                       |
 | **_lastUpdatedDateTime** | A date time object automatically filled with the datetime of any entity update operation. Gateway *may* allow caller to modify this field. By default only admin users can modify this field.                                                                                                                                                                                                                                                                   |
 | **_lastUpdatedBy**       | Id of the user who performed the last update operation. Gateway *may* allow caller to modify this field. By default only admin users can modify this field.                                                                                                                                                                                                                                                                                                     |
 | **_validFromDateTime**   | A date time object represents the time when the object is a valid entity. Can be treated as the approval time. There is a configuration to auto approve records at the time of creation.                                                                                                                                                                                                                                                                        |
@@ -1367,7 +1367,7 @@ Here are the list of common field names.
 
 **Strictly Managed Fields**: `_version`, `_idempotencyKey`, `_parentsCount`,  `_viewerUsersCount`, `_viewerGroupsCount`, `_ownerUsersCount` and `_ownerGroupsCount` fields are calculated at the application logic no matter what value is sent by the caller.  
 
-**Fields Set by Application when Empty**: `_kind`, `_visibility`, `_validFromDateTime`, `_slug`, `_creationDateTime` and `_lastUpdatedDateTime` are calculated at the application logic if it is not specified in the request body. entity-persistence-gateway decides if user is authorized to send these fields by evaluating authorization policies.   
+**Fields Set by Application when Empty**: `_kind`, `_visibility`, `_validFromDateTime`, `_slug`, `_createdDateTime` and `_lastUpdatedDateTime` are calculated at the application logic if it is not specified in the request body. entity-persistence-gateway decides if user is authorized to send these fields by evaluating authorization policies.   
 
 **Gateway Managed Fields**: `_viewerUsers`, `_viewerGroups`, `_ownerUsers`, `_ownerGroups`, `_createdBy`, `_createdDateTime`, `_lastUpdatedBy`, `_lastUpdatedDateTime`, `_validFromDateTime` fields *may* be modified by entity-persistence-gateway. Gateway decides whether it accepts the given value, modifies it, or allows the caller to modify it by evaluating security policies.
 
@@ -1608,7 +1608,8 @@ Each environment variable accepts a JSON array of limit configurations:
 [
   {
     "scope": "string",  // Where clauses or set expressions defining where the limit applies
-    "limit": number    // Maximum number of records allowed in this scope
+    "limit": number,     // Maximum number of records allowed in this scope
+    "duration": "string" // OPTIONAL sliding time window. Examples: "30d", "1M", "15min"
   }
 ]
 ```
@@ -1689,6 +1690,49 @@ The scope field supports interpolation of record values using `${fieldname}` syn
      {"scope":"set[actives]&set[publics]","limit":50}
    ]'
    ```
+
+#### Duration-based record limits
+
+In addition to the `scope` and `limit` properties, you may add an optional `duration` to a limit definition. When present, the limit counts only records whose canonical creation timestamp (`_createdDateTime`) falls within a sliding window defined as (now - duration). This is useful when you want to enforce quotas over recent activity rather than all-time totals.
+
+Key behavior:
+
+- The `duration` value is a compact duration string (amount + unit). Examples: `30d` (30 days), `1M` (1 month), `15min` (15 minutes), `24h` (24 hours). See supported units below.
+- When a `duration` is supplied for a limit, the service injects an additional condition into the computed filter for that limit equivalent to:
+
+  ```text
+  _createdDateTime > (now - duration)
+  ```
+
+- If the incoming record already contains a `_createdDateTime` and it is older than or equal to `(now - duration)`, the limit check for that configuration is skipped because the new record cannot contribute to the duration-bounded count.
+- During update operations the service excludes the record itself from the count (by injecting `_id: { neq: <id> }`) so updating an existing record does not cause a self-hit on the limit. The same self-exclusion is applied to uniqueness checks.
+- Duration strings are validated at startup. If a configured `duration` is invalid the service logs a warning and the duration is ignored for that limit (the limit still applies without the time restriction). This prevents accidental startup failures due to mis-typed durations.
+
+Supported units and common synonyms:
+
+| Unit | Examples accepted |
+| ---- | ----------------- |
+| seconds | `s`, `sec`, `secs`, `second`, `seconds` |
+| minutes | `m`, `min`, `mins`, `minute`, `minutes` |
+| hours | `h`, `hour`, `hours` |
+| days | `d`, `day`, `days` |
+| weeks | `w`, `week`, `weeks` |
+| months | `M`, `mo`, `mon`, `month`, `months` (note: uppercase `M` is accepted as month and `m` is treated as minute) |
+
+Examples:
+
+```bash
+# Limit book entities created in the last 30 days to 100
+ENTITY_RECORD_LIMITS='[{"scope":"where[_kind]=book","limit":100,"duration":"30d"}]'
+
+# Limit reactions per entity to 500 in the last 30 days
+ENTITY_REACTION_RECORD_LIMITS='[{"scope":"where[_entityId]=${_entityId}","limit":500,"duration":"30d"}]'
+```
+
+Notes and caveats:
+
+- The service performs counting using repository-level queries. Counts are not atomic with the create operation — consider this a best-effort enforcement and evaluate database-level or transactional strategies for strict quotas in high-concurrency scenarios.
+- Invalid duration strings are logged and ignored (the limit remains in effect without the duration bound).
 
 #### Filter Expressions
 

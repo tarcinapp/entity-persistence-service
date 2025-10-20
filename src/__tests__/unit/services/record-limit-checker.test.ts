@@ -1,6 +1,6 @@
 import type { DefaultCrudRepository } from '@loopback/repository';
 import { Entity } from '@loopback/repository';
-import { expect } from '@loopback/testlab';
+import { expect, sinon } from '@loopback/testlab';
 import type { LoggingService } from '../../../services/logging.service';
 import { RecordLimitCheckerService } from '../../../services/record-limit-checker.service';
 import { EnvConfigHelper } from '../../../extensions/config-helpers/env-config-helper';
@@ -155,6 +155,25 @@ describe('Utilities: RecordLimitChecker', () => {
       expect(() => {
         new RecordLimitCheckerService(mockLoggingService as LoggingService);
       }).to.throw('Invalid configuration');
+    });
+
+    it('should warn and ignore invalid duration strings in env config', () => {
+      process.env.ENTITY_RECORD_LIMITS = JSON.stringify([
+        { scope: 'where[_kind]=book', limit: 10, duration: 'not-a-duration' },
+      ]);
+
+      EnvConfigHelper.reset();
+
+      let warned = false;
+      mockLoggingService.warn = () => {
+        warned = true;
+      };
+
+      expect(() => {
+        new RecordLimitCheckerService(mockLoggingService as LoggingService);
+      }).to.not.throw();
+
+      expect(warned).to.be.true();
     });
   });
 
@@ -443,6 +462,90 @@ describe('Utilities: RecordLimitChecker', () => {
       // The last clause should be the exclusion on _id
       const lastClause = capturedWhere.and[capturedWhere.and.length - 1];
       expect(lastClause).to.deepEqual({ _id: { neq: 'existing-id' } });
+    });
+
+    it('should honor duration in record limit by restricting to created date window', async () => {
+      // Set system time to a known fixed point
+      const systemTime = new Date('2024-01-14T21:00:00.000Z').getTime();
+      const clock = sinon.useFakeTimers(systemTime);
+
+      try {
+        const limits = [
+          { scope: 'where[_kind]=book', limit: 10, duration: '1d' },
+        ];
+
+        process.env.ENTITY_RECORD_LIMITS = JSON.stringify(limits);
+        EnvConfigHelper.reset();
+        service = new RecordLimitCheckerService(
+          mockLoggingService as LoggingService,
+        );
+
+        let capturedWhere: any;
+        mockRepository.count = async (where) => {
+          capturedWhere = where;
+          return { count: 0 };
+        };
+
+        await expect(
+          service.checkLimits(
+            GenericEntity,
+            { _kind: 'book' },
+            mockRepository as DefaultCrudRepository<any, any, any>,
+          ),
+        ).to.not.be.rejected();
+
+        // Ensure creation restriction was injected in the where clause
+        expect(capturedWhere).to.not.be.undefined();
+        expect(capturedWhere).to.have.property('and');
+        const createdClause = capturedWhere.and[capturedWhere.and.length - 1];
+        expect(createdClause).to.have.property('_createdDateTime');
+        // Start date should be approximately now - 1 day
+        const startIso = new Date(systemTime - 24 * 60 * 60 * 1000).toISOString();
+        expect(createdClause._createdDateTime.gt).to.equal(startIso);
+      } finally {
+        clock.restore();
+      }
+    });
+
+    it('should skip counting when incoming record _createdDateTime is older than duration window', async () => {
+      // Freeze time for determinism
+      const systemTime = new Date('2025-10-19T00:00:00.000Z').getTime();
+      const clock = sinon.useFakeTimers(systemTime);
+
+      try {
+        const limits = [
+          { scope: 'where[_kind]=book', limit: 10, duration: '30d' },
+        ];
+
+        process.env.ENTITY_RECORD_LIMITS = JSON.stringify(limits);
+        EnvConfigHelper.reset();
+        service = new RecordLimitCheckerService(
+          mockLoggingService as LoggingService,
+        );
+
+        let called = false;
+        mockRepository.count = async () => {
+          called = true;
+          return { count: 0 };
+        };
+
+        // Create a record whose created date is 40 days ago (outside 30d window)
+        const oldDate = new Date(systemTime - 40 * 24 * 60 * 60 * 1000).toISOString();
+
+        await expect(
+          service.checkLimits(
+            GenericEntity,
+            { _kind: 'book', _createdDateTime: oldDate },
+            mockRepository as DefaultCrudRepository<any, any, any>,
+          ),
+        ).to.not.be.rejected();
+
+        // Since the incoming record is outside the duration window, count
+        // should not be invoked for this limit.
+        expect(called).to.be.false();
+      } finally {
+        clock.restore();
+      }
     });
   });
 
