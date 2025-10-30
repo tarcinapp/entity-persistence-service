@@ -110,14 +110,14 @@
 
 📌 Each record — whether an entity, list, or reaction — is automatically decorated with a set of **managed fields**, including:
 - `_id`
+- `_createdDateTime`
+- `_createdBy`
 - `_ownerUsers`, `_ownerGroups`
 - `_viewerUsers`, `_viewerGroups`
 - `_visibility`
-- `_parents`
-- `_createdBy`
-- `_createdDateTime`
 - `_lastUpdatedBy`
 - `_lastUpdatedDateTime`
+- `_parents`
 - `_version`
 - `_idempotencyKey`
 - and more...
