@@ -2061,7 +2061,7 @@ Summary of common error categories and representative codes
   - `<RESOURCE>-UNIQUENESS-VIOLATION` (409) — Pattern used for uniqueness errors. Examples: `ENTITY-UNIQUENESS-VIOLATION`, `LIST-UNIQUENESS-VIOLATION`, `RELATION-UNIQUENESS-VIOLATION`. Message typically: "<Resource> already exists" and `details.info.scope` contains the uniqueness scope.
 
 - Limits (429)
-  - `<RESOURCE>-LIMIT-EXCEEDED` (429) — Pattern used when record limits are hit. Examples: `ENTITY-LIMIT-EXCEEDED`, `LIST-LIMIT-EXCEEDED`, `RELATION-LIMIT-EXCEEDED`, `ENTITYREACTION-LIMIT-EXCEEDED` / `ENTITY-REACTION-LIMIT-EXCEEDED` (variants appear in tests). Message: "Record limit exceeded for [type]". `details.info` contains `limit` and `scope`.
+  - `<RESOURCE>-LIMIT-EXCEEDED` (429) — Pattern used when record limits are hit. Examples: `ENTITY-LIMIT-EXCEEDED`, `LIST-LIMIT-EXCEEDED`, `RELATION-LIMIT-EXCEEDED`, `ENTITYREACTION-LIMIT-EXCEEDED`. Message: "Record limit exceeded for [type]". `details.info` contains `limit` and `scope`.
 
 - Lookup & Reference Validation (422)
   - `<PREFIX>-INVALID-LOOKUP-REFERENCE` (422) — Invalid tapp:// reference format in a constrained property. Example: `ENTITY-INVALID-LOOKUP-REFERENCE` or `ENTITY-REACTION-INVALID-LOOKUP-REFERENCE`. Message example: "Invalid reference format in property 'metadata.supplier'...".
