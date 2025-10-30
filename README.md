@@ -2040,6 +2040,7 @@ Example (uniqueness violation):
 }
 ```
 
+
 Summary of common error categories and representative codes
 
 - Resource Not Found (404)
@@ -2056,6 +2057,9 @@ Summary of common error categories and representative codes
   - `INVALID-ENTITY-KIND`, `INVALID-LIST-KIND`, `INVALID-RELATION-KIND`, `INVALID-ENTITY-REACTION-KIND`, `INVALID-LIST-REACTION-KIND` (422) — Input `_kind` value is not accepted by configuration.
   - `IMMUTABLE-ENTITY-KIND`, `IMMUTABLE-LIST-KIND`, `IMMUTABLE-RELATION-KIND`, `IMMUTABLE-ENTITY-REACTION-KIND`, `IMMUTABLE-LIST-REACTION-KIND` (422) — Attempt to change an immutable `_kind` after creation. Example message: "Entity kind cannot be changed after creation." Remediation: create a new record with the desired kind.
   - `IMMUTABLE-ENTITY-ID`, `IMMUTABLE-LIST-ID` (422) — Attempt to change an immutable identifier field. These codes are raised when a caller attempts to change identifying id fields — for example modifying `_entityId` on an existing entity-reaction or `_listId` on an existing list-reaction — or when trying to change a record's `_id`.
+  - `SOURCE-RECORD-NOT-MATCH` (422) — Source record does not match parent. Raised when creating a child reaction and the parent's identifier does not match the child's identifier. Used for both entity reactions (`_entityId`) and list reactions (`_listId`).
+    - For entity reactions: "Source record _entityId does not match parent. Parent _entityId: '{parentEntityId}', child _entityId: '{childEntityId}'."
+    - For list reactions: "Source record _listId does not match parent. Parent _listId: '{parentListId}', child _listId: '{childListId}'."
 
 - Uniqueness (409)
   - `<RESOURCE>-UNIQUENESS-VIOLATION` (409) — Pattern used for uniqueness errors. Examples: `ENTITY-UNIQUENESS-VIOLATION`, `LIST-UNIQUENESS-VIOLATION`, `RELATION-UNIQUENESS-VIOLATION`. Message typically: "<Resource> already exists" and `details.info.scope` contains the uniqueness scope.

@@ -755,8 +755,6 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
       // Get collection names from configuration
       const entityCollectionName =
         CollectionConfigHelper.getInstance().getEntityCollectionName();
-      const reactionCollectionName =
-        CollectionConfigHelper.getInstance().getEntityReactionsCollectionName();
 
       // Build pipeline using helper
       const pipeline = this.mongoPipelineHelper.buildEntityReactionPipeline(
@@ -893,6 +891,22 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     reaction: DataObject<EntityReaction>,
   ): Promise<EntityReaction> {
     try {
+      // Retrieve parent with _entityId
+      const parent = await this.findByIdRaw(parentId, { fields: { _entityId: true } });
+
+      // If parent not found, findByIdRaw will throw ENTITY-REACTION-NOT-FOUND
+
+      // Check if _entityId matches
+      if (parent._entityId !== reaction._entityId) {
+        throw new HttpErrorResponse({
+          statusCode: 422,
+          name: 'SourceRecordNotMatchError',
+          message: `Source record _entityId does not match parent. Parent _entityId: '${parent._entityId}', child _entityId: '${reaction._entityId}'.`,
+          code: 'SOURCE-RECORD-NOT-MATCH',
+          status: 422,
+        });
+      }
+
       // Add the parent reference to the reaction
       const childReaction: EntityReaction = {
         ...reaction,
