@@ -714,8 +714,6 @@ export class ListReactionsRepository extends DefaultCrudRepository<
       // Get collection names from configuration
       const listCollectionName =
         CollectionConfigHelper.getInstance().getListCollectionName();
-      const reactionCollectionName =
-        CollectionConfigHelper.getInstance().getListReactionsCollectionName();
 
       // Build pipeline using helper
       const pipeline = this.mongoPipelineHelper.buildEntityReactionPipeline(
@@ -757,8 +755,6 @@ export class ListReactionsRepository extends DefaultCrudRepository<
       // Get collection names from configuration
       const listCollectionName =
         CollectionConfigHelper.getInstance().getListCollectionName();
-      const reactionCollectionName =
-        CollectionConfigHelper.getInstance().getListReactionsCollectionName();
 
       // Build pipeline using helper
       const pipeline = this.mongoPipelineHelper.buildEntityReactionPipeline(
@@ -895,6 +891,22 @@ export class ListReactionsRepository extends DefaultCrudRepository<
     reaction: DataObject<ListReaction>,
   ): Promise<ListReaction> {
     try {
+      // Retrieve parent with _listId
+      const parent = await this.findByIdRaw(parentId, { fields: { _listId: true } });
+
+      // If parent not found, findByIdRaw will throw LIST-REACTION-NOT-FOUND
+
+      // Check if _listId matches
+      if (parent._listId !== reaction._listId) {
+        throw new HttpErrorResponse({
+          statusCode: 422,
+          name: 'SourceRecordNotMatchError',
+          message: `Source record _listId does not match parent. Parent _listId: '${parent._listId}', child _listId: '${reaction._listId}'.`,
+          code: 'SOURCE-RECORD-NOT-MATCH',
+          status: 422,
+        });
+      }
+
       // Add the parent reference to the reaction
       const childReaction: ListReaction = {
         ...reaction,
