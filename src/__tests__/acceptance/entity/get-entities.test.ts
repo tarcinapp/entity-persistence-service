@@ -907,8 +907,8 @@ describe('GET /entities', () => {
     // Set time to 3 hours ago to ensure it's in the past
     definitelyPastDate.setHours(now.getHours() - 3);
 
-    // Create a date in previous month
-    const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 15);
+    // Create a date 40 days ago
+    const previousMonth = new Date(now.getTime() - 40 * 24 * 60 * 60 * 1000);
 
     // Create a date 1 hour before now (definitely in the past)
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
@@ -918,7 +918,7 @@ describe('GET /entities', () => {
       _name: 'Old Inactive Science Book',
       _kind: 'book',
       description: 'science',
-  _createdDateTime: previousMonth.toISOString(),
+    _createdDateTime: previousMonth.toISOString(),
       _validFromDateTime: previousMonth.toISOString(),
       _validUntilDateTime: previousMonth.toISOString(),
     });
@@ -928,7 +928,7 @@ describe('GET /entities', () => {
       _name: 'Recent Inactive Science Book',
       _kind: 'book',
       description: 'science',
-  _createdDateTime: definitelyPastDate.toISOString(), // Several hours in the past
+    _createdDateTime: definitelyPastDate.toISOString(), // Several hours in the past
       _validFromDateTime: definitelyPastDate.toISOString(),
       _validUntilDateTime: oneHourAgo.toISOString(), // Definitely inactive
     });
