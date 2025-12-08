@@ -403,7 +403,8 @@ export class LookupHelper {
 
             if (inclusionFields.length > 0) {
               Object.keys(result).forEach((key) => {
-                if (!inclusionFields.includes(key)) {
+                // Always preserve _recordType virtual field, regardless of field selection
+                if (key !== '_recordType' && !inclusionFields.includes(key)) {
                   delete result[key];
                 }
               });
@@ -411,7 +412,10 @@ export class LookupHelper {
               Object.entries(fields)
                 .filter(([_, value]) => value === false)
                 .forEach(([key]) => {
-                  delete result[key];
+                  // Never delete _recordType virtual field
+                  if (key !== '_recordType') {
+                    delete result[key];
+                  }
                 });
             }
 
@@ -454,15 +458,16 @@ export class LookupHelper {
       );
 
       if (hasInclusionFields) {
-        // If we have inclusion fields, ensure _id is included for internal use
+        // If we have inclusion fields, ensure _id and _recordType (virtual field) are included
         adjustedFields = {
           ...fields,
           _id: true,
+          _recordType: true,
         };
       } else {
-        // If we only have exclusion fields, remove _id from exclusions if present
+        // If we only have exclusion fields, remove _id and _recordType from exclusions if present
         adjustedFields = Object.fromEntries(
-          Object.entries(fields).filter(([key]) => key !== '_id'),
+          Object.entries(fields).filter(([key]) => key !== '_id' && key !== '_recordType'),
         );
       }
     }
@@ -501,15 +506,16 @@ export class LookupHelper {
       );
 
       if (hasInclusionFields) {
-        // If we have inclusion fields, ensure _id is included for internal use
+        // If we have inclusion fields, ensure _id and _recordType (virtual field) are included
         adjustedFields = {
           ...fields,
           _id: true,
+          _recordType: true,
         };
       } else {
-        // If we only have exclusion fields, remove _id from exclusions if present
+        // If we only have exclusion fields, remove _id and _recordType from exclusions if present
         adjustedFields = Object.fromEntries(
-          Object.entries(fields).filter(([key]) => key !== '_id'),
+          Object.entries(fields).filter(([key]) => key !== '_id' && key !== '_recordType'),
         );
       }
     }
@@ -548,13 +554,16 @@ export class LookupHelper {
       );
 
       if (hasInclusionFields) {
+        // If we have inclusion fields, ensure _id and _recordType (virtual field) are included
         adjustedFields = {
           ...fields,
           _id: true,
+          _recordType: true,
         };
       } else {
+        // If we only have exclusion fields, remove _id and _recordType from exclusions if present
         adjustedFields = Object.fromEntries(
-          Object.entries(fields).filter(([key]) => key !== '_id'),
+          Object.entries(fields).filter(([key]) => key !== '_id' && key !== '_recordType'),
         );
       }
     }
@@ -592,13 +601,16 @@ export class LookupHelper {
       );
 
       if (hasInclusionFields) {
+        // If we have inclusion fields, ensure _id and _recordType (virtual field) are included
         adjustedFields = {
           ...fields,
           _id: true,
+          _recordType: true,
         };
       } else {
+        // If we only have exclusion fields, remove _id and _recordType from exclusions if present
         adjustedFields = Object.fromEntries(
-          Object.entries(fields).filter(([key]) => key !== '_id'),
+          Object.entries(fields).filter(([key]) => key !== '_id' && key !== '_recordType'),
         );
       }
     }

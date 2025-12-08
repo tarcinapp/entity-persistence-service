@@ -169,8 +169,9 @@ export class ListReactionsRepository extends DefaultCrudRepository<
     // If useMongoPipeline is not explicitly set to true, use repository approach
     if (options?.useMongoPipeline !== true) {
       const reactions = await super.find(filter);
+      const reactionsWithLookup = await this.processLookups(reactions, filter);
 
-      return this.processLookups(reactions, filter);
+      return this.injectRecordTypeArray(reactionsWithLookup);
     }
 
     // MongoDB pipeline approach
@@ -202,7 +203,8 @@ export class ListReactionsRepository extends DefaultCrudRepository<
     const result = await cursor.toArray();
 
     // Process lookups if needed
-    return this.processLookups(result as ListReaction[], filter);
+    const reactionsWithLookup = await this.processLookups(result as ListReaction[], filter);
+    return this.injectRecordTypeArray(reactionsWithLookup);
   }
 
   async create(data: DataObject<ListReaction>, options?: Options) {
@@ -218,7 +220,7 @@ export class ListReactionsRepository extends DefaultCrudRepository<
         },
       );
 
-      return foundIdempotent;
+      return this.injectRecordType(foundIdempotent);
     }
 
     if (idempotencyKey) {
@@ -280,7 +282,11 @@ export class ListReactionsRepository extends DefaultCrudRepository<
       .then((enrichedData) =>
         this.validateIncomingReactionForCreation(enrichedData),
       )
-      .then((validEnrichedData) => super.create(validEnrichedData, options));
+      .then((validEnrichedData) =>
+        super
+          .create(validEnrichedData, options)
+          .then((created) => this.injectRecordType(created)),
+      );
   }
 
   private async checkListExistence(
@@ -328,6 +334,9 @@ export class ListReactionsRepository extends DefaultCrudRepository<
   private async modifyIncomingReactionForCreation(
     data: DataObject<ListReaction>,
   ): Promise<DataObject<ListReaction>> {
+    // Strip virtual fields before persisting
+    data = this.sanitizeRecordType(data);
+
     data._kind =
       data._kind ??
       this.kindConfigReader.defaultListReactionKind;
@@ -458,6 +467,9 @@ export class ListReactionsRepository extends DefaultCrudRepository<
     id: string,
     data: DataObject<ListReaction>,
   ) {
+    // Strip virtual fields before persisting
+    data = this.sanitizeRecordType(data);
+
     return this.findByIdRaw(id)
       .then((existingData) => {
         // check if we have this record in db
@@ -568,6 +580,8 @@ export class ListReactionsRepository extends DefaultCrudRepository<
     where?: Where<ListReaction>,
     listWhere?: Where<ListReaction>,
   ): Promise<Count> {
+    data = this.sanitizeRecordType(data);
+
     // Check if user is trying to change the _kind field, which is immutable
     if (data._kind !== undefined) {
       throw new HttpErrorResponse({
@@ -847,7 +861,8 @@ export class ListReactionsRepository extends DefaultCrudRepository<
       }
 
       // Process lookups if needed
-      return await this.processLookup(result[0] as ListReaction, filter);
+      const reactionWithLookup = await this.processLookup(result[0] as ListReaction, filter);
+      return this.injectRecordType(reactionWithLookup);
     } catch (error) {
       if (error.code === 'LIST-REACTION-NOT-FOUND') {
         throw error;
@@ -903,6 +918,7 @@ export class ListReactionsRepository extends DefaultCrudRepository<
       },
     );
 
+    // find already injects _recordType
     return this.find(parentFilter, listFilter, {
       useMongoPipeline: false,
       ...options,
@@ -937,6 +953,7 @@ export class ListReactionsRepository extends DefaultCrudRepository<
       },
     );
 
+    // find already injects _recordType
     return this.find(childFilter, listFilter, {
       useMongoPipeline: false,
       ...options,
@@ -970,7 +987,7 @@ export class ListReactionsRepository extends DefaultCrudRepository<
         _parents: [`tapp://localhost/list-reactions/${parentId}`],
       } as ListReaction;
 
-      // Create the child reaction
+      // Create the child reaction (create already injects _recordType)
       return await this.create(childReaction);
     } catch (error) {
       this.loggingService.error(
@@ -999,5 +1016,24 @@ export class ListReactionsRepository extends DefaultCrudRepository<
     );
 
     return super.replaceById(id, validEnrichedData);
+  }
+
+  private injectRecordType(reaction: ListReaction): ListReaction {
+    if (!reaction) return reaction;
+    (reaction as any)._recordType = 'listReaction';
+    return reaction;
+  }
+
+  private injectRecordTypeArray(reactions: ListReaction[]): ListReaction[] {
+    return reactions.map(reaction => this.injectRecordType(reaction));
+  }
+
+  private sanitizeRecordType(data: DataObject<ListReaction>): DataObject<ListReaction> {
+    if ('_recordType' in data) {
+      const sanitized = { ...data };
+      delete sanitized._recordType;
+      return sanitized;
+    }
+    return data;
   }
 }

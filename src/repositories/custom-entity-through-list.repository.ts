@@ -105,7 +105,7 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
     const entities = await super.find(updatedFilter, options);
 
     // Map relation metadata to entities, excluding `toMetadata`
-    return entities.map((entity) => {
+    const entitiesWithMetadata = entities.map((entity) => {
       const relation = relations.find(
         (rel: ListToEntityRelation) => rel._entityId === entity._id,
       );
@@ -122,6 +122,8 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
 
       return entity;
     });
+
+    return this.injectRecordTypeArray(entitiesWithMetadata);
   }
 
   /**
@@ -209,5 +211,14 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
     where = { _id: { inq: entityIds }, ...where };
 
     return entitiesRepo.deleteAll(where, options);
+  }
+
+  private injectRecordType<T extends GenericEntity | GenericEntityWithRelations>(entity: T): T {
+    (entity as any)._recordType = 'entity';
+    return entity;
+  }
+
+  private injectRecordTypeArray<T extends GenericEntity | GenericEntityWithRelations>(entities: T[]): T[] {
+    return entities.map(entity => this.injectRecordType(entity));
   }
 }

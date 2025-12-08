@@ -228,8 +228,9 @@ export class ListRepository extends DefaultCrudRepository<
     });
 
     const lists = await super.find(filter, options);
+    const listsWithLookup = await this.processLookups(lists, filter);
 
-    return this.processLookups(lists, filter);
+    return this.injectRecordTypeArray(listsWithLookup);
   }
 
   async findById(
@@ -243,9 +244,10 @@ export class ListRepository extends DefaultCrudRepository<
 
       // Call the LoopBack super method, which already throws an error if not found
       const list = await super.findById(id, typedFilter);
+      const listWithLookup = await this.processLookup(list, filter);
 
       // Return the successfully found entity
-      return await this.processLookup(list, filter);
+      return this.injectRecordType(listWithLookup);
     } catch (error) {
       // Handle specific known errors, such as "Entity not found"
       if (error.code === 'ENTITY_NOT_FOUND') {
@@ -275,7 +277,7 @@ export class ListRepository extends DefaultCrudRepository<
 
     return this.findIdempotentList(idempotencyKey).then((foundIdempotent) => {
       if (foundIdempotent) {
-        return foundIdempotent;
+        return this.injectRecordType(foundIdempotent);
       }
 
       if (idempotencyKey) {
@@ -352,6 +354,8 @@ export class ListRepository extends DefaultCrudRepository<
     where?: Where<List>,
     options?: Options,
   ) {
+    data = this.sanitizeRecordType(data);
+
     const now = new Date().toISOString();
     data._lastUpdatedDateTime = now;
 
@@ -544,7 +548,9 @@ export class ListRepository extends DefaultCrudRepository<
       .then((enrichedData) =>
         this.validateIncomingListForCreation(enrichedData),
       )
-      .then((validEnrichedData) => super.create(validEnrichedData));
+      .then((validEnrichedData) =>
+        super.create(validEnrichedData).then((created) => this.injectRecordType(created)),
+      );
   }
 
   private async validateIncomingListForCreation(
@@ -624,6 +630,9 @@ export class ListRepository extends DefaultCrudRepository<
   private async modifyIncomingListForCreation(
     data: DataObject<List>,
   ): Promise<DataObject<List>> {
+    // Strip virtual fields before persisting
+    data = this.sanitizeRecordType(data);
+
     data._kind =
       data._kind ??
       this.kindConfigReader.defaultListKind;
@@ -678,6 +687,9 @@ export class ListRepository extends DefaultCrudRepository<
     id: string,
     data: DataObject<List>,
   ) {
+    // Strip virtual fields before persisting
+    data = this.sanitizeRecordType(data);
+
     return this.findById(id)
       .then((existingData) => {
         // check if we have this record in db
@@ -839,6 +851,7 @@ export class ListRepository extends DefaultCrudRepository<
       parentFilter,
     });
 
+    // find already injects _recordType
     return this.find(parentFilter, options);
   }
 
@@ -876,6 +889,7 @@ export class ListRepository extends DefaultCrudRepository<
       childFilter,
     });
 
+    // find already injects _recordType
     return this.find(childFilter, options);
   }
 
@@ -892,7 +906,26 @@ export class ListRepository extends DefaultCrudRepository<
       _parents: [`tapp://localhost/lists/${parentId}`],
     };
 
-    // Create the child list
+    // Create the child list (create already injects _recordType)
     return this.create(childList);
+  }
+
+  private injectRecordType<T extends List | (List & ListRelations)>(list: T): T {
+    if (!list) return list;
+    (list as any)._recordType = 'list';
+    return list;
+  }
+
+  private injectRecordTypeArray<T extends List | (List & ListRelations)>(lists: T[]): T[] {
+    return lists.map(list => this.injectRecordType(list));
+  }
+
+  private sanitizeRecordType(data: DataObject<List>): DataObject<List> {
+    if ('_recordType' in data) {
+      const sanitized = { ...data };
+      delete sanitized._recordType;
+      return sanitized;
+    }
+    return data;
   }
 }

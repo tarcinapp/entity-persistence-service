@@ -242,11 +242,11 @@ When structure is needed, the gateway can validate these records against configu
 When records are created or updated through **Entity Persistence Service**, the system automatically **decorates the incoming JSON data** with a set of managed fields. These fields support core capabilities like:
 
 - Ownership and visibility control (`_ownerUsers`, `_viewerGroups`, `_visibility`)
-- Metadata tracking (`_createdBy`, `_lastUpdatedDateTime`, `_version`)
+- Metadata tracking (`_createdBy`, `_lastUpdatedDateTime`, `_version`, `_recordType`)
 - Query optimizations (`_parentsCount`, `_ownerUsersCount`, etc.)
 
 Managed fields are either:
-- **Strictly controlled** by the application (e.g., `_version`, `_idempotencyKey`)
+- **Strictly controlled** by the application (e.g., `_version`, `_idempotencyKey`, `_recordType`)
 - **Auto-filled** when missing (e.g., `_slug`, `_createdDateTime`)
 - **Policy-controlled**: their visibility and mutability depend on security policies evaluated at the gateway level
 
@@ -1377,6 +1377,7 @@ Here are the list of common field names.
 | **_validFromDateTime**   | A date time object represents the time when the object is a valid entity. Can be treated as the approval time. There is a configuration to auto approve records at the time of creation.                                                                                                                                                                                                                                                                        |
 | **_validUntilDateTime**  | A date time object represents the time when the objects validity ends. Can be used instead of deleting records.                                                                                                                                                                                                                                                                                                                                                 |
 | **_idempotencyKey**      | A hashed string field should be computed using the record's fields, which are designed to enhance the record's uniqueness.                                                                                                                                                                                                                                                                                                                                      |
+| **_recordType**          | A read-only virtual field automatically injected in responses to indicate the type of record. Values: `entity`, `list`, `relation`, `entityReaction`, `listReaction`. Not persisted to the database. Callers cannot set or modify this field.                                                                                                                                                                                                                   |
 
 **(\*)** Required fields
 

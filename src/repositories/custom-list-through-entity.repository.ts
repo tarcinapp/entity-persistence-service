@@ -99,7 +99,7 @@ export class CustomListThroughEntityRepository extends DefaultCrudRepository<
     const lists = await super.find(updatedFilter, options);
 
     // Map relation metadata to lists
-    return lists.map((list) => {
+    const listsWithMetadata = lists.map((list) => {
       const relation = relations.find(
         (rel: ListToEntityRelation) => rel._listId === list._id,
       );
@@ -114,5 +114,16 @@ export class CustomListThroughEntityRepository extends DefaultCrudRepository<
 
       return list;
     });
+
+    return this.injectRecordTypeArray(listsWithMetadata);
+  }
+
+  private injectRecordType<T extends List | ListWithRelations>(list: T): T {
+    (list as any)._recordType = 'list';
+    return list;
+  }
+
+  private injectRecordTypeArray<T extends List | ListWithRelations>(lists: T[]): T[] {
+    return lists.map(list => this.injectRecordType(list));
   }
 }

@@ -215,8 +215,9 @@ export class EntityRepository extends DefaultCrudRepository<
       });
 
       const entities = await super.find(filter, options);
+      const entitiesWithLookup = await this.processLookups(entities, filter);
 
-      return await this.processLookups(entities, filter);
+      return this.injectRecordTypeArray(entitiesWithLookup);
     } catch (error) {
       this.loggingService.error('EntityRepository.find - Error:', { error });
       throw error;
@@ -236,7 +237,7 @@ export class EntityRepository extends DefaultCrudRepository<
         },
       );
 
-      return foundIdempotent;
+      return this.injectRecordType(foundIdempotent);
     }
 
     if (idempotencyKey) {
@@ -445,7 +446,11 @@ export class EntityRepository extends DefaultCrudRepository<
       .then((enrichedData) =>
         this.validateIncomingEntityForCreation(enrichedData),
       )
-      .then((validEnrichedData) => super.create(validEnrichedData, options));
+      .then((validEnrichedData) =>
+        super
+          .create(validEnrichedData, options)
+          .then((created) => this.injectRecordType(created)),
+      );
   }
 
   private async validateIncomingEntityForCreation(
@@ -569,6 +574,9 @@ export class EntityRepository extends DefaultCrudRepository<
   private async modifyIncomingEntityForCreation(
     data: DataObject<GenericEntity>,
   ): Promise<DataObject<GenericEntity>> {
+    // Strip virtual fields before persisting
+    data = this.sanitizeRecordType(data);
+
     data._kind = data._kind ?? this.kindConfigReader.defaultEntityKind;
 
     // take the date of now to make sure we have exactly the same date in all date fields
@@ -620,6 +628,9 @@ export class EntityRepository extends DefaultCrudRepository<
     id: string,
     data: DataObject<GenericEntity>,
   ) {
+    // Strip virtual fields before persisting
+    data = this.sanitizeRecordType(data);
+
     return this.findById(id)
       .then((existingData) => {
         // check if we have this record in db
@@ -752,8 +763,9 @@ export class EntityRepository extends DefaultCrudRepository<
       const typedFilter = forcedFilter as FilterExcludingWhere<GenericEntity>;
 
       const entity = await super.findById(id, typedFilter, options);
+      const entityWithLookup = await this.processLookup(entity, filter);
 
-      return await this.processLookup(entity, filter);
+      return this.injectRecordType(entityWithLookup);
     } catch (error) {
       if (error.code === 'ENTITY_NOT_FOUND') {
         this.loggingService.warn(`Entity with id '${id}' not found.`);
@@ -816,6 +828,7 @@ export class EntityRepository extends DefaultCrudRepository<
         },
       );
 
+      // find already injects _recordType
       return await this.find(parentFilter, options);
     } catch (error) {
       this.loggingService.error('EntityRepository.findParents - Error:', {
@@ -854,6 +867,7 @@ export class EntityRepository extends DefaultCrudRepository<
         },
       );
 
+      // find already injects _recordType
       return await this.find(childFilter, options);
     } catch (error) {
       this.loggingService.error('EntityRepository.findChildren - Error:', {
@@ -878,7 +892,7 @@ export class EntityRepository extends DefaultCrudRepository<
         _parents: [`tapp://localhost/entities/${parentId}`],
       };
 
-      // Create the child entity
+      // Create the child entity (create already injects _recordType)
       return await this.create(childEntity);
     } catch (error) {
       this.loggingService.error('EntityRepository.createChild - Error:', {
@@ -887,5 +901,28 @@ export class EntityRepository extends DefaultCrudRepository<
       });
       throw error;
     }
+  }
+
+  private injectRecordType<T extends GenericEntity | (GenericEntity & GenericEntityRelations)>(
+    entity: T,
+  ): T {
+    if (!entity) return entity;
+    (entity as any)._recordType = 'entity';
+    return entity;
+  }
+
+  private injectRecordTypeArray<T extends GenericEntity | (GenericEntity & GenericEntityRelations)>(
+    entities: T[],
+  ): T[] {
+    return entities.map(entity => this.injectRecordType(entity));
+  }
+
+  private sanitizeRecordType(data: DataObject<GenericEntity>): DataObject<GenericEntity> {
+    if ('_recordType' in data) {
+      const sanitized = { ...data };
+      delete sanitized._recordType;
+      return sanitized;
+    }
+    return data;
   }
 }

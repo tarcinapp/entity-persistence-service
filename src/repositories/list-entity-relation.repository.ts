@@ -172,7 +172,7 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
       const cursor = relationCollection.aggregate(pipeline);
       const result = await cursor.toArray();
 
-      return result as (ListToEntityRelation & ListEntityRelationRelations)[];
+      return this.injectRecordTypeArray(result as (ListToEntityRelation & ListEntityRelationRelations)[]);
     } catch (error) {
       throw new Error(`Failed to execute aggregation: ${error}`);
     }
@@ -295,7 +295,7 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
         };
       }
 
-      return rawRelation;
+      return this.injectRecordType(rawRelation);
     });
   }
 
@@ -308,7 +308,7 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     return this.findIdempotentRelation(idempotencyKey).then(
       (foundIdempotent) => {
         if (foundIdempotent) {
-          return foundIdempotent;
+          return this.injectRecordType(foundIdempotent);
         }
 
         data._idempotencyKey = idempotencyKey;
@@ -367,6 +367,8 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     where?: Where<ListToEntityRelation>,
     options?: Options,
   ) {
+    data = this.sanitizeRecordType(data);
+
     if (data._kind) {
       throw new HttpErrorResponse({
         statusCode: 422,
@@ -394,7 +396,11 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
       .then((enrichedData) =>
         this.validateIncomingRelationForCreation(enrichedData),
       )
-      .then((validEnrichedData) => super.create(validEnrichedData, options));
+      .then((validEnrichedData) =>
+        super
+          .create(validEnrichedData, options)
+          .then((created) => this.injectRecordType(created)),
+      );
   }
 
   /**
@@ -422,6 +428,9 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     id: string,
     data: DataObject<ListToEntityRelation>,
   ) {
+    // Strip virtual fields before persisting
+    data = this.sanitizeRecordType(data);
+
     const existingData = await this.findById(id);
 
     // check if we have this record in db
@@ -582,6 +591,9 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
   enrichIncomingRelationForCreation(
     data: DataObject<ListToEntityRelation>,
   ): Promise<DataObject<ListToEntityRelation>> {
+    // Strip virtual fields before persisting
+    data = this.sanitizeRecordType(data);
+
     const now = new Date().toISOString();
 
     data._kind =
@@ -690,5 +702,28 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
       data,
       this,
     );
+  }
+
+  private injectRecordType<T extends ListToEntityRelation | (ListToEntityRelation & ListEntityRelationRelations)>(
+    relation: T,
+  ): T {
+    if (!relation) return relation;
+    (relation as any)._recordType = 'relation';
+    return relation;
+  }
+
+  private injectRecordTypeArray<T extends ListToEntityRelation | (ListToEntityRelation & ListEntityRelationRelations)>(
+    relations: T[],
+  ): T[] {
+    return relations.map(relation => this.injectRecordType(relation));
+  }
+
+  private sanitizeRecordType(data: DataObject<ListToEntityRelation>): DataObject<ListToEntityRelation> {
+    if ('_recordType' in data) {
+      const sanitized = { ...data };
+      delete sanitized._recordType;
+      return sanitized;
+    }
+    return data;
   }
 }

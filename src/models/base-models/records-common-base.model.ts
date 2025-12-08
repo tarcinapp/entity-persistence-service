@@ -86,6 +86,14 @@ export class RecordsCommonBase extends Entity {
   })
   _version?: number;
 
+  @property({
+    type: 'string',
+    jsonSchema: {
+      readOnly: true,
+    },
+  })
+  _recordType?: string;
+
   constructor(data?: Partial<RecordsCommonBase>) {
     super(data);
   }
