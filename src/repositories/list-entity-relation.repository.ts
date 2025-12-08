@@ -72,11 +72,61 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     super(ListToEntityRelation, dataSource);
   }
 
+  private forceKindInclusion(filter: Filter<ListToEntityRelation> | undefined): Filter<ListToEntityRelation> | undefined {
+    if (!filter) {
+      return filter;
+    }
+
+    if (!filter.fields) {
+      return filter;
+    }
+
+    // If fields is an array, ensure _kind is included
+    if (Array.isArray(filter.fields)) {
+      if (!filter.fields.includes('_kind' as any)) {
+        return {
+          ...filter,
+          fields: [...filter.fields, '_kind' as any],
+        };
+      }
+      return filter;
+    }
+
+    // If fields is an object (inclusion/exclusion mode)
+    const fieldEntries = Object.entries(filter.fields);
+    const hasInclusionMode = fieldEntries.some(([_, value]) => value === true);
+
+    if (hasInclusionMode) {
+      // Inclusion mode: ensure _kind: true
+      return {
+        ...filter,
+        fields: {
+          ...filter.fields,
+          _kind: true,
+        } as any,
+      };
+    }
+
+    // Exclusion mode: remove _kind if it's set to false
+    const updatedFields = { ...filter.fields };
+    if ((updatedFields as any)._kind === false) {
+      delete (updatedFields as any)._kind;
+    }
+
+    return {
+      ...filter,
+      fields: updatedFields,
+    };
+  }
+
   async find(
     filter?: Filter<ListToEntityRelation>,
     entityFilter?: Filter<ListToEntityRelation>,
     listFilter?: Filter<ListToEntityRelation>,
   ): Promise<(ListToEntityRelation & ListEntityRelationRelations)[]> {
+    // Ensure _kind is always included
+    filter = this.forceKindInclusion(filter);
+
     // Get collection names from configuration
     const listCollectionName =
       CollectionConfigHelper.getInstance().getListCollectionName();
@@ -188,8 +238,12 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     filter?: FilterExcludingWhere<ListToEntityRelation>,
     options?: Options,
   ): Promise<ListToEntityRelation> {
+    // Ensure _kind is always included (cast to Filter for the helper)
+    const forcedFilter = this.forceKindInclusion(filter as Filter<ListToEntityRelation>);
+    const typedFilter = forcedFilter as FilterExcludingWhere<ListToEntityRelation>;
+
     // Fetch a single raw relation from the database
-    return super.findById(id, filter, options).then(async (rawRelation) => {
+    return super.findById(id, typedFilter, options).then(async (rawRelation) => {
       if (!rawRelation) {
         throw new HttpErrorResponse({
           statusCode: 404,

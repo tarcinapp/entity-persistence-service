@@ -121,6 +121,53 @@ export class EntityRepository extends DefaultCrudRepository<
     };
   }
 
+  private forceKindInclusion(filter: Filter<GenericEntity> | undefined): Filter<GenericEntity> | undefined {
+    if (!filter) {
+      return filter;
+    }
+
+    if (!filter.fields) {
+      return filter;
+    }
+
+    // If fields is an array, ensure _kind is included
+    if (Array.isArray(filter.fields)) {
+      if (!filter.fields.includes('_kind' as any)) {
+        return {
+          ...filter,
+          fields: [...filter.fields, '_kind' as any],
+        };
+      }
+      return filter;
+    }
+
+    // If fields is an object (inclusion/exclusion mode)
+    const fieldEntries = Object.entries(filter.fields);
+    const hasInclusionMode = fieldEntries.some(([_, value]) => value === true);
+
+    if (hasInclusionMode) {
+      // Inclusion mode: ensure _kind: true
+      return {
+        ...filter,
+        fields: {
+          ...filter.fields,
+          _kind: true,
+        } as any,
+      };
+    }
+
+    // Exclusion mode: remove _kind if it's set to false
+    const updatedFields = { ...filter.fields };
+    if ((updatedFields as any)._kind === false) {
+      delete (updatedFields as any)._kind;
+    }
+
+    return {
+      ...filter,
+      fields: updatedFields,
+    };
+  }
+
   private async processLookups(
     entities: (GenericEntity & GenericEntityRelations)[],
     filter?: Filter<GenericEntity>,
@@ -159,6 +206,9 @@ export class EntityRepository extends DefaultCrudRepository<
           this.responseLimitConfigReader.getEntityResponseLimit(),
         ),
       };
+
+      // Ensure _kind is always included
+      filter = this.forceKindInclusion(filter);
 
       this.loggingService.info('EntityRepository.find - Modified filter:', {
         filter,
@@ -616,20 +666,26 @@ export class EntityRepository extends DefaultCrudRepository<
   }
 
   private setCountFields(data: DataObject<GenericEntity>) {
-    // Always set count fields based on their corresponding arrays
-    data._ownerUsersCount = _.isArray(data._ownerUsers)
-      ? data._ownerUsers.length
-      : 0;
-    data._ownerGroupsCount = _.isArray(data._ownerGroups)
-      ? data._ownerGroups.length
-      : 0;
-    data._viewerUsersCount = _.isArray(data._viewerUsers)
-      ? data._viewerUsers.length
-      : 0;
-    data._viewerGroupsCount = _.isArray(data._viewerGroups)
-      ? data._viewerGroups.length
-      : 0;
-    data._parentsCount = _.isArray(data._parents) ? data._parents.length : 0;
+    // Only update count fields if the related array is present in the data object
+    if (_.isArray(data._ownerUsers)) {
+      data._ownerUsersCount = data._ownerUsers.length;
+    }
+
+    if (_.isArray(data._ownerGroups)) {
+      data._ownerGroupsCount = data._ownerGroups.length;
+    }
+
+    if (_.isArray(data._viewerUsers)) {
+      data._viewerUsersCount = data._viewerUsers.length;
+    }
+
+    if (_.isArray(data._viewerGroups)) {
+      data._viewerGroupsCount = data._viewerGroups.length;
+    }
+
+    if (_.isArray(data._parents)) {
+      data._parentsCount = data._parents.length;
+    }
   }
 
   private checkDataKindFormat(data: DataObject<GenericEntity>) {
@@ -691,7 +747,11 @@ export class EntityRepository extends DefaultCrudRepository<
     options?: Options,
   ): Promise<GenericEntity & GenericEntityRelations> {
     try {
-      const entity = await super.findById(id, filter, options);
+      // Ensure _kind is always included (cast to Filter for the helper)
+      const forcedFilter = this.forceKindInclusion(filter as Filter<GenericEntity>);
+      const typedFilter = forcedFilter as FilterExcludingWhere<GenericEntity>;
+
+      const entity = await super.findById(id, typedFilter, options);
 
       return await this.processLookup(entity, filter);
     } catch (error) {

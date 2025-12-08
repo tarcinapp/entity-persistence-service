@@ -1450,7 +1450,9 @@ describe('GET /entities/{entityId}/children', () => {
 
     // Verify non-selected fields are absent
     expect(childResult).to.not.have.property('description');
-    expect(childResult).to.not.have.property('_kind');
+
+    // _kind field cannot be excluded
+    expect(childResult).to.have.property('_kind');
 
     // Verify lookup fields selection
     expect(childResult.relatedAuthors).to.be.Array().and.have.length(1);

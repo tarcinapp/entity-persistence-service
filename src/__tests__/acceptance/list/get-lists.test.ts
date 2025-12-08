@@ -546,11 +546,13 @@ describe('GET /lists', () => {
 
     // Should not have other fields
     expect(list).to.not.have.property('_id');
-    expect(list).to.not.have.property('_kind');
+
+    // _kind field cannot be excluded
+    expect(list).to.have.property('_kind');
     expect(list).to.not.have.property('_ownerUsers');
     expect(list).to.not.have.property('_viewerUsers');
     expect(list).to.not.have.property('_validFromDateTime');
-  expect(list).to.not.have.property('_createdDateTime');
+    expect(list).to.not.have.property('_createdDateTime');
     expect(list).to.not.have.property('_lastUpdatedDateTime');
   });
 

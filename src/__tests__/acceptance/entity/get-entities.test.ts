@@ -1088,7 +1088,9 @@ describe('GET /entities', () => {
 
     // Should not have other fields
     expect(entity).to.not.have.property('_id');
-    expect(entity).to.not.have.property('_kind');
+
+    // _kind field cannot be excluded, so it will always be present
+    expect(entity).to.have.property('_kind');
     expect(entity).to.not.have.property('_ownerUsers');
     expect(entity).to.not.have.property('_viewerUsers');
     expect(entity).to.not.have.property('_validFromDateTime');

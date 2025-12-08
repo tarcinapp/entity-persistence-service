@@ -139,6 +139,53 @@ export class ListRepository extends DefaultCrudRepository<
     //this.registerInclusionResolver('_genericEntities', genericEntitiesInclusionResolver);
   }
 
+  private forceKindInclusion(filter: Filter<List> | undefined): Filter<List> | undefined {
+    if (!filter) {
+      return filter;
+    }
+
+    if (!filter.fields) {
+      return filter;
+    }
+
+    // If fields is an array, ensure _kind is included
+    if (Array.isArray(filter.fields)) {
+      if (!filter.fields.includes('_kind' as any)) {
+        return {
+          ...filter,
+          fields: [...filter.fields, '_kind' as any],
+        };
+      }
+      return filter;
+    }
+
+    // If fields is an object (inclusion/exclusion mode)
+    const fieldEntries = Object.entries(filter.fields);
+    const hasInclusionMode = fieldEntries.some(([_, value]) => value === true);
+
+    if (hasInclusionMode) {
+      // Inclusion mode: ensure _kind: true
+      return {
+        ...filter,
+        fields: {
+          ...filter.fields,
+          _kind: true,
+        } as any,
+      };
+    }
+
+    // Exclusion mode: remove _kind if it's set to false
+    const updatedFields = { ...filter.fields };
+    if ((updatedFields as any)._kind === false) {
+      delete (updatedFields as any)._kind;
+    }
+
+    return {
+      ...filter,
+      fields: updatedFields,
+    };
+  }
+
   private async processLookups(
     lists: (List & ListRelations)[],
     filter?: Filter<List>,
@@ -173,6 +220,9 @@ export class ListRepository extends DefaultCrudRepository<
       ),
     };
 
+    // Ensure _kind is always included
+    filter = this.forceKindInclusion(filter);
+
     this.loggingService.info('ListRepository.find - Modified filter:', {
       filter,
     });
@@ -187,8 +237,12 @@ export class ListRepository extends DefaultCrudRepository<
     filter?: FilterExcludingWhere<List>,
   ): Promise<List> {
     try {
+      // Ensure _kind is always included (cast to Filter for the helper)
+      const forcedFilter = this.forceKindInclusion(filter as Filter<List>);
+      const typedFilter = forcedFilter as FilterExcludingWhere<List>;
+
       // Call the LoopBack super method, which already throws an error if not found
-      const list = await super.findById(id, filter);
+      const list = await super.findById(id, typedFilter);
 
       // Return the successfully found entity
       return await this.processLookup(list, filter);
@@ -672,20 +726,26 @@ export class ListRepository extends DefaultCrudRepository<
   }
 
   private setCountFields(data: DataObject<List>) {
-    // Always set count fields based on their corresponding arrays
-    data._ownerUsersCount = _.isArray(data._ownerUsers)
-      ? data._ownerUsers.length
-      : 0;
-    data._ownerGroupsCount = _.isArray(data._ownerGroups)
-      ? data._ownerGroups.length
-      : 0;
-    data._viewerUsersCount = _.isArray(data._viewerUsers)
-      ? data._viewerUsers.length
-      : 0;
-    data._viewerGroupsCount = _.isArray(data._viewerGroups)
-      ? data._viewerGroups.length
-      : 0;
-    data._parentsCount = _.isArray(data._parents) ? data._parents.length : 0;
+    // Only update count fields if the related array is present in the data object
+    if (_.isArray(data._ownerUsers)) {
+      data._ownerUsersCount = data._ownerUsers.length;
+    }
+
+    if (_.isArray(data._ownerGroups)) {
+      data._ownerGroupsCount = data._ownerGroups.length;
+    }
+
+    if (_.isArray(data._viewerUsers)) {
+      data._viewerUsersCount = data._viewerUsers.length;
+    }
+
+    if (_.isArray(data._viewerGroups)) {
+      data._viewerGroupsCount = data._viewerGroups.length;
+    }
+
+    if (_.isArray(data._parents)) {
+      data._parentsCount = data._parents.length;
+    }
   }
 
   private checkDataKindFormat(data: DataObject<List>) {

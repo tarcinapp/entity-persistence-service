@@ -558,6 +558,21 @@ GET /lists?filter[fields][_id]=false&filter[fields][title]=false
 
 You can use this to reduce payload size or limit data exposure. See [2. Field Selection with Arbitrary Fields](#2-field-selection-with-arbitrary-fields) for the limitation with the arbitrary fields.
 
+**Mandatory `_kind` Field Inclusion**
+
+Regardless of the fields specified in `filter[fields]`, the `_kind` field will always be present in API responses for every resource. This is a core security and consistency constraint enforced by the service to ensure reliable identification of data variants, support schema validation, and enable gateway-based access control.
+
+This requirement applies not only to primary resources, but also to any related records included via `filter[include]` and to any referenced objects resolved through lookups (`filter[lookup]`). Even if `_kind` is explicitly excluded in the field selection, it will be included in the response for all such resources.
+
+**Examples:**
+
+```http
+GET /entities?filter[fields][name]=true&filter[fields][_kind]=false   # _kind will still be present
+GET /lists?filter[fields][title]=true&filter[fields][_kind]=false     # _kind will still be present
+GET /entities?filter[include][0][relation]=_reactions&filter[include][0][scope][fields][type]=true&filter[include][0][scope][fields][_kind]=false   # _kind will still be present in included reactions
+GET /entities?filter[lookup][0][prop]=supplierCompany&filter[lookup][0][scope][fields][name]=true&filter[lookup][0][scope][fields][_kind]=false   # _kind will still be present in looked-up supplierCompany
+```
+
 #### `filter[include]` — Related Models
 
 The `filter[include]` option allows you to include related records (such as reactions or contained entities) directly within the response of a primary resource. This can reduce roundtrips and simplify client-side logic.
