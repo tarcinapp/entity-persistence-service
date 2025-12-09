@@ -1,7 +1,7 @@
 // This is a list of fields that are not modifiable with POST/PUT/PATCH operations by the user
 export const UNMODIFIABLE_COMMON_FIELDS = Object.freeze([
   '_id',
-  '_slug',
+  '_kind',
   '_ownerUsersCount',
   '_ownerGroupsCount',
   '_viewerUsersCount',
