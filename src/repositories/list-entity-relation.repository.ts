@@ -719,11 +719,21 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
   }
 
   private sanitizeRecordType(data: DataObject<ListToEntityRelation>): DataObject<ListToEntityRelation> {
-    if ('_recordType' in data) {
-      const sanitized = { ...data };
+    // Strip virtual/response-only fields that should never be persisted
+    const sanitized = { ...data };
+
+    if ('_recordType' in sanitized) {
       delete sanitized._recordType;
-      return sanitized;
     }
-    return data;
+
+    if ('_fromMetadata' in sanitized) {
+      delete sanitized._fromMetadata;
+    }
+
+    if ('_toMetadata' in sanitized) {
+      delete sanitized._toMetadata;
+    }
+
+    return sanitized;
   }
 }

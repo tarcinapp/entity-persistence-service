@@ -29,6 +29,7 @@ export class ListToEntityRelation extends RecordsCommonBase {
   @property({
     type: 'object',
     description: 'Metadata for the source entity',
+    jsonSchema: { readOnly: true },
   })
   _fromMetadata: SourceAndTargetMetadata;
 
@@ -36,6 +37,7 @@ export class ListToEntityRelation extends RecordsCommonBase {
   @property({
     type: 'object',
     description: 'Metadata for the destination entity',
+    jsonSchema: { readOnly: true },
   })
   _toMetadata: SourceAndTargetMetadata;
 
