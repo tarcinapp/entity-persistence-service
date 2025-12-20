@@ -2,7 +2,7 @@ import { inject, injectable } from '@loopback/core';
 import { Request } from '@loopback/rest';
 import winston from 'winston';
 import { LoggingBindings } from '../config/logging.config';
-import {EnvConfigHelper} from '../extensions/config-helpers/env-config-helper';
+import { EnvConfigHelper } from '../extensions/config-helpers/env-config-helper';
 
 interface RequestContext {
   method: string;

@@ -68,7 +68,9 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     super(EntityReaction, dataSource);
   }
 
-  private forceKindInclusion(filter: Filter<EntityReaction> | undefined): Filter<EntityReaction> | undefined {
+  private forceKindInclusion(
+    filter: Filter<EntityReaction> | undefined,
+  ): Filter<EntityReaction> | undefined {
     if (!filter) {
       return filter;
     }
@@ -85,6 +87,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
           fields: [...filter.fields, '_kind' as any],
         };
       }
+
       return filter;
     }
 
@@ -203,7 +206,11 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     const result = await cursor.toArray();
 
     // Process lookups if needed
-    const reactionsWithLookup = await this.processLookups(result as EntityReaction[], filter);
+    const reactionsWithLookup = await this.processLookups(
+      result as EntityReaction[],
+      filter,
+    );
+
     return this.injectRecordTypeArray(reactionsWithLookup);
   }
 
@@ -303,7 +310,6 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
             name: 'NotFoundError',
             message: `Entity with id '${data._entityId}' could not be found.`,
             code: 'ENTITY-NOT-FOUND',
-            status: 404,
           });
         }
 
@@ -337,9 +343,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     // Strip virtual fields before persisting
     data = this.sanitizeRecordType(data);
 
-    data._kind =
-      data._kind ??
-      this.kindConfigReader.defaultEntityReactionKind;
+    data._kind = data._kind ?? this.kindConfigReader.defaultEntityReactionKind;
 
     const now = new Date().toISOString();
 
@@ -386,7 +390,6 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
           name: 'InvalidKindError',
           message: `Entity reaction kind cannot contain special or uppercase characters. Use '${slugKind}' instead.`,
           code: 'INVALID-ENTITY-REACTION-KIND',
-          status: 422,
         });
       }
     }
@@ -403,7 +406,6 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
         name: 'InvalidKindError',
         message: `Entity reaction kind '${data._kind}' is not valid. Use any of these values instead: ${validValues.join(', ')}`,
         code: 'INVALID-ENTITY-REACTION-KIND',
-        status: 422,
       });
     }
   }
@@ -453,7 +455,6 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
           name: 'NotFoundError',
           message: `Entity reaction with id '${id}' could not be found.`,
           code: 'ENTITY-REACTION-NOT-FOUND',
-          status: 404,
         });
       }
 
@@ -477,7 +478,6 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
             name: 'NotFoundError',
             message: "Entity reaction with id '" + id + "' could not be found.",
             code: 'ENTITY-REACTION-NOT-FOUND',
-            status: 404,
           });
         }
 
@@ -520,7 +520,6 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
         name: 'ImmutableKindError',
         message: `Entity reaction kind cannot be changed after creation. Current kind is '${existingReaction._kind}'.`,
         code: 'IMMUTABLE-ENTITY-REACTION-KIND',
-        status: 422,
       });
     }
 
@@ -534,7 +533,6 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
         name: 'ImmutableEntityIdError',
         message: `Entity reaction entity ID cannot be changed after creation. Current entity ID is '${existingReaction._entityId}'.`,
         code: 'IMMUTABLE-ENTITY-ID',
-        status: 422,
       });
     }
 
@@ -587,7 +585,6 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
         name: 'ImmutableKindError',
         message: 'Entity reaction kind cannot be changed after creation.',
         code: 'IMMUTABLE-ENTITY-REACTION-KIND',
-        status: 422,
       });
     }
 
@@ -598,7 +595,6 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
         name: 'ImmutableEntityIdError',
         message: 'Entity reaction entity ID cannot be changed after creation.',
         code: 'IMMUTABLE-ENTITY-ID',
-        status: 422,
       });
     }
 
@@ -705,7 +701,6 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
         name: 'ImmutableKindError',
         message: `Entity reaction kind cannot be changed after creation. Current kind is '${existingData._kind}'.`,
         code: 'IMMUTABLE-ENTITY-REACTION-KIND',
-        status: 422,
       });
     }
 
@@ -719,7 +714,6 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
         name: 'ImmutableEntityIdError',
         message: `Entity reaction entity ID cannot be changed after creation. Current entity ID is '${existingData._entityId}'.`,
         code: 'IMMUTABLE-ENTITY-ID',
-        status: 422,
       });
     }
 
@@ -856,12 +850,15 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
           name: 'NotFoundError',
           message: `Entity reaction with id '${id}' could not be found.`,
           code: 'ENTITY-REACTION-NOT-FOUND',
-          status: 404,
         });
       }
 
       // Process lookups if needed
-      const reactionWithLookup = await this.processLookup(result[0] as EntityReaction, filter);
+      const reactionWithLookup = await this.processLookup(
+        result[0] as EntityReaction,
+        filter,
+      );
+
       return this.injectRecordType(reactionWithLookup);
     } catch (error) {
       if (error.code === 'ENTITY-REACTION-NOT-FOUND') {
@@ -966,7 +963,9 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
   ): Promise<EntityReaction> {
     try {
       // Retrieve parent with _entityId
-      const parent = await this.findByIdRaw(parentId, { fields: { _entityId: true } });
+      const parent = await this.findByIdRaw(parentId, {
+        fields: { _entityId: true },
+      });
 
       // If parent not found, findByIdRaw will throw ENTITY-REACTION-NOT-FOUND
 
@@ -977,7 +976,6 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
           name: 'SourceRecordNotMatchError',
           message: `Source record _entityId does not match parent. Parent _entityId: '${parent._entityId}', child _entityId: '${reaction._entityId}'.`,
           code: 'SOURCE-RECORD-NOT-MATCH',
-          status: 422,
         });
       }
 
@@ -1019,21 +1017,29 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
   }
 
   private injectRecordType(reaction: EntityReaction): EntityReaction {
-    if (!reaction) return reaction;
+    if (!reaction) {
+      return reaction;
+    }
+
     (reaction as any)._recordType = 'entityReaction';
+
     return reaction;
   }
 
   private injectRecordTypeArray(reactions: EntityReaction[]): EntityReaction[] {
-    return reactions.map(reaction => this.injectRecordType(reaction));
+    return reactions.map((reaction) => this.injectRecordType(reaction));
   }
 
-  private sanitizeRecordType(data: DataObject<EntityReaction>): DataObject<EntityReaction> {
+  private sanitizeRecordType(
+    data: DataObject<EntityReaction>,
+  ): DataObject<EntityReaction> {
     if ('_recordType' in data) {
       const sanitized = { ...data };
       delete sanitized._recordType;
+
       return sanitized;
     }
+
     return data;
   }
 }

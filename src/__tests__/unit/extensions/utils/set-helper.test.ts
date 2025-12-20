@@ -184,7 +184,8 @@ describe('Utilities: SetHelper', () => {
 
         const nowIso = new Date('2024-01-15T10:00:00.000Z').toISOString();
         const startIso = new Date(
-          new Date('2024-01-15T10:00:00.000Z').getTime() - 2 * 24 * 60 * 60 * 1000,
+          new Date('2024-01-15T10:00:00.000Z').getTime() -
+            2 * 24 * 60 * 60 * 1000,
         ).toISOString();
 
         expect(filter.where).to.deepEqual({
@@ -194,8 +195,12 @@ describe('Utilities: SetHelper', () => {
           ],
         });
 
-        const expiredWithin = { _validUntilDateTime: '2024-01-14T10:00:00.000Z' };
-        const expiredOlder = { _validUntilDateTime: '2024-01-12T09:00:00.000Z' };
+        const expiredWithin = {
+          _validUntilDateTime: '2024-01-14T10:00:00.000Z',
+        };
+        const expiredOlder = {
+          _validUntilDateTime: '2024-01-12T09:00:00.000Z',
+        };
         const notExpired = { _validUntilDateTime: null };
 
         expect(FilterMatcher.matches(expiredWithin, filter.where)).to.be.true();
@@ -453,15 +458,17 @@ describe('Utilities: SetHelper', () => {
         });
 
         // Test with records: within last 24 hours, and outside window
-  const justCreated = { _createdDateTime: '2024-01-14T21:00:00.000Z' };
-  const createdToday = { _createdDateTime: '2024-01-14T02:00:00.000Z' };
+        const justCreated = { _createdDateTime: '2024-01-14T21:00:00.000Z' };
+        const createdToday = { _createdDateTime: '2024-01-14T02:00:00.000Z' };
         const createdYesterday = {
           _createdDateTime: '2024-01-13T20:00:00.000Z',
         };
 
         expect(FilterMatcher.matches(justCreated, filter.where)).to.be.true();
         expect(FilterMatcher.matches(createdToday, filter.where)).to.be.true();
-        expect(FilterMatcher.matches(createdYesterday, filter.where)).to.be.false();
+        expect(
+          FilterMatcher.matches(createdYesterday, filter.where),
+        ).to.be.false();
       } finally {
         clock.restore();
       }
@@ -486,7 +493,7 @@ describe('Utilities: SetHelper', () => {
         });
 
         // Test with records
-  const justCreated = { _createdDateTime: '2024-01-17T21:00:00.000Z' };
+        const justCreated = { _createdDateTime: '2024-01-17T21:00:00.000Z' };
         const createdThisWeek = {
           _createdDateTime: '2024-01-15T10:00:00.000Z',
         };
@@ -495,8 +502,12 @@ describe('Utilities: SetHelper', () => {
         };
 
         expect(FilterMatcher.matches(justCreated, filter.where)).to.be.true();
-        expect(FilterMatcher.matches(createdThisWeek, filter.where)).to.be.true();
-        expect(FilterMatcher.matches(createdLastWeek, filter.where)).to.be.false();
+        expect(
+          FilterMatcher.matches(createdThisWeek, filter.where),
+        ).to.be.true();
+        expect(
+          FilterMatcher.matches(createdLastWeek, filter.where),
+        ).to.be.false();
       } finally {
         clock.restore();
       }
@@ -521,7 +532,7 @@ describe('Utilities: SetHelper', () => {
         });
 
         // Test with records
-  const justCreated = { _createdDateTime: '2024-01-15T21:00:00.000Z' };
+        const justCreated = { _createdDateTime: '2024-01-15T21:00:00.000Z' };
         const createdThisMonth = {
           _createdDateTime: '2024-01-02T10:00:00.000Z',
         };
@@ -530,8 +541,12 @@ describe('Utilities: SetHelper', () => {
         };
 
         expect(FilterMatcher.matches(justCreated, filter.where)).to.be.true();
-        expect(FilterMatcher.matches(createdThisMonth, filter.where)).to.be.true();
-        expect(FilterMatcher.matches(createdLastMonth, filter.where)).to.be.false();
+        expect(
+          FilterMatcher.matches(createdThisMonth, filter.where),
+        ).to.be.true();
+        expect(
+          FilterMatcher.matches(createdLastMonth, filter.where),
+        ).to.be.false();
       } finally {
         clock.restore();
       }

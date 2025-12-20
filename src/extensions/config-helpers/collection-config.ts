@@ -21,7 +21,8 @@ export class CollectionConfig {
     this.collectionNames = {
       entity: env.COLLECTION_ENTITY ?? 'Entity',
       list: env.COLLECTION_LIST ?? 'List',
-      listEntityRelation: env.COLLECTION_LIST_ENTITY_REL ?? 'ListToEntityRelation',
+      listEntityRelation:
+        env.COLLECTION_LIST_ENTITY_REL ?? 'ListToEntityRelation',
       entityReactions: env.COLLECTION_ENTITY_REACTIONS ?? 'EntityReaction',
     };
   }

@@ -17,6 +17,7 @@ export class IdempotencyConfigurationReader {
 
   public isIdempotencyConfiguredForEntities(kind?: string) {
     const env = EnvConfigHelper.getInstance();
+
     return (
       env.IDEMPOTENCY_ENTITY !== undefined ||
       this.isIdempotencyConfiguredForKindForEntities(kind)
@@ -25,6 +26,7 @@ export class IdempotencyConfigurationReader {
 
   public isIdempotencyConfiguredForLists(kind?: string) {
     const env = EnvConfigHelper.getInstance();
+
     return (
       env.IDEMPOTENCY_LIST !== undefined ||
       this.isIdempotencyConfiguredForKindForLists(kind)
@@ -33,6 +35,7 @@ export class IdempotencyConfigurationReader {
 
   public isIdempotencyConfiguredForEntityReactions(kind?: string) {
     const env = EnvConfigHelper.getInstance();
+
     return (
       env.IDEMPOTENCY_ENTITY_REACTION !== undefined ||
       this.isIdempotencyConfiguredForKindForEntityReactions(kind)
@@ -41,6 +44,7 @@ export class IdempotencyConfigurationReader {
 
   public isIdempotencyConfiguredForListReactions(kind?: string) {
     const env = EnvConfigHelper.getInstance();
+
     return (
       env.IDEMPOTENCY_LIST_REACTION !== undefined ||
       this.isIdempotencyConfiguredForKindForListReactions(kind)
@@ -49,21 +53,29 @@ export class IdempotencyConfigurationReader {
 
   public isIdempotencyConfiguredForKindForEntities(kind?: string): boolean {
     const env = EnvConfigHelper.getInstance();
+
     return env.getIdempotencyEntityForKind(kind) !== undefined;
   }
 
   public isIdempotencyConfiguredForKindForLists(kind?: string): boolean {
     const env = EnvConfigHelper.getInstance();
+
     return env.getIdempotencyListForKind(kind) !== undefined;
   }
 
-  public isIdempotencyConfiguredForKindForEntityReactions(kind?: string): boolean {
+  public isIdempotencyConfiguredForKindForEntityReactions(
+    kind?: string,
+  ): boolean {
     const env = EnvConfigHelper.getInstance();
+
     return env.getIdempotencyEntityReactionForKind(kind) !== undefined;
   }
 
-  public isIdempotencyConfiguredForKindForListReactions(kind?: string): boolean {
+  public isIdempotencyConfiguredForKindForListReactions(
+    kind?: string,
+  ): boolean {
     const env = EnvConfigHelper.getInstance();
+
     return env.getIdempotencyListReactionForKind(kind) !== undefined;
   }
 
@@ -123,60 +135,72 @@ export class IdempotencyConfigurationReader {
   private getIdempotencyConfigForKindForEntities(kind?: string): string[] {
     const env = EnvConfigHelper.getInstance();
     const config = env.getIdempotencyEntityForKind(kind);
+
     return config ? config.split(',').map((fieldPath) => fieldPath.trim()) : [];
   }
 
   private getIdempotencyConfigForEntities(): string[] {
     const env = EnvConfigHelper.getInstance();
     const config = env.IDEMPOTENCY_ENTITY;
+
     return config ? config.split(',').map((fieldPath) => fieldPath.trim()) : [];
   }
 
   private getIdempotencyConfigForKindForLists(kind?: string): string[] {
     const env = EnvConfigHelper.getInstance();
     const config = env.getIdempotencyListForKind(kind);
+
     return config ? config.split(',').map((fieldPath) => fieldPath.trim()) : [];
   }
 
   private getIdempotencyConfigForLists(): string[] {
     const env = EnvConfigHelper.getInstance();
     const config = env.IDEMPOTENCY_LIST;
+
     return config ? config.split(',').map((fieldPath) => fieldPath.trim()) : [];
   }
 
   private getIdempotencyConfigForKindForListEntityRel(kind?: string): string[] {
     const env = EnvConfigHelper.getInstance();
     const config = env.getIdempotencyListEntityRelForKind(kind);
+
     return config ? config.split(',').map((fieldPath) => fieldPath.trim()) : [];
   }
 
   private getIdempotencyConfigForListEntityRel(): string[] {
     const env = EnvConfigHelper.getInstance();
     const config = env.IDEMPOTENCY_LIST_ENTITY_REL;
+
     return config ? config.split(',').map((fieldPath) => fieldPath.trim()) : [];
   }
 
-  private getIdempotencyConfigForKindForEntityReactions(kind?: string): string[] {
+  private getIdempotencyConfigForKindForEntityReactions(
+    kind?: string,
+  ): string[] {
     const env = EnvConfigHelper.getInstance();
     const config = env.getIdempotencyEntityReactionForKind(kind);
+
     return config ? config.split(',').map((fieldPath) => fieldPath.trim()) : [];
   }
 
   private getIdempotencyConfigForEntityReactions(): string[] {
     const env = EnvConfigHelper.getInstance();
     const config = env.IDEMPOTENCY_ENTITY_REACTION;
+
     return config ? config.split(',').map((fieldPath) => fieldPath.trim()) : [];
   }
 
   private getIdempotencyConfigForKindForListReactions(kind?: string): string[] {
     const env = EnvConfigHelper.getInstance();
     const config = env.getIdempotencyListReactionForKind(kind);
+
     return config ? config.split(',').map((fieldPath) => fieldPath.trim()) : [];
   }
 
   private getIdempotencyConfigForListReactions(): string[] {
     const env = EnvConfigHelper.getInstance();
     const config = env.IDEMPOTENCY_LIST_REACTION;
+
     return config ? config.split(',').map((fieldPath) => fieldPath.trim()) : [];
   }
 }

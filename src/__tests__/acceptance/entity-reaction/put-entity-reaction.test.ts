@@ -141,7 +141,6 @@ describe('PUT /entity-reactions/{id}', () => {
       'code',
       'IMMUTABLE-ENTITY-REACTION-KIND',
     );
-    expect(response.body.error).to.have.property('status', 422);
 
     // Verify _kind remains unchanged by getting the entity reaction
     const getResponse = await client
@@ -201,7 +200,6 @@ describe('PUT /entity-reactions/{id}', () => {
       `Entity reaction entity ID cannot be changed after creation. Current entity ID is '${entity1Id}'.`,
     );
     expect(response.body.error).to.have.property('code', 'IMMUTABLE-ENTITY-ID');
-    expect(response.body.error).to.have.property('status', 422);
 
     // Verify _entityId remains unchanged by getting the entity reaction
     const getResponse = await client

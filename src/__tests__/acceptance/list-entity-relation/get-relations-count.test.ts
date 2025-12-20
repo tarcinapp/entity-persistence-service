@@ -82,9 +82,7 @@ describe('GET /relations/count', () => {
     });
 
     // Get count of relations
-    const response = await client
-      .get('/relations/count')
-      .expect(200);
+    const response = await client.get('/relations/count').expect(200);
 
     expect(response.body).to.have.property('count', 2);
   });

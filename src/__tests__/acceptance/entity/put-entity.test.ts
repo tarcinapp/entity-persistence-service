@@ -121,7 +121,6 @@ describe('PUT /entities/{id}', () => {
       'code',
       'IMMUTABLE-ENTITY-KIND',
     );
-    expect(response.body.error).to.have.property('status', 422);
 
     // Verify _kind remains unchanged by getting the entity
     const getResponse = await client.get(`/entities/${entityId}`).expect(200);

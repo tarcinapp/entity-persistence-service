@@ -237,8 +237,15 @@ describe('GET /list-reactions/{id}/parents', () => {
       })
       .expect(200);
     expect(response.body).to.be.Array().and.have.length(1);
-    expect(response.body[0]).to.have.properties(['_id', '_kind', '_visibility']);
-    expect(response.body[0]).to.not.have.properties(['_ownerUsers', 'customField']);
+    expect(response.body[0]).to.have.properties([
+      '_id',
+      '_kind',
+      '_visibility',
+    ]);
+    expect(response.body[0]).to.not.have.properties([
+      '_ownerUsers',
+      'customField',
+    ]);
   });
 
   it('filter: by nationality', async () => {
@@ -790,7 +797,9 @@ describe('GET /list-reactions/{id}/parents', () => {
       .query(combinedFilterStr)
       .expect(200);
     expect(combinedResponse.body).to.be.Array().and.have.length(1);
-    expect(combinedResponse.body[0]._viewerGroups).to.containDeep([viewerGroup]);
+    expect(combinedResponse.body[0]._viewerGroups).to.containDeep([
+      viewerGroup,
+    ]);
   });
 
   it('field-selection: includes only specified fields', async () => {
@@ -824,7 +833,11 @@ describe('GET /list-reactions/{id}/parents', () => {
       })
       .expect(200);
     expect(response.body).to.be.Array().and.have.length(1);
-    expect(response.body[0]).to.have.properties(['_id', '_kind', '_visibility']);
+    expect(response.body[0]).to.have.properties([
+      '_id',
+      '_kind',
+      '_visibility',
+    ]);
     expect(response.body[0]).to.not.have.properties(['customField']);
   });
 
@@ -897,7 +910,9 @@ describe('GET /list-reactions/{id}/parents', () => {
   });
 
   it('lookup: resolves references in arbitrary fields with complex filters', async () => {
-    appWithClient = await setupApplication({ list_kinds: 'reading-list,author' });
+    appWithClient = await setupApplication({
+      list_kinds: 'reading-list,author',
+    });
     ({ client } = appWithClient);
     const now = new Date();
     const pastDate = new Date(now);
@@ -967,28 +982,9 @@ describe('GET /list-reactions/{id}/parents', () => {
     const response = await client
       .get(`/list-reactions/${nonExistentId}/parents`)
       .expect(404);
-    expect(response.body.error).to.have.property('status', 404);
+    expect(response.body.error).to.have.property(
+      'code',
+      'LIST-REACTION-NOT-FOUND',
+    );
   });
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

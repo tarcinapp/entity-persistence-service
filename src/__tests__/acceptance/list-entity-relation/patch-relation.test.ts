@@ -156,7 +156,6 @@ describe('PATCH /relations/{id}', () => {
       'code',
       'IMMUTABLE-RELATION-KIND',
     );
-    expect(response.body.error).to.have.property('status', 422);
 
     // Verify _kind remains unchanged by getting the relation
     const getResponse = await client

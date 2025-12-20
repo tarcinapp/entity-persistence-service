@@ -1,9 +1,9 @@
 import type { DefaultCrudRepository } from '@loopback/repository';
 import { Entity } from '@loopback/repository';
 import { expect, sinon } from '@loopback/testlab';
+import { EnvConfigHelper } from '../../../extensions/config-helpers/env-config-helper';
 import type { LoggingService } from '../../../services/logging.service';
 import { RecordLimitCheckerService } from '../../../services/record-limit-checker.service';
-import { EnvConfigHelper } from '../../../extensions/config-helpers/env-config-helper';
 
 describe('Utilities: RecordLimitChecker', () => {
   let service: RecordLimitCheckerService;
@@ -443,6 +443,7 @@ describe('Utilities: RecordLimitChecker', () => {
       let capturedWhere: any;
       mockRepository.count = async (where) => {
         capturedWhere = where;
+
         // Simulate count after excluding the existing record
         return { count: 9 };
       };
@@ -483,6 +484,7 @@ describe('Utilities: RecordLimitChecker', () => {
         let capturedWhere: any;
         mockRepository.count = async (where) => {
           capturedWhere = where;
+
           return { count: 0 };
         };
 
@@ -500,7 +502,9 @@ describe('Utilities: RecordLimitChecker', () => {
         const createdClause = capturedWhere.and[capturedWhere.and.length - 1];
         expect(createdClause).to.have.property('_createdDateTime');
         // Start date should be approximately now - 1 day
-        const startIso = new Date(systemTime - 24 * 60 * 60 * 1000).toISOString();
+        const startIso = new Date(
+          systemTime - 24 * 60 * 60 * 1000,
+        ).toISOString();
         expect(createdClause._createdDateTime.gt).to.equal(startIso);
       } finally {
         clock.restore();
@@ -526,11 +530,14 @@ describe('Utilities: RecordLimitChecker', () => {
         let called = false;
         mockRepository.count = async () => {
           called = true;
+
           return { count: 0 };
         };
 
         // Create a record whose created date is 40 days ago (outside 30d window)
-        const oldDate = new Date(systemTime - 40 * 24 * 60 * 60 * 1000).toISOString();
+        const oldDate = new Date(
+          systemTime - 40 * 24 * 60 * 60 * 1000,
+        ).toISOString();
 
         await expect(
           service.checkLimits(
@@ -561,7 +568,13 @@ describe('Utilities: RecordLimitChecker', () => {
       mockRepository.count = async (where) => {
         capturedWhere = where;
         // If exclusion was applied, simulate zero matches
-        const hasExclusion = !!(where && (where as any).and && (where as any).and.some((w: any) => w && w._id && w._id.neq === 'existing-id'));
+        const hasExclusion = !!(
+          where &&
+          (where as any).and?.some(
+            (w: any) => w?._id && w._id.neq === 'existing-id',
+          )
+        );
+
         return { count: hasExclusion ? 0 : 1 };
       };
 

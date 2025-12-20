@@ -246,7 +246,6 @@ export class LookupConstraintService {
           name: 'InvalidLookupReferenceError',
           message: `Invalid reference format in property '${constraint.propertyPath}'. Expected format: 'tapp://localhost/${this.getReferencePath(constraint.record)}/{id}'`,
           code: `${this.getErrorCodePrefix(recordType)}-INVALID-LOOKUP-REFERENCE`,
-          status: 422,
         });
       }
     }
@@ -283,7 +282,6 @@ export class LookupConstraintService {
           name: 'InvalidLookupConstraintError',
           message: `One or more lookup references in property '${constraint.propertyPath}' do not meet the constraint: expected targetKind='${constraint.targetKind}'.`,
           code: `${this.getErrorCodePrefix(recordType)}-INVALID-LOOKUP-KIND`,
-          status: 422,
         });
       }
 
@@ -301,7 +299,6 @@ export class LookupConstraintService {
               name: 'InvalidParentEntityIdError',
               message: `One or more parent reactions in property '_parents' do not have matching entity ID. Expected entity ID: '${itemEntityId}'.`,
               code: `${this.getErrorCodePrefix(recordType)}-INVALID-PARENT-ENTITY-ID`,
-              status: 422,
             });
           }
         } else if (recordType === 'list-reaction') {
@@ -316,7 +313,6 @@ export class LookupConstraintService {
               name: 'InvalidParentListIdError',
               message: `One or more parent reactions in property '_parents' do not have matching list ID. Expected list ID: '${itemListId}'.`,
               code: `${this.getErrorCodePrefix(recordType)}-INVALID-PARENT-LIST-ID`,
-              status: 422,
             });
           }
         }

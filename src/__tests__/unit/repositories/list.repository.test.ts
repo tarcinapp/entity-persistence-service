@@ -360,7 +360,6 @@ describe('ListRepository', () => {
             name: 'UniquenessViolationError',
             message: 'List already exists',
             code: 'LIST-UNIQUENESS-VIOLATION',
-            status: 409,
             details: [
               new SingleError({
                 code: 'LIST-UNIQUENESS-VIOLATION',
@@ -538,7 +537,6 @@ describe('ListRepository', () => {
             name: 'UniquenessViolationError',
             message: 'List already exists',
             code: 'LIST-UNIQUENESS-VIOLATION',
-            status: 409,
             details: [
               new SingleError({
                 code: 'LIST-UNIQUENESS-VIOLATION',
@@ -865,7 +863,6 @@ describe('ListRepository', () => {
             name: 'UniquenessViolationError',
             message: 'List already exists',
             code: 'LIST-UNIQUENESS-VIOLATION',
-            status: 409,
             details: [
               new SingleError({
                 code: 'LIST-UNIQUENESS-VIOLATION',

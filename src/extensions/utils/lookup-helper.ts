@@ -467,7 +467,9 @@ export class LookupHelper {
       } else {
         // If we only have exclusion fields, remove _id and _recordType from exclusions if present
         adjustedFields = Object.fromEntries(
-          Object.entries(fields).filter(([key]) => key !== '_id' && key !== '_recordType'),
+          Object.entries(fields).filter(
+            ([key]) => key !== '_id' && key !== '_recordType',
+          ),
         );
       }
     }
@@ -515,7 +517,9 @@ export class LookupHelper {
       } else {
         // If we only have exclusion fields, remove _id and _recordType from exclusions if present
         adjustedFields = Object.fromEntries(
-          Object.entries(fields).filter(([key]) => key !== '_id' && key !== '_recordType'),
+          Object.entries(fields).filter(
+            ([key]) => key !== '_id' && key !== '_recordType',
+          ),
         );
       }
     }
@@ -563,7 +567,9 @@ export class LookupHelper {
       } else {
         // If we only have exclusion fields, remove _id and _recordType from exclusions if present
         adjustedFields = Object.fromEntries(
-          Object.entries(fields).filter(([key]) => key !== '_id' && key !== '_recordType'),
+          Object.entries(fields).filter(
+            ([key]) => key !== '_id' && key !== '_recordType',
+          ),
         );
       }
     }
@@ -610,7 +616,9 @@ export class LookupHelper {
       } else {
         // If we only have exclusion fields, remove _id and _recordType from exclusions if present
         adjustedFields = Object.fromEntries(
-          Object.entries(fields).filter(([key]) => key !== '_id' && key !== '_recordType'),
+          Object.entries(fields).filter(
+            ([key]) => key !== '_id' && key !== '_recordType',
+          ),
         );
       }
     }

@@ -273,7 +273,8 @@ class SetToFilterTransformer {
     // support dynamic duration sets like:
     //   createds-10min, expireds-30d, actives-7d, pendings-2w
     // units supported (with synonyms): min|m (minutes), d|day (days), w (weeks), mon|mo (months)
-    const durationRegex = /^(createds|actives|pendings|expireds)-(\d+)(min|m|d|day|w|mon|mo)$/i;
+    const durationRegex =
+      /^(createds|actives|pendings|expireds)-(\d+)(min|m|d|day|w|mon|mo)$/i;
     const dynamicMatch = normalized.match(durationRegex);
 
     if (dynamicMatch) {
@@ -473,7 +474,11 @@ class SetToFilterTransformer {
     return {
       and: [
         { _validUntilDateTime: { neq: null } },
-        { _validUntilDateTime: { between: [start.toISOString(), now.toISOString()] } },
+        {
+          _validUntilDateTime: {
+            between: [start.toISOString(), now.toISOString()],
+          },
+        },
       ],
     };
   }
@@ -553,8 +558,14 @@ class SetToFilterTransformer {
      * we returning all records matching either of them
      */
     // Ensure userIds and groupIds are strings before checking length
-    const userIdsStr = typeof setValue.userIds === 'string' ? setValue.userIds : String(setValue.userIds || '');
-    const groupIdsStr = typeof setValue.groupIds === 'string' ? setValue.groupIds : String(setValue.groupIds || '');
+    const userIdsStr =
+      typeof setValue.userIds === 'string'
+        ? setValue.userIds
+        : String(setValue.userIds || '');
+    const groupIdsStr =
+      typeof setValue.groupIds === 'string'
+        ? setValue.groupIds
+        : String(setValue.groupIds || '');
     const userIdsGiven = userIdsStr.length > 0;
     const groupIdsGiven = groupIdsStr.length > 0;
 
@@ -611,8 +622,14 @@ class SetToFilterTransformer {
      * we returning all records matching either of them
      */
     // Ensure userIds and groupIds are strings before checking length
-    const userIdsStr = typeof setValue.userIds === 'string' ? setValue.userIds : String(setValue.userIds || '');
-    const groupIdsStr = typeof setValue.groupIds === 'string' ? setValue.groupIds : String(setValue.groupIds || '');
+    const userIdsStr =
+      typeof setValue.userIds === 'string'
+        ? setValue.userIds
+        : String(setValue.userIds || '');
+    const groupIdsStr =
+      typeof setValue.groupIds === 'string'
+        ? setValue.groupIds
+        : String(setValue.groupIds || '');
     const userIdsGiven = userIdsStr.length > 0;
     const groupIdsGiven = groupIdsStr.length > 0;
 
@@ -757,6 +774,7 @@ class SetToFilterTransformer {
       case 'mon': {
         const start = new Date(now.getTime());
         start.setUTCMonth(start.getUTCMonth() - amount);
+
         return start;
       }
       default:

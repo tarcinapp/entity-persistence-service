@@ -992,11 +992,11 @@ describe('GET /list-reactions', () => {
     ({ client } = appWithClient);
 
     const now = new Date();
-  // Use explicit, unambiguous offsets to avoid month-length edge cases.
-  const oldDate = new Date(now.getTime() - 40 * 24 * 60 * 60 * 1000); // 40 days ago
-  const recentDate = new Date(now.getTime() - 3 * 60 * 60 * 1000); // 3 hours ago
-  const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000); // 2 days ago
-  const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    // Use explicit, unambiguous offsets to avoid month-length edge cases.
+    const oldDate = new Date(now.getTime() - 40 * 24 * 60 * 60 * 1000); // 40 days ago
+    const recentDate = new Date(now.getTime() - 3 * 60 * 60 * 1000); // 3 hours ago
+    const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000); // 2 days ago
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
 
     // Create test lists first
     const list1Id = await createTestList(client, {
@@ -1010,9 +1010,9 @@ describe('GET /list-reactions', () => {
       _listId: list1Id,
       _kind: 'like',
       sentiment: 'positive',
-  _createdDateTime: oldDate.toISOString(),
-  _validFromDateTime: oldDate.toISOString(),
-  _validUntilDateTime: oldDate.toISOString(),
+      _createdDateTime: oldDate.toISOString(),
+      _validFromDateTime: oldDate.toISOString(),
+      _validUntilDateTime: oldDate.toISOString(),
     });
 
     // Create a recent inactive positive reaction (this month, and expired)
@@ -1021,8 +1021,8 @@ describe('GET /list-reactions', () => {
       _listId: list1Id,
       _kind: 'like',
       sentiment: 'positive',
-  _createdDateTime: recentDate.toISOString(),
-  _validFromDateTime: recentDate.toISOString(),
+      _createdDateTime: recentDate.toISOString(),
+      _validFromDateTime: recentDate.toISOString(),
       _validUntilDateTime: oneHourAgo.toISOString(),
     });
 
@@ -1032,14 +1032,14 @@ describe('GET /list-reactions', () => {
       _listId: list1Id,
       _kind: 'dislike',
       sentiment: 'negative',
-  _createdDateTime: twoDaysAgo.toISOString(),
-  _validFromDateTime: twoDaysAgo.toISOString(),
+      _createdDateTime: twoDaysAgo.toISOString(),
+      _validFromDateTime: twoDaysAgo.toISOString(),
       _validUntilDateTime: oneHourAgo.toISOString(),
     });
 
     // Get inactive reactions created within the last 30 days that have 'positive' sentiment
     const filterStr =
-  'set[and][0][expireds]=true&set[and][1][createds-30d]=true&filter[where][sentiment]=positive';
+      'set[and][0][expireds]=true&set[and][1][createds-30d]=true&filter[where][sentiment]=positive';
     const response = await client
       .get('/list-reactions')
       .query(filterStr)
@@ -1052,7 +1052,7 @@ describe('GET /list-reactions', () => {
     expect(response.body[0].sentiment).to.equal('positive');
 
     // Verify it was created within the last 30 days
-  const createdDate = new Date(response.body[0]._createdDateTime);
+    const createdDate = new Date(response.body[0]._createdDateTime);
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     expect(createdDate.getTime()).to.be.greaterThan(thirtyDaysAgo.getTime());
 
@@ -1121,8 +1121,8 @@ describe('GET /list-reactions', () => {
       _validUntilDateTime: null,
     });
 
-  // Get inactive reactions using set[expireds]
-  const filterStr = 'set[expireds]=true';
+    // Get inactive reactions using set[expireds]
+    const filterStr = 'set[expireds]=true';
     const response = await client
       .get('/list-reactions')
       .query(filterStr)
@@ -1308,7 +1308,9 @@ describe('GET /list-reactions', () => {
     expect(response.body).to.be.Array().and.have.length(2);
 
     // Find the child reaction in the response
-    const child = response.body.find((r: ListReaction) => r._name === 'Child Reaction');
+    const child = response.body.find(
+      (r: ListReaction) => r._name === 'Child Reaction',
+    );
     expect(child).to.not.be.undefined();
     expect(child.relatedReaction).to.be.an.Object();
     expect(child.relatedReaction._id).to.equal(parentReactionId);
@@ -1371,7 +1373,9 @@ describe('GET /list-reactions', () => {
     expect(response.body).to.be.Array().and.have.length(3);
 
     // Find the child reaction in the response
-    const child = response.body.find((r: ListReaction) => r._name === 'Child Reaction');
+    const child = response.body.find(
+      (r: ListReaction) => r._name === 'Child Reaction',
+    );
     expect(child).to.not.be.undefined();
     expect(child.nested.parent).to.be.an.Object();
     expect(child.nested.parent._id).to.equal(parentId);
@@ -1407,7 +1411,9 @@ describe('GET /list-reactions', () => {
       .query(filterStr)
       .expect(200);
     expect(response.body).to.be.Array().and.have.length(2);
-    const child = response.body.find((r: ListReaction) => r._name === 'Child Reaction');
+    const child = response.body.find(
+      (r: ListReaction) => r._name === 'Child Reaction',
+    );
     expect(child.nested.related).to.be.an.Object();
     expect(child.nested.related._id).to.equal(parentId);
     expect(child.nested.related._name).to.equal('Parent Reaction');
@@ -1443,7 +1449,9 @@ describe('GET /list-reactions', () => {
       .query(filterStr)
       .expect(200);
     expect(response.body).to.be.Array().and.have.length(2);
-    const child = response.body.find((r: ListReaction) => r._name === 'Child Reaction');
+    const child = response.body.find(
+      (r: ListReaction) => r._name === 'Child Reaction',
+    );
     expect(child.relatedReaction).to.be.an.Object();
     expect(child.relatedReaction._name).to.equal('Parent Reaction');
     expect(child.relatedReaction.sentiment).to.equal('positive');
@@ -1483,7 +1491,9 @@ describe('GET /list-reactions', () => {
       .query(filterStr)
       .expect(200);
     expect(response.body).to.be.Array().and.have.length(3);
-    const child = response.body.find((r: ListReaction) => r._name === 'Child Reaction');
+    const child = response.body.find(
+      (r: ListReaction) => r._name === 'Child Reaction',
+    );
     expect(child.relatedReactions).to.be.an.Array().and.have.length(2);
     const ids = child.relatedReactions.map((r: any) => r._id);
     expect(ids).to.containEql(parent1Id);
@@ -1493,7 +1503,10 @@ describe('GET /list-reactions', () => {
   it('lookup: applies skip and limit in scope when looking up array references', async () => {
     appWithClient = await setupApplication({ list_kinds: 'reading-list' });
     ({ client } = appWithClient);
-    const listId = await createTestList(client, { _name: 'List 1', _kind: 'reading-list' });
+    const listId = await createTestList(client, {
+      _name: 'List 1',
+      _kind: 'reading-list',
+    });
     const ids = [];
     for (let i = 1; i <= 4; i++) {
       ids.push(
@@ -1509,7 +1522,9 @@ describe('GET /list-reactions', () => {
       _name: 'Child Reaction',
       _listId: listId,
       _kind: 'like',
-      relatedReactions: ids.map((id) => `tapp://localhost/list-reactions/${id}`),
+      relatedReactions: ids.map(
+        (id) => `tapp://localhost/list-reactions/${id}`,
+      ),
     });
     const filterStr =
       'filter[lookup][0][prop]=relatedReactions&' +
@@ -1521,7 +1536,9 @@ describe('GET /list-reactions', () => {
       .query(filterStr)
       .expect(200);
     expect(response.body).to.be.Array().and.have.length(5);
-    const child = response.body.find((r: ListReaction) => r._name === 'Child Reaction');
+    const child = response.body.find(
+      (r: ListReaction) => r._name === 'Child Reaction',
+    );
     expect(child.relatedReactions).to.be.an.Array().and.have.length(2);
     // After ordering by name ASC: Parent 1, Parent 2, Parent 3, Parent 4
     // After skip=1: Parent 2, Parent 3
@@ -1532,9 +1549,20 @@ describe('GET /list-reactions', () => {
   it('lookup: handles invalid references and not-found list-reactions with skip and limit', async () => {
     appWithClient = await setupApplication({ list_kinds: 'reading-list' });
     ({ client } = appWithClient);
-    const listId = await createTestList(client, { _name: 'List 1', _kind: 'reading-list' });
-    const parent1Id = await createTestListReaction(client, { _name: 'Parent 1', _listId: listId, _kind: 'like' });
-    const parent2Id = await createTestListReaction(client, { _name: 'Parent 2', _listId: listId, _kind: 'like' });
+    const listId = await createTestList(client, {
+      _name: 'List 1',
+      _kind: 'reading-list',
+    });
+    const parent1Id = await createTestListReaction(client, {
+      _name: 'Parent 1',
+      _listId: listId,
+      _kind: 'like',
+    });
+    const parent2Id = await createTestListReaction(client, {
+      _name: 'Parent 2',
+      _listId: listId,
+      _kind: 'like',
+    });
     await createTestListReaction(client, {
       _name: 'Child Reaction',
       _listId: listId,
@@ -1557,7 +1585,9 @@ describe('GET /list-reactions', () => {
       .query(filterStr)
       .expect(200);
     expect(response.body).to.be.Array().and.have.length(3);
-    const child = response.body.find((r: ListReaction) => r._name === 'Child Reaction');
+    const child = response.body.find(
+      (r: ListReaction) => r._name === 'Child Reaction',
+    );
     expect(child.relatedReactions).to.be.an.Array().and.have.length(1);
     expect(child.relatedReactions[0]._id).to.equal(parent2Id);
     expect(child.relatedReactions[0]._name).to.equal('Parent 2');
@@ -1566,7 +1596,10 @@ describe('GET /list-reactions', () => {
   it('lookup: handles not-found list-reactions with skip and limit', async () => {
     appWithClient = await setupApplication({ list_kinds: 'reading-list' });
     ({ client } = appWithClient);
-    const listId = await createTestList(client, { _name: 'List 1', _kind: 'reading-list' });
+    const listId = await createTestList(client, {
+      _name: 'List 1',
+      _kind: 'reading-list',
+    });
     await createTestListReaction(client, {
       _name: 'Child Reaction',
       _listId: listId,
@@ -1586,42 +1619,9 @@ describe('GET /list-reactions', () => {
       .query(filterStr)
       .expect(200);
     expect(response.body).to.be.Array().and.have.length(1);
-    const child = response.body.find((r: ListReaction) => r._name === 'Child Reaction');
+    const child = response.body.find(
+      (r: ListReaction) => r._name === 'Child Reaction',
+    );
     expect(child.relatedReactions).to.be.Array().and.have.length(0);
   });
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

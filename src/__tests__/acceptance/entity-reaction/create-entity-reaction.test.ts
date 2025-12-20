@@ -125,8 +125,8 @@ describe('POST /entity-reactions', () => {
       statusCode: 422,
       name: 'InvalidKindError',
       code: 'INVALID-ENTITY-REACTION-KIND',
-      status: 422,
     });
+    expect(errorResponse.body.error.requestId ?? '').to.match(/.+/);
   });
 
   it('rejects duplicate entity reaction based on uniqueness configuration', async () => {
@@ -173,7 +173,6 @@ describe('POST /entity-reactions', () => {
       statusCode: 409,
       name: 'UniquenessViolationError',
       code: 'ENTITYREACTION-UNIQUENESS-VIOLATION',
-      status: 409,
     });
   });
 
@@ -223,7 +222,6 @@ describe('POST /entity-reactions', () => {
       statusCode: 409,
       name: 'UniquenessViolationError',
       code: 'ENTITYREACTION-UNIQUENESS-VIOLATION',
-      status: 409,
     });
   });
 
@@ -321,7 +319,6 @@ describe('POST /entity-reactions', () => {
       statusCode: 409,
       name: 'UniquenessViolationError',
       code: 'ENTITYREACTION-UNIQUENESS-VIOLATION',
-      status: 409,
     });
   });
 
@@ -381,7 +378,6 @@ describe('POST /entity-reactions', () => {
       statusCode: 409,
       name: 'UniquenessViolationError',
       code: 'ENTITYREACTION-UNIQUENESS-VIOLATION',
-      status: 409,
     });
   });
 
@@ -649,7 +645,6 @@ describe('POST /entity-reactions', () => {
       statusCode: 429,
       name: 'LimitExceededError',
       code: 'ENTITYREACTION-LIMIT-EXCEEDED',
-      status: 429,
     });
   });
 
@@ -685,7 +680,6 @@ describe('POST /entity-reactions', () => {
       statusCode: 429,
       name: 'LimitExceededError',
       code: 'ENTITYREACTION-LIMIT-EXCEEDED',
-      status: 429,
     });
   });
 
@@ -754,7 +748,6 @@ describe('POST /entity-reactions', () => {
       statusCode: 429,
       name: 'LimitExceededError',
       code: 'ENTITYREACTION-LIMIT-EXCEEDED',
-      status: 429,
     });
   });
 
@@ -813,7 +806,6 @@ describe('POST /entity-reactions', () => {
       statusCode: 429,
       name: 'LimitExceededError',
       code: 'ENTITYREACTION-LIMIT-EXCEEDED',
-      status: 429,
     });
   });
 
@@ -899,7 +891,6 @@ describe('POST /entity-reactions', () => {
       statusCode: 429,
       name: 'LimitExceededError',
       code: 'ENTITYREACTION-LIMIT-EXCEEDED',
-      status: 429,
     });
   });
 
@@ -961,7 +952,6 @@ describe('POST /entity-reactions', () => {
       statusCode: 429,
       name: 'LimitExceededError',
       code: 'ENTITYREACTION-LIMIT-EXCEEDED',
-      status: 429,
     });
   });
 
@@ -1159,7 +1149,6 @@ describe('POST /entity-reactions', () => {
       statusCode: 404,
       name: 'NotFoundError',
       code: 'ENTITY-NOT-FOUND',
-      status: 404,
     });
   });
 
@@ -1196,7 +1185,6 @@ describe('POST /entity-reactions', () => {
         statusCode: 422,
         name: 'InvalidLookupReferenceError',
         code: 'ENTITY-REACTION-INVALID-LOOKUP-REFERENCE',
-        status: 422,
       });
     });
 
@@ -1232,7 +1220,6 @@ describe('POST /entity-reactions', () => {
         statusCode: 422,
         name: 'InvalidLookupReferenceError',
         code: 'ENTITY-REACTION-INVALID-LOOKUP-REFERENCE',
-        status: 422,
       });
     });
 
@@ -1274,7 +1261,6 @@ describe('POST /entity-reactions', () => {
         statusCode: 422,
         name: 'InvalidLookupConstraintError',
         code: 'ENTITY-REACTION-INVALID-LOOKUP-KIND',
-        status: 422,
       });
     });
 
@@ -1398,7 +1384,6 @@ describe('POST /entity-reactions', () => {
         statusCode: 422,
         name: 'InvalidLookupReferenceError',
         code: 'ENTITY-REACTION-INVALID-LOOKUP-REFERENCE',
-        status: 422,
       });
     });
 
@@ -1438,7 +1423,6 @@ describe('POST /entity-reactions', () => {
         statusCode: 422,
         name: 'InvalidLookupConstraintError',
         code: 'ENTITY-REACTION-INVALID-LOOKUP-KIND',
-        status: 422,
       });
     });
 

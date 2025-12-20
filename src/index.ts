@@ -37,7 +37,10 @@ async function setupInMemoryMongoDB() {
   // Check if we're in production or if MongoDB config is provided
   const hasMongoConfig = !!(
     env.MONGODB_URL ??
-    (env.MONGODB_HOST && env.MONGODB_PORT && env.MONGODB_USER && env.MONGODB_PASSWORD)
+    (env.MONGODB_HOST &&
+      env.MONGODB_PORT &&
+      env.MONGODB_USER &&
+      env.MONGODB_PASSWORD)
   );
 
   if (env.NODE_ENV !== 'production' && !hasMongoConfig) {
@@ -47,11 +50,11 @@ async function setupInMemoryMongoDB() {
     const uri = mongod.getUri();
 
     // Set MongoDB environment variables
-  // Set via EnvConfigHelper and also set process.env for compatibility
-  env.set('mongodb_url', uri);
-  env.set('mongodb_database', 'memory-db');
-  process.env['mongodb_url'] = uri;
-  process.env['mongodb_database'] = 'memory-db';
+    // Set via EnvConfigHelper and also set process.env for compatibility
+    env.set('mongodb_url', uri);
+    env.set('mongodb_database', 'memory-db');
+    process.env['mongodb_url'] = uri;
+    process.env['mongodb_database'] = 'memory-db';
   }
 }
 

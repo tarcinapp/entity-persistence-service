@@ -213,12 +213,17 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
     return entitiesRepo.deleteAll(where, options);
   }
 
-  private injectRecordType<T extends GenericEntity | GenericEntityWithRelations>(entity: T): T {
+  private injectRecordType<
+    T extends GenericEntity | GenericEntityWithRelations,
+  >(entity: T): T {
     (entity as any)._recordType = 'entity';
+
     return entity;
   }
 
-  private injectRecordTypeArray<T extends GenericEntity | GenericEntityWithRelations>(entities: T[]): T[] {
-    return entities.map(entity => this.injectRecordType(entity));
+  private injectRecordTypeArray<
+    T extends GenericEntity | GenericEntityWithRelations,
+  >(entities: T[]): T[] {
+    return entities.map((entity) => this.injectRecordType(entity));
   }
 }

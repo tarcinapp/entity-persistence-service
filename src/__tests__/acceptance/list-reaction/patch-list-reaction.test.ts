@@ -133,7 +133,6 @@ describe('PATCH /list-reactions/{id}', () => {
       'code',
       'IMMUTABLE-LIST-REACTION-KIND',
     );
-    expect(response.body.error).to.have.property('status', 422);
 
     // Verify _kind remains unchanged by getting the list reaction
     const getResponse = await client
@@ -188,7 +187,6 @@ describe('PATCH /list-reactions/{id}', () => {
       `List reaction list ID cannot be changed after creation. Current list ID is '${list1Id}'.`,
     );
     expect(response.body.error).to.have.property('code', 'IMMUTABLE-LIST-ID');
-    expect(response.body.error).to.have.property('status', 422);
 
     // Verify _listId remains unchanged by getting the list reaction
     const getResponse = await client

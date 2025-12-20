@@ -1,9 +1,9 @@
 /**
  * This loader reads environment variables from a file specified in ENV_FILE
  * and loads them into process.env BEFORE any other modules are loaded.
- * 
+ *
  * Usage:
- *   node -r ./load-env.js -e "require('./dist/index')" 
+ *   node -r ./load-env.js -e "require('./dist/index')"
  *   (with ENV_FILE environment variable set)
  */
 
@@ -12,7 +12,7 @@ const path = require('path');
 
 if (process.env.ENV_FILE) {
   const envFile = process.env.ENV_FILE;
-  
+
   if (!fs.existsSync(envFile)) {
     console.error(`Error: Environment file '${envFile}' not found`);
     process.exit(1);
@@ -36,8 +36,10 @@ if (process.env.ENV_FILE) {
         let value = match[2].trim();
 
         // Remove quotes if present
-        if ((value.startsWith('"') && value.endsWith('"')) ||
-            (value.startsWith("'") && value.endsWith("'"))) {
+        if (
+          (value.startsWith('"') && value.endsWith('"')) ||
+          (value.startsWith("'") && value.endsWith("'"))
+        ) {
           value = value.slice(1, -1);
         }
 
@@ -47,7 +49,10 @@ if (process.env.ENV_FILE) {
 
     console.log(`✓ Loaded environment variables from: ${envFile}`);
   } catch (error) {
-    console.error(`Error reading environment file '${envFile}':`, error.message);
+    console.error(
+      `Error reading environment file '${envFile}':`,
+      error.message,
+    );
     process.exit(1);
   }
 }

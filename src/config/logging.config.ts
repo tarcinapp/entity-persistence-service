@@ -1,7 +1,7 @@
 import type { Logger } from 'winston';
 import { format, createLogger, transports } from 'winston';
-import type { LoggingConfig } from '../types/logging.types';
 import { EnvConfigHelper } from '../extensions/config-helpers/env-config-helper';
+import type { LoggingConfig } from '../types/logging.types';
 
 export const LoggingBindings = {
   LOGGER: 'logging.logger',

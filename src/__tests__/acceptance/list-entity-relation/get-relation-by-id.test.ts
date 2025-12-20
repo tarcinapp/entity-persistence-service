@@ -76,9 +76,7 @@ describe('GET /relations/{id}', () => {
     const relationId = relationResponse.body._id;
 
     // Get relation by id
-    const response = await client
-      .get(`/relations/${relationId}`)
-      .expect(200);
+    const response = await client.get(`/relations/${relationId}`).expect(200);
 
     // Verify response
     expect(response.body).to.have.property('_id', relationId);
@@ -90,4 +88,4 @@ describe('GET /relations/{id}', () => {
     expect(response.body).to.have.property('_createdDateTime');
     expect(response.body).to.have.property('_lastUpdatedDateTime');
   });
-}); 
+});

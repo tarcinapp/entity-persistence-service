@@ -118,7 +118,6 @@ describe('PUT /lists/{id}', () => {
       'List kind cannot be changed after creation.',
     );
     expect(response.body.error).to.have.property('code', 'IMMUTABLE-LIST-KIND');
-    expect(response.body.error).to.have.property('status', 422);
 
     // Verify _kind remains unchanged by getting the list
     const getResponse = await client.get(`/lists/${listId}`).expect(200);

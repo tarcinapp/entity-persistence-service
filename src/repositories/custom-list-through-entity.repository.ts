@@ -120,10 +120,13 @@ export class CustomListThroughEntityRepository extends DefaultCrudRepository<
 
   private injectRecordType<T extends List | ListWithRelations>(list: T): T {
     (list as any)._recordType = 'list';
+
     return list;
   }
 
-  private injectRecordTypeArray<T extends List | ListWithRelations>(lists: T[]): T[] {
-    return lists.map(list => this.injectRecordType(list));
+  private injectRecordTypeArray<T extends List | ListWithRelations>(
+    lists: T[],
+  ): T[] {
+    return lists.map((list) => this.injectRecordType(list));
   }
 }

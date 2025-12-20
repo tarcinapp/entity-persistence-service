@@ -1,5 +1,6 @@
 import { Getter } from '@loopback/core';
 import { expect, sinon } from '@loopback/testlab';
+import { EnvConfigHelper } from '../../../extensions/config-helpers/env-config-helper';
 import { GenericEntity } from '../../../models/entity.model';
 import { HttpErrorResponse } from '../../../models/http-error-response.model';
 import { List } from '../../../models/list.model';
@@ -9,7 +10,6 @@ import { ListReactionsRepository } from '../../../repositories/list-reactions.re
 import { ListRepository } from '../../../repositories/list.repository';
 import type { LoggingService } from '../../../services/logging.service';
 import { LookupConstraintService } from '../../../services/lookup-constraint.service';
-import { EnvConfigHelper } from '../../../extensions/config-helpers/env-config-helper';
 
 describe('Utilities: LookupConstraint', () => {
   let service: LookupConstraintService;
@@ -77,8 +77,8 @@ describe('Utilities: LookupConstraint', () => {
         },
       ];
 
-  process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify(constraints);
-  EnvConfigHelper.reset();
+      process.env.ENTITY_LOOKUP_CONSTRAINT = JSON.stringify(constraints);
+      EnvConfigHelper.reset();
 
       // Create a new service instance after setting the environment variable
       service = new LookupConstraintService(
@@ -103,8 +103,8 @@ describe('Utilities: LookupConstraint', () => {
         },
       ];
 
-  process.env.LIST_LOOKUP_CONSTRAINT = JSON.stringify(constraints);
-  EnvConfigHelper.reset();
+      process.env.LIST_LOOKUP_CONSTRAINT = JSON.stringify(constraints);
+      EnvConfigHelper.reset();
 
       // Create a new service instance after setting the environment variable
       service = new LookupConstraintService(
@@ -120,8 +120,8 @@ describe('Utilities: LookupConstraint', () => {
     });
 
     it('should handle invalid JSON in environment variables', () => {
-  process.env.ENTITY_LOOKUP_CONSTRAINT = 'invalid json';
-  EnvConfigHelper.reset();
+      process.env.ENTITY_LOOKUP_CONSTRAINT = 'invalid json';
+      EnvConfigHelper.reset();
 
       // Should not throw, just log warning
       expect(() => {

@@ -1582,6 +1582,5 @@ describe('GET /entities/{entityId}/children', () => {
       `Entity with id '${nonExistentId}' could not be found.`,
     );
     expect(response.body.error).to.have.property('code', 'ENTITY-NOT-FOUND');
-    expect(response.body.error).to.have.property('status', 404);
   });
 });

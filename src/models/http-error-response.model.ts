@@ -63,17 +63,16 @@ export class HttpErrorResponse extends Model {
   })
   code: string;
 
+  @property({
+    type: 'string',
+  })
+  requestId?: string;
+
   @property.array(Object, {
     // <------- We should be able to use '@property.array(SingleError, {' here, according to the documentation. But this usage cause lb4 to fail when creating schema descriptor.
     jsonSchema: getJsonSchema(SingleError),
   })
   details: SingleError[];
-
-  @property({
-    type: 'number',
-    required: true,
-  })
-  status: number;
 
   constructor(data?: Partial<HttpErrorResponse>) {
     super(data);

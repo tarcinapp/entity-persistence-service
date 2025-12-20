@@ -992,11 +992,11 @@ describe('GET /entity-reactions', () => {
     ({ client } = appWithClient);
 
     const now = new Date();
-  // Use explicit, unambiguous offsets to avoid month-length edge cases.
-  const oldDate = new Date(now.getTime() - 40 * 24 * 60 * 60 * 1000); // 40 days ago
-  const recentDate = new Date(now.getTime() - 3 * 60 * 60 * 1000); // 3 hours ago
-  const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000); // 2 days ago
-  const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    // Use explicit, unambiguous offsets to avoid month-length edge cases.
+    const oldDate = new Date(now.getTime() - 40 * 24 * 60 * 60 * 1000); // 40 days ago
+    const recentDate = new Date(now.getTime() - 3 * 60 * 60 * 1000); // 3 hours ago
+    const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000); // 2 days ago
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
 
     // Create test entities first
     const entity1Id = await createTestEntity(client, {
@@ -1010,9 +1010,9 @@ describe('GET /entity-reactions', () => {
       _entityId: entity1Id,
       _kind: 'like',
       sentiment: 'positive',
-  _createdDateTime: oldDate.toISOString(),
-  _validFromDateTime: oldDate.toISOString(),
-  _validUntilDateTime: oldDate.toISOString(),
+      _createdDateTime: oldDate.toISOString(),
+      _validFromDateTime: oldDate.toISOString(),
+      _validUntilDateTime: oldDate.toISOString(),
     });
 
     // Create a recent inactive positive reaction (this month, and expired)
@@ -1021,8 +1021,8 @@ describe('GET /entity-reactions', () => {
       _entityId: entity1Id,
       _kind: 'like',
       sentiment: 'positive',
-  _createdDateTime: recentDate.toISOString(),
-  _validFromDateTime: recentDate.toISOString(),
+      _createdDateTime: recentDate.toISOString(),
+      _validFromDateTime: recentDate.toISOString(),
       _validUntilDateTime: oneHourAgo.toISOString(),
     });
 
@@ -1032,14 +1032,14 @@ describe('GET /entity-reactions', () => {
       _entityId: entity1Id,
       _kind: 'dislike',
       sentiment: 'negative',
-  _createdDateTime: twoDaysAgo.toISOString(),
-  _validFromDateTime: twoDaysAgo.toISOString(),
+      _createdDateTime: twoDaysAgo.toISOString(),
+      _validFromDateTime: twoDaysAgo.toISOString(),
       _validUntilDateTime: oneHourAgo.toISOString(),
     });
 
     // Get inactive reactions created within the last 30 days that have 'positive' sentiment
     const filterStr =
-  'set[and][0][expireds]=true&set[and][1][createds-30d]=true&filter[where][sentiment]=positive';
+      'set[and][0][expireds]=true&set[and][1][createds-30d]=true&filter[where][sentiment]=positive';
     const response = await client
       .get('/entity-reactions')
       .query(filterStr)
@@ -1052,7 +1052,7 @@ describe('GET /entity-reactions', () => {
     expect(response.body[0].sentiment).to.equal('positive');
 
     // Verify it was created within the last 30 days
-  const createdDate = new Date(response.body[0]._createdDateTime);
+    const createdDate = new Date(response.body[0]._createdDateTime);
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     expect(createdDate.getTime()).to.be.greaterThan(thirtyDaysAgo.getTime());
 
@@ -1121,8 +1121,8 @@ describe('GET /entity-reactions', () => {
       _validUntilDateTime: null,
     });
 
-  // Get inactive reactions using set[expireds]
-  const filterStr = 'set[expireds]=true';
+    // Get inactive reactions using set[expireds]
+    const filterStr = 'set[expireds]=true';
     const response = await client
       .get('/entity-reactions')
       .query(filterStr)

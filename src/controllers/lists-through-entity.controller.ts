@@ -12,7 +12,7 @@ export class ListsThroughEntityController {
     protected entityRepository: EntityRepository,
   ) {}
 
-    @get('/entities/{id}/lists', {
+  @get('/entities/{id}/lists', {
     operationId: 'findListsByEntityId',
     responses: {
       '200': {

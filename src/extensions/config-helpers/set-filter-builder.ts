@@ -4,7 +4,10 @@ import { AnyObject } from '@loopback/repository/dist/common-types';
 import { RestBindings } from '@loopback/rest';
 import _ from 'lodash';
 import { LoggingService } from '../../services/logging.service';
-import { Set, SetFilterBuilder as UtilsSetFilterBuilder } from '../utils/set-helper';
+import {
+  Set,
+  SetFilterBuilder as UtilsSetFilterBuilder,
+} from '../utils/set-helper';
 
 export class SetFilterBuilder<T extends object = AnyObject> {
   constructor(
@@ -88,7 +91,10 @@ export class SetFilterBuilder<T extends object = AnyObject> {
     }
 
     // Delegate other single-key sets (including dynamic-duration sets)
-    const utilBuilder = new UtilsSetFilterBuilder<AnyObject>(this.set as AnyObject);
+    const utilBuilder = new UtilsSetFilterBuilder<AnyObject>(
+      this.set as AnyObject,
+    );
+
     return utilBuilder.build().where as Where<AnyObject>;
   }
 

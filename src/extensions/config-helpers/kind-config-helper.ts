@@ -50,15 +50,19 @@ export class KindConfiguration {
     if (env.DEFAULT_ENTITY_KIND) {
       this.entityConfig.defaultKind = env.DEFAULT_ENTITY_KIND;
     }
+
     if (env.DEFAULT_LIST_KIND) {
       this.listConfig.defaultKind = env.DEFAULT_LIST_KIND;
     }
+
     if (env.DEFAULT_RELATION_KIND) {
       this.relationConfig.defaultKind = env.DEFAULT_RELATION_KIND;
     }
+
     if (env.DEFAULT_ENTITY_REACTION_KIND) {
       this.entityReactionConfig.defaultKind = env.DEFAULT_ENTITY_REACTION_KIND;
     }
+
     if (env.DEFAULT_LIST_REACTION_KIND) {
       this.listReactionConfig.defaultKind = env.DEFAULT_LIST_REACTION_KIND;
     }
@@ -103,7 +107,9 @@ export class KindConfiguration {
       const kinds = env.ENTITY_REACTION_KINDS;
       this.entityReactionConfig.allowedKinds = [...new Set(kinds)];
       if (env.DEFAULT_ENTITY_REACTION_KIND) {
-        this.entityReactionConfig.allowedKinds.push(env.DEFAULT_ENTITY_REACTION_KIND);
+        this.entityReactionConfig.allowedKinds.push(
+          env.DEFAULT_ENTITY_REACTION_KIND,
+        );
       }
     } else {
       this.entityReactionConfig.allowedKinds = [];
@@ -114,7 +120,9 @@ export class KindConfiguration {
       const kinds = env.LIST_REACTION_KINDS;
       this.listReactionConfig.allowedKinds = [...new Set(kinds)];
       if (env.DEFAULT_LIST_REACTION_KIND) {
-        this.listReactionConfig.allowedKinds.push(env.DEFAULT_LIST_REACTION_KIND);
+        this.listReactionConfig.allowedKinds.push(
+          env.DEFAULT_LIST_REACTION_KIND,
+        );
       }
     } else {
       this.listReactionConfig.allowedKinds = [];

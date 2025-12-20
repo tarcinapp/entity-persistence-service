@@ -144,7 +144,6 @@ describe('POST /lists', () => {
       name: 'UniquenessViolationError',
       message: 'List already exists',
       code: 'LIST-UNIQUENESS-VIOLATION',
-      status: 409,
       details: [
         {
           code: 'LIST-UNIQUENESS-VIOLATION',
@@ -155,6 +154,7 @@ describe('POST /lists', () => {
         },
       ],
     });
+    expect(errorResponse.body.error.requestId ?? '').to.match(/.+/);
   });
 
   it('rejects duplicate list based on uniqueness configuration including owner users', async () => {
@@ -198,7 +198,6 @@ describe('POST /lists', () => {
       name: 'UniquenessViolationError',
       message: 'List already exists',
       code: 'LIST-UNIQUENESS-VIOLATION',
-      status: 409,
       details: [
         {
           code: 'LIST-UNIQUENESS-VIOLATION',
@@ -260,7 +259,6 @@ describe('POST /lists', () => {
       name: 'UniquenessViolationError',
       message: 'List already exists',
       code: 'LIST-UNIQUENESS-VIOLATION',
-      status: 409,
       details: [
         {
           code: 'LIST-UNIQUENESS-VIOLATION',
@@ -333,7 +331,6 @@ describe('POST /lists', () => {
       name: 'UniquenessViolationError',
       message: 'List already exists',
       code: 'LIST-UNIQUENESS-VIOLATION',
-      status: 409,
       details: [
         {
           code: 'LIST-UNIQUENESS-VIOLATION',
@@ -617,7 +614,6 @@ describe('POST /lists', () => {
       name: 'LimitExceededError',
       message: 'Record limit exceeded for list',
       code: 'LIST-LIMIT-EXCEEDED',
-      status: 429,
       details: [
         {
           code: 'LIST-LIMIT-EXCEEDED',
@@ -671,7 +667,6 @@ describe('POST /lists', () => {
       name: 'LimitExceededError',
       message: 'Record limit exceeded for list',
       code: 'LIST-LIMIT-EXCEEDED',
-      status: 429,
       details: [
         {
           code: 'LIST-LIMIT-EXCEEDED',
@@ -747,7 +742,6 @@ describe('POST /lists', () => {
       name: 'LimitExceededError',
       message: 'Record limit exceeded for list',
       code: 'LIST-LIMIT-EXCEEDED',
-      status: 429,
       details: [
         {
           code: 'LIST-LIMIT-EXCEEDED',
@@ -814,7 +808,6 @@ describe('POST /lists', () => {
       name: 'LimitExceededError',
       message: 'Record limit exceeded for list',
       code: 'LIST-LIMIT-EXCEEDED',
-      status: 429,
       details: [
         {
           code: 'LIST-LIMIT-EXCEEDED',
@@ -905,7 +898,6 @@ describe('POST /lists', () => {
       name: 'LimitExceededError',
       message: 'Record limit exceeded for list',
       code: 'LIST-LIMIT-EXCEEDED',
-      status: 429,
       details: [
         {
           code: 'LIST-LIMIT-EXCEEDED',
@@ -974,7 +966,6 @@ describe('POST /lists', () => {
       name: 'LimitExceededError',
       message: 'Record limit exceeded for list',
       code: 'LIST-LIMIT-EXCEEDED',
-      status: 429,
       details: [
         {
           code: 'LIST-LIMIT-EXCEEDED',
@@ -1004,7 +995,6 @@ describe('POST /lists', () => {
       name: 'LimitExceededError',
       message: 'Record limit exceeded for list',
       code: 'LIST-LIMIT-EXCEEDED',
-      status: 429,
       details: [
         {
           code: 'LIST-LIMIT-EXCEEDED',

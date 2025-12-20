@@ -1544,38 +1544,45 @@ describe('GET /lists', () => {
     });
 
     // Get collections with readingList lookup, filtering for active lists only
-    const filterStr = 'filter[lookup][0][prop]=readingList&filter[lookup][0][set][actives]=true';
+    const filterStr =
+      'filter[lookup][0][prop]=readingList&filter[lookup][0][set][actives]=true';
     const response = await client.get('/lists').query(filterStr).expect(200);
 
     expect(response.body).to.be.Array();
 
     // Find collections in the response
-    const collections = response.body.filter((l: List) => l._kind === 'collection');
+    const collections = response.body.filter(
+      (l: List) => l._kind === 'collection',
+    );
     expect(collections).to.have.length(3);
 
     // Find the collection with active list
-    const collectionWithActiveList = collections.find((collection: any) => 
-      collection._name === 'Collection with Active List'
+    const collectionWithActiveList = collections.find(
+      (collection: any) => collection._name === 'Collection with Active List',
     );
     expect(collectionWithActiveList).to.not.be.undefined();
     expect(collectionWithActiveList.readingList).to.be.an.Object();
-    expect(collectionWithActiveList.readingList._name).to.equal('Active Reading List');
+    expect(collectionWithActiveList.readingList._name).to.equal(
+      'Active Reading List',
+    );
     expect(collectionWithActiveList.readingList._kind).to.equal('reading');
 
     // Verify that collections with inactive lists have null readingList (filtered out)
-    const collectionWithInactiveList = collections.find((collection: any) => 
-      collection._name === 'Collection with Inactive List'
+    const collectionWithInactiveList = collections.find(
+      (collection: any) => collection._name === 'Collection with Inactive List',
     );
     expect(collectionWithInactiveList).to.not.be.undefined();
     expect(collectionWithInactiveList.readingList).to.be.null();
 
     // Verify that collections with private lists still have the list (actives set only filters by dates, not visibility)
-    const collectionWithPrivateList = collections.find((collection: any) => 
-      collection._name === 'Collection with Private List'
+    const collectionWithPrivateList = collections.find(
+      (collection: any) => collection._name === 'Collection with Private List',
     );
     expect(collectionWithPrivateList).to.not.be.undefined();
     expect(collectionWithPrivateList.readingList).to.be.an.Object();
-    expect(collectionWithPrivateList.readingList._name).to.equal('Private Reading List');
+    expect(collectionWithPrivateList.readingList._name).to.equal(
+      'Private Reading List',
+    );
     expect(collectionWithPrivateList.readingList._kind).to.equal('reading');
   });
 
@@ -1646,33 +1653,39 @@ describe('GET /lists', () => {
     });
 
     // Get collections with readingList lookup, filtering for public lists only
-    const filterStr = 'filter[lookup][0][prop]=readingList&filter[lookup][0][set][publics]=true';
+    const filterStr =
+      'filter[lookup][0][prop]=readingList&filter[lookup][0][set][publics]=true';
     const response = await client.get('/lists').query(filterStr).expect(200);
 
     expect(response.body).to.be.Array();
 
     // Find collections in the response
-    const collections = response.body.filter((l: List) => l._kind === 'collection');
+    const collections = response.body.filter(
+      (l: List) => l._kind === 'collection',
+    );
     expect(collections).to.have.length(3);
 
     // Find the collection with public list
-    const collectionWithPublicList = collections.find((collection: any) => 
-      collection._name === 'Collection with Public List'
+    const collectionWithPublicList = collections.find(
+      (collection: any) => collection._name === 'Collection with Public List',
     );
     expect(collectionWithPublicList).to.not.be.undefined();
     expect(collectionWithPublicList.readingList).to.be.an.Object();
-    expect(collectionWithPublicList.readingList._name).to.equal('Public Reading List');
+    expect(collectionWithPublicList.readingList._name).to.equal(
+      'Public Reading List',
+    );
     expect(collectionWithPublicList.readingList._visibility).to.equal('public');
 
     // Verify that collections with non-public lists have null readingList (filtered out)
-    const collectionWithPrivateList = collections.find((collection: any) => 
-      collection._name === 'Collection with Private List'
+    const collectionWithPrivateList = collections.find(
+      (collection: any) => collection._name === 'Collection with Private List',
     );
     expect(collectionWithPrivateList).to.not.be.undefined();
     expect(collectionWithPrivateList.readingList).to.be.null();
 
-    const collectionWithProtectedList = collections.find((collection: any) => 
-      collection._name === 'Collection with Protected List'
+    const collectionWithProtectedList = collections.find(
+      (collection: any) =>
+        collection._name === 'Collection with Protected List',
     );
     expect(collectionWithProtectedList).to.not.be.undefined();
     expect(collectionWithProtectedList.readingList).to.be.null();
@@ -1745,33 +1758,43 @@ describe('GET /lists', () => {
     });
 
     // Get collections with readingList lookup, filtering for lists that are both active AND public
-    const filterStr = 'filter[lookup][0][prop]=readingList&filter[lookup][0][set][and][0][actives]=true&filter[lookup][0][set][and][1][publics]=true';
+    const filterStr =
+      'filter[lookup][0][prop]=readingList&filter[lookup][0][set][and][0][actives]=true&filter[lookup][0][set][and][1][publics]=true';
     const response = await client.get('/lists').query(filterStr).expect(200);
 
     expect(response.body).to.be.Array();
 
     // Find collections in the response
-    const collections = response.body.filter((l: List) => l._kind === 'collection');
+    const collections = response.body.filter(
+      (l: List) => l._kind === 'collection',
+    );
     expect(collections).to.have.length(3);
 
     // Find the collection with active public list
-    const collectionWithActivePublicList = collections.find((collection: any) => 
-      collection._name === 'Collection with Active Public List'
+    const collectionWithActivePublicList = collections.find(
+      (collection: any) =>
+        collection._name === 'Collection with Active Public List',
     );
     expect(collectionWithActivePublicList).to.not.be.undefined();
     expect(collectionWithActivePublicList.readingList).to.be.an.Object();
-    expect(collectionWithActivePublicList.readingList._name).to.equal('Active Public Reading List');
-    expect(collectionWithActivePublicList.readingList._visibility).to.equal('public');
+    expect(collectionWithActivePublicList.readingList._name).to.equal(
+      'Active Public Reading List',
+    );
+    expect(collectionWithActivePublicList.readingList._visibility).to.equal(
+      'public',
+    );
 
     // Verify that collections with lists that don't match both conditions have null readingList
-    const collectionWithActivePrivateList = collections.find((collection: any) => 
-      collection._name === 'Collection with Active Private List'
+    const collectionWithActivePrivateList = collections.find(
+      (collection: any) =>
+        collection._name === 'Collection with Active Private List',
     );
     expect(collectionWithActivePrivateList).to.not.be.undefined();
     expect(collectionWithActivePrivateList.readingList).to.be.null();
 
-    const collectionWithInactivePublicList = collections.find((collection: any) => 
-      collection._name === 'Collection with Inactive Public List'
+    const collectionWithInactivePublicList = collections.find(
+      (collection: any) =>
+        collection._name === 'Collection with Inactive Public List',
     );
     expect(collectionWithInactivePublicList).to.not.be.undefined();
     expect(collectionWithInactivePublicList.readingList).to.be.null();
@@ -1833,13 +1856,16 @@ describe('GET /lists', () => {
     });
 
     // Get the collection with readingLists lookup, filtering for active lists only
-    const filterStr = 'filter[lookup][0][prop]=readingLists&filter[lookup][0][set][actives]=true';
+    const filterStr =
+      'filter[lookup][0][prop]=readingLists&filter[lookup][0][set][actives]=true';
     const response = await client.get('/lists').query(filterStr).expect(200);
 
     expect(response.body).to.be.Array();
 
     // Find the collection in the response
-    const collection = response.body.find((l: List) => l._kind === 'collection');
+    const collection = response.body.find(
+      (l: List) => l._kind === 'collection',
+    );
     expect(collection).to.not.be.undefined();
     expect(collection._name).to.equal('Collection with Multiple Lists');
 
@@ -1847,13 +1873,20 @@ describe('GET /lists', () => {
     expect(collection.readingLists).to.be.an.Array().and.have.length(2);
 
     const listNames = collection.readingLists.map((l: any) => l._name).sort();
-    expect(listNames).to.eql(['Active Reading List 1', 'Active Reading List 2']);
+    expect(listNames).to.eql([
+      'Active Reading List 1',
+      'Active Reading List 2',
+    ]);
 
     // Verify all returned lists are active
     collection.readingLists.forEach((list: any) => {
       expect(list._kind).to.equal('reading');
-      expect(new Date(list._validFromDateTime).getTime()).to.be.lessThan(now.getTime());
-      expect(new Date(list._validUntilDateTime).getTime()).to.be.greaterThan(now.getTime());
+      expect(new Date(list._validFromDateTime).getTime()).to.be.lessThan(
+        now.getTime(),
+      );
+      expect(new Date(list._validUntilDateTime).getTime()).to.be.greaterThan(
+        now.getTime(),
+      );
     });
   });
 
@@ -1950,13 +1983,16 @@ describe('GET /lists', () => {
     });
 
     // Get the collection with readingLists lookup, filtering for audience (current-user and current-group)
-    const filterStr = 'filter[lookup][0][prop]=readingLists&filter[lookup][0][set][audience][userIds]=current-user&filter[lookup][0][set][audience][groupIds]=current-group';
+    const filterStr =
+      'filter[lookup][0][prop]=readingLists&filter[lookup][0][set][audience][userIds]=current-user&filter[lookup][0][set][audience][groupIds]=current-group';
     const response = await client.get('/lists').query(filterStr).expect(200);
 
     expect(response.body).to.be.Array();
 
     // Find the collection in the response
-    const collection = response.body.find((l: List) => l._kind === 'collection');
+    const collection = response.body.find(
+      (l: List) => l._kind === 'collection',
+    );
     expect(collection).to.not.be.undefined();
     expect(collection._name).to.equal('Collection with Multiple Lists');
 
@@ -1968,35 +2004,55 @@ describe('GET /lists', () => {
     const listNames = collection.readingLists.map((l: any) => l._name).sort();
     expect(listNames).to.eql([
       'Owned by Group List',
-      'Owned by User List', 
+      'Owned by User List',
       'Public List',
       'Viewable by Group List',
-      'Viewable by User List'
+      'Viewable by User List',
     ]);
 
     // Verify each returned list is accessible to current-user or current-group
-    const ownedByUserList = collection.readingLists.find((l: any) => l._name === 'Owned by User List');
+    const ownedByUserList = collection.readingLists.find(
+      (l: any) => l._name === 'Owned by User List',
+    );
     expect(ownedByUserList).to.not.be.undefined();
-    expect(ownedByUserList._ownerUsers).to.be.an.Array().and.containEql('current-user');
+    expect(ownedByUserList._ownerUsers)
+      .to.be.an.Array()
+      .and.containEql('current-user');
 
-    const ownedByGroupList = collection.readingLists.find((l: any) => l._name === 'Owned by Group List');
+    const ownedByGroupList = collection.readingLists.find(
+      (l: any) => l._name === 'Owned by Group List',
+    );
     expect(ownedByGroupList).to.not.be.undefined();
-    expect(ownedByGroupList._ownerGroups).to.be.an.Array().and.containEql('current-group');
+    expect(ownedByGroupList._ownerGroups)
+      .to.be.an.Array()
+      .and.containEql('current-group');
 
-    const viewableByUserList = collection.readingLists.find((l: any) => l._name === 'Viewable by User List');
+    const viewableByUserList = collection.readingLists.find(
+      (l: any) => l._name === 'Viewable by User List',
+    );
     expect(viewableByUserList).to.not.be.undefined();
-    expect(viewableByUserList._viewerUsers).to.be.an.Array().and.containEql('current-user');
+    expect(viewableByUserList._viewerUsers)
+      .to.be.an.Array()
+      .and.containEql('current-user');
 
-    const viewableByGroupList = collection.readingLists.find((l: any) => l._name === 'Viewable by Group List');
+    const viewableByGroupList = collection.readingLists.find(
+      (l: any) => l._name === 'Viewable by Group List',
+    );
     expect(viewableByGroupList).to.not.be.undefined();
-    expect(viewableByGroupList._viewerGroups).to.be.an.Array().and.containEql('current-group');
+    expect(viewableByGroupList._viewerGroups)
+      .to.be.an.Array()
+      .and.containEql('current-group');
 
-    const publicList = collection.readingLists.find((l: any) => l._name === 'Public List');
+    const publicList = collection.readingLists.find(
+      (l: any) => l._name === 'Public List',
+    );
     expect(publicList).to.not.be.undefined();
     expect(publicList._visibility).to.equal('public');
 
     // Verify inaccessible list is filtered out
-    const inaccessibleList = collection.readingLists.find((l: any) => l._name === 'Inaccessible List');
+    const inaccessibleList = collection.readingLists.find(
+      (l: any) => l._name === 'Inaccessible List',
+    );
     expect(inaccessibleList).to.be.undefined();
   });
 
@@ -2069,37 +2125,46 @@ describe('GET /lists', () => {
     });
 
     // Get collections with readingList lookup, filtering for active lists in fiction category
-    const filterStr = 
+    const filterStr =
       'filter[lookup][0][prop]=readingList&' +
       'filter[lookup][0][set][actives]=true&' +
       'filter[lookup][0][scope][where][category]=fiction';
-    
+
     const response = await client.get('/lists').query(filterStr).expect(200);
 
     expect(response.body).to.be.Array();
 
     // Find collections in the response
-    const collections = response.body.filter((l: List) => l._kind === 'collection');
+    const collections = response.body.filter(
+      (l: List) => l._kind === 'collection',
+    );
     expect(collections).to.have.length(3);
 
     // Find the collection with active fiction reading list
-    const collectionWithActiveReadingList = collections.find((collection: any) => 
-      collection._name === 'Collection with Active Reading List'
+    const collectionWithActiveReadingList = collections.find(
+      (collection: any) =>
+        collection._name === 'Collection with Active Reading List',
     );
     expect(collectionWithActiveReadingList).to.not.be.undefined();
     expect(collectionWithActiveReadingList.readingList).to.be.an.Object();
-    expect(collectionWithActiveReadingList.readingList._name).to.equal('Active Reading List');
-    expect(collectionWithActiveReadingList.readingList.category).to.equal('fiction');
+    expect(collectionWithActiveReadingList.readingList._name).to.equal(
+      'Active Reading List',
+    );
+    expect(collectionWithActiveReadingList.readingList.category).to.equal(
+      'fiction',
+    );
 
     // Verify that collections with lists that don't match both set and scope filters have null readingList
-    const collectionWithActiveWishlist = collections.find((collection: any) => 
-      collection._name === 'Collection with Active Wishlist'
+    const collectionWithActiveWishlist = collections.find(
+      (collection: any) =>
+        collection._name === 'Collection with Active Wishlist',
     );
     expect(collectionWithActiveWishlist).to.not.be.undefined();
     expect(collectionWithActiveWishlist.readingList).to.be.null(); // filtered out by scope (category != 'fiction')
 
-    const collectionWithInactiveReadingList = collections.find((collection: any) => 
-      collection._name === 'Collection with Inactive Reading List'
+    const collectionWithInactiveReadingList = collections.find(
+      (collection: any) =>
+        collection._name === 'Collection with Inactive Reading List',
     );
     expect(collectionWithInactiveReadingList).to.not.be.undefined();
     expect(collectionWithInactiveReadingList.readingList).to.be.null(); // filtered out by set (not active)
@@ -2176,37 +2241,51 @@ describe('GET /lists', () => {
     });
 
     // Get collections with nested lookup: readingList -> category, filtering for active categories
-    const filterStr = 
+    const filterStr =
       'filter[lookup][0][prop]=readingList&' +
       'filter[lookup][0][scope][lookup][0][prop]=category&' +
       'filter[lookup][0][scope][lookup][0][set][actives]=true';
-    
+
     const response = await client.get('/lists').query(filterStr).expect(200);
 
     expect(response.body).to.be.Array();
 
     // Find collections in the response
-    const collections = response.body.filter((l: List) => l._kind === 'collection');
+    const collections = response.body.filter(
+      (l: List) => l._kind === 'collection',
+    );
     expect(collections).to.have.length(2);
 
     // Find the collection with reading list with active category
-    const collectionWithActiveCategory = collections.find((collection: any) => 
-      collection._name === 'Collection with Reading List with Active Category'
+    const collectionWithActiveCategory = collections.find(
+      (collection: any) =>
+        collection._name ===
+        'Collection with Reading List with Active Category',
     );
     expect(collectionWithActiveCategory).to.not.be.undefined();
     expect(collectionWithActiveCategory.readingList).to.be.an.Object();
-    expect(collectionWithActiveCategory.readingList._name).to.equal('Reading List with Active Category');
+    expect(collectionWithActiveCategory.readingList._name).to.equal(
+      'Reading List with Active Category',
+    );
     expect(collectionWithActiveCategory.readingList.category).to.be.an.Object();
-    expect(collectionWithActiveCategory.readingList.category._name).to.equal('Active Category');
-    expect(collectionWithActiveCategory.readingList.category.description).to.equal('Active category');
+    expect(collectionWithActiveCategory.readingList.category._name).to.equal(
+      'Active Category',
+    );
+    expect(
+      collectionWithActiveCategory.readingList.category.description,
+    ).to.equal('Active category');
 
     // Verify that collection with reading list with inactive category has null nested category
-    const collectionWithInactiveCategory = collections.find((collection: any) => 
-      collection._name === 'Collection with Reading List with Inactive Category'
+    const collectionWithInactiveCategory = collections.find(
+      (collection: any) =>
+        collection._name ===
+        'Collection with Reading List with Inactive Category',
     );
     expect(collectionWithInactiveCategory).to.not.be.undefined();
     expect(collectionWithInactiveCategory.readingList).to.be.an.Object();
-    expect(collectionWithInactiveCategory.readingList._name).to.equal('Reading List with Inactive Category');
+    expect(collectionWithInactiveCategory.readingList._name).to.equal(
+      'Reading List with Inactive Category',
+    );
     expect(collectionWithInactiveCategory.readingList.category).to.be.null(); // filtered out by nested set
   });
 });

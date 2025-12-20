@@ -125,8 +125,8 @@ describe('POST /list-reactions', () => {
       statusCode: 422,
       name: 'InvalidKindError',
       code: 'INVALID-LIST-REACTION-KIND',
-      status: 422,
     });
+    expect(errorResponse.body.error.requestId ?? '').to.match(/.+/);
   });
 
   it('rejects duplicate list reaction based on uniqueness configuration', async () => {
@@ -150,10 +150,7 @@ describe('POST /list-reactions', () => {
       _name: 'Like', // arbitrary, non-managed field
       description: 'A like reaction',
     };
-    await client
-      .post('/list-reactions')
-      .send(firstReaction)
-      .expect(200);
+    await client.post('/list-reactions').send(firstReaction).expect(200);
 
     // Second reaction with same kind and listId - should fail
     const secondReaction: Partial<ListReaction> = {
@@ -170,7 +167,6 @@ describe('POST /list-reactions', () => {
       statusCode: 409,
       name: 'UniquenessViolationError',
       code: 'LISTREACTION-UNIQUENESS-VIOLATION',
-      status: 409,
     });
   });
 
@@ -220,7 +216,6 @@ describe('POST /list-reactions', () => {
       statusCode: 409,
       name: 'UniquenessViolationError',
       code: 'LISTREACTION-UNIQUENESS-VIOLATION',
-      status: 409,
     });
   });
 
@@ -318,7 +313,6 @@ describe('POST /list-reactions', () => {
       statusCode: 409,
       name: 'UniquenessViolationError',
       code: 'LISTREACTION-UNIQUENESS-VIOLATION',
-      status: 409,
     });
   });
 
@@ -378,7 +372,6 @@ describe('POST /list-reactions', () => {
       statusCode: 409,
       name: 'UniquenessViolationError',
       code: 'LISTREACTION-UNIQUENESS-VIOLATION',
-      status: 409,
     });
   });
 
@@ -646,15 +639,13 @@ describe('POST /list-reactions', () => {
       statusCode: 429,
       name: 'LimitExceededError',
       code: 'LISTREACTION-LIMIT-EXCEEDED',
-      status: 429,
     });
   });
 
   it('enforces kind-specific record count limit for list reactions', async () => {
     appWithClient = await setupApplication({
       list_reaction_kinds: 'like,dislike',
-      LIST_REACTION_RECORD_LIMITS:
-        '[{"scope":"where[_kind]=like","limit":1}]',
+      LIST_REACTION_RECORD_LIMITS: '[{"scope":"where[_kind]=like","limit":1}]',
     });
     ({ client } = appWithClient);
 
@@ -682,7 +673,6 @@ describe('POST /list-reactions', () => {
       statusCode: 429,
       name: 'LimitExceededError',
       code: 'LISTREACTION-LIMIT-EXCEEDED',
-      status: 429,
     });
   });
 
@@ -751,7 +741,6 @@ describe('POST /list-reactions', () => {
       statusCode: 429,
       name: 'LimitExceededError',
       code: 'LISTREACTION-LIMIT-EXCEEDED',
-      status: 429,
     });
   });
 
@@ -810,7 +799,6 @@ describe('POST /list-reactions', () => {
       statusCode: 429,
       name: 'LimitExceededError',
       code: 'LISTREACTION-LIMIT-EXCEEDED',
-      status: 429,
     });
   });
 
@@ -896,7 +884,6 @@ describe('POST /list-reactions', () => {
       statusCode: 429,
       name: 'LimitExceededError',
       code: 'LISTREACTION-LIMIT-EXCEEDED',
-      status: 429,
     });
   });
 
@@ -958,7 +945,6 @@ describe('POST /list-reactions', () => {
       statusCode: 429,
       name: 'LimitExceededError',
       code: 'LISTREACTION-LIMIT-EXCEEDED',
-      status: 429,
     });
   });
 
@@ -1096,8 +1082,7 @@ describe('POST /list-reactions', () => {
   it('enforces idempotency with date fields for list reactions', async () => {
     appWithClient = await setupApplication({
       list_reaction_kinds: 'like',
-      idempotency_list_reaction:
-        '_kind,_validFromDateTime,_validUntilDateTime',
+      idempotency_list_reaction: '_kind,_validFromDateTime,_validUntilDateTime',
     });
     ({ client } = appWithClient);
 
@@ -1156,7 +1141,6 @@ describe('POST /list-reactions', () => {
       statusCode: 404,
       name: 'NotFoundError',
       code: 'LIST-NOT-FOUND',
-      status: 404,
     });
   });
 
@@ -1193,7 +1177,6 @@ describe('POST /list-reactions', () => {
         statusCode: 422,
         name: 'InvalidLookupReferenceError',
         code: 'LIST-REACTION-INVALID-LOOKUP-REFERENCE',
-        status: 422,
       });
     });
 
@@ -1229,7 +1212,6 @@ describe('POST /list-reactions', () => {
         statusCode: 422,
         name: 'InvalidLookupReferenceError',
         code: 'LIST-REACTION-INVALID-LOOKUP-REFERENCE',
-        status: 422,
       });
     });
 
@@ -1271,7 +1253,6 @@ describe('POST /list-reactions', () => {
         statusCode: 422,
         name: 'InvalidLookupConstraintError',
         code: 'LIST-REACTION-INVALID-LOOKUP-KIND',
-        status: 422,
       });
     });
 
@@ -1395,7 +1376,6 @@ describe('POST /list-reactions', () => {
         statusCode: 422,
         name: 'InvalidLookupReferenceError',
         code: 'LIST-REACTION-INVALID-LOOKUP-REFERENCE',
-        status: 422,
       });
     });
 
@@ -1435,7 +1415,6 @@ describe('POST /list-reactions', () => {
         statusCode: 422,
         name: 'InvalidLookupConstraintError',
         code: 'LIST-REACTION-INVALID-LOOKUP-KIND',
-        status: 422,
       });
     });
 
@@ -1525,6 +1504,3 @@ describe('POST /list-reactions', () => {
     });
   });
 });
-
-
-

@@ -41,7 +41,8 @@ export class EntityPersistenceApplication extends BootMixin(
     // Configure logging
     const env = EnvConfigHelper.getInstance();
     const config = getLoggingConfig();
-    config.level = env.LOG_LEVEL ?? (env.NODE_ENV === 'production' ? 'info' : 'debug');
+    config.level =
+      env.LOG_LEVEL ?? (env.NODE_ENV === 'production' ? 'info' : 'debug');
     const logger = createLoggerInstance(config);
     this.bind(LoggingBindings.LOGGER).to(logger);
 

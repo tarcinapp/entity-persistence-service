@@ -918,7 +918,7 @@ describe('GET /entities', () => {
       _name: 'Old Inactive Science Book',
       _kind: 'book',
       description: 'science',
-    _createdDateTime: previousMonth.toISOString(),
+      _createdDateTime: previousMonth.toISOString(),
       _validFromDateTime: previousMonth.toISOString(),
       _validUntilDateTime: previousMonth.toISOString(),
     });
@@ -928,7 +928,7 @@ describe('GET /entities', () => {
       _name: 'Recent Inactive Science Book',
       _kind: 'book',
       description: 'science',
-    _createdDateTime: definitelyPastDate.toISOString(), // Several hours in the past
+      _createdDateTime: definitelyPastDate.toISOString(), // Several hours in the past
       _validFromDateTime: definitelyPastDate.toISOString(),
       _validUntilDateTime: oneHourAgo.toISOString(), // Definitely inactive
     });
@@ -938,7 +938,7 @@ describe('GET /entities', () => {
       _name: 'Recent Inactive History Book',
       _kind: 'book',
       description: 'history',
-  _createdDateTime: firstDayOfMonth.toISOString(),
+      _createdDateTime: firstDayOfMonth.toISOString(),
       _validFromDateTime: firstDayOfMonth.toISOString(),
       _validUntilDateTime: oneHourAgo.toISOString(),
     });
@@ -948,14 +948,14 @@ describe('GET /entities', () => {
       _name: 'Recent Active Science Book',
       _kind: 'book',
       description: 'science',
-  _createdDateTime: firstDayOfMonth.toISOString(),
+      _createdDateTime: firstDayOfMonth.toISOString(),
       _validFromDateTime: firstDayOfMonth.toISOString(),
       _validUntilDateTime: new Date(now.getTime() + 86400000).toISOString(), // tomorrow
     });
 
     // Get inactive entities created within the current month that have 'science' in their description
     const filterStr =
-  'set[and][0][expireds]=true&set[and][1][createds-30d]=true&filter[where][description]=science';
+      'set[and][0][expireds]=true&set[and][1][createds-30d]=true&filter[where][description]=science';
     const response = await client.get('/entities').query(filterStr).expect(200);
 
     expect(response.body).to.be.Array().and.have.length(1);
@@ -963,7 +963,7 @@ describe('GET /entities', () => {
     expect(response.body[0].description).to.equal('science');
 
     // Verify it was created this month
-  const createdDate = new Date(response.body[0]._createdDateTime);
+    const createdDate = new Date(response.body[0]._createdDateTime);
     expect(createdDate.getMonth()).to.equal(now.getMonth());
     expect(createdDate.getFullYear()).to.equal(now.getFullYear());
 
@@ -1030,8 +1030,8 @@ describe('GET /entities', () => {
       _validUntilDateTime: futureDate.toISOString(),
     });
 
-  // Get inactive entities using set[expireds]
-  const filterStr = 'set[expireds]=true';
+    // Get inactive entities using set[expireds]
+    const filterStr = 'set[expireds]=true';
     const response = await client.get('/entities').query(filterStr).expect(200);
 
     expect(response.body).to.be.Array().and.have.length(2);
@@ -1094,7 +1094,7 @@ describe('GET /entities', () => {
     expect(entity).to.not.have.property('_ownerUsers');
     expect(entity).to.not.have.property('_viewerUsers');
     expect(entity).to.not.have.property('_validFromDateTime');
-  expect(entity).to.not.have.property('_createdDateTime');
+    expect(entity).to.not.have.property('_createdDateTime');
     expect(entity).to.not.have.property('_lastUpdatedDateTime');
   });
 
@@ -2119,18 +2119,21 @@ describe('GET /entities', () => {
     });
 
     // Get books with author lookup, filtering for active authors only
-    const filterStr = 'filter[lookup][0][prop]=author&filter[lookup][0][set][actives]=true';
+    const filterStr =
+      'filter[lookup][0][prop]=author&filter[lookup][0][set][actives]=true';
     const response = await client.get('/entities').query(filterStr).expect(200);
 
     expect(response.body).to.be.Array();
 
     // Find books in the response
-    const books = response.body.filter((e: GenericEntity) => e._kind === 'book');
+    const books = response.body.filter(
+      (e: GenericEntity) => e._kind === 'book',
+    );
     expect(books).to.have.length(3);
 
     // Find the book with active author
-    const bookWithActiveAuthor = books.find((book: any) => 
-      book._name === 'Book with Active Author'
+    const bookWithActiveAuthor = books.find(
+      (book: any) => book._name === 'Book with Active Author',
     );
     expect(bookWithActiveAuthor).to.not.be.undefined();
     expect(bookWithActiveAuthor.author).to.be.an.Object();
@@ -2138,15 +2141,15 @@ describe('GET /entities', () => {
     expect(bookWithActiveAuthor.author._kind).to.equal('author');
 
     // Verify that books with inactive authors have null author (filtered out)
-    const bookWithInactiveAuthor = books.find((book: any) => 
-      book._name === 'Book with Inactive Author'
+    const bookWithInactiveAuthor = books.find(
+      (book: any) => book._name === 'Book with Inactive Author',
     );
     expect(bookWithInactiveAuthor).to.not.be.undefined();
     expect(bookWithInactiveAuthor.author).to.be.null();
 
     // Verify that books with private authors still have the author (actives set only filters by dates, not visibility)
-    const bookWithPrivateAuthor = books.find((book: any) => 
-      book._name === 'Book with Private Author'
+    const bookWithPrivateAuthor = books.find(
+      (book: any) => book._name === 'Book with Private Author',
     );
     expect(bookWithPrivateAuthor).to.not.be.undefined();
     expect(bookWithPrivateAuthor.author).to.be.an.Object();
@@ -2221,18 +2224,21 @@ describe('GET /entities', () => {
     });
 
     // Get books with author lookup, filtering for public authors only
-    const filterStr = 'filter[lookup][0][prop]=author&filter[lookup][0][set][publics]=true';
+    const filterStr =
+      'filter[lookup][0][prop]=author&filter[lookup][0][set][publics]=true';
     const response = await client.get('/entities').query(filterStr).expect(200);
 
     expect(response.body).to.be.Array();
 
     // Find books in the response
-    const books = response.body.filter((e: GenericEntity) => e._kind === 'book');
+    const books = response.body.filter(
+      (e: GenericEntity) => e._kind === 'book',
+    );
     expect(books).to.have.length(3);
 
     // Find the book with public author
-    const bookWithPublicAuthor = books.find((book: any) => 
-      book._name === 'Book with Public Author'
+    const bookWithPublicAuthor = books.find(
+      (book: any) => book._name === 'Book with Public Author',
     );
     expect(bookWithPublicAuthor).to.not.be.undefined();
     expect(bookWithPublicAuthor.author).to.be.an.Object();
@@ -2240,14 +2246,14 @@ describe('GET /entities', () => {
     expect(bookWithPublicAuthor.author._visibility).to.equal('public');
 
     // Verify that books with non-public authors have null author (filtered out)
-    const bookWithPrivateAuthor = books.find((book: any) => 
-      book._name === 'Book with Private Author'
+    const bookWithPrivateAuthor = books.find(
+      (book: any) => book._name === 'Book with Private Author',
     );
     expect(bookWithPrivateAuthor).to.not.be.undefined();
     expect(bookWithPrivateAuthor.author).to.be.null();
 
-    const bookWithProtectedAuthor = books.find((book: any) => 
-      book._name === 'Book with Protected Author'
+    const bookWithProtectedAuthor = books.find(
+      (book: any) => book._name === 'Book with Protected Author',
     );
     expect(bookWithProtectedAuthor).to.not.be.undefined();
     expect(bookWithProtectedAuthor.author).to.be.null();
@@ -2320,33 +2326,38 @@ describe('GET /entities', () => {
     });
 
     // Get books with author lookup, filtering for authors that are both active AND public
-    const filterStr = 'filter[lookup][0][prop]=author&filter[lookup][0][set][and][0][actives]=true&filter[lookup][0][set][and][1][publics]=true';
+    const filterStr =
+      'filter[lookup][0][prop]=author&filter[lookup][0][set][and][0][actives]=true&filter[lookup][0][set][and][1][publics]=true';
     const response = await client.get('/entities').query(filterStr).expect(200);
 
     expect(response.body).to.be.Array();
 
     // Find books in the response
-    const books = response.body.filter((e: GenericEntity) => e._kind === 'book');
+    const books = response.body.filter(
+      (e: GenericEntity) => e._kind === 'book',
+    );
     expect(books).to.have.length(3);
 
     // Find the book with active public author
-    const bookWithActivePublicAuthor = books.find((book: any) => 
-      book._name === 'Book with Active Public Author'
+    const bookWithActivePublicAuthor = books.find(
+      (book: any) => book._name === 'Book with Active Public Author',
     );
     expect(bookWithActivePublicAuthor).to.not.be.undefined();
     expect(bookWithActivePublicAuthor.author).to.be.an.Object();
-    expect(bookWithActivePublicAuthor.author._name).to.equal('Active Public Author');
+    expect(bookWithActivePublicAuthor.author._name).to.equal(
+      'Active Public Author',
+    );
     expect(bookWithActivePublicAuthor.author._visibility).to.equal('public');
 
     // Verify that books with authors that don't match both conditions have null author
-    const bookWithActivePrivateAuthor = books.find((book: any) => 
-      book._name === 'Book with Active Private Author'
+    const bookWithActivePrivateAuthor = books.find(
+      (book: any) => book._name === 'Book with Active Private Author',
     );
     expect(bookWithActivePrivateAuthor).to.not.be.undefined();
     expect(bookWithActivePrivateAuthor.author).to.be.null();
 
-    const bookWithInactivePublicAuthor = books.find((book: any) => 
-      book._name === 'Book with Inactive Public Author'
+    const bookWithInactivePublicAuthor = books.find(
+      (book: any) => book._name === 'Book with Inactive Public Author',
     );
     expect(bookWithInactivePublicAuthor).to.not.be.undefined();
     expect(bookWithInactivePublicAuthor.author).to.be.null();
@@ -2408,7 +2419,8 @@ describe('GET /entities', () => {
     });
 
     // Get the book with authors lookup, filtering for active authors only
-    const filterStr = 'filter[lookup][0][prop]=authors&filter[lookup][0][set][actives]=true';
+    const filterStr =
+      'filter[lookup][0][prop]=authors&filter[lookup][0][set][actives]=true';
     const response = await client.get('/entities').query(filterStr).expect(200);
 
     expect(response.body).to.be.Array();
@@ -2427,8 +2439,12 @@ describe('GET /entities', () => {
     // Verify all returned authors are active
     book.authors.forEach((author: any) => {
       expect(author._kind).to.equal('author');
-      expect(new Date(author._validFromDateTime).getTime()).to.be.lessThan(now.getTime());
-      expect(new Date(author._validUntilDateTime).getTime()).to.be.greaterThan(now.getTime());
+      expect(new Date(author._validFromDateTime).getTime()).to.be.lessThan(
+        now.getTime(),
+      );
+      expect(new Date(author._validUntilDateTime).getTime()).to.be.greaterThan(
+        now.getTime(),
+      );
     });
   });
 
@@ -2525,7 +2541,8 @@ describe('GET /entities', () => {
     });
 
     // Get the book with authors lookup, filtering for audience (current-user and current-group)
-    const filterStr = 'filter[lookup][0][prop]=authors&filter[lookup][0][set][audience][userIds]=current-user&filter[lookup][0][set][audience][groupIds]=current-group';
+    const filterStr =
+      'filter[lookup][0][prop]=authors&filter[lookup][0][set][audience][userIds]=current-user&filter[lookup][0][set][audience][groupIds]=current-group';
     const response = await client.get('/entities').query(filterStr).expect(200);
 
     expect(response.body).to.be.Array();
@@ -2543,35 +2560,55 @@ describe('GET /entities', () => {
     const authorNames = book.authors.map((a: any) => a._name).sort();
     expect(authorNames).to.eql([
       'Owned by Group Author',
-      'Owned by User Author', 
+      'Owned by User Author',
       'Public Author',
       'Viewable by Group Author',
-      'Viewable by User Author'
+      'Viewable by User Author',
     ]);
 
     // Verify each returned author is accessible to current-user or current-group
-    const ownedByUserAuthor = book.authors.find((a: any) => a._name === 'Owned by User Author');
+    const ownedByUserAuthor = book.authors.find(
+      (a: any) => a._name === 'Owned by User Author',
+    );
     expect(ownedByUserAuthor).to.not.be.undefined();
-    expect(ownedByUserAuthor._ownerUsers).to.be.an.Array().and.containEql('current-user');
+    expect(ownedByUserAuthor._ownerUsers)
+      .to.be.an.Array()
+      .and.containEql('current-user');
 
-    const ownedByGroupAuthor = book.authors.find((a: any) => a._name === 'Owned by Group Author');
+    const ownedByGroupAuthor = book.authors.find(
+      (a: any) => a._name === 'Owned by Group Author',
+    );
     expect(ownedByGroupAuthor).to.not.be.undefined();
-    expect(ownedByGroupAuthor._ownerGroups).to.be.an.Array().and.containEql('current-group');
+    expect(ownedByGroupAuthor._ownerGroups)
+      .to.be.an.Array()
+      .and.containEql('current-group');
 
-    const viewableByUserAuthor = book.authors.find((a: any) => a._name === 'Viewable by User Author');
+    const viewableByUserAuthor = book.authors.find(
+      (a: any) => a._name === 'Viewable by User Author',
+    );
     expect(viewableByUserAuthor).to.not.be.undefined();
-    expect(viewableByUserAuthor._viewerUsers).to.be.an.Array().and.containEql('current-user');
+    expect(viewableByUserAuthor._viewerUsers)
+      .to.be.an.Array()
+      .and.containEql('current-user');
 
-    const viewableByGroupAuthor = book.authors.find((a: any) => a._name === 'Viewable by Group Author');
+    const viewableByGroupAuthor = book.authors.find(
+      (a: any) => a._name === 'Viewable by Group Author',
+    );
     expect(viewableByGroupAuthor).to.not.be.undefined();
-    expect(viewableByGroupAuthor._viewerGroups).to.be.an.Array().and.containEql('current-group');
+    expect(viewableByGroupAuthor._viewerGroups)
+      .to.be.an.Array()
+      .and.containEql('current-group');
 
-    const publicAuthor = book.authors.find((a: any) => a._name === 'Public Author');
+    const publicAuthor = book.authors.find(
+      (a: any) => a._name === 'Public Author',
+    );
     expect(publicAuthor).to.not.be.undefined();
     expect(publicAuthor._visibility).to.equal('public');
 
     // Verify inaccessible author is filtered out
-    const inaccessibleAuthor = book.authors.find((a: any) => a._name === 'Inaccessible Author');
+    const inaccessibleAuthor = book.authors.find(
+      (a: any) => a._name === 'Inaccessible Author',
+    );
     expect(inaccessibleAuthor).to.be.undefined();
   });
 
@@ -2644,22 +2681,24 @@ describe('GET /entities', () => {
     });
 
     // Get books with author lookup, filtering for active authors in fiction category
-    const filterStr = 
+    const filterStr =
       'filter[lookup][0][prop]=author&' +
       'filter[lookup][0][set][actives]=true&' +
       'filter[lookup][0][scope][where][category]=fiction';
-    
+
     const response = await client.get('/entities').query(filterStr).expect(200);
 
     expect(response.body).to.be.Array();
 
     // Find books in the response
-    const books = response.body.filter((e: GenericEntity) => e._kind === 'book');
+    const books = response.body.filter(
+      (e: GenericEntity) => e._kind === 'book',
+    );
     expect(books).to.have.length(3);
 
     // Find the book with active fiction author
-    const bookWithActiveAuthor = books.find((book: any) => 
-      book._name === 'Book with Active Author'
+    const bookWithActiveAuthor = books.find(
+      (book: any) => book._name === 'Book with Active Author',
     );
     expect(bookWithActiveAuthor).to.not.be.undefined();
     expect(bookWithActiveAuthor.author).to.be.an.Object();
@@ -2667,14 +2706,14 @@ describe('GET /entities', () => {
     expect(bookWithActiveAuthor.author.category).to.equal('fiction');
 
     // Verify that books with authors that don't match both set and scope filters have null author
-    const bookWithActiveEditor = books.find((book: any) => 
-      book._name === 'Book with Active Editor'
+    const bookWithActiveEditor = books.find(
+      (book: any) => book._name === 'Book with Active Editor',
     );
     expect(bookWithActiveEditor).to.not.be.undefined();
     expect(bookWithActiveEditor.author).to.be.null(); // filtered out by scope (category != 'fiction')
 
-    const bookWithInactiveAuthor = books.find((book: any) => 
-      book._name === 'Book with Inactive Author'
+    const bookWithInactiveAuthor = books.find(
+      (book: any) => book._name === 'Book with Inactive Author',
     );
     expect(bookWithInactiveAuthor).to.not.be.undefined();
     expect(bookWithInactiveAuthor.author).to.be.null(); // filtered out by set (not active)
@@ -2751,37 +2790,47 @@ describe('GET /entities', () => {
     });
 
     // Get books with nested lookup: author -> publisher, filtering for active publishers
-    const filterStr = 
+    const filterStr =
       'filter[lookup][0][prop]=author&' +
       'filter[lookup][0][scope][lookup][0][prop]=publisher&' +
       'filter[lookup][0][scope][lookup][0][set][actives]=true';
-    
+
     const response = await client.get('/entities').query(filterStr).expect(200);
 
     expect(response.body).to.be.Array();
 
     // Find books in the response
-    const books = response.body.filter((e: GenericEntity) => e._kind === 'book');
+    const books = response.body.filter(
+      (e: GenericEntity) => e._kind === 'book',
+    );
     expect(books).to.have.length(2);
 
     // Find the book with author with active publisher
-    const bookWithActivePublisher = books.find((book: any) => 
-      book._name === 'Book with Author with Active Publisher'
+    const bookWithActivePublisher = books.find(
+      (book: any) => book._name === 'Book with Author with Active Publisher',
     );
     expect(bookWithActivePublisher).to.not.be.undefined();
     expect(bookWithActivePublisher.author).to.be.an.Object();
-    expect(bookWithActivePublisher.author._name).to.equal('Author with Active Publisher');
+    expect(bookWithActivePublisher.author._name).to.equal(
+      'Author with Active Publisher',
+    );
     expect(bookWithActivePublisher.author.publisher).to.be.an.Object();
-    expect(bookWithActivePublisher.author.publisher._name).to.equal('Active Publisher');
-    expect(bookWithActivePublisher.author.publisher.location).to.equal('New York');
+    expect(bookWithActivePublisher.author.publisher._name).to.equal(
+      'Active Publisher',
+    );
+    expect(bookWithActivePublisher.author.publisher.location).to.equal(
+      'New York',
+    );
 
     // Verify that book with author with inactive publisher has null nested publisher
-    const bookWithInactivePublisher = books.find((book: any) => 
-      book._name === 'Book with Author with Inactive Publisher'
+    const bookWithInactivePublisher = books.find(
+      (book: any) => book._name === 'Book with Author with Inactive Publisher',
     );
     expect(bookWithInactivePublisher).to.not.be.undefined();
     expect(bookWithInactivePublisher.author).to.be.an.Object();
-    expect(bookWithInactivePublisher.author._name).to.equal('Author with Inactive Publisher');
+    expect(bookWithInactivePublisher.author._name).to.equal(
+      'Author with Inactive Publisher',
+    );
     expect(bookWithInactivePublisher.author.publisher).to.be.null(); // filtered out by nested set
   });
 

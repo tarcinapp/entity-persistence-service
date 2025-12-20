@@ -186,7 +186,7 @@ export class EntitiesThroughListController {
     return repo.create(entity);
   }
 
-    @patch('/lists/{id}/entities', {
+  @patch('/lists/{id}/entities', {
     operationId: 'updateEntitiesByListId',
     responses: {
       '200': {

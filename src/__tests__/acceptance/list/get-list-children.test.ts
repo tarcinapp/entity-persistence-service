@@ -142,6 +142,5 @@ describe('GET /lists/{id}/children', () => {
       `List with id '${nonExistentId}' could not be found.`,
     );
     expect(response.body.error).to.have.property('code', 'LIST-NOT-FOUND');
-    expect(response.body.error).to.have.property('status', 404);
   });
 });

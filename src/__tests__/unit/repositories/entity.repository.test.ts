@@ -272,7 +272,6 @@ describe('EntityRepository', () => {
     });
 
     describe('validation and enrichment', () => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       let kindStub: sinon.SinonStub;
 
       beforeEach(() => {
@@ -440,7 +439,6 @@ describe('EntityRepository', () => {
             name: 'LimitExceededError',
             message: 'Record limit exceeded for entity',
             code: 'ENTITY-LIMIT-EXCEEDED',
-            status: 429,
             details: [
               new SingleError({
                 code: 'ENTITY-LIMIT-EXCEEDED',
@@ -493,7 +491,6 @@ describe('EntityRepository', () => {
             name: 'UniquenessViolationError',
             message: 'Entity already exists',
             code: 'ENTITY-UNIQUENESS-VIOLATION',
-            status: 409,
             details: [
               new SingleError({
                 code: 'ENTITY-UNIQUENESS-VIOLATION',
@@ -636,7 +633,6 @@ describe('EntityRepository', () => {
             name: 'UniquenessViolationError',
             message: 'Entity already exists',
             code: 'ENTITY-UNIQUENESS-VIOLATION',
-            status: 409,
             details: [
               new SingleError({
                 code: 'ENTITY-UNIQUENESS-VIOLATION',
@@ -1007,7 +1003,6 @@ describe('EntityRepository', () => {
             name: 'UniquenessViolationError',
             message: 'Entity already exists',
             code: 'ENTITY-UNIQUENESS-VIOLATION',
-            status: 409,
             details: [
               new SingleError({
                 code: 'ENTITY-UNIQUENESS-VIOLATION',

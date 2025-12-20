@@ -139,10 +139,7 @@ export class ListReactionsController {
     sanitizeFilterFields(filter);
     sanitizeFilterFields(listFilter);
 
-    return this.listReactionsRepository.count(
-      filter.where,
-      listFilter.where,
-    );
+    return this.listReactionsRepository.count(filter.where, listFilter.where);
   }
 
   @get('/list-reactions', {
@@ -449,12 +446,9 @@ export class ListReactionsController {
     sanitizeFilterFields(filter);
     sanitizeFilterFields(listFilter);
 
-    return this.listReactionsRepository.findParents(
-      id,
-      filter,
-      listFilter,
-      { useMongoPipeline: true },
-    );
+    return this.listReactionsRepository.findParents(id, filter, listFilter, {
+      useMongoPipeline: true,
+    });
   }
 
   @get('/list-reactions/{id}/children', {
@@ -508,12 +502,9 @@ export class ListReactionsController {
     sanitizeFilterFields(filter);
     sanitizeFilterFields(listFilter);
 
-    return this.listReactionsRepository.findChildren(
-      id,
-      filter,
-      listFilter,
-      { useMongoPipeline: true },
-    );
+    return this.listReactionsRepository.findChildren(id, filter, listFilter, {
+      useMongoPipeline: true,
+    });
   }
 
   @post('/list-reactions/{id}/children', {

@@ -9,6 +9,7 @@ export class CollectionConfigHelper {
     if (!CollectionConfigHelper.instance) {
       CollectionConfigHelper.instance = new CollectionConfigHelper();
     }
+
     return CollectionConfigHelper.instance;
   }
 
@@ -21,14 +22,22 @@ export class CollectionConfigHelper {
   }
 
   public getListEntityRelationCollectionName(): string {
-    return EnvConfigHelper.getInstance().COLLECTION_LIST_ENTITY_REL ?? 'ListToEntityRelation';
+    return (
+      EnvConfigHelper.getInstance().COLLECTION_LIST_ENTITY_REL ??
+      'ListToEntityRelation'
+    );
   }
 
   public getEntityReactionsCollectionName(): string {
-    return EnvConfigHelper.getInstance().COLLECTION_ENTITY_REACTIONS ?? 'EntityReaction';
+    return (
+      EnvConfigHelper.getInstance().COLLECTION_ENTITY_REACTIONS ??
+      'EntityReaction'
+    );
   }
 
   public getListReactionsCollectionName(): string {
-    return EnvConfigHelper.getInstance().COLLECTION_LIST_REACTIONS ?? 'ListReactions';
+    return (
+      EnvConfigHelper.getInstance().COLLECTION_LIST_REACTIONS ?? 'ListReactions'
+    );
   }
 }

@@ -22,6 +22,7 @@ import {
   KindBindings,
   KindConfigurationReader,
 } from '../../extensions';
+import { EnvConfigHelper } from '../../extensions/config-helpers/env-config-helper';
 import {
   LookupBindings,
   LookupHelper,
@@ -30,12 +31,16 @@ import {
   MongoPipelineHelperBindings,
   MongoPipelineHelper,
 } from '../../extensions/utils/mongo-pipeline-helper';
-import type { GenericEntity, List, EntityReaction, ListReaction } from '../../models';
+import type {
+  GenericEntity,
+  List,
+  EntityReaction,
+  ListReaction,
+} from '../../models';
 import { LookupConstraintBindings } from '../../services/lookup-constraint.bindings';
 import { LookupConstraintService } from '../../services/lookup-constraint.service';
 import { RecordLimitCheckerBindings } from '../../services/record-limit-checker.bindings';
 import { RecordLimitCheckerService } from '../../services/record-limit-checker.service';
-import {EnvConfigHelper} from '../../extensions/config-helpers/env-config-helper';
 
 /**
  * Utility function to verify that all fields in two responses match exactly
@@ -350,7 +355,6 @@ export async function setupApplication(
     delete process.env[key];
   });
 
-
   // Set new environment variables
   if (envVars) {
     Object.entries(envVars).forEach(([key, value]) => {
@@ -387,12 +391,12 @@ export async function setupApplication(
   app.bootOptions = {
     controllers: {
       dirs: ['../../controllers'],
-      extensions: ['.controller.ts'],
+      extensions: ['.controller.js', '.controller.ts'],
       nested: true,
     },
     repositories: {
       dirs: ['../../repositories'],
-      extensions: ['.repository.ts'],
+      extensions: ['.repository.js', '.repository.ts'],
       nested: true,
     },
   };

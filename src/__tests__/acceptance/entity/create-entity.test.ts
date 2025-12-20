@@ -113,7 +113,6 @@ describe('POST /entities', () => {
       statusCode: 422,
       name: 'InvalidKindError',
       code: 'INVALID-ENTITY-KIND',
-      status: 422,
     });
   });
 
@@ -157,7 +156,6 @@ describe('POST /entities', () => {
       name: 'UniquenessViolationError',
       message: 'Entity already exists',
       code: 'ENTITY-UNIQUENESS-VIOLATION',
-      status: 409,
       details: [
         {
           code: 'ENTITY-UNIQUENESS-VIOLATION',
@@ -214,7 +212,6 @@ describe('POST /entities', () => {
       name: 'UniquenessViolationError',
       message: 'Entity already exists',
       code: 'ENTITY-UNIQUENESS-VIOLATION',
-      status: 409,
       details: [
         {
           code: 'ENTITY-UNIQUENESS-VIOLATION',
@@ -276,7 +273,6 @@ describe('POST /entities', () => {
       name: 'UniquenessViolationError',
       message: 'Entity already exists',
       code: 'ENTITY-UNIQUENESS-VIOLATION',
-      status: 409,
       details: [
         {
           code: 'ENTITY-UNIQUENESS-VIOLATION',
@@ -288,6 +284,7 @@ describe('POST /entities', () => {
         },
       ],
     });
+    expect(errorResponse.body.error.requestId ?? '').to.match(/.+/);
   });
 
   it('rejects duplicate entity when uniqueness set includes actives and both entities are active', async () => {
@@ -349,7 +346,6 @@ describe('POST /entities', () => {
       name: 'UniquenessViolationError',
       message: 'Entity already exists',
       code: 'ENTITY-UNIQUENESS-VIOLATION',
-      status: 409,
       details: [
         {
           code: 'ENTITY-UNIQUENESS-VIOLATION',
@@ -636,7 +632,6 @@ describe('POST /entities', () => {
       name: 'LimitExceededError',
       message: 'Record limit exceeded for entity',
       code: 'ENTITY-LIMIT-EXCEEDED',
-      status: 429,
       details: [
         {
           code: 'ENTITY-LIMIT-EXCEEDED',
@@ -690,7 +685,6 @@ describe('POST /entities', () => {
       name: 'LimitExceededError',
       message: 'Record limit exceeded for entity',
       code: 'ENTITY-LIMIT-EXCEEDED',
-      status: 429,
       details: [
         {
           code: 'ENTITY-LIMIT-EXCEEDED',
@@ -766,7 +760,6 @@ describe('POST /entities', () => {
       name: 'LimitExceededError',
       message: 'Record limit exceeded for entity',
       code: 'ENTITY-LIMIT-EXCEEDED',
-      status: 429,
       details: [
         {
           code: 'ENTITY-LIMIT-EXCEEDED',
@@ -833,7 +826,6 @@ describe('POST /entities', () => {
       name: 'LimitExceededError',
       message: 'Record limit exceeded for entity',
       code: 'ENTITY-LIMIT-EXCEEDED',
-      status: 429,
       details: [
         {
           code: 'ENTITY-LIMIT-EXCEEDED',
@@ -924,7 +916,6 @@ describe('POST /entities', () => {
       name: 'LimitExceededError',
       message: 'Record limit exceeded for entity',
       code: 'ENTITY-LIMIT-EXCEEDED',
-      status: 429,
       details: [
         {
           code: 'ENTITY-LIMIT-EXCEEDED',
@@ -993,7 +984,6 @@ describe('POST /entities', () => {
       name: 'LimitExceededError',
       message: 'Record limit exceeded for entity',
       code: 'ENTITY-LIMIT-EXCEEDED',
-      status: 429,
       details: [
         {
           code: 'ENTITY-LIMIT-EXCEEDED',
@@ -1250,7 +1240,6 @@ describe('POST /entities', () => {
         statusCode: 422,
         name: 'InvalidLookupReferenceError',
         code: 'ENTITY-INVALID-LOOKUP-REFERENCE',
-        status: 422,
       });
     });
 
@@ -1281,7 +1270,6 @@ describe('POST /entities', () => {
         statusCode: 422,
         name: 'InvalidLookupReferenceError',
         code: 'ENTITY-INVALID-LOOKUP-REFERENCE',
-        status: 422,
       });
     });
 
@@ -1324,7 +1312,6 @@ describe('POST /entities', () => {
         statusCode: 422,
         name: 'InvalidLookupConstraintError',
         code: 'ENTITY-INVALID-LOOKUP-KIND',
-        status: 422,
       });
     });
 

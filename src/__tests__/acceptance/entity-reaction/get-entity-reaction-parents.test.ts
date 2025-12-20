@@ -989,6 +989,6 @@ describe('GET /entity-reactions/{id}/parents', () => {
     const response = await client
       .get(`/entity-reactions/${nonExistentId}/parents`)
       .expect(404);
-    expect(response.body.error).to.have.property('status', 404);
+    expect(response.body.error).to.have.property('statusCode', 404);
   });
 });

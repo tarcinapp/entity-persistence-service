@@ -203,7 +203,6 @@ describe('POST /relations', () => {
       name: 'LimitExceededError',
       message: 'Record limit exceeded for relation',
       code: 'RELATION-LIMIT-EXCEEDED',
-      status: 429,
       details: [
         {
           code: 'RELATION-LIMIT-EXCEEDED',
@@ -215,6 +214,7 @@ describe('POST /relations', () => {
         },
       ],
     });
+    expect(response.body.error.requestId ?? '').to.match(/.+/);
   });
 
   it('enforces kind-specific record count limit', async () => {
@@ -268,7 +268,6 @@ describe('POST /relations', () => {
       name: 'LimitExceededError',
       message: 'Record limit exceeded for relation',
       code: 'RELATION-LIMIT-EXCEEDED',
-      status: 429,
       details: [
         {
           code: 'RELATION-LIMIT-EXCEEDED',
@@ -316,7 +315,6 @@ describe('POST /relations', () => {
       name: 'LimitExceededError',
       message: 'Record limit exceeded for relation',
       code: 'RELATION-LIMIT-EXCEEDED',
-      status: 429,
       details: [
         {
           code: 'RELATION-LIMIT-EXCEEDED',
@@ -485,7 +483,6 @@ describe('POST /relations', () => {
       name: 'LimitExceededError',
       message: 'Record limit exceeded for relation',
       code: 'RELATION-LIMIT-EXCEEDED',
-      status: 429,
       details: [
         {
           code: 'RELATION-LIMIT-EXCEEDED',
@@ -560,7 +557,6 @@ describe('POST /relations', () => {
       name: 'LimitExceededError',
       message: 'Record limit exceeded for relation',
       code: 'RELATION-LIMIT-EXCEEDED',
-      status: 429,
       details: [
         {
           code: 'RELATION-LIMIT-EXCEEDED',
@@ -606,7 +602,6 @@ describe('POST /relations', () => {
       name: 'LimitExceededError',
       message: 'Record limit exceeded for relation',
       code: 'RELATION-LIMIT-EXCEEDED',
-      status: 429,
       details: [
         {
           code: 'RELATION-LIMIT-EXCEEDED',
@@ -669,7 +664,6 @@ describe('POST /relations', () => {
       name: 'UniquenessViolationError',
       message: 'Relation already exists',
       code: 'RELATION-UNIQUENESS-VIOLATION',
-      status: 409,
       details: [
         {
           code: 'RELATION-UNIQUENESS-VIOLATION',

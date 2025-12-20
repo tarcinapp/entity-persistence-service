@@ -121,7 +121,9 @@ export class EntityRepository extends DefaultCrudRepository<
     };
   }
 
-  private forceKindInclusion(filter: Filter<GenericEntity> | undefined): Filter<GenericEntity> | undefined {
+  private forceKindInclusion(
+    filter: Filter<GenericEntity> | undefined,
+  ): Filter<GenericEntity> | undefined {
     if (!filter) {
       return filter;
     }
@@ -138,6 +140,7 @@ export class EntityRepository extends DefaultCrudRepository<
           fields: [...filter.fields, '_kind' as any],
         };
       }
+
       return filter;
     }
 
@@ -304,7 +307,6 @@ export class EntityRepository extends DefaultCrudRepository<
         name: 'ImmutableKindError',
         message: 'Entity kind cannot be changed after creation.',
         code: 'IMMUTABLE-ENTITY-KIND',
-        status: 422,
       });
     }
 
@@ -485,7 +487,6 @@ export class EntityRepository extends DefaultCrudRepository<
         name: 'ImmutableKindError',
         message: `Entity kind cannot be changed after creation. Current kind is '${existingEntity._kind}'.`,
         code: 'IMMUTABLE-ENTITY-KIND',
-        status: 422,
       });
     }
 
@@ -518,7 +519,6 @@ export class EntityRepository extends DefaultCrudRepository<
         name: 'ImmutableKindError',
         message: `Entity kind cannot be changed after creation. Current kind is '${existingData._kind}'.`,
         code: 'IMMUTABLE-ENTITY-KIND',
-        status: 422,
       });
     }
 
@@ -640,7 +640,6 @@ export class EntityRepository extends DefaultCrudRepository<
             name: 'NotFoundError',
             message: "Entity with id '" + id + "' could not be found.",
             code: 'ENTITY-NOT-FOUND',
-            status: 404,
           });
         }
 
@@ -708,7 +707,6 @@ export class EntityRepository extends DefaultCrudRepository<
           name: 'InvalidKindError',
           message: `Entity kind cannot contain special or uppercase characters. Use '${slugKind}' instead.`,
           code: 'INVALID-ENTITY-KIND',
-          status: 422,
         });
       }
     }
@@ -725,7 +723,6 @@ export class EntityRepository extends DefaultCrudRepository<
         name: 'InvalidKindError',
         message: `Entity kind '${data._kind}' is not valid. Use any of these values instead: ${validValues.join(', ')}`,
         code: 'INVALID-ENTITY-KIND',
-        status: 422,
       });
     }
   }
@@ -759,7 +756,9 @@ export class EntityRepository extends DefaultCrudRepository<
   ): Promise<GenericEntity & GenericEntityRelations> {
     try {
       // Ensure _kind is always included (cast to Filter for the helper)
-      const forcedFilter = this.forceKindInclusion(filter as Filter<GenericEntity>);
+      const forcedFilter = this.forceKindInclusion(
+        filter as Filter<GenericEntity>,
+      );
       const typedFilter = forcedFilter as FilterExcludingWhere<GenericEntity>;
 
       const entity = await super.findById(id, typedFilter, options);
@@ -774,7 +773,6 @@ export class EntityRepository extends DefaultCrudRepository<
           name: 'NotFoundError',
           message: `Entity with id '${id}' could not be found.`,
           code: 'ENTITY-NOT-FOUND',
-          status: 404,
         });
       }
 
@@ -903,26 +901,34 @@ export class EntityRepository extends DefaultCrudRepository<
     }
   }
 
-  private injectRecordType<T extends GenericEntity | (GenericEntity & GenericEntityRelations)>(
-    entity: T,
-  ): T {
-    if (!entity) return entity;
+  private injectRecordType<
+    T extends GenericEntity | (GenericEntity & GenericEntityRelations),
+  >(entity: T): T {
+    if (!entity) {
+      return entity;
+    }
+
     (entity as any)._recordType = 'entity';
+
     return entity;
   }
 
-  private injectRecordTypeArray<T extends GenericEntity | (GenericEntity & GenericEntityRelations)>(
-    entities: T[],
-  ): T[] {
-    return entities.map(entity => this.injectRecordType(entity));
+  private injectRecordTypeArray<
+    T extends GenericEntity | (GenericEntity & GenericEntityRelations),
+  >(entities: T[]): T[] {
+    return entities.map((entity) => this.injectRecordType(entity));
   }
 
-  private sanitizeRecordType(data: DataObject<GenericEntity>): DataObject<GenericEntity> {
+  private sanitizeRecordType(
+    data: DataObject<GenericEntity>,
+  ): DataObject<GenericEntity> {
     if ('_recordType' in data) {
       const sanitized = { ...data };
       delete sanitized._recordType;
+
       return sanitized;
     }
+
     return data;
   }
 }

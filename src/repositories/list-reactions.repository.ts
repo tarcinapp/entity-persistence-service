@@ -68,7 +68,9 @@ export class ListReactionsRepository extends DefaultCrudRepository<
     super(ListReaction, dataSource);
   }
 
-  private forceKindInclusion(filter: Filter<ListReaction> | undefined): Filter<ListReaction> | undefined {
+  private forceKindInclusion(
+    filter: Filter<ListReaction> | undefined,
+  ): Filter<ListReaction> | undefined {
     if (!filter) {
       return filter;
     }
@@ -85,6 +87,7 @@ export class ListReactionsRepository extends DefaultCrudRepository<
           fields: [...filter.fields, '_kind' as any],
         };
       }
+
       return filter;
     }
 
@@ -203,7 +206,11 @@ export class ListReactionsRepository extends DefaultCrudRepository<
     const result = await cursor.toArray();
 
     // Process lookups if needed
-    const reactionsWithLookup = await this.processLookups(result as ListReaction[], filter);
+    const reactionsWithLookup = await this.processLookups(
+      result as ListReaction[],
+      filter,
+    );
+
     return this.injectRecordTypeArray(reactionsWithLookup);
   }
 
@@ -303,7 +310,6 @@ export class ListReactionsRepository extends DefaultCrudRepository<
             name: 'NotFoundError',
             message: `List with id '${data._listId}' could not be found.`,
             code: 'LIST-NOT-FOUND',
-            status: 404,
           });
         }
 
@@ -337,9 +343,7 @@ export class ListReactionsRepository extends DefaultCrudRepository<
     // Strip virtual fields before persisting
     data = this.sanitizeRecordType(data);
 
-    data._kind =
-      data._kind ??
-      this.kindConfigReader.defaultListReactionKind;
+    data._kind = data._kind ?? this.kindConfigReader.defaultListReactionKind;
 
     const now = new Date().toISOString();
 
@@ -359,9 +363,7 @@ export class ListReactionsRepository extends DefaultCrudRepository<
 
     data._visibility = data._visibility
       ? data._visibility
-      : this.visibilityConfigReader.getVisibilityForListReactions(
-          data._kind,
-        );
+      : this.visibilityConfigReader.getVisibilityForListReactions(data._kind);
 
     this.generateSlug(data);
     this.setCountFields(data);
@@ -372,11 +374,7 @@ export class ListReactionsRepository extends DefaultCrudRepository<
   }
 
   private async checkUniquenessForCreate(newData: DataObject<ListReaction>) {
-    await this.recordLimitChecker.checkUniqueness(
-      ListReaction,
-      newData,
-      this,
-    );
+    await this.recordLimitChecker.checkUniqueness(ListReaction, newData, this);
   }
 
   private checkDataKindFormat(data: DataObject<ListReaction>) {
@@ -388,7 +386,6 @@ export class ListReactionsRepository extends DefaultCrudRepository<
           name: 'InvalidKindError',
           message: `List reaction kind cannot contain special or uppercase characters. Use '${slugKind}' instead.`,
           code: 'INVALID-LIST-REACTION-KIND',
-          status: 422,
         });
       }
     }
@@ -405,7 +402,6 @@ export class ListReactionsRepository extends DefaultCrudRepository<
         name: 'InvalidKindError',
         message: `List reaction kind '${data._kind}' is not valid. Use any of these values instead: ${validValues.join(', ')}`,
         code: 'INVALID-LIST-REACTION-KIND',
-        status: 422,
       });
     }
   }
@@ -455,7 +451,6 @@ export class ListReactionsRepository extends DefaultCrudRepository<
           name: 'NotFoundError',
           message: `List reaction with id '${id}' could not be found.`,
           code: 'LIST-REACTION-NOT-FOUND',
-          status: 404,
         });
       }
 
@@ -479,7 +474,6 @@ export class ListReactionsRepository extends DefaultCrudRepository<
             name: 'NotFoundError',
             message: "List reaction with id '" + id + "' could not be found.",
             code: 'LIST-REACTION-NOT-FOUND',
-            status: 404,
           });
         }
 
@@ -522,7 +516,6 @@ export class ListReactionsRepository extends DefaultCrudRepository<
         name: 'ImmutableKindError',
         message: `List reaction kind cannot be changed after creation. Current kind is '${existingReaction._kind}'.`,
         code: 'IMMUTABLE-LIST-REACTION-KIND',
-        status: 422,
       });
     }
 
@@ -536,7 +529,6 @@ export class ListReactionsRepository extends DefaultCrudRepository<
         name: 'ImmutableListIdError',
         message: `List reaction list ID cannot be changed after creation. Current list ID is '${existingReaction._listId}'.`,
         code: 'IMMUTABLE-LIST-ID',
-        status: 422,
       });
     }
 
@@ -589,7 +581,6 @@ export class ListReactionsRepository extends DefaultCrudRepository<
         name: 'ImmutableKindError',
         message: 'List reaction kind cannot be changed after creation.',
         code: 'IMMUTABLE-LIST-REACTION-KIND',
-        status: 422,
       });
     }
 
@@ -600,7 +591,6 @@ export class ListReactionsRepository extends DefaultCrudRepository<
         name: 'ImmutableListIdError',
         message: 'List reaction list ID cannot be changed after creation.',
         code: 'IMMUTABLE-LIST-ID',
-        status: 422,
       });
     }
 
@@ -707,21 +697,16 @@ export class ListReactionsRepository extends DefaultCrudRepository<
         name: 'ImmutableKindError',
         message: `List reaction kind cannot be changed after creation. Current kind is '${existingData._kind}'.`,
         code: 'IMMUTABLE-LIST-REACTION-KIND',
-        status: 422,
       });
     }
 
     // Check if user is trying to change the _listId field
-    if (
-      data._listId !== undefined &&
-      data._listId !== existingData._listId
-    ) {
+    if (data._listId !== undefined && data._listId !== existingData._listId) {
       throw new HttpErrorResponse({
         statusCode: 422,
         name: 'ImmutableListIdError',
         message: `List reaction list ID cannot be changed after creation. Current list ID is '${existingData._listId}'.`,
         code: 'IMMUTABLE-LIST-ID',
-        status: 422,
       });
     }
 
@@ -856,12 +841,15 @@ export class ListReactionsRepository extends DefaultCrudRepository<
           name: 'NotFoundError',
           message: `List reaction with id '${id}' could not be found.`,
           code: 'LIST-REACTION-NOT-FOUND',
-          status: 404,
         });
       }
 
       // Process lookups if needed
-      const reactionWithLookup = await this.processLookup(result[0] as ListReaction, filter);
+      const reactionWithLookup = await this.processLookup(
+        result[0] as ListReaction,
+        filter,
+      );
+
       return this.injectRecordType(reactionWithLookup);
     } catch (error) {
       if (error.code === 'LIST-REACTION-NOT-FOUND') {
@@ -966,7 +954,9 @@ export class ListReactionsRepository extends DefaultCrudRepository<
   ): Promise<ListReaction> {
     try {
       // Retrieve parent with _listId
-      const parent = await this.findByIdRaw(parentId, { fields: { _listId: true } });
+      const parent = await this.findByIdRaw(parentId, {
+        fields: { _listId: true },
+      });
 
       // If parent not found, findByIdRaw will throw LIST-REACTION-NOT-FOUND
 
@@ -977,7 +967,6 @@ export class ListReactionsRepository extends DefaultCrudRepository<
           name: 'SourceRecordNotMatchError',
           message: `Source record _listId does not match parent. Parent _listId: '${parent._listId}', child _listId: '${reaction._listId}'.`,
           code: 'SOURCE-RECORD-NOT-MATCH',
-          status: 422,
         });
       }
 
@@ -1019,21 +1008,29 @@ export class ListReactionsRepository extends DefaultCrudRepository<
   }
 
   private injectRecordType(reaction: ListReaction): ListReaction {
-    if (!reaction) return reaction;
+    if (!reaction) {
+      return reaction;
+    }
+
     (reaction as any)._recordType = 'listReaction';
+
     return reaction;
   }
 
   private injectRecordTypeArray(reactions: ListReaction[]): ListReaction[] {
-    return reactions.map(reaction => this.injectRecordType(reaction));
+    return reactions.map((reaction) => this.injectRecordType(reaction));
   }
 
-  private sanitizeRecordType(data: DataObject<ListReaction>): DataObject<ListReaction> {
+  private sanitizeRecordType(
+    data: DataObject<ListReaction>,
+  ): DataObject<ListReaction> {
     if ('_recordType' in data) {
       const sanitized = { ...data };
       delete sanitized._recordType;
+
       return sanitized;
     }
+
     return data;
   }
 }

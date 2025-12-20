@@ -139,7 +139,9 @@ export class ListRepository extends DefaultCrudRepository<
     //this.registerInclusionResolver('_genericEntities', genericEntitiesInclusionResolver);
   }
 
-  private forceKindInclusion(filter: Filter<List> | undefined): Filter<List> | undefined {
+  private forceKindInclusion(
+    filter: Filter<List> | undefined,
+  ): Filter<List> | undefined {
     if (!filter) {
       return filter;
     }
@@ -156,6 +158,7 @@ export class ListRepository extends DefaultCrudRepository<
           fields: [...filter.fields, '_kind' as any],
         };
       }
+
       return filter;
     }
 
@@ -257,7 +260,6 @@ export class ListRepository extends DefaultCrudRepository<
           name: 'NotFoundError',
           message: `List with id '${id}' could not be found.`,
           code: 'LIST-NOT-FOUND',
-          status: 404,
         });
       }
 
@@ -366,7 +368,6 @@ export class ListRepository extends DefaultCrudRepository<
         name: 'ImmutableKindError',
         message: 'List kind cannot be changed after creation.',
         code: 'IMMUTABLE-LIST-KIND',
-        status: 422,
       });
     }
 
@@ -549,7 +550,9 @@ export class ListRepository extends DefaultCrudRepository<
         this.validateIncomingListForCreation(enrichedData),
       )
       .then((validEnrichedData) =>
-        super.create(validEnrichedData).then((created) => this.injectRecordType(created)),
+        super
+          .create(validEnrichedData)
+          .then((created) => this.injectRecordType(created)),
       );
   }
 
@@ -581,7 +584,6 @@ export class ListRepository extends DefaultCrudRepository<
         name: 'ImmutableKindError',
         message: 'List kind cannot be changed after creation.',
         code: 'IMMUTABLE-LIST-KIND',
-        status: 422,
       });
     }
 
@@ -610,7 +612,6 @@ export class ListRepository extends DefaultCrudRepository<
         name: 'ImmutableKindError',
         message: 'List kind cannot be changed after creation.',
         code: 'IMMUTABLE-LIST-KIND',
-        status: 422,
       });
     }
 
@@ -633,9 +634,7 @@ export class ListRepository extends DefaultCrudRepository<
     // Strip virtual fields before persisting
     data = this.sanitizeRecordType(data);
 
-    data._kind =
-      data._kind ??
-      this.kindConfigReader.defaultListKind;
+    data._kind = data._kind ?? this.kindConfigReader.defaultListKind;
 
     // take the date of now to make sure we have exactly the same date in all date fields
     const now = new Date().toISOString();
@@ -699,7 +698,6 @@ export class ListRepository extends DefaultCrudRepository<
             name: 'NotFoundError',
             message: "List with id '" + id + "' could not be found.",
             code: 'LIST-NOT-FOUND',
-            status: 404,
           });
         }
 
@@ -769,7 +767,6 @@ export class ListRepository extends DefaultCrudRepository<
           name: 'InvalidKindError',
           message: `List kind cannot contain special or uppercase characters. Use '${slugKind}' instead.`,
           code: 'INVALID-LIST-KIND',
-          status: 422,
         });
       }
     }
@@ -786,7 +783,6 @@ export class ListRepository extends DefaultCrudRepository<
         name: 'InvalidKindError',
         message: `List kind '${data._kind}' is not valid. Use any of these values instead: ${validValues.join(', ')}`,
         code: 'INVALID-LIST-KIND',
-        status: 422,
       });
     }
   }
@@ -825,7 +821,6 @@ export class ListRepository extends DefaultCrudRepository<
         name: 'NotFoundError',
         message: "List with id '" + listId + "' could not be found.",
         code: 'LIST-NOT-FOUND',
-        status: 404,
       });
     }
 
@@ -871,7 +866,6 @@ export class ListRepository extends DefaultCrudRepository<
         name: 'NotFoundError',
         message: "List with id '" + listId + "' could not be found.",
         code: 'LIST-NOT-FOUND',
-        status: 404,
       });
     }
 
@@ -910,22 +904,32 @@ export class ListRepository extends DefaultCrudRepository<
     return this.create(childList);
   }
 
-  private injectRecordType<T extends List | (List & ListRelations)>(list: T): T {
-    if (!list) return list;
+  private injectRecordType<T extends List | (List & ListRelations)>(
+    list: T,
+  ): T {
+    if (!list) {
+      return list;
+    }
+
     (list as any)._recordType = 'list';
+
     return list;
   }
 
-  private injectRecordTypeArray<T extends List | (List & ListRelations)>(lists: T[]): T[] {
-    return lists.map(list => this.injectRecordType(list));
+  private injectRecordTypeArray<T extends List | (List & ListRelations)>(
+    lists: T[],
+  ): T[] {
+    return lists.map((list) => this.injectRecordType(list));
   }
 
   private sanitizeRecordType(data: DataObject<List>): DataObject<List> {
     if ('_recordType' in data) {
       const sanitized = { ...data };
       delete sanitized._recordType;
+
       return sanitized;
     }
+
     return data;
   }
 }

@@ -63,4 +63,4 @@ describe('DELETE /lists/{id}', () => {
     expect(response.body.error).to.have.property('statusCode', 404);
     expect(response.body.error).to.have.property('code', 'LIST-NOT-FOUND');
   });
-}); 
+});

@@ -1,6 +1,6 @@
 import type { ApplicationConfig } from '@loopback/core';
 import { EntityPersistenceApplication } from './application';
-import {EnvConfigHelper} from './extensions/config-helpers/env-config-helper';
+import { EnvConfigHelper } from './extensions/config-helpers/env-config-helper';
 
 /**
  * Export the OpenAPI spec from the application

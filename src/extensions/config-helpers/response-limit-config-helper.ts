@@ -10,7 +10,6 @@ export const ResponseLimitConfigBindings = {
 } as const;
 
 export class ResponseLimitConfigurationReader {
-
   private readonly defaultResponseLimit = 50;
   private env = EnvConfigHelper.getInstance();
 
@@ -33,5 +32,4 @@ export class ResponseLimitConfigurationReader {
   public getListReactionResponseLimit(): number {
     return this.env.RESPONSE_LIMIT_LIST_REACTION ?? this.defaultResponseLimit;
   }
-
 }

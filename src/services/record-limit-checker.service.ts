@@ -85,16 +85,22 @@ export class RecordLimitCheckerService {
    * Returns undefined if parsing fails.
    */
   private parseDurationToDate(duration: string): Date | undefined {
-    if (!duration || typeof duration !== 'string') return undefined;
+    if (!duration || typeof duration !== 'string') {
+      return undefined;
+    }
 
     const trimmed = duration.trim();
     const match = trimmed.match(/^(\d+)\s*([A-Za-z]+)$/);
-    if (!match) return undefined;
+    if (!match) {
+      return undefined;
+    }
 
     const amount = Number(match[1]);
     let unit = match[2];
 
-    if (!Number.isFinite(amount) || amount <= 0) return undefined;
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return undefined;
+    }
 
     // Disambiguate single-letter 'm' (minute) vs uppercase 'M' (month)
     // Normalize unit tokens mostly by lowercasing, but preserve 'M' -> month
@@ -137,6 +143,7 @@ export class RecordLimitCheckerService {
     if (monthsUnits.has(unit)) {
       const start = new Date(now.getTime());
       start.setUTCMonth(start.getUTCMonth() - amount);
+
       return start;
     }
 
@@ -159,6 +166,7 @@ export class RecordLimitCheckerService {
           'ENTITY_RECORD_LIMITS',
         );
       }
+
       if (env.LIST_RECORD_LIMITS) {
         const parsed = JSON.parse(env.LIST_RECORD_LIMITS);
         this.config.listLimits = this.sanitizeLimitsArray(
@@ -166,6 +174,7 @@ export class RecordLimitCheckerService {
           'LIST_RECORD_LIMITS',
         );
       }
+
       if (env.RELATION_RECORD_LIMITS) {
         const parsed = JSON.parse(env.RELATION_RECORD_LIMITS);
         this.config.relationLimits = this.sanitizeLimitsArray(
@@ -173,6 +182,7 @@ export class RecordLimitCheckerService {
           'RELATION_RECORD_LIMITS',
         );
       }
+
       if (env.ENTITY_REACTION_RECORD_LIMITS) {
         const parsed = JSON.parse(env.ENTITY_REACTION_RECORD_LIMITS);
         this.config.entityReactionLimits = this.sanitizeLimitsArray(
@@ -180,6 +190,7 @@ export class RecordLimitCheckerService {
           'ENTITY_REACTION_RECORD_LIMITS',
         );
       }
+
       if (env.LIST_REACTION_RECORD_LIMITS) {
         const parsed = JSON.parse(env.LIST_REACTION_RECORD_LIMITS);
         this.config.listReactionLimits = this.sanitizeLimitsArray(
@@ -192,17 +203,23 @@ export class RecordLimitCheckerService {
       if (env.ENTITY_UNIQUENESS) {
         this.config.entityUniqueness = env.ENTITY_UNIQUENESS.split(',');
       }
+
       if (env.LIST_UNIQUENESS) {
         this.config.listUniqueness = env.LIST_UNIQUENESS.split(',');
       }
+
       if (env.RELATION_UNIQUENESS) {
         this.config.relationUniqueness = env.RELATION_UNIQUENESS.split(',');
       }
+
       if (env.ENTITY_REACTION_UNIQUENESS) {
-        this.config.entityReactionUniqueness = env.ENTITY_REACTION_UNIQUENESS.split(',');
+        this.config.entityReactionUniqueness =
+          env.ENTITY_REACTION_UNIQUENESS.split(',');
       }
+
       if (env.LIST_REACTION_UNIQUENESS) {
-        this.config.listReactionUniqueness = env.LIST_REACTION_UNIQUENESS.split(',');
+        this.config.listReactionUniqueness =
+          env.LIST_REACTION_UNIQUENESS.split(',');
       }
 
       this.loggingService.debug(
@@ -231,6 +248,7 @@ export class RecordLimitCheckerService {
       this.loggingService.warn(
         `Invalid ${envKeyName} value: expected JSON array, got ${typeof parsed}`,
       );
+
       return undefined;
     }
 
@@ -462,6 +480,7 @@ export class RecordLimitCheckerService {
         if (!this.recordMatchesFilter(newData, filter)) {
           return; // Skip if record wouldn't be counted in this scope
         }
+
         // If a duration is specified for this limit, restrict the counting to
         // records created after (now - duration). This implements the
         // "created data in duration" semantics.
@@ -489,10 +508,13 @@ export class RecordLimitCheckerService {
                 return;
               }
             }
+
             // Restrict by created date using the canonical field name.
-            const creationCond = { _createdDateTime: { gt: startDate.toISOString() } } as Where<any>;
+            const creationCond = {
+              _createdDateTime: { gt: startDate.toISOString() },
+            } as Where<any>;
             const where = filter.where ? _.cloneDeep(filter.where) : undefined;
-            
+
             if (!where) {
               filter.where = creationCond as Where<any>;
             } else if ((where as any).and) {
@@ -512,7 +534,8 @@ export class RecordLimitCheckerService {
 
         // If this looks like an update (has an _id), exclude the record itself
         // from the counting so updates don't incorrectly trigger the limit.
-        const idToExclude = _.get(newData as any, '_id') ?? _.get(newData as any, 'id');
+        const idToExclude =
+          _.get(newData as any, '_id') ?? _.get(newData as any, 'id');
         if (idToExclude) {
           // Ensure we don't mutate original filter objects from callers; clone
           // only the where clause as that's what we pass to repository.count.
@@ -535,14 +558,17 @@ export class RecordLimitCheckerService {
         // Count existing records in scope
         let count: Count;
         // Debug: log the exact filter/scope that will be used for counting
-        this.loggingService.debug('RecordLimitCheckerService.count - about to count records', {
-          model: modelClass.modelName,
-          limit,
-          scope: interpolatedScope,
-          duration,
-          startDate: startDate ? startDate.toISOString() : undefined,
-          filterWhere: filter.where,
-        });
+        this.loggingService.debug(
+          'RecordLimitCheckerService.count - about to count records',
+          {
+            model: modelClass.modelName,
+            limit,
+            scope: interpolatedScope,
+            duration,
+            startDate: startDate ? startDate.toISOString() : undefined,
+            filterWhere: filter.where,
+          },
+        );
         if (repository instanceof ListEntityRelationRepository) {
           // Special handling for ListEntityRelationRepository
           count = await (
@@ -559,13 +585,16 @@ export class RecordLimitCheckerService {
         }
 
         // Debug: log the count observed from the repository
-        this.loggingService.debug('RecordLimitCheckerService.count - observed count', {
-          model: modelClass.modelName,
-          scope: interpolatedScope,
-          count: count.count,
-          limit,
-          filterWhere: filter.where,
-        });
+        this.loggingService.debug(
+          'RecordLimitCheckerService.count - observed count',
+          {
+            model: modelClass.modelName,
+            scope: interpolatedScope,
+            count: count.count,
+            limit,
+            filterWhere: filter.where,
+          },
+        );
 
         if (count.count >= limit) {
           const errorCodePrefix = this.getErrorCodePrefix(modelClass.modelName);
@@ -577,7 +606,6 @@ export class RecordLimitCheckerService {
             name: 'LimitExceededError',
             message: `Record limit exceeded for ${friendlyName}`,
             code: errorCode,
-            status: 429,
             details: [
               new SingleError({
                 code: errorCode,
@@ -622,7 +650,8 @@ export class RecordLimitCheckerService {
         // If this looks like an update (has an _id), exclude the record itself
         // from the uniqueness check so updating a record doesn't trigger a
         // uniqueness violation against itself.
-        const idToExclude = _.get(newData as any, '_id') ?? _.get(newData as any, 'id');
+        const idToExclude =
+          _.get(newData as any, '_id') ?? _.get(newData as any, 'id');
         if (idToExclude) {
           const where = filter.where ? _.cloneDeep(filter.where) : undefined;
           const exclusion = { _id: { neq: idToExclude } };
@@ -662,7 +691,6 @@ export class RecordLimitCheckerService {
             name: 'UniquenessViolationError',
             message: `${friendlyName.charAt(0).toUpperCase() + friendlyName.slice(1)} already exists`,
             code: errorCode,
-            status: 409,
             details: [
               new SingleError({
                 code: errorCode,

@@ -166,7 +166,6 @@ describe('PATCH /lists/{id}/entities', () => {
       'code',
       'IMMUTABLE-ENTITY-KIND',
     );
-    expect(response.body.error).to.have.property('status', 422);
 
     // Verify _kind remains unchanged by getting the entities
     const getResponse = await client

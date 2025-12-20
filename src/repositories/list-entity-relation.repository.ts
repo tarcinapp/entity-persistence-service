@@ -72,7 +72,9 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     super(ListToEntityRelation, dataSource);
   }
 
-  private forceKindInclusion(filter: Filter<ListToEntityRelation> | undefined): Filter<ListToEntityRelation> | undefined {
+  private forceKindInclusion(
+    filter: Filter<ListToEntityRelation> | undefined,
+  ): Filter<ListToEntityRelation> | undefined {
     if (!filter) {
       return filter;
     }
@@ -89,6 +91,7 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
           fields: [...filter.fields, '_kind' as any],
         };
       }
+
       return filter;
     }
 
@@ -172,7 +175,9 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
       const cursor = relationCollection.aggregate(pipeline);
       const result = await cursor.toArray();
 
-      return this.injectRecordTypeArray(result as (ListToEntityRelation & ListEntityRelationRelations)[]);
+      return this.injectRecordTypeArray(
+        result as (ListToEntityRelation & ListEntityRelationRelations)[],
+      );
     } catch (error) {
       throw new Error(`Failed to execute aggregation: ${error}`);
     }
@@ -239,64 +244,68 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     options?: Options,
   ): Promise<ListToEntityRelation> {
     // Ensure _kind is always included (cast to Filter for the helper)
-    const forcedFilter = this.forceKindInclusion(filter as Filter<ListToEntityRelation>);
-    const typedFilter = forcedFilter as FilterExcludingWhere<ListToEntityRelation>;
+    const forcedFilter = this.forceKindInclusion(
+      filter as Filter<ListToEntityRelation>,
+    );
+    const typedFilter =
+      forcedFilter as FilterExcludingWhere<ListToEntityRelation>;
 
     // Fetch a single raw relation from the database
-    return super.findById(id, typedFilter, options).then(async (rawRelation) => {
-      if (!rawRelation) {
-        throw new HttpErrorResponse({
-          statusCode: 404,
-          name: 'NotFoundError',
-          message: "Relation with id '" + id + "' could not be found.",
-          code: 'RELATION-NOT-FOUND',
-          status: 404,
-        });
-      }
+    return super
+      .findById(id, typedFilter, options)
+      .then(async (rawRelation) => {
+        if (!rawRelation) {
+          throw new HttpErrorResponse({
+            statusCode: 404,
+            name: 'NotFoundError',
+            message: "Relation with id '" + id + "' could not be found.",
+            code: 'RELATION-NOT-FOUND',
+          });
+        }
 
-      // Fetch required metadata for the list and entity
-      const [listMetadata, entityMetadata] = await Promise.all([
-        this.listRepositoryGetter().then((listRepo) =>
-          listRepo.findById(rawRelation._listId).catch(() => null),
-        ),
-        this.entityRepositoryGetter().then((entityRepo) =>
-          entityRepo.findById(rawRelation._entityId).catch(() => null),
-        ),
-      ]);
+        // Fetch required metadata for the list and entity
+        const [listMetadata, entityMetadata] = await Promise.all([
+          this.listRepositoryGetter().then((listRepo) =>
+            listRepo.findById(rawRelation._listId).catch(() => null),
+          ),
+          this.entityRepositoryGetter().then((entityRepo) =>
+            entityRepo.findById(rawRelation._entityId).catch(() => null),
+          ),
+        ]);
 
-      // Enrich the raw relation with metadata
-      if (listMetadata) {
-        rawRelation._fromMetadata = {
-          _kind: listMetadata._kind,
-          _name: listMetadata._name,
-          _slug: listMetadata._slug,
-          _validFromDateTime: listMetadata._validFromDateTime,
-          _validUntilDateTime: listMetadata._validUntilDateTime,
-          _visibility: listMetadata._visibility,
-          _ownerUsers: listMetadata._ownerUsers,
-          _ownerGroups: listMetadata._ownerGroups,
-          _viewerUsers: listMetadata._viewerUsers,
-          _viewerGroups: listMetadata._viewerGroups,
-        };
-      }
+        // Enrich the raw relation with metadata
+        if (listMetadata) {
+          rawRelation._fromMetadata = {
+            _kind: listMetadata._kind,
+            _name: listMetadata._name,
+            _slug: listMetadata._slug,
+            _validFromDateTime: listMetadata._validFromDateTime,
+            _validUntilDateTime: listMetadata._validUntilDateTime,
+            _visibility: listMetadata._visibility,
+            _ownerUsers: listMetadata._ownerUsers,
+            _ownerGroups: listMetadata._ownerGroups,
+            _viewerUsers: listMetadata._viewerUsers,
+            _viewerGroups: listMetadata._viewerGroups,
+          };
+        }
 
-      if (entityMetadata) {
-        rawRelation._toMetadata = {
-          _kind: entityMetadata._kind,
-          _name: entityMetadata._name,
-          _slug: entityMetadata._slug,
-          _validFromDateTime: entityMetadata._validFromDateTime,
-          _validUntilDateTime: entityMetadata._validUntilDateTime,
-          _visibility: entityMetadata._visibility,
-          _ownerUsers: entityMetadata._ownerUsers,
-          _ownerGroups: entityMetadata._ownerGroups,
-          _viewerUsers: entityMetadata._viewerUsers,
-          _viewerGroups: entityMetadata._viewerGroups,
-        };
-      }
+        if (entityMetadata) {
+          rawRelation._toMetadata = {
+            _kind: entityMetadata._kind,
+            _name: entityMetadata._name,
+            _slug: entityMetadata._slug,
+            _validFromDateTime: entityMetadata._validFromDateTime,
+            _validUntilDateTime: entityMetadata._validUntilDateTime,
+            _visibility: entityMetadata._visibility,
+            _ownerUsers: entityMetadata._ownerUsers,
+            _ownerGroups: entityMetadata._ownerGroups,
+            _viewerUsers: entityMetadata._viewerUsers,
+            _viewerGroups: entityMetadata._viewerGroups,
+          };
+        }
 
-      return this.injectRecordType(rawRelation);
-    });
+        return this.injectRecordType(rawRelation);
+      });
   }
 
   /**
@@ -375,7 +384,6 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
         name: 'ImmutableKindError',
         message: 'Relation kind cannot be changed after creation.',
         code: 'IMMUTABLE-RELATION-KIND',
-        status: 422,
       });
     }
 
@@ -440,7 +448,6 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
         name: 'NotFoundError',
         message: "Relation with id '" + id + "' could not be found.",
         code: 'RELATION-NOT-FOUND',
-        status: 404,
       });
     }
 
@@ -472,7 +479,6 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
         name: 'ImmutableKindError',
         message: 'Relation kind cannot be changed after creation.',
         code: 'IMMUTABLE-RELATION-KIND',
-        status: 422,
       });
     }
 
@@ -506,7 +512,6 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
         name: 'ImmutableKindError',
         message: 'Relation kind cannot be changed after creation.',
         code: 'IMMUTABLE-RELATION-KIND',
-        status: 422,
       });
     }
 
@@ -557,7 +562,6 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
         name: 'BadRequestError',
         message: 'Entity id and list id are required.',
         code: 'RELATION-MISSING-IDS',
-        status: 400,
       });
     }
 
@@ -570,7 +574,6 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
           message:
             "Entity with id '" + data._entityId + "' could not be found.",
           code: 'ENTITY-NOT-FOUND',
-          status: 404,
         });
       }),
       listRepo.findById(data._listId).catch(() => {
@@ -579,7 +582,6 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
           name: 'NotFoundError',
           message: "List with id '" + data._listId + "' could not be found.",
           code: 'LIST-NOT-FOUND',
-          status: 404,
         });
       }),
     ]);
@@ -596,9 +598,7 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
 
     const now = new Date().toISOString();
 
-    data._kind =
-      data._kind ??
-      this.kindConfigReader.defaultRelationKind;
+    data._kind = data._kind ?? this.kindConfigReader.defaultRelationKind;
     data._createdDateTime = data._createdDateTime ?? now;
     data._lastUpdatedDateTime = data._lastUpdatedDateTime ?? now;
     data._version = 1;
@@ -665,7 +665,6 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
           name: 'InvalidKindError',
           message: `Relation kind cannot contain special or uppercase characters. Use '${slugKind}' instead.`,
           code: 'INVALID-RELATION-KIND',
-          status: 422,
         });
       }
     }
@@ -686,7 +685,6 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
         name: 'InvalidKindError',
         message: `Relation kind '${data._kind}' is not valid. Use any of these values instead: ${validValues.join(', ')}`,
         code: 'INVALID-RELATION-KIND',
-        status: 422,
       });
     }
   }
@@ -704,21 +702,31 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     );
   }
 
-  private injectRecordType<T extends ListToEntityRelation | (ListToEntityRelation & ListEntityRelationRelations)>(
-    relation: T,
-  ): T {
-    if (!relation) return relation;
+  private injectRecordType<
+    T extends
+      | ListToEntityRelation
+      | (ListToEntityRelation & ListEntityRelationRelations),
+  >(relation: T): T {
+    if (!relation) {
+      return relation;
+    }
+
     (relation as any)._recordType = 'relation';
+
     return relation;
   }
 
-  private injectRecordTypeArray<T extends ListToEntityRelation | (ListToEntityRelation & ListEntityRelationRelations)>(
-    relations: T[],
-  ): T[] {
-    return relations.map(relation => this.injectRecordType(relation));
+  private injectRecordTypeArray<
+    T extends
+      | ListToEntityRelation
+      | (ListToEntityRelation & ListEntityRelationRelations),
+  >(relations: T[]): T[] {
+    return relations.map((relation) => this.injectRecordType(relation));
   }
 
-  private sanitizeRecordType(data: DataObject<ListToEntityRelation>): DataObject<ListToEntityRelation> {
+  private sanitizeRecordType(
+    data: DataObject<ListToEntityRelation>,
+  ): DataObject<ListToEntityRelation> {
     // Strip virtual/response-only fields that should never be persisted
     const sanitized = { ...data };
 
