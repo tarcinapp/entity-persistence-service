@@ -102,10 +102,11 @@ fi
 if [ "$DETACH" = true ]; then
     echo "Starting the application in background (detached)..."
     # Use nohup so the process continues after this script exits. Save pid and logs.
-    nohup node -r source-map-support/register . > server.log 2>&1 &
+    # Pass env file to node via ENV_FILE environment variable and load-env.js loader
+    nohup env ENV_FILE="$ENV_FILE" node -r ./load-env.js -r source-map-support/register . > server.log 2>&1 &
     echo $! > server.pid
     echo "Server started (detached) with PID $(cat server.pid). Logs: $(pwd)/server.log"
 else
     echo "Starting the application..."
-    node -r source-map-support/register .
+    env ENV_FILE="$ENV_FILE" node -r ./load-env.js -r source-map-support/register .
 fi
