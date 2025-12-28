@@ -367,7 +367,11 @@ export async function setupApplication(
   // Reset EnvConfigHelper singleton after setting env vars
   EnvConfigHelper.reset();
 
-  const mongod = await MongoMemoryServer.create();
+  const mongod = await MongoMemoryServer.create({
+    binary: {
+      version: '7.0.0',
+    },
+  });
 
   // Set MongoDB environment variables
   process.env.mongodb_url = mongod.getUri();
@@ -407,8 +411,6 @@ export async function setupApplication(
     connector: 'mongodb',
     url: mongod.getUri(),
     database: 'testdb',
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
   };
 
   app.bind('datasources.config.EntityDb').to(mongoDsConfig);
