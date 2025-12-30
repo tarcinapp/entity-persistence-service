@@ -879,10 +879,11 @@ export class EntityRepository extends DefaultCrudRepository<
   async createChild(
     parentId: string,
     entity: Omit<GenericEntity, UnmodifiableCommonFields | '_parents'>,
+    options?: Options,
   ): Promise<GenericEntity> {
     try {
       // First verify that the parent exists
-      await this.findById(parentId);
+      await this.findById(parentId, undefined, options);
 
       // Add the parent reference to the entity
       const childEntity = {
@@ -891,7 +892,7 @@ export class EntityRepository extends DefaultCrudRepository<
       };
 
       // Create the child entity (create already injects _recordType)
-      return await this.create(childEntity);
+      return await this.create(childEntity, options);
     } catch (error) {
       this.loggingService.error('EntityRepository.createChild - Error:', {
         error,

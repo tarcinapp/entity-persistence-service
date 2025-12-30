@@ -327,7 +327,11 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     );
   }
 
-  async replaceById(id: string, data: DataObject<ListToEntityRelation>) {
+  async replaceById(
+    id: string,
+    data: DataObject<ListToEntityRelation>,
+    options?: Options,
+  ) {
     return this.enrichIncomingRelForUpdates(id, data)
       .then((collection) => {
         // calculate idempotencyKey
@@ -341,10 +345,14 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
       .then((collection) =>
         this.validateIncomingRelForReplace(id, collection.data),
       )
-      .then((validEnrichedData) => super.replaceById(id, validEnrichedData));
+      .then((validEnrichedData) => super.replaceById(id, validEnrichedData, options));
   }
 
-  async updateById(id: string, data: DataObject<ListToEntityRelation>) {
+  async updateById(
+    id: string,
+    data: DataObject<ListToEntityRelation>,
+    options?: Options,
+  ) {
     return this.enrichIncomingRelForUpdates(id, data)
       .then((collection) => {
         const mergedData = {
@@ -368,7 +376,7 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
           collection.data,
         ),
       )
-      .then((validEnrichedData) => super.updateById(id, validEnrichedData));
+      .then((validEnrichedData) => super.updateById(id, validEnrichedData, options));
   }
 
   async updateAll(

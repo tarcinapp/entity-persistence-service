@@ -666,7 +666,11 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     return { count: updateResult.modifiedCount };
   }
 
-  async updateById(id: string, data: DataObject<EntityReaction>) {
+  async updateById(
+    id: string,
+    data: DataObject<EntityReaction>,
+    options?: Options,
+  ) {
     const collection = await this.modifyIncomingReactionForUpdates(id, data);
 
     // Merge incoming data with existing reaction data to ensure completeness
@@ -686,7 +690,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
       collection.data,
     );
 
-    return super.updateById(id, validEnrichedData);
+    return super.updateById(id, validEnrichedData, options);
   }
 
   private async validateIncomingDataForUpdate(
@@ -999,7 +1003,11 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     }
   }
 
-  async replaceById(id: string, data: DataObject<EntityReaction>) {
+  async replaceById(
+    id: string,
+    data: DataObject<EntityReaction>,
+    options?: Options,
+  ) {
     const collection = await this.modifyIncomingReactionForUpdates(id, data);
 
     // Calculate idempotencyKey and assign it if present
@@ -1013,7 +1021,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
       collection.data,
     );
 
-    return super.replaceById(id, validEnrichedData);
+    return super.replaceById(id, validEnrichedData, options);
   }
 
   private injectRecordType(reaction: EntityReaction): EntityReaction {
