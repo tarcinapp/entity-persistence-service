@@ -454,7 +454,7 @@ describe('EntityRepository', () => {
         recordLimitCheckerStub.checkUniqueness.resolves();
 
         // Replace the repository's record limit checker with our stub
-        repository['recordLimitChecker'] = recordLimitCheckerStub;
+        (repository as any)['recordLimitChecker'] = recordLimitCheckerStub;
 
         try {
           await repository.create(inputData);
@@ -505,7 +505,7 @@ describe('EntityRepository', () => {
         recordLimitCheckerStub.checkLimits.resolves();
 
         // Replace the repository's record limit checker with our stub
-        repository['recordLimitChecker'] = recordLimitCheckerStub;
+        (repository as any)['recordLimitChecker'] = recordLimitCheckerStub;
 
         try {
           await repository.create(inputData);
@@ -647,7 +647,7 @@ describe('EntityRepository', () => {
         recordLimitCheckerStub.checkLimits.resolves();
 
         // Replace the repository's record limit checker with our stub
-        repository['recordLimitChecker'] = recordLimitCheckerStub;
+        (repository as any)['recordLimitChecker'] = recordLimitCheckerStub;
 
         try {
           await repository.replaceById(existingId, updateData);
@@ -1017,7 +1017,7 @@ describe('EntityRepository', () => {
         recordLimitCheckerStub.checkLimits.resolves();
 
         // Replace the repository's record limit checker with our stub
-        repository['recordLimitChecker'] = recordLimitCheckerStub;
+        (repository as any)['recordLimitChecker'] = recordLimitCheckerStub;
 
         try {
           await repository.updateById(existingId, updateData);

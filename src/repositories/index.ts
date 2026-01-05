@@ -1,4 +1,6 @@
 export * from './entity-persistence-base.repository';
+export * from './entity-persistence-business.repository';
+export * from './entity-persistence-reaction.repository';
 export * from './entity.repository';
 export * from './list-entity-relation.repository';
 export * from './list.repository';

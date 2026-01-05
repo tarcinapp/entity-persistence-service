@@ -4,3 +4,5 @@ export * from './list.model';
 export * from './http-error-response.model';
 export * from './list-reactions.model';
 export * from './entity-reactions.model';
+export * from './base-models/list-entity-common-base.model';
+export * from './base-models/reactions-common-base.model';

@@ -1,18 +1,12 @@
 import { Getter, inject } from '@loopback/core';
 import {
   Count,
-  DataObject,
-  Filter,
-  FilterExcludingWhere,
   HasManyRepositoryFactory,
   Options,
   Where,
   repository,
 } from '@loopback/repository';
-import { EntityPersistenceBaseRepository } from './entity-persistence-base.repository';
-import * as crypto from 'crypto';
-import _ from 'lodash';
-import slugify from 'slugify';
+import { EntityPersistenceBusinessRepository } from './entity-persistence-business.repository';
 import { EntityDbDataSource } from '../datasources';
 import {
   IdempotencyConfigurationReader,
@@ -34,21 +28,43 @@ import {
 import {
   GenericEntity,
   GenericEntityRelations,
-  HttpErrorResponse,
   EntityReaction,
 } from '../models';
-import { UnmodifiableCommonFields } from '../models/base-types/unmodifiable-common-fields';
 import { LoggingService } from '../services/logging.service';
 import { LookupConstraintBindings } from '../services/lookup-constraint.bindings';
 import { LookupConstraintService } from '../services/lookup-constraint.service';
 import { RecordLimitCheckerService } from '../services/record-limit-checker.service';
 
-export class EntityRepository extends EntityPersistenceBaseRepository<
+/**
+ * EntityRepository - Concrete repository for GenericEntity model.
+ *
+ * This repository extends EntityPersistenceBusinessRepository (Level 2A) and provides
+ * only entity-specific functionality. All common business logic (CRUD, validation,
+ * lifecycle management) is inherited from the base class.
+ *
+ * ## Entity-Specific Features:
+ * - Relations: lists (through pivot table), reactions (hasMany)
+ * - Parent/child entity relationships via _parents field
+ * - Cascading deletes for relations and reactions
+ *
+ * ## Inherited from Base:
+ * - find, findById, create, replaceById, updateById, updateAll
+ * - Validation, idempotency, slug generation, count fields
+ * - Kind validation, lookup processing
+ */
+export class EntityRepository extends EntityPersistenceBusinessRepository<
   GenericEntity,
   typeof GenericEntity.prototype._id,
   GenericEntityRelations
 > {
+
+  // ABSTRACT PROPERTY IMPLEMENTATIONS
   protected readonly recordTypeName = 'entity';
+  protected readonly entityTypeName = 'Entity';
+  protected readonly errorCodePrefix = 'ENTITY';
+  protected readonly uriPathSegment = 'entities';
+
+  // RELATIONS
   public readonly lists: (
     entityId: typeof GenericEntity.prototype._id,
   ) => CustomListThroughEntityRepository;
@@ -72,34 +88,35 @@ export class EntityRepository extends EntityPersistenceBaseRepository<
     protected listEntityRelationRepositoryGetter: Getter<ListEntityRelationRepository>,
 
     @inject('extensions.kind.configurationreader')
-    private kindConfigReader: KindConfigurationReader,
+    protected readonly kindConfigReader: KindConfigurationReader,
 
     @inject('extensions.visibility.configurationreader')
-    private visibilityConfigReader: VisibilityConfigurationReader,
+    protected readonly visibilityConfigReader: VisibilityConfigurationReader,
 
     @inject('extensions.validfrom.configurationreader')
-    private validfromConfigReader: ValidfromConfigurationReader,
+    protected readonly validfromConfigReader: ValidfromConfigurationReader,
 
     @inject('extensions.idempotency.configurationreader')
-    private idempotencyConfigReader: IdempotencyConfigurationReader,
+    protected readonly idempotencyConfigReader: IdempotencyConfigurationReader,
 
     @inject('extensions.response-limit.configurationreader')
-    private responseLimitConfigReader: ResponseLimitConfigurationReader,
+    protected readonly responseLimitConfigReader: ResponseLimitConfigurationReader,
 
     @inject(LookupBindings.HELPER)
-    private lookupHelper: LookupHelper,
+    protected readonly lookupHelper: LookupHelper,
 
     @inject('services.LoggingService')
-    private loggingService: LoggingService,
+    protected readonly loggingService: LoggingService,
 
     @inject('services.record-limit-checker')
-    private recordLimitChecker: RecordLimitCheckerService,
+    protected readonly recordLimitChecker: RecordLimitCheckerService,
 
     @inject(LookupConstraintBindings.SERVICE)
-    private lookupConstraintService: LookupConstraintService,
+    protected readonly lookupConstraintService: LookupConstraintService,
   ) {
     super(GenericEntity, dataSource);
 
+    // Setup reactions relation
     this.reactions = this.createHasManyRepositoryFactoryFor(
       '_reactions',
       reactionsRepositoryGetter,
@@ -109,6 +126,7 @@ export class EntityRepository extends EntityPersistenceBaseRepository<
       this.reactions.inclusionResolver,
     );
 
+    // Setup lists relation (through pivot table)
     this.lists = (entityId: typeof GenericEntity.prototype._id) => {
       const repo = new CustomListThroughEntityRepository(
         this.dataSource,
@@ -117,237 +135,51 @@ export class EntityRepository extends EntityPersistenceBaseRepository<
       );
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (repo as any).sourceEntityId = entityId;
-
       return repo;
     };
   }
 
-  private forceKindInclusion(
-    filter: Filter<GenericEntity> | undefined,
-  ): Filter<GenericEntity> | undefined {
-    if (!filter) {
-      return filter;
-    }
-
-    if (!filter.fields) {
-      return filter;
-    }
-
-    // If fields is an array, ensure _kind is included
-    if (Array.isArray(filter.fields)) {
-      if (!filter.fields.includes('_kind' as any)) {
-        return {
-          ...filter,
-          fields: [...filter.fields, '_kind' as any],
-        };
-      }
-
-      return filter;
-    }
-
-    // If fields is an object (inclusion/exclusion mode)
-    const fieldEntries = Object.entries(filter.fields);
-    const hasInclusionMode = fieldEntries.some(([_, value]) => value === true);
-
-    if (hasInclusionMode) {
-      // Inclusion mode: ensure _kind: true
-      return {
-        ...filter,
-        fields: {
-          ...filter.fields,
-          _kind: true,
-        } as any,
-      };
-    }
-
-    // Exclusion mode: remove _kind if it's set to false
-    const updatedFields = { ...filter.fields };
-    if ((updatedFields as any)._kind === false) {
-      delete (updatedFields as any)._kind;
-    }
-
-    return {
-      ...filter,
-      fields: updatedFields,
-    };
+  
+  // ABSTRACT HOOK METHOD IMPLEMENTATIONS
+  protected getDefaultKind(): string {
+    return this.kindConfigReader.defaultEntityKind;
   }
 
-  private async processLookups(
-    entities: (GenericEntity & GenericEntityRelations)[],
-    filter?: Filter<GenericEntity>,
-    options?: Options,
-  ): Promise<(GenericEntity & GenericEntityRelations)[]> {
-    if (!filter?.lookup) {
-      return entities;
-    }
-
-    return this.lookupHelper.processLookupForArray(entities, filter, options);
+  protected getIdempotencyFields(kind?: string): string[] {
+    return this.idempotencyConfigReader.getIdempotencyForEntities(kind);
   }
 
-  private async processLookup(
-    entity: GenericEntity & GenericEntityRelations,
-    filter?: Filter<GenericEntity>,
-    options?: Options,
-  ): Promise<GenericEntity & GenericEntityRelations> {
-    if (!filter?.lookup) {
-      return entity;
-    }
-
-    return this.lookupHelper.processLookupForOne(entity, filter, options);
+  protected getVisibilityForKind(kind?: string): string {
+    return this.visibilityConfigReader.getVisibilityForEntities(kind);
   }
 
-  async find(
-    filter?: Filter<GenericEntity>,
-    options?: Options,
-  ): Promise<(GenericEntity & GenericEntityRelations)[]> {
-    try {
-      const limit =
-        filter?.limit ??
-        this.responseLimitConfigReader.getEntityResponseLimit();
-
-      filter = {
-        ...filter,
-        limit: Math.min(
-          limit,
-          this.responseLimitConfigReader.getEntityResponseLimit(),
-        ),
-      };
-
-      // Ensure _kind is always included
-      filter = this.forceKindInclusion(filter);
-
-      this.loggingService.info('EntityRepository.find - Modified filter:', {
-        filter,
-      });
-
-      const entities = await super.find(filter, options);
-      const entitiesWithLookup = await this.processLookups(entities, filter, options);
-
-      return this.injectRecordTypeArray(entitiesWithLookup);
-    } catch (error) {
-      this.loggingService.error('EntityRepository.find - Error:', { error });
-      throw error;
-    }
+  protected getValidFromForKind(kind?: string): boolean {
+    return this.validfromConfigReader.getValidFromForEntities(kind);
   }
 
-  async create(data: DataObject<GenericEntity>, options?: Options) {
-    const idempotencyKey = this.calculateIdempotencyKey(data);
-    const foundIdempotent = await this.findIdempotentEntity(idempotencyKey);
-
-    if (foundIdempotent) {
-      this.loggingService.info(
-        'EntityRepository.create - Idempotent entity found. Skipping creation.',
-        {
-          idempotencyKey,
-          existingEntity: foundIdempotent,
-        },
-      );
-
-      return this.injectRecordType(foundIdempotent);
-    }
-
-    if (idempotencyKey) {
-      data._idempotencyKey = idempotencyKey;
-    }
-
-    // No identical data in the DB → Validate, enrich, and create
-    return this.createNewEntityFacade(data, options);
+  protected getResponseLimit(): number {
+    return this.responseLimitConfigReader.getEntityResponseLimit();
   }
 
-  async replaceById(
-    id: string,
-    data: DataObject<GenericEntity>,
-    options?: Options,
-  ) {
-    const collection = await this.modifyIncomingEntityForUpdates(id, data);
-
-    // Calculate idempotencyKey and assign it if present
-    const idempotencyKey = this.calculateIdempotencyKey(collection.data);
-    if (idempotencyKey) {
-      collection.data._idempotencyKey = idempotencyKey;
-    }
-
-    const validEnrichedData = await this.validateIncomingEntityForReplace(
-      id,
-      collection.data,
-      options,
-    );
-
-    return super.replaceById(id, validEnrichedData, options);
+  protected isKindAcceptable(kind: string): boolean {
+    return this.kindConfigReader.isKindAcceptableForEntity(kind);
   }
 
-  async updateById(
-    id: string,
-    data: DataObject<GenericEntity>,
-    options?: Options,
-  ) {
-    const collection = await this.modifyIncomingEntityForUpdates(id, data);
-
-    // Merge incoming data with existing entity data to ensure completeness
-    const mergedData = _.defaults({}, collection.data, collection.existingData);
-
-    // Calculate idempotencyKey based on the fully merged entity
-    const idempotencyKey = this.calculateIdempotencyKey(mergedData);
-
-    // Store the idempotencyKey in the data being updated
-    if (idempotencyKey) {
-      collection.data._idempotencyKey = idempotencyKey;
-    }
-
-    const validEnrichedData = await this.validateIncomingDataForUpdate(
-      id,
-      collection.existingData,
-      collection.data,
-      options,
-    );
-
-    return super.updateById(id, validEnrichedData, options);
+  protected getAllowedKinds(): string[] {
+    return this.kindConfigReader.allowedKindsForEntities;
   }
 
-  async updateAll(
-    data: DataObject<GenericEntity>,
-    where?: Where<GenericEntity>,
-    options?: Options,
-  ) {
-    // Check if user is trying to change the _kind field, which is immutable
-    if (data._kind !== undefined) {
-      throw new HttpErrorResponse({
-        statusCode: 422,
-        name: 'ImmutableKindError',
-        message: 'Entity kind cannot be changed after creation.',
-        code: 'IMMUTABLE-ENTITY-KIND',
-      });
-    }
-
-    const now = new Date().toISOString();
-    data._lastUpdatedDateTime = now;
-
-    // Generate slug and set count fields
-    this.generateSlug(data);
-    this.setCountFields(data);
-
-    this.loggingService.info('EntityRepository.updateAll - Modified data:', {
-      data,
-      where,
-    });
-
-    return super.updateAll(data, where, options);
-  }
-
+  
+  // ENTITY-SPECIFIC: CASCADE DELETE OPERATIONS
   async deleteById(id: string, options?: Options): Promise<void> {
-    const listEntityRelationRepo =
-      await this.listEntityRelationRepositoryGetter();
+    const listEntityRelationRepo = await this.listEntityRelationRepositoryGetter();
     const reactionsRepo = await this.reactionsRepositoryGetter();
 
     // Delete all relations associated with the entity
-    await listEntityRelationRepo.deleteAll({
-      _entityId: id,
-    });
+    await listEntityRelationRepo.deleteAll({ _entityId: id });
 
     // Delete all reactions associated with the entity
-    await reactionsRepo.deleteAll({
-      _entityId: id,
-    });
+    await reactionsRepo.deleteAll({ _entityId: id });
 
     return super.deleteById(id, options);
   }
@@ -356,571 +188,22 @@ export class EntityRepository extends EntityPersistenceBaseRepository<
     where?: Where<GenericEntity>,
     options?: Options,
   ): Promise<Count> {
-    const listEntityRelationRepo =
-      await this.listEntityRelationRepositoryGetter();
+    const listEntityRelationRepo = await this.listEntityRelationRepositoryGetter();
     const reactionsRepo = await this.reactionsRepositoryGetter();
 
-    this.loggingService.info('EntityRepository.deleteAll - Where condition:', {
-      where,
-    });
+    this.loggingService.info('EntityRepository.deleteAll - Where condition:', { where });
 
-    // Delete all relations by matching _entityId
+    // Get IDs of entities to delete
     const idsToDelete = (
-      await this.find({
-        where: where,
-        fields: ['_id'],
-      })
+      await this.find({ where, fields: ['_id'] })
     ).map((entity) => entity._id);
 
-    await listEntityRelationRepo.deleteAll({
-      _entityId: { inq: idsToDelete },
-    });
+    // Delete all relations by matching _entityId
+    await listEntityRelationRepo.deleteAll({ _entityId: { inq: idsToDelete } });
 
     // Delete all reactions associated with the entities
-    await reactionsRepo.deleteAll({
-      _entityId: { inq: idsToDelete },
-    });
+    await reactionsRepo.deleteAll({ _entityId: { inq: idsToDelete } });
 
     return super.deleteAll(where, options);
   }
-
-  private async findIdempotentEntity(
-    idempotencyKey: string | undefined,
-  ): Promise<GenericEntity | null> {
-    // check if same record already exists
-    if (_.isString(idempotencyKey) && !_.isEmpty(idempotencyKey)) {
-      // try to find if a record with this idempotency key is already created
-      const sameRecord = this.findOne({
-        where: {
-          and: [
-            {
-              _idempotencyKey: idempotencyKey,
-            },
-          ],
-        },
-      });
-
-      // if record already created return the existing record as if it newly created
-      return sameRecord;
-    }
-
-    return Promise.resolve(null);
-  }
-
-  calculateIdempotencyKey(data: DataObject<GenericEntity>) {
-    const idempotencyFields =
-      this.idempotencyConfigReader.getIdempotencyForEntities(data._kind);
-
-    // idempotency is not configured
-    if (idempotencyFields.length === 0) {
-      return;
-    }
-
-    const fieldValues = idempotencyFields.map((idempotencyField) => {
-      const value = _.get(data, idempotencyField);
-
-      // If value is an array, sort it before stringifying
-      if (Array.isArray(value)) {
-        return JSON.stringify([...value].sort());
-      }
-
-      return typeof value === 'object' ? JSON.stringify(value) : value;
-    });
-
-    const keyString = fieldValues.join(',');
-    const hash = crypto.createHash('sha256').update(keyString);
-
-    return hash.digest('hex');
-  }
-
-  /**
-   * Validates the incoming data, enriches with managed fields then calls super.create
-   *
-   * @param data Input object to create entity from.
-   * @returns Newly created entity.
-   */
-  private async createNewEntityFacade(
-    data: DataObject<GenericEntity>,
-    options?: Options,
-  ): Promise<GenericEntity> {
-    /**
-     * TODO: MongoDB connector still does not support transactions.
-     * Comment out here when we receive transaction support.
-     * Then we need to pass the trx to the methods down here.
-     */
-    /*
-    const trxRepo = new DefaultTransactionalRepository(GenericEntity, this.dataSource);
-    const trx = await trxRepo.beginTransaction(IsolationLevel.READ_COMMITTED);
-    */
-
-    return this.modifyIncomingEntityForCreation(data)
-      .then((enrichedData) =>
-        this.validateIncomingEntityForCreation(enrichedData, options),
-      )
-      .then((validEnrichedData) =>
-        super
-          .create(validEnrichedData, options)
-          .then((created) => this.injectRecordType(created)),
-      );
-  }
-
-  private async validateIncomingEntityForCreation(
-    data: DataObject<GenericEntity>,
-    options?: Options,
-  ): Promise<DataObject<GenericEntity>> {
-    this.checkDataKindFormat(data);
-    this.checkDataKindValues(data);
-
-    return Promise.all([
-      this.checkUniquenessForCreate(data, options),
-      this.recordLimitChecker.checkLimits(GenericEntity, data, this, options),
-      this.lookupConstraintService.validateLookupConstraints(
-        data as GenericEntity,
-        GenericEntity,
-        options,
-      ),
-    ]).then(() => {
-      return data;
-    });
-  }
-
-  private async validateIncomingEntityForReplace(
-    id: string,
-    data: DataObject<GenericEntity>,
-    options?: Options,
-  ) {
-    // Get the existing entity to check if _kind is being changed
-    const existingEntity = await this.findById(id);
-
-    // Check if user is trying to change the _kind field
-    if (data._kind !== undefined && data._kind !== existingEntity._kind) {
-      throw new HttpErrorResponse({
-        statusCode: 422,
-        name: 'ImmutableKindError',
-        message: `Entity kind cannot be changed after creation. Current kind is '${existingEntity._kind}'.`,
-        code: 'IMMUTABLE-ENTITY-KIND',
-      });
-    }
-
-    const uniquenessCheck = this.checkUniquenessForUpdate(id, data, options);
-    const limitCheck = this.recordLimitChecker.checkLimits(
-      GenericEntity,
-      data,
-      this,
-      options,
-    );
-    const lookupConstraintCheck =
-      this.lookupConstraintService.validateLookupConstraints(
-        data as GenericEntity,
-        GenericEntity,
-        options,
-      );
-
-    await Promise.all([uniquenessCheck, limitCheck, lookupConstraintCheck]);
-
-    return data;
-  }
-
-  private async validateIncomingDataForUpdate(
-    id: string,
-    existingData: DataObject<GenericEntity>,
-    data: DataObject<GenericEntity>,
-    options?: Options,
-  ) {
-    // Check if user is trying to change the _kind field
-    if (data._kind !== undefined && data._kind !== existingData._kind) {
-      throw new HttpErrorResponse({
-        statusCode: 422,
-        name: 'ImmutableKindError',
-        message: `Entity kind cannot be changed after creation. Current kind is '${existingData._kind}'.`,
-        code: 'IMMUTABLE-ENTITY-KIND',
-      });
-    }
-
-    // we need to merge existing data with incoming data in order to check limits and uniquenesses
-    const mergedData = _.assign(
-      {},
-      existingData && _.pickBy(existingData, (value) => value !== null),
-      data,
-    );
-    const uniquenessCheck = this.checkUniquenessForUpdate(id, mergedData, options);
-    const limitCheck = this.recordLimitChecker.checkLimits(
-      GenericEntity,
-      mergedData,
-      this,
-      options,
-    );
-    const lookupConstraintCheck =
-      this.lookupConstraintService.validateLookupConstraints(
-        mergedData as GenericEntity,
-        GenericEntity,
-        options,
-      );
-
-    this.generateSlug(data);
-    this.setCountFields(data);
-
-    await Promise.all([uniquenessCheck, limitCheck, lookupConstraintCheck]);
-
-    return data;
-  }
-
-  /**
-   * Modifies the incoming payload according to the managed fields policies and configuration.
-   * ---
-   * Sets these fields if absent:
-   * - _slug
-   * - _creationDateTime
-   * - _lastUpdatedDateTime
-   * - _validFromDateTime (according to the configuration)
-   *
-   * Always sets these fields ignoring their incoming values:
-   * - _version
-   * - _visibility (according to the configuration)
-   * - _ownerGroupsCount
-   * - _ownerUsersCount
-   * - _viewerUsersCount
-   * - _viewerGroupsCount
-   *
-   * Always clears these fields as they are readonly through relation.
-   * - relationMetadata
-   *
-   * @param data Data that is intended to be created
-   * @returns New version of the data which have managed fields are added
-   */
-  private async modifyIncomingEntityForCreation(
-    data: DataObject<GenericEntity>,
-  ): Promise<DataObject<GenericEntity>> {
-    // Strip virtual fields before persisting
-    data = this.sanitizeRecordType(data);
-
-    data._kind = data._kind ?? this.kindConfigReader.defaultEntityKind;
-
-    // take the date of now to make sure we have exactly the same date in all date fields
-    const now = new Date().toISOString();
-
-    // use incoming creationDateTime and lastUpdateDateTime if given. Override with default if it does not exist.
-    data._createdDateTime = data._createdDateTime ? data._createdDateTime : now;
-    data._lastUpdatedDateTime = data._lastUpdatedDateTime
-      ? data._lastUpdatedDateTime
-      : now;
-
-    // autoapprove the record if it is configured
-    const shouldAutoApprove =
-      this.validfromConfigReader.getValidFromForEntities(data._kind);
-    data._validFromDateTime =
-      data._validFromDateTime ?? (shouldAutoApprove ? now : undefined);
-
-    // we need to explicitly set validUntilDateTime to null if it is not provided
-    // to make filter matcher work correctly while checking record limits
-    data._validUntilDateTime = data._validUntilDateTime ?? null;
-
-    // new data is starting from version 1
-    data._version = 1;
-
-    // set visibility
-    data._visibility = data._visibility
-      ? data._visibility
-      : this.visibilityConfigReader.getVisibilityForEntities(data._kind);
-
-    // prepare slug from the name and set to the record
-    this.generateSlug(data);
-
-    // set owners count to make searching easier
-    this.setCountFields(data);
-
-    _.unset(data, '_relationMetadata');
-
-    return data;
-  }
-
-  /**
-   * Modifies the original record with managed fields where applicable.
-   * This method can be used by replace and update operations as their requirements are same.
-   * @param id Id of the targeted record
-   * @param data Payload of the entity
-   * @returns Enriched entity
-   */
-  private async modifyIncomingEntityForUpdates(
-    id: string,
-    data: DataObject<GenericEntity>,
-  ) {
-    // Strip virtual fields before persisting
-    data = this.sanitizeRecordType(data);
-
-    return this.findById(id)
-      .then((existingData) => {
-        // check if we have this record in db
-        if (!existingData) {
-          throw new HttpErrorResponse({
-            statusCode: 404,
-            name: 'NotFoundError',
-            message: "Entity with id '" + id + "' could not be found.",
-            code: 'ENTITY-NOT-FOUND',
-          });
-        }
-
-        return existingData;
-      })
-      .then((existingData) => {
-        const now = new Date().toISOString();
-
-        // set new version
-        data._version = (existingData._version ?? 1) + 1;
-
-        // we may use current date, if it does not exist in the given data
-        data._lastUpdatedDateTime = data._lastUpdatedDateTime
-          ? data._lastUpdatedDateTime
-          : now;
-
-        this.generateSlug(data);
-
-        this.setCountFields(data);
-
-        _.unset(data, '_relationMetadata');
-
-        return {
-          data: data,
-          existingData: existingData,
-        };
-      });
-  }
-
-  private generateSlug(data: DataObject<GenericEntity>) {
-    if (data._name && !data._slug) {
-      data._slug = slugify(data._name ?? '', { lower: true, strict: true });
-    }
-  }
-
-  private setCountFields(data: DataObject<GenericEntity>) {
-    // Only update count fields if the related array is present in the data object
-    if (_.isArray(data._ownerUsers)) {
-      data._ownerUsersCount = data._ownerUsers.length;
-    }
-
-    if (_.isArray(data._ownerGroups)) {
-      data._ownerGroupsCount = data._ownerGroups.length;
-    }
-
-    if (_.isArray(data._viewerUsers)) {
-      data._viewerUsersCount = data._viewerUsers.length;
-    }
-
-    if (_.isArray(data._viewerGroups)) {
-      data._viewerGroupsCount = data._viewerGroups.length;
-    }
-
-    if (_.isArray(data._parents)) {
-      data._parentsCount = data._parents.length;
-    }
-  }
-
-  private checkDataKindFormat(data: DataObject<GenericEntity>) {
-    if (data._kind) {
-      const slugKind = this.kindConfigReader.validateKindFormat(data._kind);
-      if (slugKind) {
-        throw new HttpErrorResponse({
-          statusCode: 422,
-          name: 'InvalidKindError',
-          message: `Entity kind cannot contain special or uppercase characters. Use '${slugKind}' instead.`,
-          code: 'INVALID-ENTITY-KIND',
-        });
-      }
-    }
-  }
-
-  private checkDataKindValues(data: DataObject<GenericEntity>) {
-    if (
-      data._kind &&
-      !this.kindConfigReader.isKindAcceptableForEntity(data._kind)
-    ) {
-      const validValues = this.kindConfigReader.allowedKindsForEntities;
-      throw new HttpErrorResponse({
-        statusCode: 422,
-        name: 'InvalidKindError',
-        message: `Entity kind '${data._kind}' is not valid. Use any of these values instead: ${validValues.join(', ')}`,
-        code: 'INVALID-ENTITY-KIND',
-      });
-    }
-  }
-
-  private async checkUniquenessForCreate(
-    newData: DataObject<GenericEntity>,
-    options?: Options,
-  ) {
-    await this.recordLimitChecker.checkUniqueness(GenericEntity, newData, this, options);
-  }
-
-  private async checkUniquenessForUpdate(
-    id: string,
-    newData: DataObject<GenericEntity>,
-    options?: Options,
-  ) {
-    // we need to merge existing data with incoming data in order to check uniqueness
-    const existingData = await this.findById(id);
-    const mergedData = _.assign(
-      {},
-      existingData && _.pickBy(existingData, (value) => value !== null),
-      newData,
-    );
-    await this.recordLimitChecker.checkUniqueness(
-      GenericEntity,
-      mergedData,
-      this,
-      options,
-    );
-  }
-
-  async findById(
-    id: string,
-    filter?: FilterExcludingWhere<GenericEntity>,
-    options?: Options,
-  ): Promise<GenericEntity & GenericEntityRelations> {
-    try {
-      // Ensure _kind is always included (cast to Filter for the helper)
-      const forcedFilter = this.forceKindInclusion(
-        filter as Filter<GenericEntity>,
-      );
-      const typedFilter = forcedFilter as FilterExcludingWhere<GenericEntity>;
-
-      const entity = await super.findById(id, typedFilter, options);
-      const entityWithLookup = await this.processLookup(entity, filter, options);
-
-      return this.injectRecordType(entityWithLookup);
-    } catch (error) {
-      if (error.code === 'ENTITY_NOT_FOUND') {
-        this.loggingService.warn(`Entity with id '${id}' not found.`);
-        throw new HttpErrorResponse({
-          statusCode: 404,
-          name: 'NotFoundError',
-          message: `Entity with id '${id}' could not be found.`,
-          code: 'ENTITY-NOT-FOUND',
-        });
-      }
-
-      this.loggingService.error(
-        'EntityRepository.findById - Unexpected Error:',
-        {
-          error,
-          id,
-        },
-      );
-
-      throw error; // Rethrow unexpected errors
-    }
-  }
-
-  async findParents(
-    entityId: string,
-    filter?: Filter<GenericEntity>,
-    options?: Options,
-  ): Promise<(GenericEntity & GenericEntityRelations)[]> {
-    try {
-      // First, get the entity's parent references
-      const entity = await this.findById(entityId, {
-        fields: { _parents: true },
-      });
-
-      if (!entity._parents || entity._parents.length === 0) {
-        return [];
-      }
-
-      // Extract parent IDs from the URIs
-      const parentIds = entity._parents.map((uri: string) =>
-        uri.split('/').pop(),
-      );
-
-      // Create a new filter that includes the parent IDs
-      const parentFilter: Filter<GenericEntity> = {
-        ...filter,
-        where: {
-          and: [
-            { _id: { inq: parentIds } },
-            ...(filter?.where ? [filter.where] : []),
-          ],
-        },
-      };
-
-      this.loggingService.info(
-        'EntityRepository.findParents - Parent filter:',
-        {
-          parentFilter,
-        },
-      );
-
-      // find already injects _recordType
-      return await this.find(parentFilter, options);
-    } catch (error) {
-      this.loggingService.error('EntityRepository.findParents - Error:', {
-        error,
-        entityId,
-      });
-      throw error;
-    }
-  }
-
-  async findChildren(
-    entityId: string,
-    filter?: Filter<GenericEntity>,
-    options?: Options,
-  ): Promise<(GenericEntity & GenericEntityRelations)[]> {
-    try {
-      // First verify that the entity exists, throw error if not
-      await this.findById(entityId, {
-        fields: { _id: true },
-      });
-
-      const uri = `tapp://localhost/entities/${entityId}`;
-
-      // Create a filter to find entities where _parents contains the given entityId
-      const childFilter: Filter<GenericEntity> = {
-        ...filter,
-        where: {
-          and: [{ _parents: uri }, ...(filter?.where ? [filter.where] : [])],
-        },
-      };
-
-      this.loggingService.info(
-        'EntityRepository.findChildren - Child filter:',
-        {
-          childFilter,
-        },
-      );
-
-      // find already injects _recordType
-      return await this.find(childFilter, options);
-    } catch (error) {
-      this.loggingService.error('EntityRepository.findChildren - Error:', {
-        error,
-        entityId,
-      });
-      throw error;
-    }
-  }
-
-  async createChild(
-    parentId: string,
-    entity: Omit<GenericEntity, UnmodifiableCommonFields | '_parents'>,
-  ): Promise<GenericEntity> {
-    try {
-      // First verify that the parent exists
-      await this.findById(parentId);
-
-      // Add the parent reference to the entity
-      const childEntity = {
-        ...entity,
-        _parents: [`tapp://localhost/entities/${parentId}`],
-      };
-
-      // Create the child entity (create already injects _recordType)
-      return await this.create(childEntity);
-    } catch (error) {
-      this.loggingService.error('EntityRepository.createChild - Error:', {
-        error,
-        parentId,
-      });
-      throw error;
-    }
-  }
-
 }

@@ -67,6 +67,13 @@ export class ListEntityCommonBase extends AccessControlBase {
   })
   _parentsCount?: number;
 
+  /**
+   * Parent references as URIs. Each concrete model defines this with @property
+   * and model-specific regex validation. This type-only definition ensures
+   * TypeScript type safety in base repositories.
+   */
+  _parents?: string[];
+
   @property({
     type: 'object',
     description: 'Contains the relation metadata for the record',

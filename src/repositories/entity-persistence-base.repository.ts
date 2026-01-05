@@ -4,6 +4,7 @@ import {
   Entity,
   juggler,
 } from '@loopback/repository';
+import _ from 'lodash';
 
 /**
  * EntityPersistenceBaseRepository - Universal Foundation for All Repositories
@@ -47,9 +48,9 @@ export abstract class EntityPersistenceBaseRepository<
    * List of virtual/response-only fields that should never be persisted to the database.
    * Subclasses can override this to add model-specific virtual fields.
    *
-   * @default ['_recordType']
+   * @default ['_recordType', '_relationMetadata']
    */
-  protected readonly virtualFields: string[] = ['_recordType'];
+  protected readonly virtualFields: string[] = ['_recordType', '_relationMetadata', '_fromMetadata', '_toMetadata'];
 
   constructor(
     entityClass: typeof Entity & { prototype: E },
@@ -118,24 +119,9 @@ export abstract class EntityPersistenceBaseRepository<
    * ```
    */
   protected sanitizeRecordType(data: DataObject<E>): DataObject<E> {
-    // Check if any virtual fields exist in the data
-    const hasVirtualFields = this.virtualFields.some(
-      (field) => field in (data as Record<string, unknown>),
-    );
-
-    if (!hasVirtualFields) {
-      return data;
-    }
-
-    // Create a shallow copy and remove virtual fields
-    const sanitized = { ...data } as Record<string, unknown>;
-
     for (const field of this.virtualFields) {
-      if (field in sanitized) {
-        delete sanitized[field];
-      }
+      _.unset(data, field);
     }
-
-    return sanitized as DataObject<E>;
+    return data;
   }
 }
