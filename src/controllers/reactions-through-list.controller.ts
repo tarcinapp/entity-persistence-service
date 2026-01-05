@@ -24,7 +24,7 @@ import {
   UnmodifiableCommonFields,
   ALWAYS_HIDDEN_FIELDS,
 } from '../models/base-types/unmodifiable-common-fields';
-import { CustomReactionThroughListRepository } from '../repositories/custom-reaction-through-list.repository';
+import { CustomReactionThroughListRepository } from '../repositories/custom/custom-reaction-through-list.repository';
 import { LoggingService } from '../services/logging.service';
 
 export class ReactionsThroughListController {

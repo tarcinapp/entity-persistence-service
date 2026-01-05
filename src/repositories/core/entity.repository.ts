@@ -6,34 +6,34 @@ import {
   Where,
   repository,
 } from '@loopback/repository';
-import { EntityPersistenceBusinessRepository } from './entity-persistence-business.repository';
-import { EntityDbDataSource } from '../datasources';
+import { EntityPersistenceBusinessRepository } from '../base/entity-persistence-business.repository';
+import { EntityDbDataSource } from '../../datasources';
 import {
   IdempotencyConfigurationReader,
   KindConfigurationReader,
   ValidfromConfigurationReader,
   VisibilityConfigurationReader,
-} from '../extensions';
+} from '../../extensions';
 
-import { CustomListThroughEntityRepository } from './custom-list-through-entity.repository';
+import { CustomListThroughEntityRepository } from '../custom/custom-list-through-entity.repository';
 import { EntityReactionsRepository } from './entity-reactions.repository';
 import { ListEntityRelationRepository } from './list-entity-relation.repository';
 import { ListRepository } from './list.repository';
 
-import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
+import { ResponseLimitConfigurationReader } from '../../extensions/config-helpers/response-limit-config-helper';
 import {
   LookupHelper,
   LookupBindings,
-} from '../extensions/utils/lookup-helper';
+} from '../../extensions/utils/lookup-helper';
 import {
   GenericEntity,
   GenericEntityRelations,
   EntityReaction,
-} from '../models';
-import { LoggingService } from '../services/logging.service';
-import { LookupConstraintBindings } from '../services/lookup-constraint.bindings';
-import { LookupConstraintService } from '../services/lookup-constraint.service';
-import { RecordLimitCheckerService } from '../services/record-limit-checker.service';
+} from '../../models';
+import { LoggingService } from '../../services/logging.service';
+import { LookupConstraintBindings } from '../../services/lookup-constraint.bindings';
+import { LookupConstraintService } from '../../services/lookup-constraint.service';
+import { RecordLimitCheckerService } from '../../services/record-limit-checker.service';
 
 /**
  * EntityRepository - Concrete repository for GenericEntity model.

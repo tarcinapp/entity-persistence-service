@@ -9,29 +9,29 @@ import {
   Count,
   Entity,
 } from '@loopback/repository';
-import { EntityPersistenceBaseRepository } from './entity-persistence-base.repository';
+import { EntityPersistenceBaseRepository } from '../base/entity-persistence-base.repository';
 import * as crypto from 'crypto';
 import _ from 'lodash';
-import { EntityDbDataSource } from '../datasources';
+import { EntityDbDataSource } from '../../datasources';
 import {
   IdempotencyConfigurationReader,
   KindConfigurationReader,
   ValidfromConfigurationReader,
-} from '../extensions';
-import { MongoPipelineHelper } from '../extensions/utils/mongo-pipeline-helper';
+} from '../../extensions';
+import { MongoPipelineHelper } from '../../extensions/utils/mongo-pipeline-helper';
 import {
   ListEntityRelationRelations,
   ListToEntityRelation,
   HttpErrorResponse,
   List,
-} from '../models';
+} from '../../models';
 import { EntityRepository } from './entity.repository';
 import { ListRepository } from './list.repository';
-import { CollectionConfigHelper } from '../extensions/config-helpers/collection-config-helper';
-import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
-import { LoggingService } from '../services/logging.service';
-import { RecordLimitCheckerBindings } from '../services/record-limit-checker.bindings';
-import { RecordLimitCheckerService } from '../services/record-limit-checker.service';
+import { CollectionConfigHelper } from '../../extensions/config-helpers/collection-config-helper';
+import { ResponseLimitConfigurationReader } from '../../extensions/config-helpers/response-limit-config-helper';
+import { LoggingService } from '../../services/logging.service';
+import { RecordLimitCheckerBindings } from '../../services/record-limit-checker.bindings';
+import { RecordLimitCheckerService } from '../../services/record-limit-checker.service';
 
 export class ListEntityRelationRepository extends EntityPersistenceBaseRepository<
   ListToEntityRelation,

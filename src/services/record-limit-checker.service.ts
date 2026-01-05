@@ -16,7 +16,7 @@ import { EnvConfigHelper } from '../extensions/config-helpers/env-config-helper'
 import { FilterMatcher } from '../extensions/utils/filter-matcher';
 import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
 import { HttpErrorResponse, SingleError } from '../models';
-import { ListEntityRelationRepository } from '../repositories/list-entity-relation.repository';
+import { ListEntityRelationRepository } from '../repositories/core/list-entity-relation.repository';
 
 export interface RecordLimit {
   scope: string;

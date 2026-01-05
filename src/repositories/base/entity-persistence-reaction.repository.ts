@@ -17,14 +17,14 @@ import {
   IdempotencyConfigurationReader,
   VisibilityConfigurationReader,
   ValidfromConfigurationReader,
-} from '../extensions';
-import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
-import { LookupHelper } from '../extensions/utils/lookup-helper';
-import { MongoPipelineHelper } from '../extensions/utils/mongo-pipeline-helper';
-import { HttpErrorResponse, ReactionsCommonBase } from '../models';
-import { LoggingService } from '../services/logging.service';
-import { LookupConstraintService } from '../services/lookup-constraint.service';
-import { RecordLimitCheckerService } from '../services/record-limit-checker.service';
+} from '../../extensions';
+import { ResponseLimitConfigurationReader } from '../../extensions/config-helpers/response-limit-config-helper';
+import { LookupHelper } from '../../extensions/utils/lookup-helper';
+import { MongoPipelineHelper } from '../../extensions/utils/mongo-pipeline-helper';
+import { HttpErrorResponse, ReactionsCommonBase } from '../../models';
+import { LoggingService } from '../../services/logging.service';
+import { LookupConstraintService } from '../../services/lookup-constraint.service';
+import { RecordLimitCheckerService } from '../../services/record-limit-checker.service';
 
 /**
  * EntityPersistenceReactionRepository - Specialized Base for Reaction Entities

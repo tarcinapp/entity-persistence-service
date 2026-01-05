@@ -1,30 +1,30 @@
 import { inject, Getter } from '@loopback/core';
 import { DataObject, repository } from '@loopback/repository';
-import { EntityPersistenceReactionRepository } from './entity-persistence-reaction.repository';
-import { EntityDbDataSource } from '../datasources';
+import { EntityPersistenceReactionRepository } from '../base/entity-persistence-reaction.repository';
+import { EntityDbDataSource } from '../../datasources';
 import {
   KindConfigurationReader,
   ValidfromConfigurationReader,
   VisibilityConfigurationReader,
   IdempotencyConfigurationReader,
-} from '../extensions';
-import { CollectionConfigHelper } from '../extensions/config-helpers/collection-config-helper';
-import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
+} from '../../extensions';
+import { CollectionConfigHelper } from '../../extensions/config-helpers/collection-config-helper';
+import { ResponseLimitConfigurationReader } from '../../extensions/config-helpers/response-limit-config-helper';
 import {
   LookupHelper,
   LookupBindings,
-} from '../extensions/utils/lookup-helper';
+} from '../../extensions/utils/lookup-helper';
 import {
   MongoPipelineHelper,
   MongoPipelineHelperBindings,
-} from '../extensions/utils/mongo-pipeline-helper';
-import { EntityReaction, HttpErrorResponse } from '../models';
+} from '../../extensions/utils/mongo-pipeline-helper';
+import { EntityReaction, HttpErrorResponse } from '../../models';
 import { EntityRepository } from './entity.repository';
-import { LoggingService } from '../services/logging.service';
-import { LookupConstraintBindings } from '../services/lookup-constraint.bindings';
-import { LookupConstraintService } from '../services/lookup-constraint.service';
-import { RecordLimitCheckerBindings } from '../services/record-limit-checker.bindings';
-import { RecordLimitCheckerService } from '../services/record-limit-checker.service';
+import { LoggingService } from '../../services/logging.service';
+import { LookupConstraintBindings } from '../../services/lookup-constraint.bindings';
+import { LookupConstraintService } from '../../services/lookup-constraint.service';
+import { RecordLimitCheckerBindings } from '../../services/record-limit-checker.bindings';
+import { RecordLimitCheckerService } from '../../services/record-limit-checker.service';
 
 /**
  * EntityReactionsRepository - Concrete repository for EntityReaction model.

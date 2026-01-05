@@ -8,35 +8,35 @@ import {
   Where,
   repository,
 } from '@loopback/repository';
-import { EntityPersistenceBusinessRepository } from './entity-persistence-business.repository';
-import { EntityDbDataSource } from '../datasources';
+import { EntityPersistenceBusinessRepository } from '../base/entity-persistence-business.repository';
+import { EntityDbDataSource } from '../../datasources';
 import {
   IdempotencyConfigurationReader,
   KindConfigurationReader,
   ValidfromConfigurationReader,
   VisibilityConfigurationReader,
-} from '../extensions';
+} from '../../extensions';
 import {
   GenericEntity,
   List,
   ListToEntityRelation,
   ListReaction,
   ListRelations,
-} from '../models';
-import { CustomEntityThroughListRepository } from './custom-entity-through-list.repository';
+} from '../../models';
+import { CustomEntityThroughListRepository } from '../custom/custom-entity-through-list.repository';
 import { EntityRepository } from './entity.repository';
 import { ListEntityRelationRepository } from './list-entity-relation.repository';
 import { ListReactionsRepository } from './list-reactions.repository';
-import { ResponseLimitConfigurationReader } from '../extensions/config-helpers/response-limit-config-helper';
+import { ResponseLimitConfigurationReader } from '../../extensions/config-helpers/response-limit-config-helper';
 import {
   LookupBindings,
   LookupHelper,
-} from '../extensions/utils/lookup-helper';
-import { LoggingService } from '../services/logging.service';
-import { LookupConstraintBindings } from '../services/lookup-constraint.bindings';
-import { LookupConstraintService } from '../services/lookup-constraint.service';
-import { RecordLimitCheckerBindings } from '../services/record-limit-checker.bindings';
-import { RecordLimitCheckerService } from '../services/record-limit-checker.service';
+} from '../../extensions/utils/lookup-helper';
+import { LoggingService } from '../../services/logging.service';
+import { LookupConstraintBindings } from '../../services/lookup-constraint.bindings';
+import { LookupConstraintService } from '../../services/lookup-constraint.service';
+import { RecordLimitCheckerBindings } from '../../services/record-limit-checker.bindings';
+import { RecordLimitCheckerService } from '../../services/record-limit-checker.service';
 
 /**
  * ListRepository - Concrete repository for List model.

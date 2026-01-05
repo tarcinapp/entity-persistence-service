@@ -6,17 +6,17 @@ import {
   Options,
   repository,
 } from '@loopback/repository';
-import { EntityPersistenceBaseRepository } from './entity-persistence-base.repository';
+import { EntityPersistenceBaseRepository } from '../base/entity-persistence-base.repository';
 import _ from 'lodash';
-import { EntityDbDataSource } from '../datasources';
+import { EntityDbDataSource } from '../../datasources';
 import {
   GenericEntity,
   List,
   ListWithRelations,
   ListToEntityRelation,
-} from '../models';
-import { ListEntityRelationRepository } from './list-entity-relation.repository';
-import { ListRepository } from './list.repository';
+} from '../../models';
+import { ListEntityRelationRepository } from '../core/list-entity-relation.repository';
+import { ListRepository } from '../core/list.repository';
 
 export class CustomListThroughEntityRepository extends EntityPersistenceBaseRepository<
   List,

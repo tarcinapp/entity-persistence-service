@@ -20,7 +20,7 @@ import {
   ListEntityRelationRepository,
   ListReactionsRepository,
 } from '../../../repositories';
-import { ListRepository } from '../../../repositories/list.repository';
+import { ListRepository } from '../../../repositories/core/list.repository';
 import { LoggingService } from '../../../services/logging.service';
 import { LookupConstraintService } from '../../../services/lookup-constraint.service';
 import { RecordLimitCheckerService } from '../../../services/record-limit-checker.service';

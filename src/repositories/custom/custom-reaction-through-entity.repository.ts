@@ -8,10 +8,10 @@ import {
   repository,
   Where,
 } from '@loopback/repository';
-import { EntityPersistenceBaseRepository } from './entity-persistence-base.repository';
-import { EntityDbDataSource } from '../datasources';
-import { EntityReaction } from '../models';
-import { EntityReactionsRepository } from './entity-reactions.repository';
+import { EntityPersistenceBaseRepository } from '../base/entity-persistence-base.repository';
+import { EntityDbDataSource } from '../../datasources';
+import { EntityReaction } from '../../models';
+import { EntityReactionsRepository } from '../core/entity-reactions.repository';
 
 export class CustomReactionThroughEntityRepository extends EntityPersistenceBaseRepository<
   EntityReaction,

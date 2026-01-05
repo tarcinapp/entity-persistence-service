@@ -5,10 +5,10 @@ import { LoggingService } from './logging.service';
 import { EnvConfigHelper } from '../extensions/config-helpers/env-config-helper';
 import { RecordsCommonBase } from '../models/base-models/records-common-base.model';
 import { HttpErrorResponse } from '../models/http-error-response.model';
-import { EntityReactionsRepository } from '../repositories/entity-reactions.repository';
-import { EntityRepository } from '../repositories/entity.repository';
-import { ListReactionsRepository } from '../repositories/list-reactions.repository';
-import { ListRepository } from '../repositories/list.repository';
+import { EntityReactionsRepository } from '../repositories/core/entity-reactions.repository';
+import { EntityRepository } from '../repositories/core/entity.repository';
+import { ListReactionsRepository } from '../repositories/core/list-reactions.repository';
+import { ListRepository } from '../repositories/core/list.repository';
 
 interface LookupConstraint {
   propertyPath: string;

@@ -24,7 +24,7 @@ import {
   UnmodifiableCommonFields,
   ALWAYS_HIDDEN_FIELDS,
 } from '../models/base-types/unmodifiable-common-fields';
-import { CustomReactionThroughEntityRepository } from '../repositories/custom-reaction-through-entity.repository';
+import { CustomReactionThroughEntityRepository } from '../repositories/custom/custom-reaction-through-entity.repository';
 import { LoggingService } from '../services/logging.service';
 
 export class ReactionsThroughEntityController {

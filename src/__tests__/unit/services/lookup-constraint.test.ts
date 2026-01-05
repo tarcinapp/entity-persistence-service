@@ -4,10 +4,10 @@ import { EnvConfigHelper } from '../../../extensions/config-helpers/env-config-h
 import { GenericEntity } from '../../../models/entity.model';
 import { HttpErrorResponse } from '../../../models/http-error-response.model';
 import { List } from '../../../models/list.model';
-import { EntityReactionsRepository } from '../../../repositories/entity-reactions.repository';
-import { EntityRepository } from '../../../repositories/entity.repository';
-import { ListReactionsRepository } from '../../../repositories/list-reactions.repository';
-import { ListRepository } from '../../../repositories/list.repository';
+import { EntityReactionsRepository } from '../../../repositories/core/entity-reactions.repository';
+import { EntityRepository } from '../../../repositories/core/entity.repository';
+import { ListReactionsRepository } from '../../../repositories/core/list-reactions.repository';
+import { ListRepository } from '../../../repositories/core/list.repository';
 import type { LoggingService } from '../../../services/logging.service';
 import { LookupConstraintService } from '../../../services/lookup-constraint.service';
 
