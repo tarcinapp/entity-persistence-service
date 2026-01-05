@@ -22,6 +22,7 @@ import {
 } from '../../../repositories';
 import { ListRepository } from '../../../repositories/list.repository';
 import { LoggingService } from '../../../services/logging.service';
+import { LookupConstraintService } from '../../../services/lookup-constraint.service';
 import { RecordLimitCheckerService } from '../../../services/record-limit-checker.service';
 
 describe('ListRepository', () => {
@@ -48,6 +49,9 @@ describe('ListRepository', () => {
     const loggingServiceStub = sinon.createStubInstance(LoggingService);
     const recordLimitCheckerStub = sinon.createStubInstance(
       RecordLimitCheckerService,
+    );
+    const lookupConstraintServiceStub = sinon.createStubInstance(
+      LookupConstraintService,
     );
 
     // Create a mock lookup helper
@@ -82,6 +86,7 @@ describe('ListRepository', () => {
       mockLookupHelper,
       loggingServiceStub,
       recordLimitCheckerStub,
+      lookupConstraintServiceStub,
     );
   });
 
@@ -98,14 +103,23 @@ describe('ListRepository', () => {
     expect(repository.entities).to.not.be.undefined();
   });
 
+  // Helper to get DefaultTransactionalRepository prototype (4 levels up)
+  // Inheritance: ListRepository -> EntityPersistenceBusinessRepository -> EntityPersistenceBaseRepository -> DefaultTransactionalRepository
+  const getBaseRepoPrototype = () =>
+    Object.getPrototypeOf(
+      Object.getPrototypeOf(
+        Object.getPrototypeOf(Object.getPrototypeOf(repository)),
+      ),
+    );
+
   describe('find', () => {
     let superFindStub: sinon.SinonStub;
     const configuredLimit = 50;
 
     beforeEach(() => {
-      // Stub the parent class's find method
+      // Stub DefaultTransactionalRepository.find (4 levels up in prototype chain)
       superFindStub = sinon
-        .stub(Object.getPrototypeOf(Object.getPrototypeOf(repository)), 'find')
+        .stub(getBaseRepoPrototype(), 'find')
         .callsFake(async (_filter, _options) => {
           return [];
         });
@@ -172,20 +186,14 @@ describe('ListRepository', () => {
       // Stub Date.now
       sinon.useFakeTimers(new Date(now));
 
-      // Stub super.create
+      // Stub DefaultTransactionalRepository.create (4 levels up)
       superCreateStub = sinon
-        .stub(
-          Object.getPrototypeOf(Object.getPrototypeOf(repository)),
-          'create',
-        )
+        .stub(getBaseRepoPrototype(), 'create')
         .callsFake(async (data) => data);
 
-      // Stub super.findOne for idempotency checks
+      // Stub DefaultTransactionalRepository.findOne for idempotency checks
       superFindOneStub = sinon
-        .stub(
-          Object.getPrototypeOf(Object.getPrototypeOf(repository)),
-          'findOne',
-        )
+        .stub(getBaseRepoPrototype(), 'findOne')
         .resolves(null);
     });
 
@@ -374,7 +382,7 @@ describe('ListRepository', () => {
         recordLimitCheckerStub.checkLimits.resolves();
 
         // Replace the repository's record limit checker with our stub
-        repository['recordLimitChecker'] = recordLimitCheckerStub;
+        (repository as any)['recordLimitChecker'] = recordLimitCheckerStub;
 
         try {
           await repository.create(inputData);
@@ -452,20 +460,14 @@ describe('ListRepository', () => {
       // Stub Date.now
       sinon.useFakeTimers(new Date(now));
 
-      // Stub super.replaceById
+      // Stub DefaultTransactionalRepository.replaceById (4 levels up)
       superReplaceByIdStub = sinon
-        .stub(
-          Object.getPrototypeOf(Object.getPrototypeOf(repository)),
-          'replaceById',
-        )
+        .stub(getBaseRepoPrototype(), 'replaceById')
         .resolves();
 
-      // Stub super.findById for existing data lookup
+      // Stub DefaultTransactionalRepository.findById for existing data lookup
       superFindByIdStub = sinon
-        .stub(
-          Object.getPrototypeOf(Object.getPrototypeOf(repository)),
-          'findById',
-        )
+        .stub(getBaseRepoPrototype(), 'findById')
         .resolves({
           _id: existingId,
           _version: 1,
@@ -551,7 +553,7 @@ describe('ListRepository', () => {
         recordLimitCheckerStub.checkLimits.resolves();
 
         // Replace the repository's record limit checker with our stub
-        repository['recordLimitChecker'] = recordLimitCheckerStub;
+        (repository as any)['recordLimitChecker'] = recordLimitCheckerStub;
 
         try {
           await repository.replaceById(existingId, updateData);
@@ -743,12 +745,9 @@ describe('ListRepository', () => {
       // Stub Date.now
       sinon.useFakeTimers(new Date(now));
 
-      // Stub super.updateById to merge data with existing list
+      // Stub DefaultTransactionalRepository.updateById to merge data with existing list
       superUpdateByIdStub = sinon
-        .stub(
-          Object.getPrototypeOf(Object.getPrototypeOf(repository)),
-          'updateById',
-        )
+        .stub(getBaseRepoPrototype(), 'updateById')
         .callsFake(async (...args) => {
           const data = args[1] as Record<string, unknown>;
           const merged = {
@@ -779,12 +778,9 @@ describe('ListRepository', () => {
           return merged;
         });
 
-      // Stub super.findById for fetching existing list
+      // Stub DefaultTransactionalRepository.findById for fetching existing list
       superFindByIdStub = sinon
-        .stub(
-          Object.getPrototypeOf(Object.getPrototypeOf(repository)),
-          'findById',
-        )
+        .stub(getBaseRepoPrototype(), 'findById')
         .resolves(existingList);
     });
 
@@ -877,7 +873,7 @@ describe('ListRepository', () => {
         recordLimitCheckerStub.checkLimits.resolves();
 
         // Replace the repository's record limit checker with our stub
-        repository['recordLimitChecker'] = recordLimitCheckerStub;
+        (repository as any)['recordLimitChecker'] = recordLimitCheckerStub;
 
         try {
           await repository.updateById(existingId, updateData);
@@ -1037,12 +1033,9 @@ describe('ListRepository', () => {
       (repository as any).customEntityThroughListRepositoryGetter = () =>
         Promise.resolve(customListEntityRelRepoStub);
 
-      // Stub super.deleteById
+      // Stub DefaultTransactionalRepository.deleteById (4 levels up)
       superDeleteByIdStub = sinon
-        .stub(
-          Object.getPrototypeOf(Object.getPrototypeOf(repository)),
-          'deleteById',
-        )
+        .stub(getBaseRepoPrototype(), 'deleteById')
         .resolves();
     });
 
@@ -1098,12 +1091,9 @@ describe('ListRepository', () => {
       // Stub Date.now
       sinon.useFakeTimers(new Date(now));
 
-      // Stub super.updateAll
+      // Stub DefaultTransactionalRepository.updateAll (4 levels up)
       superUpdateAllStub = sinon
-        .stub(
-          Object.getPrototypeOf(Object.getPrototypeOf(repository)),
-          'updateAll',
-        )
+        .stub(getBaseRepoPrototype(), 'updateAll')
         .resolves({ count: 2 });
     });
 
@@ -1182,12 +1172,9 @@ describe('ListRepository', () => {
       (repository as any).customEntityThroughListRepositoryGetter = () =>
         Promise.resolve(customListEntityRelRepoStub);
 
-      // Stub super.deleteAll
+      // Stub DefaultTransactionalRepository.deleteAll (4 levels up)
       superDeleteAllStub = sinon
-        .stub(
-          Object.getPrototypeOf(Object.getPrototypeOf(repository)),
-          'deleteAll',
-        )
+        .stub(getBaseRepoPrototype(), 'deleteAll')
         .resolves({ count: 2 });
     });
 

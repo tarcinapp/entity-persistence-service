@@ -115,7 +115,7 @@ describe('PUT /lists/{id}', () => {
     expect(response.body.error).to.have.property('name', 'ImmutableKindError');
     expect(response.body.error).to.have.property(
       'message',
-      'List kind cannot be changed after creation.',
+      'List kind cannot be changed after creation. Current kind is \'reading\'.',
     );
     expect(response.body.error).to.have.property('code', 'IMMUTABLE-LIST-KIND');
 
