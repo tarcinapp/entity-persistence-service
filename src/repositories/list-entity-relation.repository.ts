@@ -327,7 +327,11 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     );
   }
 
-  async replaceById(id: string, data: DataObject<ListToEntityRelation>) {
+  async replaceById(
+    id: string,
+    data: DataObject<ListToEntityRelation>,
+    options?: Options,
+  ) {
     return this.enrichIncomingRelForUpdates(id, data)
       .then((collection) => {
         // calculate idempotencyKey
@@ -339,12 +343,18 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
         return collection;
       })
       .then((collection) =>
-        this.validateIncomingRelForReplace(id, collection.data),
+        this.validateIncomingRelForReplace(id, collection.data, options),
       )
-      .then((validEnrichedData) => super.replaceById(id, validEnrichedData));
+      .then((validEnrichedData) =>
+        super.replaceById(id, validEnrichedData, options),
+      );
   }
 
-  async updateById(id: string, data: DataObject<ListToEntityRelation>) {
+  async updateById(
+    id: string,
+    data: DataObject<ListToEntityRelation>,
+    options?: Options,
+  ) {
     return this.enrichIncomingRelForUpdates(id, data)
       .then((collection) => {
         const mergedData = {
@@ -366,9 +376,12 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
           id,
           collection.existingData,
           collection.data,
+          options,
         ),
       )
-      .then((validEnrichedData) => super.updateById(id, validEnrichedData));
+      .then((validEnrichedData) =>
+        super.updateById(id, validEnrichedData, options),
+      );
   }
 
   async updateAll(
@@ -402,7 +415,7 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
   ): Promise<ListToEntityRelation> {
     return this.enrichIncomingRelationForCreation(data)
       .then((enrichedData) =>
-        this.validateIncomingRelationForCreation(enrichedData),
+        this.validateIncomingRelationForCreation(enrichedData, options),
       )
       .then((validEnrichedData) =>
         super
@@ -416,19 +429,20 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
    */
   async validateIncomingRelationForCreation(
     data: DataObject<ListToEntityRelation>,
+    options?: Options,
   ): Promise<DataObject<ListToEntityRelation>> {
     this.checkDataKindValues(data);
     this.checkDataKindFormat(data);
 
     return Promise.all([
-      this.checkUniquenessForRelation(data),
+      this.checkUniquenessForRelation(data, options),
       this.checkDependantsExistence(
         data as DataObject<ListToEntityRelation> & {
           _entityId: string;
           _listId: string;
         },
       ),
-      this.checkRecordLimits(data),
+      this.checkRecordLimits(data, options),
     ]).then(() => data);
   }
 
@@ -471,6 +485,7 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     id: string,
     existingData: DataObject<ListToEntityRelation>,
     data: DataObject<ListToEntityRelation>,
+    options?: Options,
   ) {
     // Check if kind is being changed
     if (data._kind && data._kind !== existingData._kind) {
@@ -489,7 +504,7 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     } as DataObject<ListToEntityRelation>;
 
     return Promise.all([
-      this.checkUniquenessForUpdate(id, mergedData),
+      this.checkUniquenessForUpdate(id, mergedData, options),
       this.checkDependantsExistence(
         mergedData as DataObject<ListToEntityRelation> & {
           _entityId: string;
@@ -502,6 +517,7 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
   async validateIncomingRelForReplace(
     id: string,
     data: DataObject<ListToEntityRelation>,
+    options?: Options,
   ) {
     const existingData = await this.findById(id);
 
@@ -522,26 +538,32 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
           _listId: string;
         },
       ),
-      this.checkUniquenessForUpdate(id, data),
+      this.checkUniquenessForUpdate(id, data, options),
     ]).then(() => data);
   }
 
   private async checkUniquenessForUpdate(
     id: string,
     newData: DataObject<ListToEntityRelation>,
+    options?: Options,
   ) {
     await this.recordLimitChecker.checkUniqueness(
       ListToEntityRelation,
       newData,
       this,
+      options,
     );
   }
 
-  private async checkRecordLimits(newData: DataObject<ListToEntityRelation>) {
+  private async checkRecordLimits(
+    newData: DataObject<ListToEntityRelation>,
+    options?: Options,
+  ) {
     await this.recordLimitChecker.checkLimits(
       ListToEntityRelation,
       newData,
       this,
+      options,
     );
   }
 
@@ -694,11 +716,13 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
    */
   private async checkUniquenessForRelation(
     data: DataObject<ListToEntityRelation>,
+    options?: Options,
   ) {
     await this.recordLimitChecker.checkUniqueness(
       ListToEntityRelation,
       data,
       this,
+      options,
     );
   }
 

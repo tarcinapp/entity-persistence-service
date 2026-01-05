@@ -121,23 +121,25 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
   private async processLookups(
     reactions: EntityReaction[],
     filter?: Filter<EntityReaction>,
+    options?: Options,
   ): Promise<EntityReaction[]> {
     if (!filter?.lookup) {
       return reactions;
     }
 
-    return this.lookupHelper.processLookupForArray(reactions, filter);
+    return this.lookupHelper.processLookupForArray(reactions, filter, options);
   }
 
   private async processLookup(
     reaction: EntityReaction,
     filter?: Filter<EntityReaction>,
+    options?: Options,
   ): Promise<EntityReaction> {
     if (!filter?.lookup) {
       return reaction;
     }
 
-    return this.lookupHelper.processLookupForOne(reaction, filter);
+    return this.lookupHelper.processLookupForOne(reaction, filter, options);
   }
 
   async find(
@@ -171,8 +173,8 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
 
     // If useMongoPipeline is not explicitly set to true, use repository approach
     if (options?.useMongoPipeline !== true) {
-      const reactions = await super.find(filter);
-      const reactionsWithLookup = await this.processLookups(reactions, filter);
+      const reactions = await super.find(filter, options);
+      const reactionsWithLookup = await this.processLookups(reactions, filter, options);
 
       return this.injectRecordTypeArray(reactionsWithLookup);
     }
@@ -209,6 +211,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     const reactionsWithLookup = await this.processLookups(
       result as EntityReaction[],
       filter,
+      options,
     );
 
     return this.injectRecordTypeArray(reactionsWithLookup);
@@ -287,7 +290,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
   ): Promise<EntityReaction> {
     return this.modifyIncomingReactionForCreation(data)
       .then((enrichedData) =>
-        this.validateIncomingReactionForCreation(enrichedData),
+        this.validateIncomingReactionForCreation(enrichedData, options),
       )
       .then((validEnrichedData) =>
         super
@@ -320,17 +323,19 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
 
   private async validateIncomingReactionForCreation(
     data: DataObject<EntityReaction>,
+    options?: Options,
   ): Promise<DataObject<EntityReaction>> {
     this.checkDataKindFormat(data);
     this.checkDataKindValues(data);
 
     return Promise.all([
       this.checkEntityExistence(data),
-      this.checkUniquenessForCreate(data),
-      this.recordLimitChecker.checkLimits(EntityReaction, data, this),
+      this.checkUniquenessForCreate(data, options),
+      this.recordLimitChecker.checkLimits(EntityReaction, data, this, options),
       this.lookupConstraintService.validateLookupConstraints(
         data as EntityReaction,
         EntityReaction,
+        options,
       ),
     ]).then(() => {
       return data;
@@ -373,11 +378,15 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     return data;
   }
 
-  private async checkUniquenessForCreate(newData: DataObject<EntityReaction>) {
+  private async checkUniquenessForCreate(
+    newData: DataObject<EntityReaction>,
+    options?: Options,
+  ) {
     await this.recordLimitChecker.checkUniqueness(
       EntityReaction,
       newData,
       this,
+      options,
     );
   }
 
@@ -509,6 +518,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
   private async validateIncomingReactionForReplace(
     id: string,
     data: DataObject<EntityReaction>,
+    options?: Options,
   ) {
     // Get the existing reaction to check if _kind is being changed
     const existingReaction = await this.findById(id);
@@ -536,16 +546,18 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
       });
     }
 
-    const uniquenessCheck = this.checkUniquenessForUpdate(id, data);
+    const uniquenessCheck = this.checkUniquenessForUpdate(id, data, options);
     const limitCheck = this.recordLimitChecker.checkLimits(
       EntityReaction,
       data,
       this,
+      options,
     );
     const lookupConstraintCheck =
       this.lookupConstraintService.validateLookupConstraints(
         data as EntityReaction,
         EntityReaction,
+        options,
       );
 
     await Promise.all([uniquenessCheck, limitCheck, lookupConstraintCheck]);
@@ -556,6 +568,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
   private async checkUniquenessForUpdate(
     id: string,
     newData: DataObject<EntityReaction>,
+    options?: Options,
   ) {
     // we need to merge existing data with incoming data in order to check uniqueness
     const existingData = await this.findById(id);
@@ -568,6 +581,7 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
       EntityReaction,
       mergedData,
       this,
+      options,
     );
   }
 
@@ -666,7 +680,11 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     return { count: updateResult.modifiedCount };
   }
 
-  async updateById(id: string, data: DataObject<EntityReaction>) {
+  async updateById(
+    id: string,
+    data: DataObject<EntityReaction>,
+    options?: Options,
+  ) {
     const collection = await this.modifyIncomingReactionForUpdates(id, data);
 
     // Merge incoming data with existing reaction data to ensure completeness
@@ -684,15 +702,17 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
       id,
       collection.existingData,
       collection.data,
+      options,
     );
 
-    return super.updateById(id, validEnrichedData);
+    return super.updateById(id, validEnrichedData, options);
   }
 
   private async validateIncomingDataForUpdate(
     id: string,
     existingData: EntityReaction,
     data: DataObject<EntityReaction>,
+    options?: Options,
   ) {
     // Check if user is trying to change the _kind field
     if (data._kind !== undefined && data._kind !== existingData._kind) {
@@ -723,16 +743,18 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
       existingData && _.pickBy(existingData, (value) => value !== null),
       data,
     );
-    const uniquenessCheck = this.checkUniquenessForUpdate(id, mergedData);
+    const uniquenessCheck = this.checkUniquenessForUpdate(id, mergedData, options);
     const limitCheck = this.recordLimitChecker.checkLimits(
       EntityReaction,
       mergedData,
       this,
+      options,
     );
     const lookupConstraintCheck =
       this.lookupConstraintService.validateLookupConstraints(
         mergedData as EntityReaction,
         EntityReaction,
+        options,
       );
 
     this.generateSlug(data);
@@ -999,7 +1021,11 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     }
   }
 
-  async replaceById(id: string, data: DataObject<EntityReaction>) {
+  async replaceById(
+    id: string,
+    data: DataObject<EntityReaction>,
+    options?: Options,
+  ) {
     const collection = await this.modifyIncomingReactionForUpdates(id, data);
 
     // Calculate idempotencyKey and assign it if present
@@ -1011,9 +1037,10 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     const validEnrichedData = await this.validateIncomingReactionForReplace(
       id,
       collection.data,
+      options,
     );
 
-    return super.replaceById(id, validEnrichedData);
+    return super.replaceById(id, validEnrichedData, options);
   }
 
   private injectRecordType(reaction: EntityReaction): EntityReaction {

@@ -1,4 +1,5 @@
 import { inject, injectable, Getter } from '@loopback/core';
+import { Options } from '@loopback/repository';
 import { get, every, isString } from 'lodash';
 import { LoggingService } from './logging.service';
 import { EnvConfigHelper } from '../extensions/config-helpers/env-config-helper';
@@ -202,6 +203,7 @@ export class LookupConstraintService {
   async validateLookupConstraints(
     item: RecordsCommonBase,
     model: typeof RecordsCommonBase,
+    options?: Options,
   ) {
     const recordType = this.getRecordType(model);
     const applicableConstraints = this.getConstraintsForType(recordType).filter(
@@ -218,7 +220,7 @@ export class LookupConstraintService {
 
     await Promise.all(
       applicableConstraints.map((constraint) =>
-        this.validateConstraint(item, constraint, recordType),
+        this.validateConstraint(item, constraint, recordType, options),
       ),
     );
   }
@@ -227,6 +229,7 @@ export class LookupConstraintService {
     item: RecordsCommonBase,
     constraint: LookupConstraint,
     recordType: RecordType,
+    options?: Options,
   ) {
     const references = get(item, constraint.propertyPath);
     if (!references || references.length === 0) {
@@ -267,10 +270,13 @@ export class LookupConstraintService {
         }
       }
 
-      const items = (await repository.find({
-        where: { _id: { inq: extractedIds } },
-        fields,
-      })) as Array<{ _kind: string; _entityId?: string; _listId?: string }>;
+      const items = (await repository.find(
+        {
+          where: { _id: { inq: extractedIds } },
+          fields,
+        },
+        options,
+      )) as Array<{ _kind: string; _entityId?: string; _listId?: string }>;
 
       const allValidKind = every(
         items,

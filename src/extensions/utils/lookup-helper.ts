@@ -1,5 +1,5 @@
 import { BindingKey, Getter, injectable } from '@loopback/core';
-import { Filter, repository } from '@loopback/repository';
+import { Filter, Options, repository } from '@loopback/repository';
 import { get, set } from 'lodash';
 import {
   GenericEntity,
@@ -109,6 +109,7 @@ export class LookupHelper {
    *
    * @param items - Array of items to process
    * @param filter - Filter containing lookup definitions
+   * @param options - Optional transaction options to propagate to repository calls
    * @returns Promise resolving to processed items with resolved references
    */
   async processLookupForArray<
@@ -116,6 +117,7 @@ export class LookupHelper {
   >(
     items: (T & (GenericEntityRelations | ListRelations))[],
     filter?: Filter<T>,
+    options?: Options,
   ): Promise<(T & (GenericEntityRelations | ListRelations))[]> {
     const lookup = filter?.lookup;
     if (!lookup) {
@@ -124,7 +126,7 @@ export class LookupHelper {
 
     let processedItems = items;
     for (const lookupDef of lookup) {
-      processedItems = await this.processLookupBatch(processedItems, lookupDef);
+      processedItems = await this.processLookupBatch(processedItems, lookupDef, options);
     }
 
     return processedItems;
@@ -136,6 +138,7 @@ export class LookupHelper {
    *
    * @param item - Single item to process
    * @param filter - Filter containing lookup definitions
+   * @param options - Optional transaction options to propagate to repository calls
    * @returns Promise resolving to processed item with resolved references
    */
   async processLookupForOne<
@@ -143,6 +146,7 @@ export class LookupHelper {
   >(
     item: T & (GenericEntityRelations | ListRelations),
     filter?: Filter<T>,
+    options?: Options,
   ): Promise<T & (GenericEntityRelations | ListRelations)> {
     const lookup = filter?.lookup;
     if (!lookup) {
@@ -152,7 +156,7 @@ export class LookupHelper {
     let processedItem = item;
     for (const lookupDef of lookup) {
       processedItem = (
-        await this.processLookupBatch([processedItem], lookupDef)
+        await this.processLookupBatch([processedItem], lookupDef, options)
       )[0];
     }
 
@@ -165,6 +169,7 @@ export class LookupHelper {
    *
    * @param items - Array of items to process
    * @param lookup - Lookup configuration defining what and how to resolve
+   * @param options - Optional transaction options to propagate to repository calls
    * @returns Promise resolving to processed items
    */
   private async processLookupBatch<
@@ -172,6 +177,7 @@ export class LookupHelper {
   >(
     items: (T & (GenericEntityRelations | ListRelations))[],
     lookup: LookupScope<T>,
+    options?: Options,
   ): Promise<(T & (GenericEntityRelations | ListRelations))[]> {
     const { prop, scope } = lookup;
 
@@ -263,6 +269,7 @@ export class LookupHelper {
           ),
         ),
         scope,
+        options,
       ),
       this.fetchReferencedLists(
         Array.from(
@@ -273,6 +280,7 @@ export class LookupHelper {
           ),
         ),
         scope,
+        options,
       ),
       this.fetchReferencedEntityReactions(
         Array.from(
@@ -283,6 +291,7 @@ export class LookupHelper {
           ),
         ),
         scope,
+        options,
       ),
       this.fetchReferencedListReactions(
         Array.from(
@@ -293,6 +302,7 @@ export class LookupHelper {
           ),
         ),
         scope,
+        options,
       ),
     ]);
 
@@ -440,6 +450,7 @@ export class LookupHelper {
   private async fetchReferencedEntities(
     entityIds: string[],
     scope?: any,
+    options?: Options,
   ): Promise<(GenericEntity & GenericEntityRelations)[]> {
     if (entityIds.length === 0) {
       return [];
@@ -474,14 +485,17 @@ export class LookupHelper {
       }
     }
 
-    return entityRepository.find({
-      ...scope,
-      fields: adjustedFields,
-      where: {
-        _id: { inq: entityIds },
-        ...(scope?.where ?? {}),
+    return entityRepository.find(
+      {
+        ...scope,
+        fields: adjustedFields,
+        where: {
+          _id: { inq: entityIds },
+          ...(scope?.where ?? {}),
+        },
       },
-    });
+      options,
+    );
   }
 
   /**
@@ -490,6 +504,7 @@ export class LookupHelper {
   private async fetchReferencedLists(
     listIds: string[],
     scope?: any,
+    options?: Options,
   ): Promise<(List & ListRelations)[]> {
     if (listIds.length === 0) {
       return [];
@@ -524,14 +539,17 @@ export class LookupHelper {
       }
     }
 
-    return listRepository.find({
-      ...scope,
-      fields: adjustedFields,
-      where: {
-        _id: { inq: listIds },
-        ...(scope?.where ?? {}),
+    return listRepository.find(
+      {
+        ...scope,
+        fields: adjustedFields,
+        where: {
+          _id: { inq: listIds },
+          ...(scope?.where ?? {}),
+        },
       },
-    });
+      options,
+    );
   }
 
   /**
@@ -540,6 +558,7 @@ export class LookupHelper {
   private async fetchReferencedEntityReactions(
     reactionIds: string[],
     scope?: any,
+    options?: Options,
   ): Promise<EntityReaction[]> {
     if (reactionIds.length === 0) {
       return [];
@@ -574,14 +593,18 @@ export class LookupHelper {
       }
     }
 
-    return entityReactionsRepository.find({
-      ...scope,
-      fields: adjustedFields,
-      where: {
-        _id: { inq: reactionIds },
-        ...(scope?.where ?? {}),
+    return entityReactionsRepository.find(
+      {
+        ...scope,
+        fields: adjustedFields,
+        where: {
+          _id: { inq: reactionIds },
+          ...(scope?.where ?? {}),
+        },
       },
-    });
+      undefined,
+      options,
+    );
   }
 
   /**
@@ -590,6 +613,7 @@ export class LookupHelper {
   private async fetchReferencedListReactions(
     reactionIds: string[],
     scope?: any,
+    options?: Options,
   ): Promise<ListReaction[]> {
     if (reactionIds.length === 0) {
       return [];
@@ -623,14 +647,18 @@ export class LookupHelper {
       }
     }
 
-    return listReactionsRepository.find({
-      ...scope,
-      fields: adjustedFields,
-      where: {
-        _id: { inq: reactionIds },
-        ...(scope?.where ?? {}),
+    return listReactionsRepository.find(
+      {
+        ...scope,
+        fields: adjustedFields,
+        where: {
+          _id: { inq: reactionIds },
+          ...(scope?.where ?? {}),
+        },
       },
-    });
+      undefined,
+      options,
+    );
   }
 }
 

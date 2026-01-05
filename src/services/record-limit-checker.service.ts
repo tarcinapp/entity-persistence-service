@@ -7,6 +7,7 @@ import {
   FilterBuilder,
   DefaultCrudRepository,
   Count,
+  Options,
 } from '@loopback/repository';
 import _ from 'lodash';
 import { parse } from 'qs';
@@ -458,11 +459,13 @@ export class RecordLimitCheckerService {
 
   /**
    * Check all applicable limits for a model
+   * @param options - Optional transaction options to propagate to repository calls
    */
   async checkLimits<T extends Entity>(
     modelClass: EntityModelClass,
     newData: DataObject<T>,
     repository: DefaultCrudRepository<T, any, any>,
+    options?: Options,
   ): Promise<void> {
     const limits = this.getLimitsForModel(modelClass) ?? [];
 
@@ -577,11 +580,11 @@ export class RecordLimitCheckerService {
             filter.where,
             listFilter?.where,
             entityFilter?.where,
-            undefined,
+            options,
           );
         } else {
           // Standard handling for other repositories
-          count = await repository.count(filter.where);
+          count = await repository.count(filter.where, options);
         }
 
         // Debug: log the count observed from the repository
@@ -624,11 +627,13 @@ export class RecordLimitCheckerService {
 
   /**
    * Check uniqueness for a model
+   * @param options - Optional transaction options to propagate to repository calls
    */
   async checkUniqueness<T extends Entity>(
     modelClass: EntityModelClass,
     newData: DataObject<T>,
     repository: DefaultCrudRepository<T, any, any>,
+    options?: Options,
   ): Promise<void> {
     const modelName = modelClass.modelName;
     const uniquenessScopes = this.getUniquenessScopes(modelName);
@@ -675,10 +680,10 @@ export class RecordLimitCheckerService {
             filter.where,
             listFilter?.where,
             entityFilter?.where,
-            undefined,
+            options,
           );
         } else {
-          count = await repository.count(filter.where);
+          count = await repository.count(filter.where, options);
         }
 
         if (count.count > 0) {

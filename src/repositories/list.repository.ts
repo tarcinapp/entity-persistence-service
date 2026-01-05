@@ -192,23 +192,25 @@ export class ListRepository extends DefaultCrudRepository<
   private async processLookups(
     lists: (List & ListRelations)[],
     filter?: Filter<List>,
+    options?: Options,
   ): Promise<(List & ListRelations)[]> {
     if (!filter?.lookup) {
       return lists;
     }
 
-    return this.lookupHelper.processLookupForArray(lists, filter);
+    return this.lookupHelper.processLookupForArray(lists, filter, options);
   }
 
   private async processLookup(
     list: List & ListRelations,
     filter?: Filter<List>,
+    options?: Options,
   ): Promise<List & ListRelations> {
     if (!filter?.lookup) {
       return list;
     }
 
-    return this.lookupHelper.processLookupForOne(list, filter);
+    return this.lookupHelper.processLookupForOne(list, filter, options);
   }
 
   async find(filter?: Filter<List>, options?: Options) {
@@ -231,7 +233,7 @@ export class ListRepository extends DefaultCrudRepository<
     });
 
     const lists = await super.find(filter, options);
-    const listsWithLookup = await this.processLookups(lists, filter);
+    const listsWithLookup = await this.processLookups(lists, filter, options);
 
     return this.injectRecordTypeArray(listsWithLookup);
   }
@@ -239,6 +241,7 @@ export class ListRepository extends DefaultCrudRepository<
   async findById(
     id: string,
     filter?: FilterExcludingWhere<List>,
+    options?: Options,
   ): Promise<List> {
     try {
       // Ensure _kind is always included (cast to Filter for the helper)
@@ -246,8 +249,8 @@ export class ListRepository extends DefaultCrudRepository<
       const typedFilter = forcedFilter as FilterExcludingWhere<List>;
 
       // Call the LoopBack super method, which already throws an error if not found
-      const list = await super.findById(id, typedFilter);
-      const listWithLookup = await this.processLookup(list, filter);
+      const list = await super.findById(id, typedFilter, options);
+      const listWithLookup = await this.processLookup(list, filter, options);
 
       // Return the successfully found entity
       return this.injectRecordType(listWithLookup);
@@ -274,7 +277,7 @@ export class ListRepository extends DefaultCrudRepository<
     }
   }
 
-  async create(data: DataObject<List>) {
+  async create(data: DataObject<List>, options?: Options) {
     const idempotencyKey = this.calculateIdempotencyKey(data);
 
     return this.findIdempotentList(idempotencyKey).then((foundIdempotent) => {
@@ -288,7 +291,7 @@ export class ListRepository extends DefaultCrudRepository<
 
       // we do not have identical data in the db
       // go ahead, validate, enrich and create the data
-      return this.createNewListFacade(data);
+      return this.createNewListFacade(data, options);
     });
   }
 
@@ -310,7 +313,7 @@ export class ListRepository extends DefaultCrudRepository<
         return collection;
       })
       .then((collection) =>
-        this.validateIncomingListForReplace(id, collection.data),
+        this.validateIncomingListForReplace(id, collection.data, options),
       )
       .then((validEnrichedData) =>
         super.replaceById(id, validEnrichedData, options),
@@ -344,6 +347,7 @@ export class ListRepository extends DefaultCrudRepository<
           id,
           collection.existingData,
           collection.data,
+          options,
         ),
       )
       .then((validEnrichedData) =>
@@ -532,9 +536,13 @@ export class ListRepository extends DefaultCrudRepository<
    * Validates the incoming data, enriches with managed fields then calls super.create
    *
    * @param data Input object to create list from.
+   * @param options Optional transaction options.
    * @returns Newly created list.
    */
-  private async createNewListFacade(data: DataObject<List>): Promise<List> {
+  private async createNewListFacade(
+    data: DataObject<List>,
+    options?: Options,
+  ): Promise<List> {
     /**
      * TODO: MongoDB connector still does not support transactions.
      * Comment out here when we receive transaction support.
@@ -547,24 +555,25 @@ export class ListRepository extends DefaultCrudRepository<
 
     return this.modifyIncomingListForCreation(data)
       .then((enrichedData) =>
-        this.validateIncomingListForCreation(enrichedData),
+        this.validateIncomingListForCreation(enrichedData, options),
       )
       .then((validEnrichedData) =>
         super
-          .create(validEnrichedData)
+          .create(validEnrichedData, options)
           .then((created) => this.injectRecordType(created)),
       );
   }
 
   private async validateIncomingListForCreation(
     data: DataObject<List>,
+    options?: Options,
   ): Promise<DataObject<List>> {
     this.checkDataKindFormat(data);
     this.checkDataKindValues(data);
 
     return Promise.all([
-      this.checkUniquenessForCreate(data),
-      this.checkRecordLimits(data),
+      this.checkUniquenessForCreate(data, options),
+      this.checkRecordLimits(data, options),
     ]).then(() => {
       return data;
     });
@@ -573,8 +582,9 @@ export class ListRepository extends DefaultCrudRepository<
   private async validateIncomingListForReplace(
     id: string,
     data: DataObject<List>,
+    options?: Options,
   ) {
-    const uniquenessCheck = this.checkUniquenessForUpdate(id, data);
+    const uniquenessCheck = this.checkUniquenessForUpdate(id, data, options);
 
     // Check if trying to change the kind field
     const existingList = await this.findById(id);
@@ -596,6 +606,7 @@ export class ListRepository extends DefaultCrudRepository<
     id: string,
     existingData: DataObject<List>,
     data: DataObject<List>,
+    options?: Options,
   ) {
     // we need to merge existing data with incoming data in order to check limits and uniquenesses
     const mergedData = _.assign(
@@ -603,7 +614,7 @@ export class ListRepository extends DefaultCrudRepository<
       existingData && _.pickBy(existingData, (value) => value !== null),
       data,
     );
-    const uniquenessCheck = this.checkUniquenessForUpdate(id, mergedData);
+    const uniquenessCheck = this.checkUniquenessForUpdate(id, mergedData, options);
 
     // Check if trying to change the kind field
     if (data._kind && data._kind !== existingData._kind) {
@@ -725,8 +736,8 @@ export class ListRepository extends DefaultCrudRepository<
       });
   }
 
-  private async checkRecordLimits(newData: DataObject<List>) {
-    await this.recordLimitChecker.checkLimits(List, newData, this);
+  private async checkRecordLimits(newData: DataObject<List>, options?: Options) {
+    await this.recordLimitChecker.checkLimits(List, newData, this, options);
   }
 
   private generateSlug(data: DataObject<List>) {
@@ -787,13 +798,17 @@ export class ListRepository extends DefaultCrudRepository<
     }
   }
 
-  private async checkUniquenessForCreate(newData: DataObject<List>) {
-    await this.recordLimitChecker.checkUniqueness(List, newData, this);
+  private async checkUniquenessForCreate(
+    newData: DataObject<List>,
+    options?: Options,
+  ) {
+    await this.recordLimitChecker.checkUniqueness(List, newData, this, options);
   }
 
   private async checkUniquenessForUpdate(
     id: string,
     newData: DataObject<List>,
+    options?: Options,
   ) {
     // we need to merge existing data with incoming data in order to check uniqueness
     const existingData = await this.findById(id);
@@ -802,7 +817,7 @@ export class ListRepository extends DefaultCrudRepository<
       existingData && _.pickBy(existingData, (value) => value !== null),
       newData,
     );
-    await this.recordLimitChecker.checkUniqueness(List, mergedData, this);
+    await this.recordLimitChecker.checkUniqueness(List, mergedData, this, options);
   }
 
   async findParents(

@@ -174,23 +174,25 @@ export class EntityRepository extends DefaultCrudRepository<
   private async processLookups(
     entities: (GenericEntity & GenericEntityRelations)[],
     filter?: Filter<GenericEntity>,
+    options?: Options,
   ): Promise<(GenericEntity & GenericEntityRelations)[]> {
     if (!filter?.lookup) {
       return entities;
     }
 
-    return this.lookupHelper.processLookupForArray(entities, filter);
+    return this.lookupHelper.processLookupForArray(entities, filter, options);
   }
 
   private async processLookup(
     entity: GenericEntity & GenericEntityRelations,
     filter?: Filter<GenericEntity>,
+    options?: Options,
   ): Promise<GenericEntity & GenericEntityRelations> {
     if (!filter?.lookup) {
       return entity;
     }
 
-    return this.lookupHelper.processLookupForOne(entity, filter);
+    return this.lookupHelper.processLookupForOne(entity, filter, options);
   }
 
   async find(
@@ -218,7 +220,7 @@ export class EntityRepository extends DefaultCrudRepository<
       });
 
       const entities = await super.find(filter, options);
-      const entitiesWithLookup = await this.processLookups(entities, filter);
+      const entitiesWithLookup = await this.processLookups(entities, filter, options);
 
       return this.injectRecordTypeArray(entitiesWithLookup);
     } catch (error) {
@@ -251,7 +253,11 @@ export class EntityRepository extends DefaultCrudRepository<
     return this.createNewEntityFacade(data, options);
   }
 
-  async replaceById(id: string, data: DataObject<GenericEntity>) {
+  async replaceById(
+    id: string,
+    data: DataObject<GenericEntity>,
+    options?: Options,
+  ) {
     const collection = await this.modifyIncomingEntityForUpdates(id, data);
 
     // Calculate idempotencyKey and assign it if present
@@ -263,9 +269,10 @@ export class EntityRepository extends DefaultCrudRepository<
     const validEnrichedData = await this.validateIncomingEntityForReplace(
       id,
       collection.data,
+      options,
     );
 
-    return super.replaceById(id, validEnrichedData);
+    return super.replaceById(id, validEnrichedData, options);
   }
 
   async updateById(
@@ -290,6 +297,7 @@ export class EntityRepository extends DefaultCrudRepository<
       id,
       collection.existingData,
       collection.data,
+      options,
     );
 
     return super.updateById(id, validEnrichedData, options);
@@ -446,7 +454,7 @@ export class EntityRepository extends DefaultCrudRepository<
 
     return this.modifyIncomingEntityForCreation(data)
       .then((enrichedData) =>
-        this.validateIncomingEntityForCreation(enrichedData),
+        this.validateIncomingEntityForCreation(enrichedData, options),
       )
       .then((validEnrichedData) =>
         super
@@ -457,16 +465,18 @@ export class EntityRepository extends DefaultCrudRepository<
 
   private async validateIncomingEntityForCreation(
     data: DataObject<GenericEntity>,
+    options?: Options,
   ): Promise<DataObject<GenericEntity>> {
     this.checkDataKindFormat(data);
     this.checkDataKindValues(data);
 
     return Promise.all([
-      this.checkUniquenessForCreate(data),
-      this.recordLimitChecker.checkLimits(GenericEntity, data, this),
+      this.checkUniquenessForCreate(data, options),
+      this.recordLimitChecker.checkLimits(GenericEntity, data, this, options),
       this.lookupConstraintService.validateLookupConstraints(
         data as GenericEntity,
         GenericEntity,
+        options,
       ),
     ]).then(() => {
       return data;
@@ -476,6 +486,7 @@ export class EntityRepository extends DefaultCrudRepository<
   private async validateIncomingEntityForReplace(
     id: string,
     data: DataObject<GenericEntity>,
+    options?: Options,
   ) {
     // Get the existing entity to check if _kind is being changed
     const existingEntity = await this.findById(id);
@@ -490,16 +501,18 @@ export class EntityRepository extends DefaultCrudRepository<
       });
     }
 
-    const uniquenessCheck = this.checkUniquenessForUpdate(id, data);
+    const uniquenessCheck = this.checkUniquenessForUpdate(id, data, options);
     const limitCheck = this.recordLimitChecker.checkLimits(
       GenericEntity,
       data,
       this,
+      options,
     );
     const lookupConstraintCheck =
       this.lookupConstraintService.validateLookupConstraints(
         data as GenericEntity,
         GenericEntity,
+        options,
       );
 
     await Promise.all([uniquenessCheck, limitCheck, lookupConstraintCheck]);
@@ -511,6 +524,7 @@ export class EntityRepository extends DefaultCrudRepository<
     id: string,
     existingData: DataObject<GenericEntity>,
     data: DataObject<GenericEntity>,
+    options?: Options,
   ) {
     // Check if user is trying to change the _kind field
     if (data._kind !== undefined && data._kind !== existingData._kind) {
@@ -528,16 +542,18 @@ export class EntityRepository extends DefaultCrudRepository<
       existingData && _.pickBy(existingData, (value) => value !== null),
       data,
     );
-    const uniquenessCheck = this.checkUniquenessForUpdate(id, mergedData);
+    const uniquenessCheck = this.checkUniquenessForUpdate(id, mergedData, options);
     const limitCheck = this.recordLimitChecker.checkLimits(
       GenericEntity,
       mergedData,
       this,
+      options,
     );
     const lookupConstraintCheck =
       this.lookupConstraintService.validateLookupConstraints(
         mergedData as GenericEntity,
         GenericEntity,
+        options,
       );
 
     this.generateSlug(data);
@@ -727,13 +743,17 @@ export class EntityRepository extends DefaultCrudRepository<
     }
   }
 
-  private async checkUniquenessForCreate(newData: DataObject<GenericEntity>) {
-    await this.recordLimitChecker.checkUniqueness(GenericEntity, newData, this);
+  private async checkUniquenessForCreate(
+    newData: DataObject<GenericEntity>,
+    options?: Options,
+  ) {
+    await this.recordLimitChecker.checkUniqueness(GenericEntity, newData, this, options);
   }
 
   private async checkUniquenessForUpdate(
     id: string,
     newData: DataObject<GenericEntity>,
+    options?: Options,
   ) {
     // we need to merge existing data with incoming data in order to check uniqueness
     const existingData = await this.findById(id);
@@ -746,6 +766,7 @@ export class EntityRepository extends DefaultCrudRepository<
       GenericEntity,
       mergedData,
       this,
+      options,
     );
   }
 
@@ -762,7 +783,7 @@ export class EntityRepository extends DefaultCrudRepository<
       const typedFilter = forcedFilter as FilterExcludingWhere<GenericEntity>;
 
       const entity = await super.findById(id, typedFilter, options);
-      const entityWithLookup = await this.processLookup(entity, filter);
+      const entityWithLookup = await this.processLookup(entity, filter, options);
 
       return this.injectRecordType(entityWithLookup);
     } catch (error) {
