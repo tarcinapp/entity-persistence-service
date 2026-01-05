@@ -95,14 +95,23 @@ describe('EntityRepository', () => {
     expect(repository.reactions).to.not.be.undefined();
   });
 
+  // Helper to get DefaultTransactionalRepository prototype (4 levels up)
+  // Inheritance: EntityRepository -> EntityPersistenceBusinessRepository -> EntityPersistenceBaseRepository -> DefaultTransactionalRepository
+  const getBaseRepoPrototype = () =>
+    Object.getPrototypeOf(
+      Object.getPrototypeOf(
+        Object.getPrototypeOf(Object.getPrototypeOf(repository)),
+      ),
+    );
+
   describe('find', () => {
     let superFindStub: sinon.SinonStub;
     const configuredLimit = 50;
 
     beforeEach(() => {
-      // Stub the parent class's find method instead of the repository's find method
+      // Stub DefaultTransactionalRepository.find (4 levels up in prototype chain)
       superFindStub = sinon
-        .stub(Object.getPrototypeOf(Object.getPrototypeOf(repository)), 'find')
+        .stub(getBaseRepoPrototype(), 'find')
         .callsFake(async (_filter, _options) => {
           return [];
         });
@@ -169,20 +178,14 @@ describe('EntityRepository', () => {
       // Stub Date.now
       sinon.useFakeTimers(new Date(now));
 
-      // Stub super.create
+      // Stub DefaultTransactionalRepository.create (4 levels up)
       superCreateStub = sinon
-        .stub(
-          Object.getPrototypeOf(Object.getPrototypeOf(repository)),
-          'create',
-        )
+        .stub(getBaseRepoPrototype(), 'create')
         .callsFake(async (data) => data);
 
-      // Stub super.findOne for idempotency checks
+      // Stub DefaultTransactionalRepository.findOne for idempotency checks
       superFindOneStub = sinon
-        .stub(
-          Object.getPrototypeOf(Object.getPrototypeOf(repository)),
-          'findOne',
-        )
+        .stub(getBaseRepoPrototype(), 'findOne')
         .resolves(null);
     });
 
@@ -556,20 +559,14 @@ describe('EntityRepository', () => {
       // Stub Date.now
       sinon.useFakeTimers(new Date(now));
 
-      // Stub super.replaceById
+      // Stub DefaultTransactionalRepository.replaceById (4 levels up)
       superReplaceByIdStub = sinon
-        .stub(
-          Object.getPrototypeOf(Object.getPrototypeOf(repository)),
-          'replaceById',
-        )
+        .stub(getBaseRepoPrototype(), 'replaceById')
         .resolves();
 
-      // Stub super.findById for existing data lookup
+      // Stub DefaultTransactionalRepository.findById for existing data lookup
       superFindByIdStub = sinon
-        .stub(
-          Object.getPrototypeOf(Object.getPrototypeOf(repository)),
-          'findById',
-        )
+        .stub(getBaseRepoPrototype(), 'findById')
         .resolves({
           _id: existingId,
           _version: 1,
@@ -858,12 +855,9 @@ describe('EntityRepository', () => {
       // Stub Date.now
       sinon.useFakeTimers(new Date(now));
 
-      // Stub super.updateById to merge data with existing entity
+      // Stub DefaultTransactionalRepository.updateById to merge data with existing entity
       superUpdateByIdStub = sinon
-        .stub(
-          Object.getPrototypeOf(Object.getPrototypeOf(repository)),
-          'updateById',
-        )
+        .stub(getBaseRepoPrototype(), 'updateById')
         .callsFake(async (...args) => {
           const data = args[1] as Record<string, unknown>;
           const merged = {
@@ -894,12 +888,9 @@ describe('EntityRepository', () => {
           return merged;
         });
 
-      // Stub super.findById for fetching existing entity
+      // Stub DefaultTransactionalRepository.findById for fetching existing entity
       superFindByIdStub = sinon
-        .stub(
-          Object.getPrototypeOf(Object.getPrototypeOf(repository)),
-          'findById',
-        )
+        .stub(getBaseRepoPrototype(), 'findById')
         .resolves(existingEntity);
     });
 
@@ -1180,12 +1171,9 @@ describe('EntityRepository', () => {
       (repository as any).listEntityRelationRepositoryGetter = () =>
         Promise.resolve(listEntityRelationRepoStub);
 
-      // Stub super.deleteById
+      // Stub DefaultTransactionalRepository.deleteById (4 levels up)
       superDeleteByIdStub = sinon
-        .stub(
-          Object.getPrototypeOf(Object.getPrototypeOf(repository)),
-          'deleteById',
-        )
+        .stub(getBaseRepoPrototype(), 'deleteById')
         .resolves();
     });
 
@@ -1241,12 +1229,9 @@ describe('EntityRepository', () => {
       // Stub Date.now
       sinon.useFakeTimers(new Date(now));
 
-      // Stub super.updateAll
+      // Stub DefaultTransactionalRepository.updateAll (4 levels up)
       superUpdateAllStub = sinon
-        .stub(
-          Object.getPrototypeOf(Object.getPrototypeOf(repository)),
-          'updateAll',
-        )
+        .stub(getBaseRepoPrototype(), 'updateAll')
         .resolves({ count: 2 });
     });
 
@@ -1319,12 +1304,9 @@ describe('EntityRepository', () => {
       (repository as any).listEntityRelationRepositoryGetter = () =>
         Promise.resolve(listEntityRelationRepoStub);
 
-      // Stub super.deleteAll
+      // Stub DefaultTransactionalRepository.deleteAll (4 levels up)
       superDeleteAllStub = sinon
-        .stub(
-          Object.getPrototypeOf(Object.getPrototypeOf(repository)),
-          'deleteAll',
-        )
+        .stub(getBaseRepoPrototype(), 'deleteAll')
         .resolves({ count: 2 });
     });
 
