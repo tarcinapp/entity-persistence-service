@@ -1,12 +1,12 @@
 import { inject } from '@loopback/context';
 import {
-  DefaultCrudRepository,
   Fields,
   Filter,
   Getter,
   Options,
   repository,
 } from '@loopback/repository';
+import { EntityPersistenceBaseRepository } from './entity-persistence-base.repository';
 import _ from 'lodash';
 import { EntityDbDataSource } from '../datasources';
 import {
@@ -18,11 +18,12 @@ import {
 import { ListEntityRelationRepository } from './list-entity-relation.repository';
 import { ListRepository } from './list.repository';
 
-export class CustomListThroughEntityRepository extends DefaultCrudRepository<
+export class CustomListThroughEntityRepository extends EntityPersistenceBaseRepository<
   List,
   typeof List.prototype._id,
   ListWithRelations
 > {
+  protected readonly recordTypeName = 'list';
   protected sourceEntityId: typeof GenericEntity.prototype._id;
 
   constructor(
@@ -118,15 +119,4 @@ export class CustomListThroughEntityRepository extends DefaultCrudRepository<
     return this.injectRecordTypeArray(listsWithMetadata);
   }
 
-  private injectRecordType<T extends List | ListWithRelations>(list: T): T {
-    (list as any)._recordType = 'list';
-
-    return list;
-  }
-
-  private injectRecordTypeArray<T extends List | ListWithRelations>(
-    lists: T[],
-  ): T[] {
-    return lists.map((list) => this.injectRecordType(list));
-  }
 }

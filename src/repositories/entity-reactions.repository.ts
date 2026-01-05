@@ -1,6 +1,5 @@
 import { inject, Getter } from '@loopback/core';
 import {
-  DefaultCrudRepository,
   Filter,
   Options,
   FilterExcludingWhere,
@@ -9,6 +8,7 @@ import {
   DataObject,
   repository,
 } from '@loopback/repository';
+import { EntityPersistenceBaseRepository } from './entity-persistence-base.repository';
 import * as crypto from 'crypto';
 import _ from 'lodash';
 import slugify from 'slugify';
@@ -36,10 +36,11 @@ import { LookupConstraintBindings } from '../services/lookup-constraint.bindings
 import { LookupConstraintService } from '../services/lookup-constraint.service';
 import { RecordLimitCheckerService } from '../services/record-limit-checker.service';
 
-export class EntityReactionsRepository extends DefaultCrudRepository<
+export class EntityReactionsRepository extends EntityPersistenceBaseRepository<
   EntityReaction,
   typeof EntityReaction.prototype.id
 > {
+  protected readonly recordTypeName = 'entityReaction';
   constructor(
     @inject('datasources.EntityDb') dataSource: EntityDbDataSource,
     @inject('extensions.kind.configurationreader')
@@ -1043,30 +1044,4 @@ export class EntityReactionsRepository extends DefaultCrudRepository<
     return super.replaceById(id, validEnrichedData, options);
   }
 
-  private injectRecordType(reaction: EntityReaction): EntityReaction {
-    if (!reaction) {
-      return reaction;
-    }
-
-    (reaction as any)._recordType = 'entityReaction';
-
-    return reaction;
-  }
-
-  private injectRecordTypeArray(reactions: EntityReaction[]): EntityReaction[] {
-    return reactions.map((reaction) => this.injectRecordType(reaction));
-  }
-
-  private sanitizeRecordType(
-    data: DataObject<EntityReaction>,
-  ): DataObject<EntityReaction> {
-    if ('_recordType' in data) {
-      const sanitized = { ...data };
-      delete sanitized._recordType;
-
-      return sanitized;
-    }
-
-    return data;
-  }
 }

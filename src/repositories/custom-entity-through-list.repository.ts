@@ -1,7 +1,6 @@
 import { inject } from '@loopback/context';
 import {
   DataObject,
-  DefaultCrudRepository,
   Fields,
   Filter,
   Getter,
@@ -9,6 +8,7 @@ import {
   repository,
   Where,
 } from '@loopback/repository';
+import { EntityPersistenceBaseRepository } from './entity-persistence-base.repository';
 import _ from 'lodash';
 import { EntityDbDataSource } from '../datasources';
 import {
@@ -20,11 +20,12 @@ import {
 import { EntityRepository } from './entity.repository';
 import { ListEntityRelationRepository } from './list-entity-relation.repository';
 
-export class CustomEntityThroughListRepository extends DefaultCrudRepository<
+export class CustomEntityThroughListRepository extends EntityPersistenceBaseRepository<
   GenericEntity,
   typeof GenericEntity.prototype._id,
   GenericEntityWithRelations
 > {
+  protected readonly recordTypeName = 'entity';
   protected sourceListId: typeof List.prototype._id;
 
   constructor(
@@ -213,17 +214,4 @@ export class CustomEntityThroughListRepository extends DefaultCrudRepository<
     return entitiesRepo.deleteAll(where, options);
   }
 
-  private injectRecordType<
-    T extends GenericEntity | GenericEntityWithRelations,
-  >(entity: T): T {
-    (entity as any)._recordType = 'entity';
-
-    return entity;
-  }
-
-  private injectRecordTypeArray<
-    T extends GenericEntity | GenericEntityWithRelations,
-  >(entities: T[]): T[] {
-    return entities.map((entity) => this.injectRecordType(entity));
-  }
 }

@@ -1,7 +1,6 @@
 import { Getter, inject } from '@loopback/core';
 import {
   DataObject,
-  DefaultCrudRepository,
   Filter,
   FilterExcludingWhere,
   Options,
@@ -10,6 +9,7 @@ import {
   Count,
   Entity,
 } from '@loopback/repository';
+import { EntityPersistenceBaseRepository } from './entity-persistence-base.repository';
 import * as crypto from 'crypto';
 import _ from 'lodash';
 import { EntityDbDataSource } from '../datasources';
@@ -33,11 +33,19 @@ import { LoggingService } from '../services/logging.service';
 import { RecordLimitCheckerBindings } from '../services/record-limit-checker.bindings';
 import { RecordLimitCheckerService } from '../services/record-limit-checker.service';
 
-export class ListEntityRelationRepository extends DefaultCrudRepository<
+export class ListEntityRelationRepository extends EntityPersistenceBaseRepository<
   ListToEntityRelation,
   typeof ListToEntityRelation.prototype._id,
   ListEntityRelationRelations
 > {
+  protected readonly recordTypeName = 'relation';
+
+  // Override virtualFields to include relation-specific fields
+  protected readonly virtualFields: string[] = [
+    '_recordType',
+    '_fromMetadata',
+    '_toMetadata',
+  ];
   constructor(
     @inject('datasources.EntityDb')
     dataSource: EntityDbDataSource,
@@ -726,46 +734,4 @@ export class ListEntityRelationRepository extends DefaultCrudRepository<
     );
   }
 
-  private injectRecordType<
-    T extends
-      | ListToEntityRelation
-      | (ListToEntityRelation & ListEntityRelationRelations),
-  >(relation: T): T {
-    if (!relation) {
-      return relation;
-    }
-
-    (relation as any)._recordType = 'relation';
-
-    return relation;
-  }
-
-  private injectRecordTypeArray<
-    T extends
-      | ListToEntityRelation
-      | (ListToEntityRelation & ListEntityRelationRelations),
-  >(relations: T[]): T[] {
-    return relations.map((relation) => this.injectRecordType(relation));
-  }
-
-  private sanitizeRecordType(
-    data: DataObject<ListToEntityRelation>,
-  ): DataObject<ListToEntityRelation> {
-    // Strip virtual/response-only fields that should never be persisted
-    const sanitized = { ...data };
-
-    if ('_recordType' in sanitized) {
-      delete sanitized._recordType;
-    }
-
-    if ('_fromMetadata' in sanitized) {
-      delete sanitized._fromMetadata;
-    }
-
-    if ('_toMetadata' in sanitized) {
-      delete sanitized._toMetadata;
-    }
-
-    return sanitized;
-  }
 }

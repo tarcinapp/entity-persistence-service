@@ -2,21 +2,22 @@ import { inject } from '@loopback/context';
 import {
   Count,
   DataObject,
-  DefaultCrudRepository,
   Filter,
   Getter,
   Options,
   repository,
   Where,
 } from '@loopback/repository';
+import { EntityPersistenceBaseRepository } from './entity-persistence-base.repository';
 import { EntityDbDataSource } from '../datasources';
 import { ListReaction } from '../models';
 import { ListReactionsRepository } from './list-reactions.repository';
 
-export class CustomReactionThroughListRepository extends DefaultCrudRepository<
+export class CustomReactionThroughListRepository extends EntityPersistenceBaseRepository<
   ListReaction,
   typeof ListReaction.prototype._id
 > {
+  protected readonly recordTypeName = 'listReaction';
   public sourceListId: string;
 
   constructor(

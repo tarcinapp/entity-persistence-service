@@ -2,7 +2,6 @@ import { Getter, inject } from '@loopback/core';
 import {
   Count,
   DataObject,
-  DefaultCrudRepository,
   Filter,
   FilterExcludingWhere,
   HasManyRepositoryFactory,
@@ -10,6 +9,7 @@ import {
   Where,
   repository,
 } from '@loopback/repository';
+import { EntityPersistenceBaseRepository } from './entity-persistence-base.repository';
 import * as crypto from 'crypto';
 import _ from 'lodash';
 import slugify from 'slugify';
@@ -43,11 +43,12 @@ import { LookupConstraintBindings } from '../services/lookup-constraint.bindings
 import { LookupConstraintService } from '../services/lookup-constraint.service';
 import { RecordLimitCheckerService } from '../services/record-limit-checker.service';
 
-export class EntityRepository extends DefaultCrudRepository<
+export class EntityRepository extends EntityPersistenceBaseRepository<
   GenericEntity,
   typeof GenericEntity.prototype._id,
   GenericEntityRelations
 > {
+  protected readonly recordTypeName = 'entity';
   public readonly lists: (
     entityId: typeof GenericEntity.prototype._id,
   ) => CustomListThroughEntityRepository;
@@ -922,34 +923,4 @@ export class EntityRepository extends DefaultCrudRepository<
     }
   }
 
-  private injectRecordType<
-    T extends GenericEntity | (GenericEntity & GenericEntityRelations),
-  >(entity: T): T {
-    if (!entity) {
-      return entity;
-    }
-
-    (entity as any)._recordType = 'entity';
-
-    return entity;
-  }
-
-  private injectRecordTypeArray<
-    T extends GenericEntity | (GenericEntity & GenericEntityRelations),
-  >(entities: T[]): T[] {
-    return entities.map((entity) => this.injectRecordType(entity));
-  }
-
-  private sanitizeRecordType(
-    data: DataObject<GenericEntity>,
-  ): DataObject<GenericEntity> {
-    if ('_recordType' in data) {
-      const sanitized = { ...data };
-      delete sanitized._recordType;
-
-      return sanitized;
-    }
-
-    return data;
-  }
 }

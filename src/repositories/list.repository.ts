@@ -2,7 +2,6 @@ import { Getter, inject } from '@loopback/core';
 import {
   Count,
   DataObject,
-  DefaultCrudRepository,
   Filter,
   FilterExcludingWhere,
   HasManyRepositoryFactory,
@@ -11,6 +10,7 @@ import {
   Where,
   repository,
 } from '@loopback/repository';
+import { EntityPersistenceBaseRepository } from './entity-persistence-base.repository';
 import * as crypto from 'crypto';
 import _ from 'lodash';
 import slugify from 'slugify';
@@ -43,11 +43,12 @@ import { LoggingService } from '../services/logging.service';
 import { RecordLimitCheckerBindings } from '../services/record-limit-checker.bindings';
 import { RecordLimitCheckerService } from '../services/record-limit-checker.service';
 
-export class ListRepository extends DefaultCrudRepository<
+export class ListRepository extends EntityPersistenceBaseRepository<
   List,
   typeof List.prototype._id,
   ListRelations
 > {
+  protected readonly recordTypeName = 'list';
   public readonly entities: (
     listId: typeof List.prototype._id,
   ) => Promise<CustomEntityThroughListRepository>;
@@ -919,32 +920,4 @@ export class ListRepository extends DefaultCrudRepository<
     return this.create(childList);
   }
 
-  private injectRecordType<T extends List | (List & ListRelations)>(
-    list: T,
-  ): T {
-    if (!list) {
-      return list;
-    }
-
-    (list as any)._recordType = 'list';
-
-    return list;
-  }
-
-  private injectRecordTypeArray<T extends List | (List & ListRelations)>(
-    lists: T[],
-  ): T[] {
-    return lists.map((list) => this.injectRecordType(list));
-  }
-
-  private sanitizeRecordType(data: DataObject<List>): DataObject<List> {
-    if ('_recordType' in data) {
-      const sanitized = { ...data };
-      delete sanitized._recordType;
-
-      return sanitized;
-    }
-
-    return data;
-  }
 }
