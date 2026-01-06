@@ -10,13 +10,23 @@ import { TRANSACTIONAL_KEY } from '../decorators/transactional.decorator';
  *
  * ## How It Works:
  * 1. Checks if method has @transactional() decorator via metadata
- * 2. Inspects options.session (ClientSession) parameter:
+ * 2. Detects MongoDB topology to ensure transaction support
+ * 3. Inspects options.session (ClientSession) parameter:
  *    - If exists: Join existing transaction (propagation)
  *    - If missing: Start new transaction via dataSource
- * 3. Injects session into options object
- * 4. On success: Commits transaction
- * 5. On error: Rolls back all changes
- * 6. Always: Ends session immediately after
+ * 4. Injects session into options object
+ * 5. On success: Commits transaction
+ * 6. On error: Rolls back all changes
+ * 7. Always: Ends session immediately after
+ *
+ * ## MongoDB Topology Detection:
+ * - STANDALONE (Single): Transactions NOT supported
+ *   → Logs warning and proceeds in non-transactional mode
+ *   → Enables development on local MongoDB instances
+ * - REPLICA SET (ReplicaSetNoPrimary, ReplicaSetWithPrimary): Transactions SUPPORTED
+ *   → Full ACID transaction semantics
+ * - SHARDED CLUSTER (Sharded): Transactions SUPPORTED
+ *   → Distributed transaction support
  *
  * ## Transaction Propagation Logic:
  * - JOINING: When nested repository calls have session, reuse it (no new transaction)
@@ -147,7 +157,29 @@ export class TransactionalInterceptor {
         );
       }
 
-      session = mongoConnector.client.startSession();
+      const client = mongoConnector.client;
+
+      // Check MongoDB topology to determine if transactions are supported
+      // Transactions require Replica Set or Sharded Cluster, not Standalone
+      const topologyType = client.topology?.description?.type;
+
+      if (topologyType === 'Single') {
+        // Standalone MongoDB detected - transactions not supported
+        // Log warning and proceed in non-transactional mode
+        console.warn(
+          '[TransactionalInterceptor] Standalone MongoDB detected. ' +
+            'Transactions are not supported in this topology. ' +
+            'Proceeding in non-transactional mode. ' +
+            'For production, use a Replica Set or Sharded Cluster.',
+        );
+
+        // Execute method without transaction
+        return await next();
+      }
+
+      // Topology supports transactions (ReplicaSetNoPrimary, ReplicaSetWithPrimary, Sharded)
+      // Proceed with full transaction logic
+      session = client.startSession();
 
       // Begin transaction on the session
       session.startTransaction();
@@ -172,7 +204,7 @@ export class TransactionalInterceptor {
         throw error;
       }
     } finally {
-      // Always end the session
+      // Always end the session (only if it was created)
       if (session) {
         await session.endSession();
       }
