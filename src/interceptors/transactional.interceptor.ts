@@ -7,8 +7,8 @@ import {
   Next,
   inject,
 } from '@loopback/core';
-import {TRANSACTIONAL_KEY} from '../decorators/transactional.decorator';
-import {EntityDbDataSource} from '../datasources/entity-db.datasource';
+import { EntityDbDataSource } from '../datasources/entity-db.datasource';
+import { TRANSACTIONAL_KEY } from '../decorators/transactional.decorator';
 
 /**
  * TransactionalInterceptor
@@ -16,13 +16,15 @@ import {EntityDbDataSource} from '../datasources/entity-db.datasource';
  * to the Request Context. This avoids parameter index issues and
  * allows clean injection in Controllers.
  */
-@globalInterceptor('transactional', {tags: {namespace: 'globalInterceptors'}})
-@injectable({scope: BindingScope.SINGLETON})
+@globalInterceptor('transactional', {
+  tags: { namespace: 'globalInterceptors' },
+})
+@injectable({ scope: BindingScope.SINGLETON })
 export class TransactionalInterceptor {
   constructor(
     @inject('datasources.EntityDb')
     public dataSource: EntityDbDataSource,
-  ) { }
+  ) {}
 
   value(): Interceptor {
     return (invocationCtx: InvocationContext, next: Next) => {
@@ -32,9 +34,11 @@ export class TransactionalInterceptor {
 
   async intercept(invocationCtx: InvocationContext, next: Next): Promise<any> {
     const method = (invocationCtx.target as any)[invocationCtx.methodName];
-    const isTransactional = !!(method && method[TRANSACTIONAL_KEY as any]);
+    const isTransactional = !!method?.[TRANSACTIONAL_KEY as any];
 
-    if (!isTransactional) return next();
+    if (!isTransactional) {
+      return next();
+    }
 
     const maxRetries = 3; // Maximum number of retries for WriteConflict
     let attempt = 0;
@@ -46,12 +50,12 @@ export class TransactionalInterceptor {
 
       if (invocationCtx.parent) {
         // Bind the session as non-enumerable to avoid circular JSON issues
-        const options = {session};
+        const options = { session };
         Object.defineProperty(options, 'session', {
           value: session,
           enumerable: false,
           configurable: true,
-          writable: true
+          writable: true,
         });
         invocationCtx.parent.bind('active.transaction.options').to(options);
       }
@@ -59,6 +63,7 @@ export class TransactionalInterceptor {
       try {
         const result = await next();
         await session.commitTransaction();
+
         return result; // Success: Exit the loop
       } catch (error) {
         await session.abortTransaction();
@@ -69,21 +74,25 @@ export class TransactionalInterceptor {
          */
         const isRetryable =
           error.code === 112 || // WriteConflict
-          (error.errorLabels && error.errorLabels.includes('TransientTransactionError'));
+          error.errorLabels?.includes('TransientTransactionError');
 
         if (isRetryable && attempt < maxRetries - 1) {
           attempt++;
-          console.warn(`[Transaction] WriteConflict detected. Retrying attempt ${attempt}...`);
+          console.warn(
+            `[Transaction] WriteConflict detected. Retrying attempt ${attempt}...`,
+          );
 
           // Brief delay before retrying (exponential backoff could be used)
-          await new Promise(resolve => setTimeout(resolve, 10 * attempt));
+          await new Promise((resolve) => setTimeout(resolve, 10 * attempt));
           continue; // Retry the loop
         }
 
         // If not retryable or max retries reached, throw the error
         throw error;
       } finally {
-        if (session) await session.endSession();
+        if (session) {
+          await session.endSession();
+        }
       }
     }
   }

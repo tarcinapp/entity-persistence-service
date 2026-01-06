@@ -1,5 +1,5 @@
-import type { DataSource } from '@loopback/repository';
 import { BindingScope } from '@loopback/core';
+import type { DataSource } from '@loopback/repository';
 import { RestBindings } from '@loopback/rest';
 import type { Client } from '@loopback/testlab';
 import {

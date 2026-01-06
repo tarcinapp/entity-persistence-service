@@ -668,9 +668,12 @@ export class ListEntityRelationRepository extends EntityPersistenceBaseRepositor
     options?: Options,
   ): Promise<ListToEntityRelation | null> {
     if (_.isString(idempotencyKey) && !_.isEmpty(idempotencyKey)) {
-      return this.findOne({
-        where: { _idempotencyKey: idempotencyKey },
-      }, options);
+      return this.findOne(
+        {
+          where: { _idempotencyKey: idempotencyKey },
+        },
+        options,
+      );
     }
 
     return null;

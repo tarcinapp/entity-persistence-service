@@ -2,8 +2,8 @@ import type {} from './extensions/types/inclusion-augmentation';
 import { EnvConfigHelper } from './extensions/config-helpers/env-config-helper';
 
 const env = EnvConfigHelper.getInstance();
-import { RestBindings } from '@loopback/rest';
 import { BindingScope } from '@loopback/core';
+import { RestBindings } from '@loopback/rest';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { parse } from 'qs';
 import type { ApplicationConfig } from './application';
@@ -25,10 +25,6 @@ import {
   MongoPipelineHelper,
   MongoPipelineHelperBindings,
 } from './extensions/utils/mongo-pipeline-helper';
-import { LookupConstraintBindings } from './services/lookup-constraint.bindings';
-import { LookupConstraintService } from './services/lookup-constraint.service';
-import { RecordLimitCheckerBindings } from './services/record-limit-checker.bindings';
-import { RecordLimitCheckerService } from './services/record-limit-checker.service';
 import {
   CustomEntityThroughListRepository,
   CustomListThroughEntityRepository,
@@ -36,6 +32,10 @@ import {
   CustomReactionThroughListRepository,
   CustomRepositoriesBindings,
 } from './repositories';
+import { LookupConstraintBindings } from './services/lookup-constraint.bindings';
+import { LookupConstraintService } from './services/lookup-constraint.service';
+import { RecordLimitCheckerBindings } from './services/record-limit-checker.bindings';
+import { RecordLimitCheckerService } from './services/record-limit-checker.service';
 
 export * from './application';
 

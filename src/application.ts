@@ -1,30 +1,30 @@
-import {BootMixin} from '@loopback/boot';
+import { BootMixin } from '@loopback/boot';
 import {
   ApplicationConfig,
   asGlobalInterceptor,
   createBindingFromClass,
 } from '@loopback/core';
-import {RepositoryMixin} from '@loopback/repository';
-import {RestApplication} from '@loopback/rest';
+import { RepositoryMixin } from '@loopback/repository';
+import { RestApplication } from '@loopback/rest';
 import {
   RestExplorerBindings,
   RestExplorerComponent,
 } from '@loopback/rest-explorer';
-import {ServiceMixin} from '@loopback/service-proxy';
+import { ServiceMixin } from '@loopback/service-proxy';
 import path from 'path';
 import {
   createLoggerInstance,
   LoggingBindings,
   getLoggingConfig,
 } from './config/logging.config';
-import {EnvConfigHelper} from './extensions/config-helpers/env-config-helper';
-import {MongoPipelineHelper} from './extensions/utils/mongo-pipeline-helper';
-import {MySequence} from './sequence';
-import {LoggingService} from './services/logging.service';
-import {TransactionalInterceptor} from './interceptors';
-import {CustomEntityThroughListRepository} from './repositories';
+import { EnvConfigHelper } from './extensions/config-helpers/env-config-helper';
+import { MongoPipelineHelper } from './extensions/utils/mongo-pipeline-helper';
+import { TransactionalInterceptor } from './interceptors';
+import { CustomEntityThroughListRepository } from './repositories';
+import { MySequence } from './sequence';
+import { LoggingService } from './services/logging.service';
 
-export {ApplicationConfig};
+export { ApplicationConfig };
 
 export class EntityPersistenceApplication extends BootMixin(
   ServiceMixin(RepositoryMixin(RestApplication)),
