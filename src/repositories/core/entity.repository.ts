@@ -6,7 +6,10 @@ import {
   Where,
   repository,
 } from '@loopback/repository';
-import { EntityPersistenceBusinessRepository } from '../base/entity-persistence-business.repository';
+
+import { EntityReactionsRepository } from './entity-reactions.repository';
+import { ListEntityRelationRepository } from './list-entity-relation.repository';
+import { ListRepository } from './list.repository';
 import { EntityDbDataSource } from '../../datasources';
 import {
   IdempotencyConfigurationReader,
@@ -14,11 +17,6 @@ import {
   ValidfromConfigurationReader,
   VisibilityConfigurationReader,
 } from '../../extensions';
-
-import { CustomListThroughEntityRepository } from '../custom/custom-list-through-entity.repository';
-import { EntityReactionsRepository } from './entity-reactions.repository';
-import { ListEntityRelationRepository } from './list-entity-relation.repository';
-import { ListRepository } from './list.repository';
 
 import { ResponseLimitConfigurationReader } from '../../extensions/config-helpers/response-limit-config-helper';
 import {
@@ -34,6 +32,8 @@ import { LoggingService } from '../../services/logging.service';
 import { LookupConstraintBindings } from '../../services/lookup-constraint.bindings';
 import { LookupConstraintService } from '../../services/lookup-constraint.service';
 import { RecordLimitCheckerService } from '../../services/record-limit-checker.service';
+import { EntityPersistenceBusinessRepository } from '../base/entity-persistence-business.repository';
+import { CustomListThroughEntityRepository } from '../custom/custom-list-through-entity.repository';
 
 /**
  * EntityRepository - Concrete repository for GenericEntity model.
@@ -57,7 +57,6 @@ export class EntityRepository extends EntityPersistenceBusinessRepository<
   typeof GenericEntity.prototype._id,
   GenericEntityRelations
 > {
-
   // ABSTRACT PROPERTY IMPLEMENTATIONS
   protected readonly recordTypeName = 'entity';
   protected readonly entityTypeName = 'Entity';
@@ -135,11 +134,11 @@ export class EntityRepository extends EntityPersistenceBusinessRepository<
       );
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (repo as any).sourceEntityId = entityId;
+
       return repo;
     };
   }
 
-  
   // ABSTRACT HOOK METHOD IMPLEMENTATIONS
   protected getDefaultKind(): string {
     return this.kindConfigReader.defaultEntityKind;
@@ -169,10 +168,10 @@ export class EntityRepository extends EntityPersistenceBusinessRepository<
     return this.kindConfigReader.allowedKindsForEntities;
   }
 
-  
   // ENTITY-SPECIFIC: CASCADE DELETE OPERATIONS
   async deleteById(id: string, options?: Options): Promise<void> {
-    const listEntityRelationRepo = await this.listEntityRelationRepositoryGetter();
+    const listEntityRelationRepo =
+      await this.listEntityRelationRepositoryGetter();
     const reactionsRepo = await this.reactionsRepositoryGetter();
 
     // Delete all relations associated with the entity
@@ -188,15 +187,18 @@ export class EntityRepository extends EntityPersistenceBusinessRepository<
     where?: Where<GenericEntity>,
     options?: Options,
   ): Promise<Count> {
-    const listEntityRelationRepo = await this.listEntityRelationRepositoryGetter();
+    const listEntityRelationRepo =
+      await this.listEntityRelationRepositoryGetter();
     const reactionsRepo = await this.reactionsRepositoryGetter();
 
-    this.loggingService.info('EntityRepository.deleteAll - Where condition:', { where });
+    this.loggingService.info('EntityRepository.deleteAll - Where condition:', {
+      where,
+    });
 
     // Get IDs of entities to delete
-    const idsToDelete = (
-      await this.find({ where, fields: ['_id'] })
-    ).map((entity) => entity._id);
+    const idsToDelete = (await this.find({ where, fields: ['_id'] })).map(
+      (entity) => entity._id,
+    );
 
     // Delete all relations by matching _entityId
     await listEntityRelationRepo.deleteAll({ _entityId: { inq: idsToDelete } });

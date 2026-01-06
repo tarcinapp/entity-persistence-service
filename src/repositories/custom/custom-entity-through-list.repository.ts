@@ -8,15 +8,16 @@ import {
   repository,
   Where,
 } from '@loopback/repository';
-import { EntityPersistenceBaseRepository } from '../base/entity-persistence-base.repository';
 import _ from 'lodash';
 import { EntityDbDataSource } from '../../datasources';
+import { transactional } from '../../decorators';
 import {
   GenericEntity,
   GenericEntityWithRelations,
   List,
   ListToEntityRelation,
 } from '../../models';
+import { EntityPersistenceBaseRepository } from '../base/entity-persistence-base.repository';
 import { EntityRepository } from '../core/entity.repository';
 import { ListEntityRelationRepository } from '../core/list-entity-relation.repository';
 
@@ -129,10 +130,12 @@ export class CustomEntityThroughListRepository extends EntityPersistenceBaseRepo
 
   /**
    * Creates the generic entity first, then the relation calling the repositories of these individual records.
-   * Deletes the entity if the relation creation fails.
+   * With @transactional() decorator, if relation creation fails, the entire transaction is rolled back,
+   * ensuring both entity and relation are created atomically or not at all.
    * @param data Generic Entity
    * @returns Created Generic Entity
    */
+  @transactional()
   async create(
     data: DataObject<GenericEntity>,
     options?: Options,
@@ -142,18 +145,13 @@ export class CustomEntityThroughListRepository extends EntityPersistenceBaseRepo
 
     const entity = await entitiesRepo.create(data, options);
 
-    try {
-      await listEntityRelationRepo.create(
-        {
-          _entityId: entity._id,
-          _listId: this.sourceListId,
-        },
-        options,
-      );
-    } catch (err) {
-      await entitiesRepo.deleteById(entity._id, options);
-      throw err;
-    }
+    await listEntityRelationRepo.create(
+      {
+        _entityId: entity._id,
+        _listId: this.sourceListId,
+      },
+      options,
+    );
 
     return entity;
   }
@@ -213,5 +211,4 @@ export class CustomEntityThroughListRepository extends EntityPersistenceBaseRepo
 
     return entitiesRepo.deleteAll(where, options);
   }
-
 }

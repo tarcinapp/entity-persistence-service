@@ -72,6 +72,11 @@ export class EntityPersistenceApplication extends BootMixin(
         extensions: ['.datasource.js'],
         nested: true,
       },
+      interceptors: {
+        dirs: ['interceptors'],
+        extensions: ['.interceptor.js'],
+        nested: true,
+      },
     };
   }
 }
