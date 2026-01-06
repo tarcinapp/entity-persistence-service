@@ -9,6 +9,7 @@ import {
   Where,
 } from '@loopback/repository';
 import { EntityDbDataSource } from '../../datasources';
+import { transactional } from '../../decorators';
 import { ListReaction } from '../../models';
 import { EntityPersistenceBaseRepository } from '../base/entity-persistence-base.repository';
 import { ListReactionsRepository } from '../core/list-reactions.repository';
@@ -44,6 +45,7 @@ export class CustomReactionThroughListRepository extends EntityPersistenceBaseRe
     return listReactionsRepo.find(updatedFilter, undefined, options);
   }
 
+  @transactional()
   async create(
     data: DataObject<ListReaction>,
     options?: Options,

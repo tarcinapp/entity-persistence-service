@@ -36,7 +36,10 @@ import { LookupConstraintService } from '../../services/lookup-constraint.servic
 import { RecordLimitCheckerBindings } from '../../services/record-limit-checker.bindings';
 import { RecordLimitCheckerService } from '../../services/record-limit-checker.service';
 import { EntityPersistenceBusinessRepository } from '../base/entity-persistence-business.repository';
-import { CustomEntityThroughListRepository } from '../custom/custom-entity-through-list.repository';
+import {
+  CustomEntityThroughListRepository,
+  CustomRepositoriesBindings,
+} from '../custom';
 
 /**
  * ListRepository - Concrete repository for List model.
@@ -90,8 +93,10 @@ export class ListRepository extends EntityPersistenceBusinessRepository<
     @repository.getter('ListReactionsRepository')
     protected reactionsRepositoryGetter: Getter<ListReactionsRepository>,
 
-    @repository.getter('CustomListEntityRelRepository')
-    protected customListEntityRelRepositoryGetter: Getter<CustomEntityThroughListRepository>,
+    @inject.getter(
+      CustomRepositoriesBindings.CUSTOM_ENTITY_THROUGH_LIST_REPOSITORY,
+    )
+    protected customEntityThroughListRepositoryGetter: Getter<CustomEntityThroughListRepository>,
 
     @repository.getter('ListRepository')
     protected listRepositoryGetter: Getter<ListRepository>,
@@ -140,11 +145,7 @@ export class ListRepository extends EntityPersistenceBusinessRepository<
       // First verify that the list exists - this will throw 404 if not found
       await this.findById(listId);
 
-      const repo = new CustomEntityThroughListRepository(
-        this.dataSource,
-        this.entityRepositoryGetter,
-        this.listEntityRelationRepositoryGetter,
-      );
+      const repo = await this.customEntityThroughListRepositoryGetter();
 
       // set the sourceListId to the custom repo
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

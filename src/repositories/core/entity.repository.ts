@@ -33,7 +33,10 @@ import { LookupConstraintBindings } from '../../services/lookup-constraint.bindi
 import { LookupConstraintService } from '../../services/lookup-constraint.service';
 import { RecordLimitCheckerService } from '../../services/record-limit-checker.service';
 import { EntityPersistenceBusinessRepository } from '../base/entity-persistence-business.repository';
-import { CustomListThroughEntityRepository } from '../custom/custom-list-through-entity.repository';
+import {
+  CustomListThroughEntityRepository,
+  CustomRepositoriesBindings,
+} from '../custom';
 
 /**
  * EntityRepository - Concrete repository for GenericEntity model.
@@ -66,7 +69,7 @@ export class EntityRepository extends EntityPersistenceBusinessRepository<
   // RELATIONS
   public readonly lists: (
     entityId: typeof GenericEntity.prototype._id,
-  ) => CustomListThroughEntityRepository;
+  ) => Promise<CustomListThroughEntityRepository>;
 
   public readonly reactions: HasManyRepositoryFactory<
     EntityReaction,
@@ -85,6 +88,11 @@ export class EntityRepository extends EntityPersistenceBusinessRepository<
 
     @repository.getter('ListEntityRelationRepository')
     protected listEntityRelationRepositoryGetter: Getter<ListEntityRelationRepository>,
+
+    @inject.getter(
+      CustomRepositoriesBindings.CUSTOM_LIST_THROUGH_ENTITY_REPOSITORY,
+    )
+    protected customListThroughEntityRepositoryGetter: Getter<CustomListThroughEntityRepository>,
 
     @inject('extensions.kind.configurationreader')
     protected readonly kindConfigReader: KindConfigurationReader,
@@ -126,12 +134,8 @@ export class EntityRepository extends EntityPersistenceBusinessRepository<
     );
 
     // Setup lists relation (through pivot table)
-    this.lists = (entityId: typeof GenericEntity.prototype._id) => {
-      const repo = new CustomListThroughEntityRepository(
-        this.dataSource,
-        this.listRepositoryGetter,
-        this.listEntityRelationRepositoryGetter,
-      );
+    this.lists = async (entityId: typeof GenericEntity.prototype._id) => {
+      const repo = await this.customListThroughEntityRepositoryGetter();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (repo as any).sourceEntityId = entityId;
 

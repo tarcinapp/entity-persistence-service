@@ -9,6 +9,7 @@ import {
   Where,
 } from '@loopback/repository';
 import { EntityDbDataSource } from '../../datasources';
+import { transactional } from '../../decorators';
 import { EntityReaction } from '../../models';
 import { EntityPersistenceBaseRepository } from '../base/entity-persistence-base.repository';
 import { EntityReactionsRepository } from '../core/entity-reactions.repository';
@@ -43,6 +44,7 @@ export class CustomReactionThroughEntityRepository extends EntityPersistenceBase
     return entityReactionsRepo.find(updatedFilter, options);
   }
 
+  @transactional()
   async create(
     data: DataObject<EntityReaction>,
     options?: Options,
