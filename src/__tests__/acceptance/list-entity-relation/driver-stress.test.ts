@@ -21,7 +21,11 @@
 
 import type { Client } from '@loopback/testlab';
 import { expect } from '@loopback/testlab';
-import type { ListToEntityRelation, GenericEntity, List } from '../../../models';
+import type {
+  ListToEntityRelation,
+  GenericEntity,
+  List,
+} from '../../../models';
 import type { AppWithClient } from '../test-helper';
 import {
   setupApplication,
@@ -155,9 +159,7 @@ describe('MongoDB 7.0 & Driver v6 Stress Tests', () => {
       expect(orphanedRelation).to.be.undefined();
 
       // Remove from cleanup since it's already deleted
-      createdRelationIds = createdRelationIds.filter(
-        (id) => id !== relationId,
-      );
+      createdRelationIds = createdRelationIds.filter((id) => id !== relationId);
     });
 
     it('should cascade-delete relation when parent Entity is deleted', async () => {
@@ -206,9 +208,7 @@ describe('MongoDB 7.0 & Driver v6 Stress Tests', () => {
       expect(orphanedRelation).to.be.undefined();
 
       // Remove from cleanup since it's already deleted
-      createdRelationIds = createdRelationIds.filter(
-        (id) => id !== relationId,
-      );
+      createdRelationIds = createdRelationIds.filter((id) => id !== relationId);
     });
 
     it('should handle $lookup with preserveNullAndEmptyArrays for non-matching joins', async () => {
@@ -438,9 +438,7 @@ describe('MongoDB 7.0 & Driver v6 Stress Tests', () => {
 
       expect(response.body).to.be.Array().and.have.length(2);
 
-      const scores = response.body.map(
-        (r: any) => r.metrics.performance.score,
-      );
+      const scores = response.body.map((r: any) => r.metrics.performance.score);
       expect(scores).to.containDeep([85, 95]);
     });
 

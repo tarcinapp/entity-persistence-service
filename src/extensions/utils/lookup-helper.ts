@@ -126,7 +126,11 @@ export class LookupHelper {
 
     let processedItems = items;
     for (const lookupDef of lookup) {
-      processedItems = await this.processLookupBatch(processedItems, lookupDef, options);
+      processedItems = await this.processLookupBatch(
+        processedItems,
+        lookupDef,
+        options,
+      );
     }
 
     return processedItems;

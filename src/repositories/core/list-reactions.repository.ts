@@ -1,6 +1,6 @@
 import { inject, Getter } from '@loopback/core';
 import { DataObject, repository } from '@loopback/repository';
-import { EntityPersistenceReactionRepository } from '../base/entity-persistence-reaction.repository';
+import { ListRepository } from './list.repository';
 import { EntityDbDataSource } from '../../datasources';
 import {
   KindConfigurationReader,
@@ -19,12 +19,12 @@ import {
   MongoPipelineHelperBindings,
 } from '../../extensions/utils/mongo-pipeline-helper';
 import { ListReaction, HttpErrorResponse } from '../../models';
-import { ListRepository } from './list.repository';
 import { LoggingService } from '../../services/logging.service';
 import { LookupConstraintBindings } from '../../services/lookup-constraint.bindings';
 import { LookupConstraintService } from '../../services/lookup-constraint.service';
 import { RecordLimitCheckerBindings } from '../../services/record-limit-checker.bindings';
 import { RecordLimitCheckerService } from '../../services/record-limit-checker.service';
+import { EntityPersistenceReactionRepository } from '../base/entity-persistence-reaction.repository';
 
 /**
  * ListReactionsRepository - Concrete repository for ListReaction model.
@@ -48,7 +48,6 @@ export class ListReactionsRepository extends EntityPersistenceReactionRepository
   ListReaction,
   typeof ListReaction.prototype.id
 > {
-
   // ABSTRACT IDENTITY PROPERTY IMPLEMENTATIONS
   protected readonly recordTypeName = 'listReaction';
   protected readonly reactionTypeName = 'List reaction';
@@ -96,7 +95,6 @@ export class ListReactionsRepository extends EntityPersistenceReactionRepository
     super(ListReaction, dataSource);
   }
 
-
   // ABSTRACT HOOK METHOD IMPLEMENTATIONS - Configuration
   protected getDefaultKind(): string {
     return this.kindConfigReader.defaultListReactionKind;
@@ -126,18 +124,22 @@ export class ListReactionsRepository extends EntityPersistenceReactionRepository
     return this.kindConfigReader.allowedKindsForListReactions;
   }
 
-
   // ABSTRACT HOOK METHOD IMPLEMENTATIONS - Target Existence
   /**
    * Check if the referenced List exists before creating/updating a reaction.
    */
-  protected async checkTargetExistence(data: DataObject<ListReaction>): Promise<void> {
+  protected async checkTargetExistence(
+    data: DataObject<ListReaction>,
+  ): Promise<void> {
     if (data._listId) {
       try {
         const listRepository = await this.listRepositoryGetter();
         await listRepository.findById(data._listId);
       } catch (error) {
-        if (error.code === 'ENTITY_NOT_FOUND' || error.code === 'LIST-NOT-FOUND') {
+        if (
+          error.code === 'ENTITY_NOT_FOUND' ||
+          error.code === 'LIST-NOT-FOUND'
+        ) {
           throw new HttpErrorResponse({
             statusCode: 404,
             name: 'NotFoundError',
@@ -145,11 +147,11 @@ export class ListReactionsRepository extends EntityPersistenceReactionRepository
             code: 'LIST-NOT-FOUND',
           });
         }
+
         throw error;
       }
     }
   }
-
 
   // ABSTRACT HOOK METHOD IMPLEMENTATIONS - MongoDB Pipeline
   protected getSourceCollectionName(): string {

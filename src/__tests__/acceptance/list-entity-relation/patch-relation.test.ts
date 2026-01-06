@@ -85,9 +85,7 @@ describe('PATCH /relations/{id}', () => {
       .expect(204);
 
     // Verify changes by getting the updated relation
-    const response = await client
-      .get(`/relations/${relationId}`)
-      .expect(200);
+    const response = await client.get(`/relations/${relationId}`).expect(200);
 
     // Verify response
     expect(response.body).to.have.property('_id', relationId);
@@ -208,9 +206,7 @@ describe('PATCH /relations/{id}', () => {
       .expect(204);
 
     // Verify _kind remains unchanged while other fields are updated
-    const response = await client
-      .get(`/relations/${relationId}`)
-      .expect(200);
+    const response = await client.get(`/relations/${relationId}`).expect(200);
     expect(response.body).to.have.property('_kind', 'relation');
     expect(response.body).to.have.property('_visibility', 'public');
   });

@@ -1,4 +1,4 @@
-import {
+import type {
   Count,
   DataObject,
   Entity,
@@ -12,19 +12,20 @@ import * as crypto from 'crypto';
 import _ from 'lodash';
 import slugify from 'slugify';
 import { EntityPersistenceBaseRepository } from './entity-persistence-base.repository';
-import {
+import type {
   KindConfigurationReader,
   IdempotencyConfigurationReader,
   VisibilityConfigurationReader,
   ValidfromConfigurationReader,
 } from '../../extensions';
-import { ResponseLimitConfigurationReader } from '../../extensions/config-helpers/response-limit-config-helper';
-import { LookupHelper } from '../../extensions/utils/lookup-helper';
-import { MongoPipelineHelper } from '../../extensions/utils/mongo-pipeline-helper';
-import { HttpErrorResponse, ReactionsCommonBase } from '../../models';
-import { LoggingService } from '../../services/logging.service';
-import { LookupConstraintService } from '../../services/lookup-constraint.service';
-import { RecordLimitCheckerService } from '../../services/record-limit-checker.service';
+import type { ResponseLimitConfigurationReader } from '../../extensions/config-helpers/response-limit-config-helper';
+import type { LookupHelper } from '../../extensions/utils/lookup-helper';
+import type { MongoPipelineHelper } from '../../extensions/utils/mongo-pipeline-helper';
+import type { ReactionsCommonBase } from '../../models';
+import { HttpErrorResponse } from '../../models';
+import type { LoggingService } from '../../services/logging.service';
+import type { LookupConstraintService } from '../../services/lookup-constraint.service';
+import type { RecordLimitCheckerService } from '../../services/record-limit-checker.service';
 
 /**
  * EntityPersistenceReactionRepository - Specialized Base for Reaction Entities
@@ -58,7 +59,6 @@ export abstract class EntityPersistenceReactionRepository<
   IdType,
   Relations extends object = {},
 > extends EntityPersistenceBaseRepository<E, IdType, Relations> {
-
   // ABSTRACT IDENTITY PROPERTIES
   /**
    * The reaction type name used in error messages (e.g., 'Entity reaction', 'List reaction').
@@ -81,7 +81,6 @@ export abstract class EntityPersistenceReactionRepository<
    */
   protected abstract readonly sourceIdFieldName: string;
 
-
   // ABSTRACT DEPENDENCY PROPERTIES
   protected abstract readonly kindConfigReader: KindConfigurationReader;
   protected abstract readonly visibilityConfigReader: VisibilityConfigurationReader;
@@ -93,7 +92,6 @@ export abstract class EntityPersistenceReactionRepository<
   protected abstract readonly recordLimitChecker: RecordLimitCheckerService;
   protected abstract readonly lookupConstraintService: LookupConstraintService;
   protected abstract readonly mongoPipelineHelper: MongoPipelineHelper;
-
 
   // ABSTRACT HOOK METHODS - Configuration
   /**
@@ -131,14 +129,12 @@ export abstract class EntityPersistenceReactionRepository<
    */
   protected abstract getAllowedKinds(): string[];
 
-
   // ABSTRACT HOOK METHODS - Target Existence
   /**
    * Checks if the target entity/list exists.
    * Implementations should use their specific repository getter to verify existence.
    */
   protected abstract checkTargetExistence(data: DataObject<E>): Promise<void>;
-
 
   // ABSTRACT HOOK METHODS - MongoDB Pipeline
   /**
@@ -152,14 +148,12 @@ export abstract class EntityPersistenceReactionRepository<
    */
   protected abstract getReactionsCollectionName(): string;
 
-
   constructor(
     entityClass: typeof Entity & { prototype: E },
     dataSource: juggler.DataSource,
   ) {
     super(entityClass, dataSource);
   }
-
 
   // ============================================================================
   // CRUD OPERATIONS - FIND
@@ -188,17 +182,26 @@ export abstract class EntityPersistenceReactionRepository<
     // Ensure _kind is always included
     filter = this.forceKindInclusion(filter);
 
-    this.loggingService.info(`${this.reactionTypeName}Repository.find - Modified filter:`, {
-      filter,
-      sourceFilter,
-      useMongoPipeline: options?.useMongoPipeline,
-    });
+    this.loggingService.info(
+      `${this.reactionTypeName}Repository.find - Modified filter:`,
+      {
+        filter,
+        sourceFilter,
+        useMongoPipeline: options?.useMongoPipeline,
+      },
+    );
 
     // If useMongoPipeline is not explicitly set to true, use standard repository approach
     if (options?.useMongoPipeline !== true) {
       const reactions = await super.find(filter, options);
-      const reactionsWithLookup = await this.processLookups(reactions, filter, options);
-      return this.injectRecordTypeArray(reactionsWithLookup) as (E & Relations)[];
+      const reactionsWithLookup = await this.processLookups(
+        reactions,
+        filter,
+        options,
+      );
+
+      return this.injectRecordTypeArray(reactionsWithLookup) as (E &
+        Relations)[];
     }
 
     // MongoDB pipeline approach
@@ -222,7 +225,12 @@ export abstract class EntityPersistenceReactionRepository<
     const cursor = collection.aggregate(pipeline);
     const result = await cursor.toArray();
 
-    const reactionsWithLookup = await this.processLookups(result as E[], filter, options);
+    const reactionsWithLookup = await this.processLookups(
+      result as E[],
+      filter,
+      options,
+    );
+
     return this.injectRecordTypeArray(reactionsWithLookup) as (E & Relations)[];
   }
 
@@ -258,21 +266,31 @@ export abstract class EntityPersistenceReactionRepository<
       const result = await cursor.toArray();
 
       if (result.length === 0) {
-        this.loggingService.warn(`${this.reactionTypeName} with id '${id}' not found.`);
+        this.loggingService.warn(
+          `${this.reactionTypeName} with id '${id}' not found.`,
+        );
         throw this.createNotFoundError(id as string);
       }
 
-      const reactionWithLookup = await this.processLookup(result[0] as E, filter, options);
+      const reactionWithLookup = await this.processLookup(
+        result[0] as E,
+        filter,
+        options,
+      );
+
       return this.injectRecordType(reactionWithLookup) as E & Relations;
     } catch (error) {
       if (error.code === `${this.errorCodePrefix}-NOT-FOUND`) {
         throw error;
       }
 
-      this.loggingService.error(`${this.reactionTypeName}Repository.findById - Unexpected Error:`, {
-        error,
-        id,
-      });
+      this.loggingService.error(
+        `${this.reactionTypeName}Repository.findById - Unexpected Error:`,
+        {
+          error,
+          id,
+        },
+      );
 
       throw error;
     }
@@ -281,10 +299,7 @@ export abstract class EntityPersistenceReactionRepository<
   /**
    * Count reactions with optional source filter using MongoDB pipeline.
    */
-  async count(
-    where?: Where<E>,
-    sourceWhere?: Where<E>,
-  ): Promise<Count> {
+  async count(where?: Where<E>, sourceWhere?: Where<E>): Promise<Count> {
     try {
       const filter = where ? { where } : undefined;
       const sourceFilter = sourceWhere ? { where: sourceWhere } : undefined;
@@ -313,11 +328,13 @@ export abstract class EntityPersistenceReactionRepository<
 
       return { count: result.length > 0 ? result[0].count : 0 };
     } catch (error) {
-      this.loggingService.error(`${this.reactionTypeName}Repository.count - Error:`, { error });
+      this.loggingService.error(
+        `${this.reactionTypeName}Repository.count - Error:`,
+        { error },
+      );
       throw error;
     }
   }
-
 
   // ============================================================================
   // CRUD OPERATIONS - CREATE
@@ -335,6 +352,7 @@ export abstract class EntityPersistenceReactionRepository<
         `${this.reactionTypeName}Repository.create - Idempotent reaction found. Skipping creation.`,
         { idempotencyKey, existingReaction: foundIdempotent },
       );
+
       return this.injectRecordType(foundIdempotent);
     }
 
@@ -353,15 +371,21 @@ export abstract class EntityPersistenceReactionRepository<
     options?: Options,
   ): Promise<E> {
     const modifiedData = await this.modifyDataForCreation(data);
-    const validatedData = await this.validateDataForCreation(modifiedData, options);
+    const validatedData = await this.validateDataForCreation(
+      modifiedData,
+      options,
+    );
     const created = await super.create(validatedData, options);
+
     return this.injectRecordType(created);
   }
 
   /**
    * Modify data before creation: set defaults, timestamps, version, counts.
    */
-  protected async modifyDataForCreation(data: DataObject<E>): Promise<DataObject<E>> {
+  protected async modifyDataForCreation(
+    data: DataObject<E>,
+  ): Promise<DataObject<E>> {
     // Strip virtual fields before persisting
     data = this.sanitizeRecordType(data);
 
@@ -378,7 +402,8 @@ export abstract class EntityPersistenceReactionRepository<
     // Set validFromDateTime based on kind configuration
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const shouldAutoApprove = this.getValidFromForKind((data as any)._kind);
-    data._validFromDateTime = data._validFromDateTime ?? (shouldAutoApprove ? now : undefined);
+    data._validFromDateTime =
+      data._validFromDateTime ?? (shouldAutoApprove ? now : undefined);
 
     // Explicitly set validUntilDateTime to null for filter matcher
     data._validUntilDateTime = data._validUntilDateTime ?? null;
@@ -387,8 +412,9 @@ export abstract class EntityPersistenceReactionRepository<
     data._version = 1;
 
     // Set default visibility based on kind configuration
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    data._visibility = data._visibility ?? this.getVisibilityForKind((data as any)._kind);
+
+    data._visibility =
+      data._visibility ?? this.getVisibilityForKind((data as any)._kind);
 
     // Generate slug and count fields
     this.generateSlug(data);
@@ -412,8 +438,18 @@ export abstract class EntityPersistenceReactionRepository<
 
     await Promise.all([
       this.checkTargetExistence(data),
-      this.recordLimitChecker.checkUniqueness(this.entityClass as any, data, this as any, options),
-      this.recordLimitChecker.checkLimits(this.entityClass as any, data, this as any, options),
+      this.recordLimitChecker.checkUniqueness(
+        this.entityClass as any,
+        data,
+        this as any,
+        options,
+      ),
+      this.recordLimitChecker.checkLimits(
+        this.entityClass as any,
+        data,
+        this as any,
+        options,
+      ),
       this.lookupConstraintService.validateLookupConstraints(
         data as E,
         this.entityClass as any,
@@ -423,7 +459,6 @@ export abstract class EntityPersistenceReactionRepository<
 
     return data;
   }
-
 
   // ============================================================================
   // CRUD OPERATIONS - UPDATE
@@ -437,7 +472,10 @@ export abstract class EntityPersistenceReactionRepository<
     data: DataObject<E>,
     options?: Options,
   ): Promise<void> {
-    const { data: modifiedData, existingData } = await this.modifyDataForUpdate(id as string, data);
+    const { data: modifiedData, existingData } = await this.modifyDataForUpdate(
+      id as string,
+      data,
+    );
 
     // Merge incoming data with existing reaction data
     const mergedData = _.defaults({}, modifiedData, existingData);
@@ -448,7 +486,12 @@ export abstract class EntityPersistenceReactionRepository<
       modifiedData._idempotencyKey = idempotencyKey;
     }
 
-    const validatedData = await this.validateDataForUpdate(id as string, existingData, modifiedData, options);
+    const validatedData = await this.validateDataForUpdate(
+      id as string,
+      existingData,
+      modifiedData,
+      options,
+    );
 
     return super.updateById(id as IdType, validatedData, options);
   }
@@ -461,7 +504,10 @@ export abstract class EntityPersistenceReactionRepository<
     data: DataObject<E>,
     options?: Options,
   ): Promise<void> {
-    const { data: modifiedData, existingData } = await this.modifyDataForUpdate(id as string, data);
+    const { data: modifiedData, existingData } = await this.modifyDataForUpdate(
+      id as string,
+      data,
+    );
 
     // Calculate and set idempotencyKey
     const idempotencyKey = this.calculateIdempotencyKey(modifiedData);
@@ -469,7 +515,12 @@ export abstract class EntityPersistenceReactionRepository<
       modifiedData._idempotencyKey = idempotencyKey;
     }
 
-    const validatedData = await this.validateDataForReplace(id as string, existingData, modifiedData, options);
+    const validatedData = await this.validateDataForReplace(
+      id as string,
+      existingData,
+      modifiedData,
+      options,
+    );
 
     return super.replaceById(id as IdType, validatedData, options);
   }
@@ -501,11 +552,14 @@ export abstract class EntityPersistenceReactionRepository<
     this.generateSlug(data);
     this.setCountFields(data);
 
-    this.loggingService.info(`${this.reactionTypeName}Repository.updateAll - Modified data:`, {
-      data,
-      where,
-      sourceWhere,
-    });
+    this.loggingService.info(
+      `${this.reactionTypeName}Repository.updateAll - Modified data:`,
+      {
+        data,
+        where,
+        sourceWhere,
+      },
+    );
 
     // Build pipeline to get IDs of documents to update
     const filter = where ? { where } : undefined;
@@ -537,7 +591,9 @@ export abstract class EntityPersistenceReactionRepository<
     }
 
     const updateResult = await collection.updateMany(
-      { _id: { $in: documentsToUpdate.map((doc: { _id: string }) => doc._id) } },
+      {
+        _id: { $in: documentsToUpdate.map((doc: { _id: string }) => doc._id) },
+      },
       { $set: data },
     );
 
@@ -588,8 +644,11 @@ export abstract class EntityPersistenceReactionRepository<
     // Check if trying to change _kind (immutable)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const existingKind = (existingData as any)._kind;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if ((data as any)._kind !== undefined && (data as any)._kind !== existingKind) {
+
+    if (
+      (data as any)._kind !== undefined &&
+      (data as any)._kind !== existingKind
+    ) {
       throw this.createImmutableKindError(existingKind);
     }
 
@@ -599,7 +658,10 @@ export abstract class EntityPersistenceReactionRepository<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const newSourceId = (data as any)[this.sourceIdFieldName];
     if (newSourceId !== undefined && newSourceId !== existingSourceId) {
-      throw this.createImmutableSourceIdError(this.sourceIdFieldName, existingSourceId);
+      throw this.createImmutableSourceIdError(
+        this.sourceIdFieldName,
+        existingSourceId,
+      );
     }
 
     // Merge for validation checks
@@ -610,8 +672,18 @@ export abstract class EntityPersistenceReactionRepository<
     );
 
     await Promise.all([
-      this.recordLimitChecker.checkUniqueness(this.entityClass as any, mergedData, this as any, options),
-      this.recordLimitChecker.checkLimits(this.entityClass as any, mergedData, this as any, options),
+      this.recordLimitChecker.checkUniqueness(
+        this.entityClass as any,
+        mergedData,
+        this as any,
+        options,
+      ),
+      this.recordLimitChecker.checkLimits(
+        this.entityClass as any,
+        mergedData,
+        this as any,
+        options,
+      ),
       this.lookupConstraintService.validateLookupConstraints(
         mergedData as E,
         this.entityClass as any,
@@ -634,7 +706,6 @@ export abstract class EntityPersistenceReactionRepository<
     return this.validateDataForUpdate(id, existingData, data, options);
   }
 
-
   // ============================================================================
   // CRUD OPERATIONS - DELETE
   // ============================================================================
@@ -645,23 +716,23 @@ export abstract class EntityPersistenceReactionRepository<
   async deleteById(id: IdType, options?: Options): Promise<void> {
     // Verify existence first
     await this.findById(id);
+
     return super.deleteById(id, options);
   }
 
   /**
    * Delete all matching reactions.
    */
-  async deleteAll(
-    where?: Where<E>,
-    options?: Options,
-  ): Promise<Count> {
-    this.loggingService.info(`${this.reactionTypeName}Repository.deleteAll - Where condition:`, {
-      where,
-    });
+  async deleteAll(where?: Where<E>, options?: Options): Promise<Count> {
+    this.loggingService.info(
+      `${this.reactionTypeName}Repository.deleteAll - Where condition:`,
+      {
+        where,
+      },
+    );
 
     return super.deleteAll(where, options);
   }
-
 
   // ============================================================================
   // HIERARCHICAL RELATIONSHIPS
@@ -676,16 +747,21 @@ export abstract class EntityPersistenceReactionRepository<
     sourceFilter?: Filter<E>,
     options?: Options,
   ): Promise<(E & Relations)[]> {
-    const reaction = await this.findById(reactionId as IdType, {
-      fields: { _parents: true },
-    } as FilterExcludingWhere<E>);
+    const reaction = await this.findById(
+      reactionId as IdType,
+      {
+        fields: { _parents: true },
+      } as FilterExcludingWhere<E>,
+    );
 
     if (!reaction._parents || reaction._parents.length === 0) {
       return [];
     }
 
     // Extract parent IDs from URIs
-    const parentIds = reaction._parents.map((uri: string) => uri.split('/').pop());
+    const parentIds = reaction._parents.map((uri: string) =>
+      uri.split('/').pop(),
+    );
 
     const parentFilter: Filter<E> = {
       ...filter,
@@ -697,11 +773,17 @@ export abstract class EntityPersistenceReactionRepository<
       } as Where<E>,
     };
 
-    this.loggingService.info(`${this.reactionTypeName}Repository.findParents - Parent filter:`, {
-      parentFilter,
-    });
+    this.loggingService.info(
+      `${this.reactionTypeName}Repository.findParents - Parent filter:`,
+      {
+        parentFilter,
+      },
+    );
 
-    return this.find(parentFilter, sourceFilter, { useMongoPipeline: false, ...options });
+    return this.find(parentFilter, sourceFilter, {
+      useMongoPipeline: false,
+      ...options,
+    });
   }
 
   /**
@@ -714,34 +796,37 @@ export abstract class EntityPersistenceReactionRepository<
     options?: Options,
   ): Promise<(E & Relations)[]> {
     // Verify reaction exists
-    await this.findById(reactionId as IdType, { fields: { _id: true } } as FilterExcludingWhere<E>);
+    await this.findById(
+      reactionId as IdType,
+      { fields: { _id: true } } as FilterExcludingWhere<E>,
+    );
 
     const uri = this.buildParentUri(reactionId);
 
     const childFilter: Filter<E> = {
       ...filter,
       where: {
-        and: [
-          { _parents: uri },
-          ...(filter?.where ? [filter.where] : []),
-        ],
+        and: [{ _parents: uri }, ...(filter?.where ? [filter.where] : [])],
       } as Where<E>,
     };
 
-    this.loggingService.info(`${this.reactionTypeName}Repository.findChildren - Child filter:`, {
-      childFilter,
-    });
+    this.loggingService.info(
+      `${this.reactionTypeName}Repository.findChildren - Child filter:`,
+      {
+        childFilter,
+      },
+    );
 
-    return this.find(childFilter, sourceFilter, { useMongoPipeline: false, ...options });
+    return this.find(childFilter, sourceFilter, {
+      useMongoPipeline: false,
+      ...options,
+    });
   }
 
   /**
    * Create a child reaction under a parent.
    */
-  async createChild(
-    parentId: string,
-    reaction: DataObject<E>,
-  ): Promise<E> {
+  async createChild(parentId: string, reaction: DataObject<E>): Promise<E> {
     try {
       // Verify parent exists and get source ID
       const parent = await this.findByIdRaw(parentId, {
@@ -770,14 +855,16 @@ export abstract class EntityPersistenceReactionRepository<
 
       return this.create(childReaction);
     } catch (error) {
-      this.loggingService.error(`${this.reactionTypeName}Repository.createChild - Error:`, {
-        error,
-        parentId,
-      });
+      this.loggingService.error(
+        `${this.reactionTypeName}Repository.createChild - Error:`,
+        {
+          error,
+          parentId,
+        },
+      );
       throw error;
     }
   }
-
 
   // ============================================================================
   // HELPER METHODS
@@ -794,9 +881,12 @@ export abstract class EntityPersistenceReactionRepository<
       return await super.findById(id as IdType, filter);
     } catch (error) {
       if (error.code === 'ENTITY_NOT_FOUND') {
-        this.loggingService.warn(`${this.reactionTypeName} with id '${id}' not found.`);
+        this.loggingService.warn(
+          `${this.reactionTypeName} with id '${id}' not found.`,
+        );
         throw this.createNotFoundError(id);
       }
+
       throw error;
     }
   }
@@ -824,15 +914,19 @@ export abstract class EntityPersistenceReactionRepository<
     if (_.isArray(reactionData._ownerUsers)) {
       reactionData._ownerUsersCount = reactionData._ownerUsers.length;
     }
+
     if (_.isArray(reactionData._ownerGroups)) {
       reactionData._ownerGroupsCount = reactionData._ownerGroups.length;
     }
+
     if (_.isArray(reactionData._viewerUsers)) {
       reactionData._viewerUsersCount = reactionData._viewerUsers.length;
     }
+
     if (_.isArray(reactionData._viewerGroups)) {
       reactionData._viewerGroupsCount = reactionData._viewerGroups.length;
     }
+
     if (_.isArray(reactionData._parents)) {
       reactionData._parentsCount = reactionData._parents.length;
     }
@@ -841,7 +935,9 @@ export abstract class EntityPersistenceReactionRepository<
   /**
    * Ensure _kind is always included in filter fields.
    */
-  protected forceKindInclusion(filter: Filter<E> | undefined): Filter<E> | undefined {
+  protected forceKindInclusion(
+    filter: Filter<E> | undefined,
+  ): Filter<E> | undefined {
     if (!filter?.fields) {
       return filter;
     }
@@ -852,6 +948,7 @@ export abstract class EntityPersistenceReactionRepository<
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return { ...filter, fields: [...filter.fields, '_kind' as any] };
       }
+
       return filter;
     }
 
@@ -882,8 +979,12 @@ export abstract class EntityPersistenceReactionRepository<
     if (!filter?.lookup) {
       return records;
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return this.lookupHelper.processLookupForArray(records as any, filter as any, options) as unknown as Promise<E[]>;
+
+    return this.lookupHelper.processLookupForArray(
+      records as any,
+      filter as any,
+      options,
+    ) as unknown as Promise<E[]>;
   }
 
   /**
@@ -898,10 +999,13 @@ export abstract class EntityPersistenceReactionRepository<
     if (!(filter as any)?.lookup) {
       return record;
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return this.lookupHelper.processLookupForOne(record as any, filter as any, options) as unknown as Promise<E>;
-  }
 
+    return this.lookupHelper.processLookupForOne(
+      record as any,
+      filter as any,
+      options,
+    ) as unknown as Promise<E>;
+  }
 
   // ============================================================================
   // IDEMPOTENCY MANAGEMENT
@@ -910,7 +1014,9 @@ export abstract class EntityPersistenceReactionRepository<
   /**
    * Find an existing reaction with the same idempotency key.
    */
-  protected async findIdempotentReaction(idempotencyKey: string | undefined): Promise<E | null> {
+  protected async findIdempotentReaction(
+    idempotencyKey: string | undefined,
+  ): Promise<E | null> {
     if (_.isString(idempotencyKey) && !_.isEmpty(idempotencyKey)) {
       return this.findOne({
         where: {
@@ -918,6 +1024,7 @@ export abstract class EntityPersistenceReactionRepository<
         } as Where<E>,
       });
     }
+
     return null;
   }
 
@@ -937,13 +1044,14 @@ export abstract class EntityPersistenceReactionRepository<
       if (Array.isArray(value)) {
         return JSON.stringify([...value].sort());
       }
+
       return typeof value === 'object' ? JSON.stringify(value) : value;
     });
 
     const keyString = fieldValues.join(',');
+
     return crypto.createHash('sha256').update(keyString).digest('hex');
   }
-
 
   // ============================================================================
   // VALIDATION HELPERS
@@ -974,7 +1082,6 @@ export abstract class EntityPersistenceReactionRepository<
     }
   }
 
-
   // ============================================================================
   // ERROR HELPERS
   // ============================================================================
@@ -1001,7 +1108,10 @@ export abstract class EntityPersistenceReactionRepository<
     });
   }
 
-  protected createImmutableSourceIdError(fieldName: string, currentValue?: string): HttpErrorResponse {
+  protected createImmutableSourceIdError(
+    fieldName: string,
+    currentValue?: string,
+  ): HttpErrorResponse {
     const fieldDisplayName = fieldName.replace('_', '').replace('Id', ' ID');
     const message = currentValue
       ? `${this.reactionTypeName} ${fieldDisplayName} cannot be changed after creation. Current ${fieldDisplayName} is '${currentValue}'.`
@@ -1015,7 +1125,9 @@ export abstract class EntityPersistenceReactionRepository<
     });
   }
 
-  protected createInvalidKindFormatError(suggestedKind: string): HttpErrorResponse {
+  protected createInvalidKindFormatError(
+    suggestedKind: string,
+  ): HttpErrorResponse {
     return new HttpErrorResponse({
       statusCode: 422,
       name: 'InvalidKindError',
@@ -1024,7 +1136,10 @@ export abstract class EntityPersistenceReactionRepository<
     });
   }
 
-  protected createInvalidKindValueError(invalidKind: string, validValues: string[]): HttpErrorResponse {
+  protected createInvalidKindValueError(
+    invalidKind: string,
+    validValues: string[],
+  ): HttpErrorResponse {
     return new HttpErrorResponse({
       statusCode: 422,
       name: 'InvalidKindError',

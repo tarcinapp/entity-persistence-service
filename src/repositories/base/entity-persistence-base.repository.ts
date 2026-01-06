@@ -1,9 +1,5 @@
-import {
-  DataObject,
-  DefaultTransactionalRepository,
-  Entity,
-  juggler,
-} from '@loopback/repository';
+import type { DataObject, Entity, juggler } from '@loopback/repository';
+import { DefaultTransactionalRepository } from '@loopback/repository';
 import _ from 'lodash';
 
 /**
@@ -50,7 +46,12 @@ export abstract class EntityPersistenceBaseRepository<
    *
    * @default ['_recordType', '_relationMetadata']
    */
-  protected readonly virtualFields: string[] = ['_recordType', '_relationMetadata', '_fromMetadata', '_toMetadata'];
+  protected readonly virtualFields: string[] = [
+    '_recordType',
+    '_relationMetadata',
+    '_fromMetadata',
+    '_toMetadata',
+  ];
 
   constructor(
     entityClass: typeof Entity & { prototype: E },
@@ -122,6 +123,7 @@ export abstract class EntityPersistenceBaseRepository<
     for (const field of this.virtualFields) {
       _.unset(data, field);
     }
+
     return data;
   }
 }

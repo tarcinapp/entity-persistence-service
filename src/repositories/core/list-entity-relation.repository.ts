@@ -9,15 +9,18 @@ import {
   Count,
   Entity,
 } from '@loopback/repository';
-import { EntityPersistenceBaseRepository } from '../base/entity-persistence-base.repository';
 import * as crypto from 'crypto';
 import _ from 'lodash';
+import { EntityRepository } from './entity.repository';
+import { ListRepository } from './list.repository';
 import { EntityDbDataSource } from '../../datasources';
 import {
   IdempotencyConfigurationReader,
   KindConfigurationReader,
   ValidfromConfigurationReader,
 } from '../../extensions';
+import { CollectionConfigHelper } from '../../extensions/config-helpers/collection-config-helper';
+import { ResponseLimitConfigurationReader } from '../../extensions/config-helpers/response-limit-config-helper';
 import { MongoPipelineHelper } from '../../extensions/utils/mongo-pipeline-helper';
 import {
   ListEntityRelationRelations,
@@ -25,13 +28,10 @@ import {
   HttpErrorResponse,
   List,
 } from '../../models';
-import { EntityRepository } from './entity.repository';
-import { ListRepository } from './list.repository';
-import { CollectionConfigHelper } from '../../extensions/config-helpers/collection-config-helper';
-import { ResponseLimitConfigurationReader } from '../../extensions/config-helpers/response-limit-config-helper';
 import { LoggingService } from '../../services/logging.service';
 import { RecordLimitCheckerBindings } from '../../services/record-limit-checker.bindings';
 import { RecordLimitCheckerService } from '../../services/record-limit-checker.service';
+import { EntityPersistenceBaseRepository } from '../base/entity-persistence-base.repository';
 
 export class ListEntityRelationRepository extends EntityPersistenceBaseRepository<
   ListToEntityRelation,
@@ -259,61 +259,58 @@ export class ListEntityRelationRepository extends EntityPersistenceBaseRepositor
       forcedFilter as FilterExcludingWhere<ListToEntityRelation>;
 
     // Fetch a single raw relation from the database
-    return super
-      .findById(id, typedFilter, options)
-      .then(async (rawRelation) => {
-        if (!rawRelation) {
-          throw new HttpErrorResponse({
-            statusCode: 404,
-            name: 'NotFoundError',
-            message: "Relation with id '" + id + "' could not be found.",
-            code: 'RELATION-NOT-FOUND',
-          });
-        }
+    const rawRelation = await super.findById(id, typedFilter, options);
 
-        // Fetch required metadata for the list and entity
-        const [listMetadata, entityMetadata] = await Promise.all([
-          this.listRepositoryGetter().then((listRepo) =>
-            listRepo.findById(rawRelation._listId).catch(() => null),
-          ),
-          this.entityRepositoryGetter().then((entityRepo) =>
-            entityRepo.findById(rawRelation._entityId).catch(() => null),
-          ),
-        ]);
-
-        // Enrich the raw relation with metadata
-        if (listMetadata) {
-          rawRelation._fromMetadata = {
-            _kind: listMetadata._kind,
-            _name: listMetadata._name,
-            _slug: listMetadata._slug,
-            _validFromDateTime: listMetadata._validFromDateTime,
-            _validUntilDateTime: listMetadata._validUntilDateTime,
-            _visibility: listMetadata._visibility,
-            _ownerUsers: listMetadata._ownerUsers,
-            _ownerGroups: listMetadata._ownerGroups,
-            _viewerUsers: listMetadata._viewerUsers,
-            _viewerGroups: listMetadata._viewerGroups,
-          };
-        }
-
-        if (entityMetadata) {
-          rawRelation._toMetadata = {
-            _kind: entityMetadata._kind,
-            _name: entityMetadata._name,
-            _slug: entityMetadata._slug,
-            _validFromDateTime: entityMetadata._validFromDateTime,
-            _validUntilDateTime: entityMetadata._validUntilDateTime,
-            _visibility: entityMetadata._visibility,
-            _ownerUsers: entityMetadata._ownerUsers,
-            _ownerGroups: entityMetadata._ownerGroups,
-            _viewerUsers: entityMetadata._viewerUsers,
-            _viewerGroups: entityMetadata._viewerGroups,
-          };
-        }
-
-        return this.injectRecordType(rawRelation);
+    if (!rawRelation) {
+      throw new HttpErrorResponse({
+        statusCode: 404,
+        name: 'NotFoundError',
+        message: "Relation with id '" + id + "' could not be found.",
+        code: 'RELATION-NOT-FOUND',
       });
+    }
+
+    // Fetch required metadata for the list and entity
+    const listRepo = await this.listRepositoryGetter();
+    const entityRepo = await this.entityRepositoryGetter();
+
+    const [listMetadata, entityMetadata] = await Promise.all([
+      listRepo.findById(rawRelation._listId).catch(() => null),
+      entityRepo.findById(rawRelation._entityId).catch(() => null),
+    ]);
+
+    // Enrich the raw relation with metadata
+    if (listMetadata) {
+      rawRelation._fromMetadata = {
+        _kind: listMetadata._kind,
+        _name: listMetadata._name,
+        _slug: listMetadata._slug,
+        _validFromDateTime: listMetadata._validFromDateTime,
+        _validUntilDateTime: listMetadata._validUntilDateTime,
+        _visibility: listMetadata._visibility,
+        _ownerUsers: listMetadata._ownerUsers,
+        _ownerGroups: listMetadata._ownerGroups,
+        _viewerUsers: listMetadata._viewerUsers,
+        _viewerGroups: listMetadata._viewerGroups,
+      };
+    }
+
+    if (entityMetadata) {
+      rawRelation._toMetadata = {
+        _kind: entityMetadata._kind,
+        _name: entityMetadata._name,
+        _slug: entityMetadata._slug,
+        _validFromDateTime: entityMetadata._validFromDateTime,
+        _validUntilDateTime: entityMetadata._validUntilDateTime,
+        _visibility: entityMetadata._visibility,
+        _ownerUsers: entityMetadata._ownerUsers,
+        _ownerGroups: entityMetadata._ownerGroups,
+        _viewerUsers: entityMetadata._viewerUsers,
+        _viewerGroups: entityMetadata._viewerGroups,
+      };
+    }
+
+    return this.injectRecordType(rawRelation);
   }
 
   /**
@@ -322,17 +319,14 @@ export class ListEntityRelationRepository extends EntityPersistenceBaseRepositor
   async create(data: DataObject<ListToEntityRelation>, options?: Options) {
     const idempotencyKey = this.calculateIdempotencyKey(data);
 
-    return this.findIdempotentRelation(idempotencyKey).then(
-      (foundIdempotent) => {
-        if (foundIdempotent) {
-          return this.injectRecordType(foundIdempotent);
-        }
+    const foundIdempotent = await this.findIdempotentRelation(idempotencyKey);
+    if (foundIdempotent) {
+      return this.injectRecordType(foundIdempotent);
+    }
 
-        data._idempotencyKey = idempotencyKey;
+    data._idempotencyKey = idempotencyKey;
 
-        return this.createNewRelationFacade(data, options);
-      },
-    );
+    return this.createNewRelationFacade(data, options);
   }
 
   async replaceById(
@@ -340,22 +334,21 @@ export class ListEntityRelationRepository extends EntityPersistenceBaseRepositor
     data: DataObject<ListToEntityRelation>,
     options?: Options,
   ) {
-    return this.enrichIncomingRelForUpdates(id, data)
-      .then((collection) => {
-        // calculate idempotencyKey
-        const idempotencyKey = this.calculateIdempotencyKey(collection.data);
+    const collection = await this.enrichIncomingRelForUpdates(id, data);
 
-        // set idempotencyKey
-        collection.data._idempotencyKey = idempotencyKey;
+    // calculate idempotencyKey
+    const idempotencyKey = this.calculateIdempotencyKey(collection.data);
 
-        return collection;
-      })
-      .then((collection) =>
-        this.validateIncomingRelForReplace(id, collection.data, options),
-      )
-      .then((validEnrichedData) =>
-        super.replaceById(id, validEnrichedData, options),
-      );
+    // set idempotencyKey
+    collection.data._idempotencyKey = idempotencyKey;
+
+    const validEnrichedData = await this.validateIncomingRelForReplace(
+      id,
+      collection.data,
+      options,
+    );
+
+    return super.replaceById(id, validEnrichedData, options);
   }
 
   async updateById(
@@ -363,33 +356,28 @@ export class ListEntityRelationRepository extends EntityPersistenceBaseRepositor
     data: DataObject<ListToEntityRelation>,
     options?: Options,
   ) {
-    return this.enrichIncomingRelForUpdates(id, data)
-      .then((collection) => {
-        const mergedData = {
-          ...data,
-          ...(collection.existingData &&
-            _.pickBy(collection.existingData, (value) => value !== null)),
-        };
+    const collection = await this.enrichIncomingRelForUpdates(id, data);
 
-        // calculate idempotencyKey
-        const idempotencyKey = this.calculateIdempotencyKey(mergedData);
+    const mergedData = {
+      ...data,
+      ...(collection.existingData &&
+        _.pickBy(collection.existingData, (value) => value !== null)),
+    };
 
-        // set idempotencyKey
-        collection.data._idempotencyKey = idempotencyKey;
+    // calculate idempotencyKey
+    const idempotencyKey = this.calculateIdempotencyKey(mergedData);
 
-        return collection;
-      })
-      .then((collection) =>
-        this.validateIncomingRelForUpdate(
-          id,
-          collection.existingData,
-          collection.data,
-          options,
-        ),
-      )
-      .then((validEnrichedData) =>
-        super.updateById(id, validEnrichedData, options),
-      );
+    // set idempotencyKey
+    collection.data._idempotencyKey = idempotencyKey;
+
+    const validEnrichedData = await this.validateIncomingRelForUpdate(
+      id,
+      collection.existingData,
+      collection.data,
+      options,
+    );
+
+    return super.updateById(id, validEnrichedData, options);
   }
 
   async updateAll(
@@ -421,15 +409,16 @@ export class ListEntityRelationRepository extends EntityPersistenceBaseRepositor
     data: DataObject<ListToEntityRelation>,
     options?: Options,
   ): Promise<ListToEntityRelation> {
-    return this.enrichIncomingRelationForCreation(data)
-      .then((enrichedData) =>
-        this.validateIncomingRelationForCreation(enrichedData, options),
-      )
-      .then((validEnrichedData) =>
-        super
-          .create(validEnrichedData, options)
-          .then((created) => this.injectRecordType(created)),
-      );
+    const enrichedData = await this.enrichIncomingRelationForCreation(data);
+
+    const validEnrichedData = await this.validateIncomingRelationForCreation(
+      enrichedData,
+      options,
+    );
+
+    const created = await super.create(validEnrichedData, options);
+
+    return this.injectRecordType(created);
   }
 
   /**
@@ -733,5 +722,4 @@ export class ListEntityRelationRepository extends EntityPersistenceBaseRepositor
       options,
     );
   }
-
 }

@@ -1,6 +1,6 @@
 import { inject, Getter } from '@loopback/core';
 import { DataObject, repository } from '@loopback/repository';
-import { EntityPersistenceReactionRepository } from '../base/entity-persistence-reaction.repository';
+import { EntityRepository } from './entity.repository';
 import { EntityDbDataSource } from '../../datasources';
 import {
   KindConfigurationReader,
@@ -19,12 +19,12 @@ import {
   MongoPipelineHelperBindings,
 } from '../../extensions/utils/mongo-pipeline-helper';
 import { EntityReaction, HttpErrorResponse } from '../../models';
-import { EntityRepository } from './entity.repository';
 import { LoggingService } from '../../services/logging.service';
 import { LookupConstraintBindings } from '../../services/lookup-constraint.bindings';
 import { LookupConstraintService } from '../../services/lookup-constraint.service';
 import { RecordLimitCheckerBindings } from '../../services/record-limit-checker.bindings';
 import { RecordLimitCheckerService } from '../../services/record-limit-checker.service';
+import { EntityPersistenceReactionRepository } from '../base/entity-persistence-reaction.repository';
 
 /**
  * EntityReactionsRepository - Concrete repository for EntityReaction model.
@@ -48,7 +48,6 @@ export class EntityReactionsRepository extends EntityPersistenceReactionReposito
   EntityReaction,
   typeof EntityReaction.prototype.id
 > {
-
   // ABSTRACT IDENTITY PROPERTY IMPLEMENTATIONS
   protected readonly recordTypeName = 'entityReaction';
   protected readonly reactionTypeName = 'Entity reaction';
@@ -96,7 +95,6 @@ export class EntityReactionsRepository extends EntityPersistenceReactionReposito
     super(EntityReaction, dataSource);
   }
 
-
   // ABSTRACT HOOK METHOD IMPLEMENTATIONS - Configuration
   protected getDefaultKind(): string {
     return this.kindConfigReader.defaultEntityReactionKind;
@@ -126,18 +124,22 @@ export class EntityReactionsRepository extends EntityPersistenceReactionReposito
     return this.kindConfigReader.allowedKindsForEntityReactions;
   }
 
-
   // ABSTRACT HOOK METHOD IMPLEMENTATIONS - Target Existence
   /**
    * Check if the referenced Entity exists before creating/updating a reaction.
    */
-  protected async checkTargetExistence(data: DataObject<EntityReaction>): Promise<void> {
+  protected async checkTargetExistence(
+    data: DataObject<EntityReaction>,
+  ): Promise<void> {
     if (data._entityId) {
       try {
         const entityRepository = await this.entityRepositoryGetter();
         await entityRepository.findById(data._entityId);
       } catch (error) {
-        if (error.code === 'ENTITY_NOT_FOUND' || error.code === 'ENTITY-NOT-FOUND') {
+        if (
+          error.code === 'ENTITY_NOT_FOUND' ||
+          error.code === 'ENTITY-NOT-FOUND'
+        ) {
           throw new HttpErrorResponse({
             statusCode: 404,
             name: 'NotFoundError',
@@ -145,11 +147,11 @@ export class EntityReactionsRepository extends EntityPersistenceReactionReposito
             code: 'ENTITY-NOT-FOUND',
           });
         }
+
         throw error;
       }
     }
   }
-
 
   // ABSTRACT HOOK METHOD IMPLEMENTATIONS - MongoDB Pipeline
   protected getSourceCollectionName(): string {

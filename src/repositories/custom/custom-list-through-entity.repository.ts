@@ -6,7 +6,6 @@ import {
   Options,
   repository,
 } from '@loopback/repository';
-import { EntityPersistenceBaseRepository } from '../base/entity-persistence-base.repository';
 import _ from 'lodash';
 import { EntityDbDataSource } from '../../datasources';
 import {
@@ -15,6 +14,7 @@ import {
   ListWithRelations,
   ListToEntityRelation,
 } from '../../models';
+import { EntityPersistenceBaseRepository } from '../base/entity-persistence-base.repository';
 import { ListEntityRelationRepository } from '../core/list-entity-relation.repository';
 import { ListRepository } from '../core/list.repository';
 
@@ -118,5 +118,4 @@ export class CustomListThroughEntityRepository extends EntityPersistenceBaseRepo
 
     return this.injectRecordTypeArray(listsWithMetadata);
   }
-
 }

@@ -8,7 +8,9 @@ import {
   Where,
   repository,
 } from '@loopback/repository';
-import { EntityPersistenceBusinessRepository } from '../base/entity-persistence-business.repository';
+import { EntityRepository } from './entity.repository';
+import { ListEntityRelationRepository } from './list-entity-relation.repository';
+import { ListReactionsRepository } from './list-reactions.repository';
 import { EntityDbDataSource } from '../../datasources';
 import {
   IdempotencyConfigurationReader,
@@ -16,6 +18,11 @@ import {
   ValidfromConfigurationReader,
   VisibilityConfigurationReader,
 } from '../../extensions';
+import { ResponseLimitConfigurationReader } from '../../extensions/config-helpers/response-limit-config-helper';
+import {
+  LookupBindings,
+  LookupHelper,
+} from '../../extensions/utils/lookup-helper';
 import {
   GenericEntity,
   List,
@@ -23,20 +30,13 @@ import {
   ListReaction,
   ListRelations,
 } from '../../models';
-import { CustomEntityThroughListRepository } from '../custom/custom-entity-through-list.repository';
-import { EntityRepository } from './entity.repository';
-import { ListEntityRelationRepository } from './list-entity-relation.repository';
-import { ListReactionsRepository } from './list-reactions.repository';
-import { ResponseLimitConfigurationReader } from '../../extensions/config-helpers/response-limit-config-helper';
-import {
-  LookupBindings,
-  LookupHelper,
-} from '../../extensions/utils/lookup-helper';
 import { LoggingService } from '../../services/logging.service';
 import { LookupConstraintBindings } from '../../services/lookup-constraint.bindings';
 import { LookupConstraintService } from '../../services/lookup-constraint.service';
 import { RecordLimitCheckerBindings } from '../../services/record-limit-checker.bindings';
 import { RecordLimitCheckerService } from '../../services/record-limit-checker.service';
+import { EntityPersistenceBusinessRepository } from '../base/entity-persistence-business.repository';
+import { CustomEntityThroughListRepository } from '../custom/custom-entity-through-list.repository';
 
 /**
  * ListRepository - Concrete repository for List model.
@@ -61,7 +61,6 @@ export class ListRepository extends EntityPersistenceBusinessRepository<
   typeof List.prototype._id,
   ListRelations
 > {
-
   // ABSTRACT PROPERTY IMPLEMENTATIONS
   protected readonly recordTypeName = 'list';
   protected readonly entityTypeName = 'List';
@@ -164,7 +163,6 @@ export class ListRepository extends EntityPersistenceBusinessRepository<
     );
   }
 
-
   // ABSTRACT HOOK METHOD IMPLEMENTATIONS
   protected getDefaultKind(): string {
     return this.kindConfigReader.defaultListKind;
@@ -194,10 +192,10 @@ export class ListRepository extends EntityPersistenceBusinessRepository<
     return this.kindConfigReader.allowedKindsForLists;
   }
 
-
   // LIST-SPECIFIC: CASCADE DELETE OPERATIONS
   async deleteById(id: string, options?: Options): Promise<void> {
-    const listEntityRelationRepo = await this.listEntityRelationRepositoryGetter();
+    const listEntityRelationRepo =
+      await this.listEntityRelationRepositoryGetter();
     const reactionsRepo = await this.reactionsRepositoryGetter();
 
     // Delete all relations associated with the list
@@ -209,19 +207,19 @@ export class ListRepository extends EntityPersistenceBusinessRepository<
     return super.deleteById(id, options);
   }
 
-  async deleteAll(
-    where?: Where<List>,
-    options?: Options,
-  ): Promise<Count> {
-    const listEntityRelationRepo = await this.listEntityRelationRepositoryGetter();
+  async deleteAll(where?: Where<List>, options?: Options): Promise<Count> {
+    const listEntityRelationRepo =
+      await this.listEntityRelationRepositoryGetter();
     const reactionsRepo = await this.reactionsRepositoryGetter();
 
-    this.loggingService.info('ListRepository.deleteAll - Where condition:', { where });
+    this.loggingService.info('ListRepository.deleteAll - Where condition:', {
+      where,
+    });
 
     // Get IDs of lists to delete
-    const idsToDelete = (
-      await this.find({ where, fields: ['_id'] })
-    ).map((list) => list._id);
+    const idsToDelete = (await this.find({ where, fields: ['_id'] })).map(
+      (list) => list._id,
+    );
 
     // Delete all relations by matching _listId
     await listEntityRelationRepo.deleteAll({ _listId: { inq: idsToDelete } });
@@ -231,7 +229,6 @@ export class ListRepository extends EntityPersistenceBusinessRepository<
 
     return super.deleteAll(where, options);
   }
-
 
   // LIST-SPECIFIC: CUSTOM INCLUSION RESOLVER
   /**

@@ -1,4 +1,4 @@
-import {
+import type {
   DataObject,
   Entity,
   Filter,
@@ -12,16 +12,17 @@ import * as crypto from 'crypto';
 import _ from 'lodash';
 import slugify from 'slugify';
 import { EntityPersistenceBaseRepository } from './entity-persistence-base.repository';
-import { LookupHelper } from '../../extensions/utils/lookup-helper';
-import { RecordLimitCheckerService } from '../../services/record-limit-checker.service';
-import { LookupConstraintService } from '../../services/lookup-constraint.service';
-import { LoggingService } from '../../services/logging.service';
-import { KindConfigurationReader } from '../../extensions/config-helpers/kind-config-helper';
-import { VisibilityConfigurationReader } from '../../extensions/config-helpers/visibility-config-helper';
-import { ValidfromConfigurationReader } from '../../extensions/config-helpers/validfrom-config-helper';
-import { IdempotencyConfigurationReader } from '../../extensions/config-helpers/idempotency-config-helper';
-import { ResponseLimitConfigurationReader } from '../../extensions/config-helpers/response-limit-config-helper';
-import { HttpErrorResponse, ListEntityCommonBase } from '../../models';
+import type { IdempotencyConfigurationReader } from '../../extensions/config-helpers/idempotency-config-helper';
+import type { KindConfigurationReader } from '../../extensions/config-helpers/kind-config-helper';
+import type { ResponseLimitConfigurationReader } from '../../extensions/config-helpers/response-limit-config-helper';
+import type { ValidfromConfigurationReader } from '../../extensions/config-helpers/validfrom-config-helper';
+import type { VisibilityConfigurationReader } from '../../extensions/config-helpers/visibility-config-helper';
+import type { LookupHelper } from '../../extensions/utils/lookup-helper';
+import type { ListEntityCommonBase } from '../../models';
+import { HttpErrorResponse } from '../../models';
+import type { LoggingService } from '../../services/logging.service';
+import type { LookupConstraintService } from '../../services/lookup-constraint.service';
+import type { RecordLimitCheckerService } from '../../services/record-limit-checker.service';
 
 /**
  * EntityPersistenceBusinessRepository - Specialized Base for Business Entities
@@ -132,8 +133,8 @@ export abstract class EntityPersistenceBusinessRepository<
     super(entityClass, dataSource);
   }
 
-    // ABSTRACT HOOK METHODS (Template Method Pattern)
-  
+  // ABSTRACT HOOK METHODS (Template Method Pattern)
+
   /**
    * Returns the default kind for this entity type.
    * Subclasses override to provide entity-specific default kind.
@@ -176,8 +177,8 @@ export abstract class EntityPersistenceBusinessRepository<
    */
   protected abstract getAllowedKinds(): string[];
 
-    // STANDARD CRUD OPERATIONS
-  
+  // STANDARD CRUD OPERATIONS
+
   /**
    * Finds records with standard business processing.
    * Includes response limiting, kind inclusion, lookup processing.
@@ -197,16 +198,26 @@ export abstract class EntityPersistenceBusinessRepository<
       // Ensure _kind is always included
       filter = this.forceKindInclusion(filter);
 
-      this.loggingService.info(`${this.entityTypeName}Repository.find - Modified filter:`, {
-        filter,
-      });
+      this.loggingService.info(
+        `${this.entityTypeName}Repository.find - Modified filter:`,
+        {
+          filter,
+        },
+      );
 
       const records = await super.find(filter, options);
-      const recordsWithLookup = await this.processLookups(records, filter, options);
+      const recordsWithLookup = await this.processLookups(
+        records,
+        filter,
+        options,
+      );
 
       return this.injectRecordTypeArray(recordsWithLookup);
     } catch (error) {
-      this.loggingService.error(`${this.entityTypeName}Repository.find - Error:`, { error });
+      this.loggingService.error(
+        `${this.entityTypeName}Repository.find - Error:`,
+        { error },
+      );
       throw error;
     }
   }
@@ -225,20 +236,29 @@ export abstract class EntityPersistenceBusinessRepository<
       const typedFilter = forcedFilter as FilterExcludingWhere<E>;
 
       const record = await super.findById(id, typedFilter, options);
-      const recordWithLookup = await this.processLookup(record, filter as Filter<E>, options);
+      const recordWithLookup = await this.processLookup(
+        record,
+        filter as Filter<E>,
+        options,
+      );
 
       return this.injectRecordType(recordWithLookup);
     } catch (error) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if ((error as any).code === 'ENTITY_NOT_FOUND') {
-        this.loggingService.warn(`${this.entityTypeName} with id '${id}' not found.`);
+        this.loggingService.warn(
+          `${this.entityTypeName} with id '${id}' not found.`,
+        );
         throw this.createNotFoundError(String(id));
       }
 
-      this.loggingService.error(`${this.entityTypeName}Repository.findById - Unexpected Error:`, {
-        error,
-        id,
-      });
+      this.loggingService.error(
+        `${this.entityTypeName}Repository.findById - Unexpected Error:`,
+        {
+          error,
+          id,
+        },
+      );
 
       throw error;
     }
@@ -352,10 +372,13 @@ export abstract class EntityPersistenceBusinessRepository<
     this.generateSlug(data);
     this.setCountFields(data);
 
-    this.loggingService.info(`${this.entityTypeName}Repository.updateAll - Modified data:`, {
-      data,
-      where,
-    });
+    this.loggingService.info(
+      `${this.entityTypeName}Repository.updateAll - Modified data:`,
+      {
+        data,
+        where,
+      },
+    );
 
     return super.updateAll(data, where, options);
   }
@@ -371,8 +394,12 @@ export abstract class EntityPersistenceBusinessRepository<
     options?: Options,
   ): Promise<E> {
     const enrichedData = await this.modifyDataForCreation(data);
-    const validEnrichedData = await this.validateDataForCreation(enrichedData, options);
+    const validEnrichedData = await this.validateDataForCreation(
+      enrichedData,
+      options,
+    );
     const created = await super.create(validEnrichedData, options);
+
     return this.injectRecordType(created);
   }
 
@@ -396,7 +423,8 @@ export abstract class EntityPersistenceBusinessRepository<
 
     // Use incoming creationDateTime and lastUpdateDateTime if given
     businessData._createdDateTime = businessData._createdDateTime ?? now;
-    businessData._lastUpdatedDateTime = businessData._lastUpdatedDateTime ?? now;
+    businessData._lastUpdatedDateTime =
+      businessData._lastUpdatedDateTime ?? now;
 
     // Auto-approve the record if it is configured
     const shouldAutoApprove = this.getValidFromForKind(businessData._kind);
@@ -435,8 +463,13 @@ export abstract class EntityPersistenceBusinessRepository<
 
     await Promise.all([
       this.checkUniquenessForCreate(this.entityClass, data, options),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      this.recordLimitChecker.checkLimits(this.entityClass as any, data, this as any, options),
+
+      this.recordLimitChecker.checkLimits(
+        this.entityClass as any,
+        data,
+        this as any,
+        options,
+      ),
       this.lookupConstraintService.validateLookupConstraints(
         data as E,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -476,7 +509,8 @@ export abstract class EntityPersistenceBusinessRepository<
     businessData._version = (existingBusinessData._version ?? 1) + 1;
 
     // Use current date if not provided
-    businessData._lastUpdatedDateTime = businessData._lastUpdatedDateTime ?? now;
+    businessData._lastUpdatedDateTime =
+      businessData._lastUpdatedDateTime ?? now;
 
     this.generateSlug(data);
     this.setCountFields(data);
@@ -509,9 +543,20 @@ export abstract class EntityPersistenceBusinessRepository<
     }
 
     await Promise.all([
-      this.checkUniquenessForUpdate(this.entityClass, id as IdType, data, existingRecord, options),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      this.recordLimitChecker.checkLimits(this.entityClass as any, data, this as any, options),
+      this.checkUniquenessForUpdate(
+        this.entityClass,
+        id as IdType,
+        data,
+        existingRecord,
+        options,
+      ),
+
+      this.recordLimitChecker.checkLimits(
+        this.entityClass as any,
+        data,
+        this as any,
+        options,
+      ),
       this.lookupConstraintService.validateLookupConstraints(
         data as E,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -551,9 +596,20 @@ export abstract class EntityPersistenceBusinessRepository<
     );
 
     await Promise.all([
-      this.checkUniquenessForUpdate(this.entityClass, id as IdType, mergedData, existingData, options),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      this.recordLimitChecker.checkLimits(this.entityClass as any, mergedData, this as any, options),
+      this.checkUniquenessForUpdate(
+        this.entityClass,
+        id as IdType,
+        mergedData,
+        existingData,
+        options,
+      ),
+
+      this.recordLimitChecker.checkLimits(
+        this.entityClass as any,
+        mergedData,
+        this as any,
+        options,
+      ),
       this.lookupConstraintService.validateLookupConstraints(
         mergedData as E,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -606,6 +662,7 @@ export abstract class EntityPersistenceBusinessRepository<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const kind = (data as any)._kind;
     const idempotencyFields = this.getIdempotencyFields(kind);
+
     return this.calculateIdempotencyKeyFromFields(data, idempotencyFields);
   }
 
@@ -628,7 +685,7 @@ export abstract class EntityPersistenceBusinessRepository<
   }
 
   // COUNT FIELD MANAGEMENT
-  
+
   /**
    * Updates count fields based on the length of their corresponding arrays.
    * Only updates a count field if its related array is present in the data object.
@@ -660,7 +717,7 @@ export abstract class EntityPersistenceBusinessRepository<
   }
 
   // KIND-BASED FILTER MANIPULATION
-  
+
   /**
    * Ensures that the `_kind` field is always included in query results.
    * This is essential for proper kind-based processing and filtering.
@@ -722,7 +779,7 @@ export abstract class EntityPersistenceBusinessRepository<
   }
 
   // LOOKUP PROCESSING
-  
+
   /**
    * Processes lookups for an array of records if the filter contains lookup configuration.
    *
@@ -740,7 +797,6 @@ export abstract class EntityPersistenceBusinessRepository<
       return records;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return this.lookupHelper.processLookupForArray(
       records as any,
       filter as any,
@@ -765,7 +821,6 @@ export abstract class EntityPersistenceBusinessRepository<
       return record;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return this.lookupHelper.processLookupForOne(
       record as any,
       filter as any,
@@ -774,7 +829,7 @@ export abstract class EntityPersistenceBusinessRepository<
   }
 
   // IDEMPOTENCY MANAGEMENT
-  
+
   /**
    * Searches for an existing record with the same idempotency key.
    *
@@ -836,7 +891,7 @@ export abstract class EntityPersistenceBusinessRepository<
   }
 
   // UNIQUENESS CHECKING
-  
+
   /**
    * Checks uniqueness constraints for a new record being created.
    *
@@ -889,7 +944,7 @@ export abstract class EntityPersistenceBusinessRepository<
   }
 
   // ERROR HELPERS
-  
+
   /**
    * Creates a standardized not found error for this entity type.
    *
@@ -988,7 +1043,10 @@ export abstract class EntityPersistenceBusinessRepository<
   ): Promise<(E & Relations)[]> {
     try {
       // Get the record's parent references
-      const record = await this.findById(id as IdType, { fields: { _parents: true } } as FilterExcludingWhere<E>);
+      const record = await this.findById(
+        id as IdType,
+        { fields: { _parents: true } } as FilterExcludingWhere<E>,
+      );
 
       const parents = record._parents;
       if (!parents || parents.length === 0) {
@@ -1006,15 +1064,21 @@ export abstract class EntityPersistenceBusinessRepository<
             { _id: { inq: parentIds } },
             ...(filter?.where ? [filter.where] : []),
           ],
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any,
       };
 
-      this.loggingService.info(`${this.entityTypeName}Repository.findParents - Parent filter:`, { parentFilter });
+      this.loggingService.info(
+        `${this.entityTypeName}Repository.findParents - Parent filter:`,
+        { parentFilter },
+      );
 
       return await this.find(parentFilter, options);
     } catch (error) {
-      this.loggingService.error(`${this.entityTypeName}Repository.findParents - Error:`, { error, id });
+      this.loggingService.error(
+        `${this.entityTypeName}Repository.findParents - Error:`,
+        { error, id },
+      );
       throw error;
     }
   }
@@ -1035,7 +1099,10 @@ export abstract class EntityPersistenceBusinessRepository<
   ): Promise<(E & Relations)[]> {
     try {
       // Verify that the record exists
-      await this.findById(id as IdType, { fields: { _id: true } } as FilterExcludingWhere<E>);
+      await this.findById(
+        id as IdType,
+        { fields: { _id: true } } as FilterExcludingWhere<E>,
+      );
 
       const uri = this.buildParentUri(id);
 
@@ -1043,19 +1110,22 @@ export abstract class EntityPersistenceBusinessRepository<
       const childFilter: Filter<E> = {
         ...filter,
         where: {
-          and: [
-            { _parents: uri },
-            ...(filter?.where ? [filter.where] : []),
-          ],
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          and: [{ _parents: uri }, ...(filter?.where ? [filter.where] : [])],
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any,
       };
 
-      this.loggingService.info(`${this.entityTypeName}Repository.findChildren - Child filter:`, { childFilter });
+      this.loggingService.info(
+        `${this.entityTypeName}Repository.findChildren - Child filter:`,
+        { childFilter },
+      );
 
       return await this.find(childFilter, options);
     } catch (error) {
-      this.loggingService.error(`${this.entityTypeName}Repository.findChildren - Error:`, { error, id });
+      this.loggingService.error(
+        `${this.entityTypeName}Repository.findChildren - Error:`,
+        { error, id },
+      );
       throw error;
     }
   }
@@ -1086,7 +1156,10 @@ export abstract class EntityPersistenceBusinessRepository<
 
       return await this.create(childData as DataObject<E>, options);
     } catch (error) {
-      this.loggingService.error(`${this.entityTypeName}Repository.createChild - Error:`, { error, parentId });
+      this.loggingService.error(
+        `${this.entityTypeName}Repository.createChild - Error:`,
+        { error, parentId },
+      );
       throw error;
     }
   }
