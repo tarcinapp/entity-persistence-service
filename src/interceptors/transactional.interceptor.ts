@@ -36,31 +36,55 @@ export class TransactionalInterceptor {
 
     if (!isTransactional) return next();
 
-    const client = (this.dataSource.connector as any).client;
-    const session = client.startSession();
-    session.startTransaction();
+    const maxRetries = 3; // Maximum number of retries for WriteConflict
+    let attempt = 0;
 
-    /**
-     * BINDING: We store the session in the Request Context (parent).
-     * The Controller will retrieve this via @inject('active.transaction.options').
-     */
-    if (invocationCtx.parent) {
-      invocationCtx.parent.bind('active.transaction.options').to({session});
-    }
+    while (attempt < maxRetries) {
+      const client = (this.dataSource.connector as any).client;
+      const session = client.startSession();
+      session.startTransaction();
 
-    try {
-      const result = await next();
-      await session.commitTransaction();
-      return result;
-    } catch (error) {
-      // Abort the transaction only if it wasn't already aborted
-      if (session.transaction.state !== 'TRANSACTION_ABORTED') {
-        await session.abortTransaction();
+      if (invocationCtx.parent) {
+        // Bind the session as non-enumerable to avoid circular JSON issues
+        const options = {session};
+        Object.defineProperty(options, 'session', {
+          value: session,
+          enumerable: false,
+          configurable: true,
+          writable: true
+        });
+        invocationCtx.parent.bind('active.transaction.options').to(options);
       }
-      throw error;
-    } finally {
-      // Ensure the session is closed regardless of outcome
-      if (session) await session.endSession();
+
+      try {
+        const result = await next();
+        await session.commitTransaction();
+        return result; // Success: Exit the loop
+      } catch (error) {
+        await session.abortTransaction();
+
+        /**
+         * Check if the error is a WriteConflict or a TransientTransactionError.
+         * MongoDB indicates retryable errors via ErrorLabels.
+         */
+        const isRetryable =
+          error.code === 112 || // WriteConflict
+          (error.errorLabels && error.errorLabels.includes('TransientTransactionError'));
+
+        if (isRetryable && attempt < maxRetries - 1) {
+          attempt++;
+          console.warn(`[Transaction] WriteConflict detected. Retrying attempt ${attempt}...`);
+
+          // Brief delay before retrying (exponential backoff could be used)
+          await new Promise(resolve => setTimeout(resolve, 10 * attempt));
+          continue; // Retry the loop
+        }
+
+        // If not retryable or max retries reached, throw the error
+        throw error;
+      } finally {
+        if (session) await session.endSession();
+      }
     }
   }
 }

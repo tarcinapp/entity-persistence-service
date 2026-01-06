@@ -134,6 +134,7 @@ export class ListEntityRelationRepository extends EntityPersistenceBaseRepositor
     filter?: Filter<ListToEntityRelation>,
     entityFilter?: Filter<ListToEntityRelation>,
     listFilter?: Filter<ListToEntityRelation>,
+    options?: Options,
   ): Promise<(ListToEntityRelation & ListEntityRelationRelations)[]> {
     // Ensure _kind is always included
     filter = this.forceKindInclusion(filter);
@@ -180,7 +181,7 @@ export class ListEntityRelationRepository extends EntityPersistenceBaseRepositor
       this.loggingService.debug(
         `Filters: ${JSON.stringify({ filter, entityFilter, listFilter }, null, 2)}\nPipeline: ${JSON.stringify(pipeline, null, 2)}`,
       );
-      const cursor = relationCollection.aggregate(pipeline);
+      const cursor = relationCollection.aggregate(pipeline, options);
       const result = await cursor.toArray();
 
       return this.injectRecordTypeArray(

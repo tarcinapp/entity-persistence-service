@@ -1,5 +1,6 @@
 import {BindingScope, ContextTags, inject, injectable, intercept} from '@loopback/context';
 import {
+  Count,
   DataObject,
   Fields,
   Filter,
@@ -176,7 +177,7 @@ export class CustomEntityThroughListRepository extends EntityPersistenceBaseRepo
         _listId: this.sourceListId,
         ...whereThrough,
       },
-    });
+    }, undefined, undefined, options);
     const entityIds = relations.map(
       (rel: ListToEntityRelation) => rel._entityId,
     );
@@ -190,22 +191,37 @@ export class CustomEntityThroughListRepository extends EntityPersistenceBaseRepo
     where?: Where<GenericEntity>,
     whereThrough?: Where<ListToEntityRelation>,
     options?: Options,
-  ) {
+  ): Promise<Count> {
     const entitiesRepo = await this.entityRepositoryGetter();
     const listEntityRelationRepo = await this.listEntityRepoGetter();
 
+    // 1. Find all relations to identify which entities are linked to this list
     const relations = await listEntityRelationRepo.find({
       where: {
         _listId: this.sourceListId,
         ...whereThrough,
       },
-    });
+    }, undefined, undefined, options);
+
+    if (relations.length === 0) return {count: 0};
+
     const entityIds = relations.map(
       (rel: ListToEntityRelation) => rel._entityId,
     );
 
-    where = {_id: {inq: entityIds}, ...where};
+    // 2. Delete the actual entities
+    const entityWhere = {_id: {inq: entityIds}, ...where};
+    const entitiesDeleteCount = await entitiesRepo.deleteAll(entityWhere, options);
 
-    return entitiesRepo.deleteAll(where, options);
+    // 3. Delete the relations to maintain referential integrity
+    const relationWhere = {
+      _listId: this.sourceListId,
+      _entityId: {inq: entityIds},
+      ...whereThrough,
+    };
+    await listEntityRelationRepo.deleteAll(relationWhere, options);
+
+    // Return the count of deleted entities as the primary result
+    return entitiesDeleteCount;
   }
 }

@@ -191,6 +191,7 @@ export class EntitiesThroughListController {
     return repo.create(entity, options);
   }
 
+  @transactional()
   @patch('/lists/{id}/entities', {
     operationId: 'updateEntitiesByListId',
     responses: {
@@ -226,6 +227,9 @@ export class EntitiesThroughListController {
 
     @param.query.object('whereThrough')
     whereThrough?: Where<ListToEntityRelation>,
+
+    @inject('active.transaction.options', {optional: true})
+    options: any = {},
   ): Promise<Count> {
     const filterBuilder = new FilterBuilder<GenericEntity>();
     const filterThroughBuilder = new FilterBuilder<ListToEntityRelation>();
@@ -258,9 +262,10 @@ export class EntitiesThroughListController {
 
     const repo = await this.listRepository.entities(id);
 
-    return repo.updateAll(entity, filter.where, filterThrough.where);
+    return repo.updateAll(entity, filter.where, filterThrough.where, options);
   }
 
+  @transactional()
   @del('/lists/{id}/entities', {
     operationId: 'deleteEntitiesByListId',
     responses: {
@@ -280,7 +285,7 @@ export class EntitiesThroughListController {
           },
         },
       },
-    },
+    }
   })
   async delete(
     @param.path.string('id') id: string,
@@ -290,6 +295,8 @@ export class EntitiesThroughListController {
     @param.query.object('setThrough') setThrough?: Set,
     @param.query.object('whereThrough')
     whereThrough?: Where<ListToEntityRelation>,
+    @inject('active.transaction.options', {optional: true})
+    options: any = {},
   ): Promise<Count> {
     const filterBuilder = new FilterBuilder<GenericEntity>();
     const filterThroughBuilder = new FilterBuilder<ListToEntityRelation>();
@@ -323,6 +330,6 @@ export class EntitiesThroughListController {
 
     const repo = await this.listRepository.entities(id);
 
-    return repo.deleteAll(filter.where, filterThrough.where);
+    return repo.deleteAll(filter.where, filterThrough.where, options);
   }
 }
