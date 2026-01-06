@@ -1,4 +1,4 @@
-import {inject} from '@loopback/context';
+import { inject } from '@loopback/context';
 import {
   Count,
   CountSchema,
@@ -21,8 +21,9 @@ import {
   RestBindings,
   Request,
 } from '@loopback/rest';
-import {sanitizeFilterFields} from '../extensions/utils/filter-helper';
-import {Set, SetFilterBuilder} from '../extensions/utils/set-helper';
+import { transactional } from '../decorators';
+import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
+import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
 import {
   GenericEntity,
   List,
@@ -34,9 +35,8 @@ import {
   UnmodifiableCommonFields,
   ALWAYS_HIDDEN_FIELDS,
 } from '../models/base-types/unmodifiable-common-fields';
-import {ListRepository} from '../repositories';
-import {LoggingService} from '../services/logging.service';
-import {transactional} from '../decorators';
+import { ListRepository } from '../repositories';
+import { LoggingService } from '../services/logging.service';
 
 export class EntitiesThroughListController {
   constructor(
@@ -44,7 +44,7 @@ export class EntitiesThroughListController {
     protected listRepository: ListRepository,
     @inject(RestBindings.Http.REQUEST) private req: Request,
     @inject('services.LoggingService') private logger: LoggingService,
-  ) { }
+  ) {}
 
   @get('/lists/{id}/entities', {
     operationId: 'findEntitiesByListId',
@@ -183,8 +183,8 @@ export class EntitiesThroughListController {
       },
     })
     entity: Omit<GenericEntity, UnmodifiableCommonFields>,
-    @inject('active.transaction.options', {optional: true})
-    options: any = {}
+    @inject('active.transaction.options', { optional: true })
+    options: any = {},
   ): Promise<GenericEntity> {
     const repo = await this.listRepository.entities(id);
 
@@ -197,7 +197,7 @@ export class EntitiesThroughListController {
     responses: {
       '200': {
         description: 'List.entities PATCH success count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
@@ -228,7 +228,7 @@ export class EntitiesThroughListController {
     @param.query.object('whereThrough')
     whereThrough?: Where<ListToEntityRelation>,
 
-    @inject('active.transaction.options', {optional: true})
+    @inject('active.transaction.options', { optional: true })
     options: any = {},
   ): Promise<Count> {
     const filterBuilder = new FilterBuilder<GenericEntity>();
@@ -271,7 +271,7 @@ export class EntitiesThroughListController {
     responses: {
       '200': {
         description: 'List.Entity DELETE success count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
       '404': {
         description: 'List not found',
@@ -285,7 +285,7 @@ export class EntitiesThroughListController {
           },
         },
       },
-    }
+    },
   })
   async delete(
     @param.path.string('id') id: string,
@@ -295,7 +295,7 @@ export class EntitiesThroughListController {
     @param.query.object('setThrough') setThrough?: Set,
     @param.query.object('whereThrough')
     whereThrough?: Where<ListToEntityRelation>,
-    @inject('active.transaction.options', {optional: true})
+    @inject('active.transaction.options', { optional: true })
     options: any = {},
   ): Promise<Count> {
     const filterBuilder = new FilterBuilder<GenericEntity>();

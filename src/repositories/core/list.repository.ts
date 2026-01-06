@@ -200,10 +200,10 @@ export class ListRepository extends EntityPersistenceBusinessRepository<
     const reactionsRepo = await this.reactionsRepositoryGetter();
 
     // Delete all relations associated with the list
-    await listEntityRelationRepo.deleteAll({ _listId: id });
+    await listEntityRelationRepo.deleteAll({ _listId: id }, options);
 
     // Delete all reactions associated with the list
-    await reactionsRepo.deleteAll({ _listId: id });
+    await reactionsRepo.deleteAll({ _listId: id }, options);
 
     return super.deleteById(id, options);
   }
@@ -218,15 +218,18 @@ export class ListRepository extends EntityPersistenceBusinessRepository<
     });
 
     // Get IDs of lists to delete
-    const idsToDelete = (await this.find({ where, fields: ['_id'] })).map(
-      (list) => list._id,
-    );
+    const idsToDelete = (
+      await this.find({ where, fields: ['_id'] }, options)
+    ).map((list) => list._id);
 
     // Delete all relations by matching _listId
-    await listEntityRelationRepo.deleteAll({ _listId: { inq: idsToDelete } });
+    await listEntityRelationRepo.deleteAll(
+      { _listId: { inq: idsToDelete } },
+      options,
+    );
 
     // Delete all reactions associated with the lists
-    await reactionsRepo.deleteAll({ _listId: { inq: idsToDelete } });
+    await reactionsRepo.deleteAll({ _listId: { inq: idsToDelete } }, options);
 
     return super.deleteAll(where, options);
   }

@@ -1,4 +1,4 @@
-import { inject } from '@loopback/context';
+import {inject} from '@loopback/context';
 import {
   Count,
   CountSchema,
@@ -21,19 +21,20 @@ import {
   Request,
   RestBindings,
 } from '@loopback/rest';
-import { Set, SetFilterBuilder } from '../extensions';
-import { processIncludes } from '../extensions/types/sets-in-inclusions';
-import { processLookups } from '../extensions/types/sets-in-lookups';
-import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
-import { List, HttpErrorResponse } from '../models';
+import {transactional} from '../decorators';
+import {Set, SetFilterBuilder} from '../extensions';
+import {processIncludes} from '../extensions/types/sets-in-inclusions';
+import {processLookups} from '../extensions/types/sets-in-lookups';
+import {sanitizeFilterFields} from '../extensions/utils/filter-helper';
+import {List, HttpErrorResponse} from '../models';
 import {
   UNMODIFIABLE_COMMON_FIELDS,
   UnmodifiableCommonFields,
   ALWAYS_HIDDEN_FIELDS,
 } from '../models/base-types/unmodifiable-common-fields';
-import { getFilterSchemaFor } from '../openapi/filter-schemas';
-import { ListRepository } from '../repositories';
-import { LoggingService } from '../services/logging.service';
+import {getFilterSchemaFor} from '../openapi/filter-schemas';
+import {ListRepository} from '../repositories';
+import {LoggingService} from '../services/logging.service';
 
 export class ListsController {
   constructor(
@@ -43,7 +44,7 @@ export class ListsController {
     private loggingService: LoggingService,
     @inject(RestBindings.Http.REQUEST)
     private request: Request,
-  ) {}
+  ) { }
 
   @post('/lists', {
     operationId: 'createList',
@@ -118,7 +119,7 @@ export class ListsController {
     responses: {
       '200': {
         description: 'List model count',
-        content: { 'application/json': { schema: CountSchema } },
+        content: {'application/json': {schema: CountSchema}},
       },
     },
   })
@@ -185,7 +186,7 @@ export class ListsController {
     responses: {
       '200': {
         description: 'List PATCH success count',
-        content: { 'application/json': { schema: CountSchema } },
+        content: {'application/json': {schema: CountSchema}},
       },
     },
   })
@@ -371,6 +372,7 @@ export class ListsController {
     await this.listRepository.replaceById(id, list);
   }
 
+  @transactional()
   @del('/lists/{id}', {
     operationId: 'deleteListById',
     responses: {
@@ -391,8 +393,12 @@ export class ListsController {
       },
     },
   })
-  async deleteById(@param.path.string('id') id: string): Promise<void> {
-    await this.listRepository.deleteById(id);
+  async deleteById(
+    @param.path.string('id') id: string,
+    @inject('active.transaction.options', {optional: true})
+    options: any = {},
+  ): Promise<void> {
+    await this.listRepository.deleteById(id, options);
   }
 
   @post('/lists/{id}/children', {

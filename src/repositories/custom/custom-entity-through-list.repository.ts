@@ -1,4 +1,10 @@
-import {BindingScope, ContextTags, inject, injectable, intercept} from '@loopback/context';
+import {
+  BindingScope,
+  ContextTags,
+  inject,
+  injectable,
+  intercept,
+} from '@loopback/context';
 import {
   Count,
   DataObject,
@@ -10,23 +16,18 @@ import {
   Where,
 } from '@loopback/repository';
 import _ from 'lodash';
-import {EntityDbDataSource} from '../../datasources';
-import {transactional} from '../../decorators';
+import { EntityDbDataSource } from '../../datasources';
+
 import {
   GenericEntity,
   GenericEntityWithRelations,
   List,
   ListToEntityRelation,
 } from '../../models';
-import {EntityPersistenceBaseRepository} from '../base/entity-persistence-base.repository';
-import {EntityRepository} from '../core/entity.repository';
-import {ListEntityRelationRepository} from '../core/list-entity-relation.repository';
+import { EntityPersistenceBaseRepository } from '../base/entity-persistence-base.repository';
+import { EntityRepository } from '../core/entity.repository';
+import { ListEntityRelationRepository } from '../core/list-entity-relation.repository';
 
-
-@injectable({
-  scope: BindingScope.TRANSIENT,
-  tags: {interceptable: true} // LB4'e "bu sınıfa aracı girsin" der
-})
 export class CustomEntityThroughListRepository extends EntityPersistenceBaseRepository<
   GenericEntity,
   typeof GenericEntity.prototype._id,
@@ -91,12 +92,12 @@ export class CustomEntityThroughListRepository extends EntityPersistenceBaseRepo
 
     // Define the throughFilter object
     const throughFilter = {
-      where: {_listId: this.sourceListId, ...filterThrough?.where},
-      ...(fields !== undefined ? {fields: fields} : {}), // Only set fields if it's defined
+      where: { _listId: this.sourceListId, ...filterThrough?.where },
+      ...(fields !== undefined ? { fields: fields } : {}), // Only set fields if it's defined
       include: filterThrough?.include,
     };
 
-    const relations = await listEntityRelationRepo.find(throughFilter);
+    const relations = await listEntityRelationRepo.find(throughFilter, undefined, undefined, options);
 
     // Extract target entity IDs from relations
     const entityIds = relations.map(
@@ -106,7 +107,7 @@ export class CustomEntityThroughListRepository extends EntityPersistenceBaseRepo
     // Update the filter to only include entities matching the IDs
     const updatedFilter = {
       ...filter,
-      where: {...filter?.where, _id: {inq: entityIds}},
+      where: { ...filter?.where, _id: { inq: entityIds } },
     };
 
     // Fetch entities matching the updated filter
@@ -172,17 +173,22 @@ export class CustomEntityThroughListRepository extends EntityPersistenceBaseRepo
     const entitiesRepo = await this.entityRepositoryGetter();
     const listEntityRelationRepo = await this.listEntityRepoGetter();
 
-    const relations = await listEntityRelationRepo.find({
-      where: {
-        _listId: this.sourceListId,
-        ...whereThrough,
+    const relations = await listEntityRelationRepo.find(
+      {
+        where: {
+          _listId: this.sourceListId,
+          ...whereThrough,
+        },
       },
-    }, undefined, undefined, options);
+      undefined,
+      undefined,
+      options,
+    );
     const entityIds = relations.map(
       (rel: ListToEntityRelation) => rel._entityId,
     );
 
-    where = {_id: {inq: entityIds}, ...where};
+    where = { _id: { inq: entityIds }, ...where };
 
     return entitiesRepo.updateAll(data, where, options);
   }
@@ -196,27 +202,37 @@ export class CustomEntityThroughListRepository extends EntityPersistenceBaseRepo
     const listEntityRelationRepo = await this.listEntityRepoGetter();
 
     // 1. Find all relations to identify which entities are linked to this list
-    const relations = await listEntityRelationRepo.find({
-      where: {
-        _listId: this.sourceListId,
-        ...whereThrough,
+    const relations = await listEntityRelationRepo.find(
+      {
+        where: {
+          _listId: this.sourceListId,
+          ...whereThrough,
+        },
       },
-    }, undefined, undefined, options);
+      undefined,
+      undefined,
+      options,
+    );
 
-    if (relations.length === 0) return {count: 0};
+    if (relations.length === 0) {
+      return { count: 0 };
+    }
 
     const entityIds = relations.map(
       (rel: ListToEntityRelation) => rel._entityId,
     );
 
     // 2. Delete the actual entities
-    const entityWhere = {_id: {inq: entityIds}, ...where};
-    const entitiesDeleteCount = await entitiesRepo.deleteAll(entityWhere, options);
+    const entityWhere = { _id: { inq: entityIds }, ...where };
+    const entitiesDeleteCount = await entitiesRepo.deleteAll(
+      entityWhere,
+      options,
+    );
 
     // 3. Delete the relations to maintain referential integrity
     const relationWhere = {
       _listId: this.sourceListId,
-      _entityId: {inq: entityIds},
+      _entityId: { inq: entityIds },
       ...whereThrough,
     };
     await listEntityRelationRepo.deleteAll(relationWhere, options);

@@ -5,6 +5,7 @@ import {
   Filter,
   FilterBuilder,
   FilterExcludingWhere,
+  Options,
   repository,
   Where,
 } from '@loopback/repository';
@@ -21,6 +22,7 @@ import {
   RestBindings,
   Request,
 } from '@loopback/rest';
+import { transactional } from '../decorators';
 import { processIncludes } from '../extensions/types/sets-in-inclusions';
 import { processLookups } from '../extensions/types/sets-in-lookups';
 import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
@@ -366,6 +368,7 @@ export class EntitiesController {
     await this.entityRepository.replaceById(id, entity);
   }
 
+  @transactional()
   @del('/entities/{id}', {
     operationId: 'deleteEntityById',
     responses: {
@@ -386,8 +389,12 @@ export class EntitiesController {
       },
     },
   })
-  async deleteById(@param.path.string('id') id: string): Promise<void> {
-    await this.entityRepository.deleteById(id);
+  async deleteById(
+    @param.path.string('id') id: string,
+    @inject('active.transaction.options', { optional: true })
+    options: any = {},
+  ): Promise<void> {
+    await this.entityRepository.deleteById(id, options);
   }
 
   @get('/entities/{id}/parents', {
