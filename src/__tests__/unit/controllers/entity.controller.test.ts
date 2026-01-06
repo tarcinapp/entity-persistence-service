@@ -329,7 +329,7 @@ describe('EntitiesController', () => {
 
       await controller.deleteById(id);
       sinon.assert.calledOnce(repository.deleteById);
-      sinon.assert.calledWithExactly(repository.deleteById, id);
+      sinon.assert.calledWithExactly(repository.deleteById, id, {});
     });
 
     it('should throw 404 when entity not found', async () => {
