@@ -1,5 +1,5 @@
 import { inject, Getter } from '@loopback/core';
-import { DataObject, repository } from '@loopback/repository';
+import { DataObject, repository, Options } from '@loopback/repository';
 import { EntityRepository } from './entity.repository';
 import { EntityDbDataSource } from '../../datasources';
 import {
@@ -130,11 +130,12 @@ export class EntityReactionsRepository extends EntityPersistenceReactionReposito
    */
   protected async checkTargetExistence(
     data: DataObject<EntityReaction>,
+    options?: Options,
   ): Promise<void> {
     if (data._entityId) {
       try {
         const entityRepository = await this.entityRepositoryGetter();
-        await entityRepository.findById(data._entityId);
+        await entityRepository.findById(data._entityId, undefined, options);
       } catch (error) {
         if (
           error.code === 'ENTITY_NOT_FOUND' ||

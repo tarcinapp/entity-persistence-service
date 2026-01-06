@@ -488,11 +488,12 @@ export abstract class EntityPersistenceBusinessRepository<
   protected async modifyDataForUpdates(
     id: string,
     data: DataObject<E>,
+    options?: Options,
   ): Promise<{ data: DataObject<E>; existingData: E }> {
     // Strip virtual fields before persisting
     data = this.sanitizeRecordType(data);
 
-    const existingData = await this.findById(id as IdType);
+    const existingData = await this.findById(id as IdType, undefined, options);
 
     if (!existingData) {
       throw this.createNotFoundError(id);
@@ -1146,7 +1147,7 @@ export abstract class EntityPersistenceBusinessRepository<
   ): Promise<E> {
     try {
       // Verify that the parent exists
-      await this.findById(parentId as IdType);
+      await this.findById(parentId as IdType, undefined, options);
 
       // Add the parent reference to the data
       const childData = {

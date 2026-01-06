@@ -18,6 +18,7 @@ import {
   del,
   requestBody,
 } from '@loopback/rest';
+import { transactional } from '../decorators';
 import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
 import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
 import { ListReaction, HttpErrorResponse } from '../models';
@@ -38,6 +39,7 @@ export class ListReactionsController {
     private logger: LoggingService,
   ) {}
 
+  @transactional()
   @post('/list-reactions', {
     operationId: 'createListReaction',
     responses: {
@@ -90,8 +92,10 @@ export class ListReactionsController {
       },
     })
     listReaction: Omit<ListReaction, UnmodifiableCommonFields>,
+    @inject('active.transaction.options', {optional: true})
+    options: any = {},
   ): Promise<ListReaction> {
-    return this.listReactionsRepository.create(listReaction);
+    return this.listReactionsRepository.create(listReaction, options);
   }
 
   @get('/list-reactions/count', {
@@ -189,6 +193,7 @@ export class ListReactionsController {
     });
   }
 
+  @transactional()
   @patch('/list-reactions', {
     operationId: 'updateListReactions',
     responses: {
@@ -217,6 +222,8 @@ export class ListReactionsController {
     @param.where(ListReaction) where?: Where<ListReaction>,
     @param.query.object('listSet') listSet?: Set,
     @param.where(ListReaction) listWhere?: Where<ListReaction>,
+    @inject('active.transaction.options', {optional: true})
+    options: any = {},
   ): Promise<Count> {
     const filterBuilder = new FilterBuilder<ListReaction>();
 
@@ -252,6 +259,7 @@ export class ListReactionsController {
       listReaction,
       filter.where,
       listFilter.where,
+      options,
     );
   }
 
@@ -289,6 +297,7 @@ export class ListReactionsController {
     return this.listReactionsRepository.findById(id, filter);
   }
 
+  @transactional()
   @patch('/list-reactions/{id}', {
     operationId: 'updateListReactionById',
     responses: {
@@ -329,10 +338,13 @@ export class ListReactionsController {
       },
     })
     listReaction: Omit<ListReaction, UnmodifiableCommonFields>,
+    @inject('active.transaction.options', {optional: true})
+    options: any = {},
   ): Promise<void> {
-    await this.listReactionsRepository.updateById(id, listReaction);
+    await this.listReactionsRepository.updateById(id, listReaction, options);
   }
 
+  @transactional()
   @put('/list-reactions/{id}', {
     operationId: 'replaceListReactionById',
     responses: {
@@ -371,10 +383,13 @@ export class ListReactionsController {
       },
     })
     listReaction: Omit<ListReaction, UnmodifiableCommonFields>,
+    @inject('active.transaction.options', {optional: true})
+    options: any = {},
   ): Promise<void> {
-    await this.listReactionsRepository.replaceById(id, listReaction);
+    await this.listReactionsRepository.replaceById(id, listReaction, options);
   }
 
+  @transactional()
   @del('/list-reactions/{id}', {
     operationId: 'deleteListReactionById',
     responses: {
@@ -391,8 +406,12 @@ export class ListReactionsController {
       },
     },
   })
-  async deleteById(@param.path.string('id') id: string): Promise<void> {
-    await this.listReactionsRepository.deleteById(id);
+  async deleteById(
+    @param.path.string('id') id: string,
+    @inject('active.transaction.options', {optional: true})
+    options: any = {},
+  ): Promise<void> {
+    await this.listReactionsRepository.deleteById(id, options);
   }
 
   @get('/list-reactions/{id}/parents', {
@@ -507,6 +526,7 @@ export class ListReactionsController {
     });
   }
 
+  @transactional()
   @post('/list-reactions/{id}/children', {
     operationId: 'createChildListReaction',
     responses: {
@@ -571,7 +591,9 @@ export class ListReactionsController {
       },
     })
     listReaction: Omit<ListReaction, UnmodifiableCommonFields | '_parents'>,
+    @inject('active.transaction.options', {optional: true})
+    options: any = {},
   ): Promise<ListReaction> {
-    return this.listReactionsRepository.createChild(id, listReaction);
+    return this.listReactionsRepository.createChild(id, listReaction, options);
   }
 }

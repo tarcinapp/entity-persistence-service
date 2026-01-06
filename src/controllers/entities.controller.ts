@@ -267,6 +267,7 @@ export class EntitiesController {
     return this.entityRepository.findById(id, filter);
   }
 
+  @transactional()
   @patch('/entities/{id}', {
     operationId: 'updateEntityById',
     responses: {
@@ -314,8 +315,10 @@ export class EntitiesController {
       },
     })
     entity: Omit<GenericEntity, UnmodifiableCommonFields>,
+    @inject('active.transaction.options', { optional: true })
+    options: any = {},
   ): Promise<void> {
-    await this.entityRepository.updateById(id, entity);
+    await this.entityRepository.updateById(id, entity, options);
   }
 
   @put('/entities/{id}', {
