@@ -51,6 +51,7 @@ export class ListsThroughEntityController {
     sanitizeFilterFields(filter);
     sanitizeFilterFields(filterThrough);
 
-    return this.entityRepository.lists(id).find(filter, filterThrough);
+    const repo = await this.entityRepository.lists(id);
+    return repo.find(filter, filterThrough);
   }
 }

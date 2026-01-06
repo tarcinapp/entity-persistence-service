@@ -1,4 +1,5 @@
 import type { DataSource } from '@loopback/repository';
+import { BindingScope } from '@loopback/core';
 import { RestBindings } from '@loopback/rest';
 import type { Client } from '@loopback/testlab';
 import {
@@ -37,6 +38,13 @@ import type {
   EntityReaction,
   ListReaction,
 } from '../../models';
+import {
+  CustomEntityThroughListRepository,
+  CustomListThroughEntityRepository,
+  CustomReactionThroughEntityRepository,
+  CustomReactionThroughListRepository,
+  CustomRepositoriesBindings,
+} from '../../repositories';
 import { LookupConstraintBindings } from '../../services/lookup-constraint.bindings';
 import { LookupConstraintService } from '../../services/lookup-constraint.service';
 import { RecordLimitCheckerBindings } from '../../services/record-limit-checker.bindings';
@@ -457,6 +465,27 @@ export async function setupApplication(
 
   // add mongo pipeline helper to context
   app.bind(MongoPipelineHelperBindings.HELPER).toClass(MongoPipelineHelper);
+
+  // bind custom repositories with TRANSIENT scope to enable proxy wrapping for interceptors
+  app
+    .bind(CustomRepositoriesBindings.CUSTOM_ENTITY_THROUGH_LIST_REPOSITORY)
+    .toClass(CustomEntityThroughListRepository)
+    .inScope(BindingScope.TRANSIENT);
+
+  app
+    .bind(CustomRepositoriesBindings.CUSTOM_LIST_THROUGH_ENTITY_REPOSITORY)
+    .toClass(CustomListThroughEntityRepository)
+    .inScope(BindingScope.TRANSIENT);
+
+  app
+    .bind(CustomRepositoriesBindings.CUSTOM_REACTION_THROUGH_ENTITY_REPOSITORY)
+    .toClass(CustomReactionThroughEntityRepository)
+    .inScope(BindingScope.TRANSIENT);
+
+  app
+    .bind(CustomRepositoriesBindings.CUSTOM_REACTION_THROUGH_LIST_REPOSITORY)
+    .toClass(CustomReactionThroughListRepository)
+    .inScope(BindingScope.TRANSIENT);
 
   await app.boot();
   await app.start();

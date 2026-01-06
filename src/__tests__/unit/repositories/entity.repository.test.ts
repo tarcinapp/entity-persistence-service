@@ -19,6 +19,7 @@ import {
   ListEntityRelationRepository,
   ListRepository,
   EntityReactionsRepository,
+  CustomListThroughEntityRepository,
 } from '../../../repositories';
 import { EntityRepository } from '../../../repositories/core/entity.repository';
 import { LoggingService } from '../../../services/logging.service';
@@ -71,6 +72,13 @@ describe('EntityRepository', () => {
       Getter.fromValue(listRepoStub),
       Getter.fromValue(reactionsRepoStub),
       Getter.fromValue(listEntityRelationRepoStub),
+      Getter.fromValue(
+        new CustomListThroughEntityRepository(
+          testSetup.dataSource,
+          Getter.fromValue(listRepoStub),
+          Getter.fromValue(listEntityRelationRepoStub),
+        ),
+      ),
       testSetup.configReaders.kindConfigReader,
       testSetup.configReaders.visibilityConfigReader,
       testSetup.configReaders.validfromConfigReader,
