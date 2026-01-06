@@ -1,213 +1,66 @@
-import { globalInterceptor, InvocationContext, Next } from '@loopback/core';
-import { Options } from '@loopback/repository';
-import { TRANSACTIONAL_KEY } from '../decorators/transactional.decorator';
+import {
+  BindingScope,
+  globalInterceptor,
+  injectable,
+  Interceptor,
+  InvocationContext,
+  Next,
+  inject,
+} from '@loopback/core';
+import {TRANSACTIONAL_KEY} from '../decorators/transactional.decorator';
+import {EntityDbDataSource} from '../datasources/entity-db.datasource';
 
 /**
- * TransactionalInterceptor - Global MongoDB Transaction Handler
- *
- * This interceptor provides declarative transaction management for repository methods
- * decorated with @transactional(). It ensures ACID compliance for multi-step operations.
- *
- * ## How It Works:
- * 1. Checks if method has @transactional() decorator via metadata
- * 2. Detects MongoDB topology to ensure transaction support
- * 3. Inspects options.session (ClientSession) parameter:
- *    - If exists: Join existing transaction (propagation)
- *    - If missing: Start new transaction via dataSource
- * 4. Injects session into options object
- * 5. On success: Commits transaction
- * 6. On error: Rolls back all changes
- * 7. Always: Ends session immediately after
- *
- * ## MongoDB Topology Detection:
- * - STANDALONE (Single): Transactions NOT supported
- *   → Logs warning and proceeds in non-transactional mode
- *   → Enables development on local MongoDB instances
- * - REPLICA SET (ReplicaSetNoPrimary, ReplicaSetWithPrimary): Transactions SUPPORTED
- *   → Full ACID transaction semantics
- * - SHARDED CLUSTER (Sharded): Transactions SUPPORTED
- *   → Distributed transaction support
- *
- * ## Transaction Propagation Logic:
- * - JOINING: When nested repository calls have session, reuse it (no new transaction)
- * - STARTING: When no session exists, begin new transaction from dataSource
- * - NESTED: Multiple transactional methods work atomically together
- *
- * @example
- * ```typescript
- * // In CustomEntityThroughListRepository
- * @transactional()
- * async create(data: DataObject<E>, options?: Options): Promise<E> {
- *   const entity = await this.entityRepo.create(data, options);
- *   // options.session is injected and propagates to nested calls
- *   const relation = await this.relationRepo.create({
- *     _entityId: entity._id,
- *     _listId: this.sourceListId,
- *   }, options);
- *   return entity;
- * }
- * ```
+ * TransactionalInterceptor
+ * Automatically manages MongoDB transactions by binding a ClientSession
+ * to the Request Context. This avoids parameter index issues and
+ * allows clean injection in Controllers.
  */
-@globalInterceptor('transactional', {
-  tags: { namespace: 'globalInterceptors' },
-})
+@globalInterceptor('transactional', {tags: {namespace: 'globalInterceptors'}})
+@injectable({scope: BindingScope.SINGLETON})
 export class TransactionalInterceptor {
-  intercept(invocationCtx: InvocationContext, next: Next): any {
-    // Check if this method has @transactional() decorator
-    const isTransactional =
-      invocationCtx.target?.constructor?.prototype?.[
-        invocationCtx.methodName
-      ]?.hasOwnProperty(TRANSACTIONAL_KEY);
+  constructor(
+    @inject('datasources.EntityDb')
+    public dataSource: EntityDbDataSource,
+  ) { }
 
-    if (!isTransactional) {
-      // Not a transactional method, proceed normally
-      return next();
-    }
-
-    // Get the method arguments
-    const args = invocationCtx.args;
-
-    // Find the options parameter (usually the last parameter for repository methods)
-    // Repository methods typically follow pattern: create(data, options?)
-    // find(filter?, options?), findById(id, filter?, options?), etc.
-    let options: Options = {};
-    let optionsIndex = -1;
-
-    // Identify which argument is the options object
-    for (let i = args.length - 1; i >= 0; i--) {
-      const arg = args[i];
-      if (
-        arg &&
-        typeof arg === 'object' &&
-        !Array.isArray(arg) &&
-        !(arg instanceof Date) &&
-        typeof arg.prototype === 'undefined'
-      ) {
-        // This might be options - check if it has known option properties
-        if (
-          typeof arg === 'object' &&
-          (arg.session !== undefined ||
-            arg.transaction !== undefined ||
-            arg.skipValidation !== undefined ||
-            arg.strict !== undefined)
-        ) {
-          options = arg;
-          optionsIndex = i;
-          break;
-        }
-      }
-    }
-
-    // If no options found, create one
-    if (optionsIndex === -1) {
-      optionsIndex = args.length;
-      options = {};
-      args.push(options);
-    } else {
-      options = args[optionsIndex];
-    }
-
-    // Check if a session already exists (transaction propagation)
-    const existingSession = (options as any)?.session;
-
-    if (existingSession) {
-      // Transaction already in progress - join it
-      // No need to manage transaction lifecycle
-      return next();
-    }
-
-    // Start a new transaction
-    const session: any = null;
-
-    // Execute the async transaction logic
-    return this.executeWithTransaction(
-      invocationCtx,
-      next,
-      args,
-      optionsIndex,
-      options,
-    );
+  value(): Interceptor {
+    return (invocationCtx: InvocationContext, next: Next) => {
+      return this.intercept(invocationCtx, next);
+    };
   }
 
-  private async executeWithTransaction(
-    invocationCtx: InvocationContext,
-    next: Next,
-    args: any[],
-    optionsIndex: number,
-    options: Options,
-  ): Promise<any> {
-    let session: any = null;
+  async intercept(invocationCtx: InvocationContext, next: Next): Promise<any> {
+    const method = (invocationCtx.target as any)[invocationCtx.methodName];
+    const isTransactional = !!(method && method[TRANSACTIONAL_KEY as any]);
+
+    if (!isTransactional) return next();
+
+    const client = (this.dataSource.connector as any).client;
+    const session = client.startSession();
+    session.startTransaction();
+
+    /**
+     * BINDING: We store the session in the Request Context (parent).
+     * The Controller will retrieve this via @inject('active.transaction.options').
+     */
+    if (invocationCtx.parent) {
+      invocationCtx.parent.bind('active.transaction.options').to({session});
+    }
 
     try {
-      // Get the MongoDB client session from the dataSource
-      const target = invocationCtx.target as any;
-      const dataSource = target?.dataSource;
-
-      if (!dataSource) {
-        throw new Error(
-          'DataSource not found on target. Cannot start transaction.',
-        );
-      }
-
-      // Start a new session from the MongoDB client
-      const mongoConnector = dataSource.connector;
-      if (!mongoConnector?.client) {
-        throw new Error(
-          'MongoDB client not accessible via dataSource connector.',
-        );
-      }
-
-      const client = mongoConnector.client;
-
-      // Check MongoDB topology to determine if transactions are supported
-      // Transactions require Replica Set or Sharded Cluster, not Standalone
-      const topologyType = client.topology?.description?.type;
-
-      if (topologyType === 'Single') {
-        // Standalone MongoDB detected - transactions not supported
-        // Log warning and proceed in non-transactional mode
-        console.warn(
-          '[TransactionalInterceptor] Standalone MongoDB detected. ' +
-            'Transactions are not supported in this topology. ' +
-            'Proceeding in non-transactional mode. ' +
-            'For production, use a Replica Set or Sharded Cluster.',
-        );
-
-        // Execute method without transaction
-        return await next();
-      }
-
-      // Topology supports transactions (ReplicaSetNoPrimary, ReplicaSetWithPrimary, Sharded)
-      // Proceed with full transaction logic
-      session = client.startSession();
-
-      // Begin transaction on the session
-      session.startTransaction();
-
-      // Inject the session into options for propagation
-      (options as any).session = session;
-
-      // Replace the options argument with the updated one
-      args[optionsIndex] = options;
-
-      // Execute the method with transaction
-      try {
-        const result = await next();
-
-        // Commit transaction on success
-        await session.commitTransaction();
-
-        return result;
-      } catch (error) {
-        // Rollback transaction on error
+      const result = await next();
+      await session.commitTransaction();
+      return result;
+    } catch (error) {
+      // Abort the transaction only if it wasn't already aborted
+      if (session.transaction.state !== 'TRANSACTION_ABORTED') {
         await session.abortTransaction();
-        throw error;
       }
+      throw error;
     } finally {
-      // Always end the session (only if it was created)
-      if (session) {
-        await session.endSession();
-      }
+      // Ensure the session is closed regardless of outcome
+      if (session) await session.endSession();
     }
   }
 }

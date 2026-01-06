@@ -1,4 +1,4 @@
-import { inject } from '@loopback/context';
+import {BindingScope, ContextTags, inject, injectable, intercept} from '@loopback/context';
 import {
   DataObject,
   Fields,
@@ -9,18 +9,23 @@ import {
   Where,
 } from '@loopback/repository';
 import _ from 'lodash';
-import { EntityDbDataSource } from '../../datasources';
-import { transactional } from '../../decorators';
+import {EntityDbDataSource} from '../../datasources';
+import {transactional} from '../../decorators';
 import {
   GenericEntity,
   GenericEntityWithRelations,
   List,
   ListToEntityRelation,
 } from '../../models';
-import { EntityPersistenceBaseRepository } from '../base/entity-persistence-base.repository';
-import { EntityRepository } from '../core/entity.repository';
-import { ListEntityRelationRepository } from '../core/list-entity-relation.repository';
+import {EntityPersistenceBaseRepository} from '../base/entity-persistence-base.repository';
+import {EntityRepository} from '../core/entity.repository';
+import {ListEntityRelationRepository} from '../core/list-entity-relation.repository';
 
+
+@injectable({
+  scope: BindingScope.TRANSIENT,
+  tags: {interceptable: true} // LB4'e "bu sınıfa aracı girsin" der
+})
 export class CustomEntityThroughListRepository extends EntityPersistenceBaseRepository<
   GenericEntity,
   typeof GenericEntity.prototype._id,
@@ -85,8 +90,8 @@ export class CustomEntityThroughListRepository extends EntityPersistenceBaseRepo
 
     // Define the throughFilter object
     const throughFilter = {
-      where: { _listId: this.sourceListId, ...filterThrough?.where },
-      ...(fields !== undefined ? { fields: fields } : {}), // Only set fields if it's defined
+      where: {_listId: this.sourceListId, ...filterThrough?.where},
+      ...(fields !== undefined ? {fields: fields} : {}), // Only set fields if it's defined
       include: filterThrough?.include,
     };
 
@@ -100,7 +105,7 @@ export class CustomEntityThroughListRepository extends EntityPersistenceBaseRepo
     // Update the filter to only include entities matching the IDs
     const updatedFilter = {
       ...filter,
-      where: { ...filter?.where, _id: { inq: entityIds } },
+      where: {...filter?.where, _id: {inq: entityIds}},
     };
 
     // Fetch entities matching the updated filter
@@ -128,17 +133,9 @@ export class CustomEntityThroughListRepository extends EntityPersistenceBaseRepo
     return this.injectRecordTypeArray(entitiesWithMetadata);
   }
 
-  /**
-   * Creates the generic entity first, then the relation calling the repositories of these individual records.
-   * With @transactional() decorator, if relation creation fails, the entire transaction is rolled back,
-   * ensuring both entity and relation are created atomically or not at all.
-   * @param data Generic Entity
-   * @returns Created Generic Entity
-   */
-  @transactional()
   async create(
     data: DataObject<GenericEntity>,
-    options?: Options,
+    options: Options = {},
   ): Promise<GenericEntity> {
     const entitiesRepo = await this.entityRepositoryGetter();
     const listEntityRelationRepo = await this.listEntityRepoGetter();
@@ -184,7 +181,7 @@ export class CustomEntityThroughListRepository extends EntityPersistenceBaseRepo
       (rel: ListToEntityRelation) => rel._entityId,
     );
 
-    where = { _id: { inq: entityIds }, ...where };
+    where = {_id: {inq: entityIds}, ...where};
 
     return entitiesRepo.updateAll(data, where, options);
   }
@@ -207,7 +204,7 @@ export class CustomEntityThroughListRepository extends EntityPersistenceBaseRepo
       (rel: ListToEntityRelation) => rel._entityId,
     );
 
-    where = { _id: { inq: entityIds }, ...where };
+    where = {_id: {inq: entityIds}, ...where};
 
     return entitiesRepo.deleteAll(where, options);
   }

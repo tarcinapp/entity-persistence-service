@@ -438,6 +438,7 @@ export class ListEntityRelationRepository extends EntityPersistenceBaseRepositor
           _entityId: string;
           _listId: string;
         },
+        options,
       ),
       this.checkRecordLimits(data, options),
     ]).then(() => data);
@@ -569,6 +570,7 @@ export class ListEntityRelationRepository extends EntityPersistenceBaseRepositor
       _entityId: string;
       _listId: string;
     },
+    options?: Options,
   ) {
     const [entityRepo, listRepo] = await Promise.all([
       this.entityRepositoryGetter(),
@@ -586,7 +588,7 @@ export class ListEntityRelationRepository extends EntityPersistenceBaseRepositor
 
     // Check if related entity and list exist
     await Promise.all([
-      entityRepo.findById(data._entityId).catch(() => {
+      entityRepo.findById(data._entityId, undefined, options).catch(() => {
         throw new HttpErrorResponse({
           statusCode: 404,
           name: 'NotFoundError',
@@ -595,7 +597,7 @@ export class ListEntityRelationRepository extends EntityPersistenceBaseRepositor
           code: 'ENTITY-NOT-FOUND',
         });
       }),
-      listRepo.findById(data._listId).catch(() => {
+      listRepo.findById(data._listId, undefined, options).catch(() => {
         throw new HttpErrorResponse({
           statusCode: 404,
           name: 'NotFoundError',
@@ -662,11 +664,12 @@ export class ListEntityRelationRepository extends EntityPersistenceBaseRepositor
    */
   private async findIdempotentRelation(
     idempotencyKey: string | undefined,
+    options?: Options,
   ): Promise<ListToEntityRelation | null> {
     if (_.isString(idempotencyKey) && !_.isEmpty(idempotencyKey)) {
       return this.findOne({
         where: { _idempotencyKey: idempotencyKey },
-      });
+      }, options);
     }
 
     return null;
