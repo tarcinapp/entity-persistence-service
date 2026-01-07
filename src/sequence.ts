@@ -76,21 +76,6 @@ export class MySequence implements SequenceHandler {
         // ignore any failure while normalizing error
       }
 
-      logger.error(
-        `Request failed ${request.method} ${request.url} ${response.statusCode}`,
-        {
-          method: request.method,
-          url: request.url,
-          statusCode: response.statusCode,
-          error: {
-            name: err.name,
-            message: err.message,
-            stack: err.stack,
-          },
-        },
-        request,
-      );
-
       // Attach requestId to the error payload when available
       try {
         if (request && (request as any).requestId) {
@@ -100,6 +85,7 @@ export class MySequence implements SequenceHandler {
         // best-effort only
       }
 
+      // Error logging is handled by the request logging middleware
       this.reject(context, err);
     }
   }

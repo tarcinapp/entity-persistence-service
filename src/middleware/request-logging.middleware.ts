@@ -56,13 +56,19 @@ export function requestLoggingMiddleware(logger: LoggingService): Middleware {
       // Calculate response time for failed requests
       const responseTime = Date.now() - startTime;
 
+      // Derive correct HTTP status for the error (response.statusCode may still be 200 here)
+      const derivedStatus =
+        (error as any)?.statusCode ??
+        (error as any)?.status ??
+        (response.statusCode >= 400 ? response.statusCode : 500);
+
       // Log error details
       logger.error(
-        `Request failed ${request.method} ${request.url} ${response.statusCode} ${responseTime}ms`,
+        `Request failed ${request.method} ${request.url} ${derivedStatus} ${responseTime}ms`,
         {
           method: request.method,
           url: request.url,
-          statusCode: response.statusCode,
+          statusCode: derivedStatus,
           responseTime,
           error: {
             name: error.name,
