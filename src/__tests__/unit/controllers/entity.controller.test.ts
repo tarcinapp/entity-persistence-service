@@ -292,7 +292,7 @@ describe('EntitiesController', () => {
 
       // Assert
       sinon.assert.calledOnce(repository.updateById);
-      sinon.assert.calledWithExactly(repository.updateById, id, updateData);
+      sinon.assert.calledWithExactly(repository.updateById, id, updateData, {});
     });
 
     it('should throw 404 when entity not found', async () => {
