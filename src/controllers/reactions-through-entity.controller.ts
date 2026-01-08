@@ -4,6 +4,7 @@ import {
   CountSchema,
   Filter,
   FilterBuilder,
+  Options,
   repository,
   Where,
 } from '@loopback/repository';
@@ -16,6 +17,7 @@ import {
   post,
   requestBody,
 } from '@loopback/rest';
+import { transactional } from '../decorators';
 import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
 import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
 import { EntityReaction, HttpErrorResponse } from '../models';
@@ -88,6 +90,7 @@ export class ReactionsThroughEntityController {
     return this.reactionRepository.find(filter);
   }
 
+  @transactional()
   @post('/entities/{id}/reactions', {
     operationId: 'createReactionByEntityId',
     responses: {
@@ -166,13 +169,16 @@ export class ReactionsThroughEntityController {
       },
     })
     reaction: Omit<EntityReaction, UnmodifiableCommonFields>,
+    @inject('active.transaction.options', { optional: true })
+    options: Options = {},
   ): Promise<EntityReaction> {
     // Set the source entity ID in the repository
     this.reactionRepository.sourceEntityId = id;
 
-    return this.reactionRepository.create(reaction);
+    return this.reactionRepository.create(reaction, options);
   }
 
+  @transactional()
   @patch('/entities/{id}/reactions', {
     operationId: 'updateReactionsByEntityId',
     responses: {
@@ -223,6 +229,8 @@ export class ReactionsThroughEntityController {
     reaction: Partial<EntityReaction>,
     @param.query.object('set') set?: Set,
     @param.query.object('where') where?: Where<EntityReaction>,
+    @inject('active.transaction.options', { optional: true })
+    options: Options = {},
   ): Promise<Count> {
     // Set the source entity ID in the repository
     this.reactionRepository.sourceEntityId = id;
@@ -243,9 +251,10 @@ export class ReactionsThroughEntityController {
 
     sanitizeFilterFields(filter);
 
-    return this.reactionRepository.updateAll(reaction, filter.where);
+    return this.reactionRepository.updateAll(reaction, filter.where, options);
   }
 
+  @transactional()
   @del('/entities/{id}/reactions', {
     operationId: 'deleteReactionsByEntityId',
     responses: {
@@ -271,6 +280,8 @@ export class ReactionsThroughEntityController {
     @param.path.string('id') id: string,
     @param.query.object('set') set?: Set,
     @param.query.object('where') where?: Where<EntityReaction>,
+    @inject('active.transaction.options', { optional: true })
+    options: Options = {},
   ): Promise<Count> {
     // Set the source entity ID in the repository
     this.reactionRepository.sourceEntityId = id;
@@ -291,6 +302,6 @@ export class ReactionsThroughEntityController {
 
     sanitizeFilterFields(filter);
 
-    return this.reactionRepository.deleteAll(filter.where);
+    return this.reactionRepository.deleteAll(filter.where, options);
   }
 }

@@ -97,7 +97,12 @@ export class CustomEntityThroughListRepository extends EntityPersistenceBaseRepo
       include: filterThrough?.include,
     };
 
-    const relations = await listEntityRelationRepo.find(throughFilter, undefined, undefined, options);
+    const relations = await listEntityRelationRepo.find(
+      throughFilter,
+      undefined,
+      undefined,
+      options,
+    );
 
     // Extract target entity IDs from relations
     const entityIds = relations.map(

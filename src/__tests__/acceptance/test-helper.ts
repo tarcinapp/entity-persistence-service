@@ -1,16 +1,16 @@
-import {BindingScope} from '@loopback/core';
-import type {DataSource} from '@loopback/repository';
-import {RestBindings} from '@loopback/rest';
-import type {Client} from '@loopback/testlab';
+import { BindingScope } from '@loopback/core';
+import type { DataSource } from '@loopback/repository';
+import { RestBindings } from '@loopback/rest';
+import type { Client } from '@loopback/testlab';
 import {
   createRestAppClient,
   givenHttpServerConfig,
   expect,
 } from '@loopback/testlab';
-import {MongoMemoryReplSet, MongoMemoryServer} from 'mongodb-memory-server';
-import {parse} from 'qs';
-import {EntityPersistenceApplication} from '../..';
-import {EntityDbDataSource} from '../../datasources/entity-db.datasource';
+import { MongoMemoryReplSet, MongoMemoryServer } from 'mongodb-memory-server';
+import { parse } from 'qs';
+import { EntityPersistenceApplication } from '../..';
+import { EntityDbDataSource } from '../../datasources/entity-db.datasource';
 import {
   VisibilityConfigBindings,
   VisibilityConfigurationReader,
@@ -23,7 +23,7 @@ import {
   KindBindings,
   KindConfigurationReader,
 } from '../../extensions';
-import {EnvConfigHelper} from '../../extensions/config-helpers/env-config-helper';
+import { EnvConfigHelper } from '../../extensions/config-helpers/env-config-helper';
 import {
   LookupBindings,
   LookupHelper,
@@ -45,10 +45,10 @@ import {
   CustomReactionThroughListRepository,
   CustomRepositoriesBindings,
 } from '../../repositories';
-import {LookupConstraintBindings} from '../../services/lookup-constraint.bindings';
-import {LookupConstraintService} from '../../services/lookup-constraint.service';
-import {RecordLimitCheckerBindings} from '../../services/record-limit-checker.bindings';
-import {RecordLimitCheckerService} from '../../services/record-limit-checker.service';
+import { LookupConstraintBindings } from '../../services/lookup-constraint.bindings';
+import { LookupConstraintService } from '../../services/lookup-constraint.service';
+import { RecordLimitCheckerBindings } from '../../services/record-limit-checker.bindings';
+import { RecordLimitCheckerService } from '../../services/record-limit-checker.service';
 
 /**
  * Utility function to verify that all fields in two responses match exactly
@@ -355,7 +355,7 @@ export async function setupApplication(
           key.startsWith('record_limit_list_reaction_scope_for_') ||
           key.startsWith('record_limit_tag_scope_for_'),
       )
-      .reduce((acc, [key, value]) => ({...acc, [key]: value}), {}),
+      .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {}),
   };
 
   // Clear all environment variables first
@@ -381,9 +381,11 @@ export async function setupApplication(
       name: 'rs0',
       storageEngine: 'wiredTiger', // Transactions require wiredTiger
     },
-    instanceOpts: [{
-      storageEngine: 'wiredTiger',
-    }],
+    instanceOpts: [
+      {
+        storageEngine: 'wiredTiger',
+      },
+    ],
     binary: {
       version: '7.0.0',
     },
@@ -400,7 +402,7 @@ export async function setupApplication(
       expressSettings: {
         'x-powered-by': false,
         'query parser': (query: any) => {
-          return parse(query, {depth: 10});
+          return parse(query, { depth: 10 });
         },
       },
     },
@@ -518,7 +520,7 @@ export async function setupApplication(
 
   const client = createRestAppClient(app);
 
-  return {app, client, mongod, originalEnv};
+  return { app, client, mongod, originalEnv };
 }
 
 export interface AppWithClient {

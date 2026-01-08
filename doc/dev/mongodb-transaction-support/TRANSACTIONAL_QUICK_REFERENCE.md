@@ -18,10 +18,28 @@
 ## Quick Import
 
 ```typescript
-import { transactional } from '../../decorators';
+import { transactional } from '../decorators';
+import { inject } from '@loopback/core';
+import { Options } from '@loopback/repository';
 ```
 
-## Basic Usage
+## Controller-Level Usage (Recommended)
+
+```typescript
+// In controllers, use @inject to receive transaction options
+@transactional()
+@post('/entities')
+async create(
+  @requestBody() data: DataObject<E>,
+  @inject('active.transaction.options', { optional: true }) options: Options = {},
+): Promise<E> {
+  const entity = await this.entityRepo.create(data, options);
+  await this.relationRepo.create(relData, options);
+  return entity;
+}
+```
+
+## Repository-Level Usage
 
 ```typescript
 @transactional()
@@ -30,9 +48,13 @@ async create(data: DataObject<E>, options?: Options): Promise<E> {
   await this.relationRepo.create(relData, options);
   return entity;
 }
-```
 
 ## ✅ DO's
+
+✅ **Inject transaction options in controllers**
+```typescript
+@inject('active.transaction.options', { optional: true }) options: Options = {}
+```
 
 ✅ **Always pass options parameter through**
 ```typescript
@@ -59,7 +81,22 @@ async create(data, options?) {
 }
 ```
 
+✅ **Pass options to services too**
+```typescript
+await this.lookupService.checkConstraints(data, options);
+await this.limitChecker.checkLimits(data, options);
+```
+
 ## ❌ DON'Ts
+
+❌ **Don't forget the `optional: true` in inject**
+```typescript
+// ✗ Will fail when no transaction context exists
+@inject('active.transaction.options') options: Options
+
+// ✓ Works with or without transaction
+@inject('active.transaction.options', { optional: true }) options: Options = {}
+```
 
 ❌ **Don't omit options parameter**
 ```typescript
@@ -162,6 +199,30 @@ async create(data, options?) {
 - Operations that don't modify data
 
 ## Common Patterns
+
+### Pattern 0: Controller with Transaction Injection
+
+```typescript
+@transactional()
+@post('/entities')
+async create(
+  @requestBody() data: Omit<GenericEntity, '_id'>,
+  @inject('active.transaction.options', { optional: true }) options: Options = {},
+): Promise<GenericEntity> {
+  // Options contains session from TransactionalInterceptor
+  return this.entityRepository.create(data, options);
+}
+
+@transactional()
+@patch('/entities')
+async updateAll(
+  @requestBody() data: DataObject<GenericEntity>,
+  @param.where(GenericEntity) where?: Where<GenericEntity>,
+  @inject('active.transaction.options', { optional: true }) options: Options = {},
+): Promise<Count> {
+  return this.entityRepository.updateAll(data, where, options);
+}
+```
 
 ### Pattern 1: Entity + Relation
 

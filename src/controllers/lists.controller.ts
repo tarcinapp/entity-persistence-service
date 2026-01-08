@@ -1,10 +1,11 @@
-import {inject} from '@loopback/context';
+import { inject } from '@loopback/context';
 import {
   Count,
   CountSchema,
   Filter,
   FilterBuilder,
   FilterExcludingWhere,
+  Options,
   repository,
   Where,
 } from '@loopback/repository';
@@ -21,20 +22,20 @@ import {
   Request,
   RestBindings,
 } from '@loopback/rest';
-import {transactional} from '../decorators';
-import {Set, SetFilterBuilder} from '../extensions';
-import {processIncludes} from '../extensions/types/sets-in-inclusions';
-import {processLookups} from '../extensions/types/sets-in-lookups';
-import {sanitizeFilterFields} from '../extensions/utils/filter-helper';
-import {List, HttpErrorResponse} from '../models';
+import { transactional } from '../decorators';
+import { Set, SetFilterBuilder } from '../extensions';
+import { processIncludes } from '../extensions/types/sets-in-inclusions';
+import { processLookups } from '../extensions/types/sets-in-lookups';
+import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
+import { List, HttpErrorResponse } from '../models';
 import {
   UNMODIFIABLE_COMMON_FIELDS,
   UnmodifiableCommonFields,
   ALWAYS_HIDDEN_FIELDS,
 } from '../models/base-types/unmodifiable-common-fields';
-import {getFilterSchemaFor} from '../openapi/filter-schemas';
-import {ListRepository} from '../repositories';
-import {LoggingService} from '../services/logging.service';
+import { getFilterSchemaFor } from '../openapi/filter-schemas';
+import { ListRepository } from '../repositories';
+import { LoggingService } from '../services/logging.service';
 
 export class ListsController {
   constructor(
@@ -44,8 +45,9 @@ export class ListsController {
     private loggingService: LoggingService,
     @inject(RestBindings.Http.REQUEST)
     private request: Request,
-  ) { }
+  ) {}
 
+  @transactional()
   @post('/lists', {
     operationId: 'createList',
     responses: {
@@ -110,8 +112,10 @@ export class ListsController {
       },
     })
     list: Omit<List, UnmodifiableCommonFields>,
+    @inject('active.transaction.options', { optional: true })
+    options: Options = {},
   ): Promise<List> {
-    return this.listRepository.create(list);
+    return this.listRepository.create(list, options);
   }
 
   @get('/lists/count', {
@@ -119,7 +123,7 @@ export class ListsController {
     responses: {
       '200': {
         description: 'List model count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
@@ -181,12 +185,13 @@ export class ListsController {
     return this.listRepository.find(filter);
   }
 
+  @transactional()
   @patch('/lists', {
     operationId: 'updateLists',
     responses: {
       '200': {
         description: 'List PATCH success count',
-        content: {'application/json': {schema: CountSchema}},
+        content: { 'application/json': { schema: CountSchema } },
       },
     },
   })
@@ -206,6 +211,8 @@ export class ListsController {
     list: Omit<List, UnmodifiableCommonFields>,
     @param.query.object('set') set?: Set,
     @param.where(List) where?: Where<List>,
+    @inject('active.transaction.options', { optional: true })
+    options: Options = {},
   ): Promise<Count> {
     const filterBuilder = new FilterBuilder<List>();
 
@@ -221,7 +228,7 @@ export class ListsController {
       }).build();
     }
 
-    return this.listRepository.updateAll(list, filter.where);
+    return this.listRepository.updateAll(list, filter.where, options);
   }
 
   @get('/lists/{id}', {
@@ -271,6 +278,7 @@ export class ListsController {
     return this.listRepository.findById(id, filter);
   }
 
+  @transactional()
   @patch('/lists/{id}', {
     operationId: 'updateListById',
     responses: {
@@ -318,10 +326,13 @@ export class ListsController {
       },
     })
     list: Omit<List, UnmodifiableCommonFields>,
+    @inject('active.transaction.options', { optional: true })
+    options: Options = {},
   ): Promise<void> {
-    await this.listRepository.updateById(id, list);
+    await this.listRepository.updateById(id, list, options);
   }
 
+  @transactional()
   @put('/lists/{id}', {
     operationId: 'replaceListById',
     responses: {
@@ -368,8 +379,10 @@ export class ListsController {
       },
     })
     list: Omit<List, UnmodifiableCommonFields>,
+    @inject('active.transaction.options', { optional: true })
+    options: Options = {},
   ): Promise<void> {
-    await this.listRepository.replaceById(id, list);
+    await this.listRepository.replaceById(id, list, options);
   }
 
   @transactional()
@@ -395,7 +408,7 @@ export class ListsController {
   })
   async deleteById(
     @param.path.string('id') id: string,
-    @inject('active.transaction.options', {optional: true})
+    @inject('active.transaction.options', { optional: true })
     options: any = {},
   ): Promise<void> {
     await this.listRepository.deleteById(id, options);
@@ -464,6 +477,7 @@ export class ListsController {
       },
     },
   })
+  @transactional()
   async createChild(
     @param.path.string('id') id: string,
     @requestBody({
@@ -481,8 +495,10 @@ export class ListsController {
       },
     })
     list: Omit<List, UnmodifiableCommonFields | '_parents'>,
+    @inject('active.transaction.options', { optional: true })
+    options: Options = {},
   ): Promise<List> {
-    return this.listRepository.createChild(id, list);
+    return this.listRepository.createChild(id, list, options);
   }
 
   @get('/lists/{id}/parents', {

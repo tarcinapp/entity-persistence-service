@@ -92,7 +92,7 @@ export class ListReactionsController {
       },
     })
     listReaction: Omit<ListReaction, UnmodifiableCommonFields>,
-    @inject('active.transaction.options', {optional: true})
+    @inject('active.transaction.options', { optional: true })
     options: any = {},
   ): Promise<ListReaction> {
     return this.listReactionsRepository.create(listReaction, options);
@@ -222,7 +222,7 @@ export class ListReactionsController {
     @param.where(ListReaction) where?: Where<ListReaction>,
     @param.query.object('listSet') listSet?: Set,
     @param.where(ListReaction) listWhere?: Where<ListReaction>,
-    @inject('active.transaction.options', {optional: true})
+    @inject('active.transaction.options', { optional: true })
     options: any = {},
   ): Promise<Count> {
     const filterBuilder = new FilterBuilder<ListReaction>();
@@ -338,7 +338,7 @@ export class ListReactionsController {
       },
     })
     listReaction: Omit<ListReaction, UnmodifiableCommonFields>,
-    @inject('active.transaction.options', {optional: true})
+    @inject('active.transaction.options', { optional: true })
     options: any = {},
   ): Promise<void> {
     await this.listReactionsRepository.updateById(id, listReaction, options);
@@ -383,7 +383,7 @@ export class ListReactionsController {
       },
     })
     listReaction: Omit<ListReaction, UnmodifiableCommonFields>,
-    @inject('active.transaction.options', {optional: true})
+    @inject('active.transaction.options', { optional: true })
     options: any = {},
   ): Promise<void> {
     await this.listReactionsRepository.replaceById(id, listReaction, options);
@@ -408,7 +408,7 @@ export class ListReactionsController {
   })
   async deleteById(
     @param.path.string('id') id: string,
-    @inject('active.transaction.options', {optional: true})
+    @inject('active.transaction.options', { optional: true })
     options: any = {},
   ): Promise<void> {
     await this.listReactionsRepository.deleteById(id, options);
@@ -591,7 +591,7 @@ export class ListReactionsController {
       },
     })
     listReaction: Omit<ListReaction, UnmodifiableCommonFields | '_parents'>,
-    @inject('active.transaction.options', {optional: true})
+    @inject('active.transaction.options', { optional: true })
     options: any = {},
   ): Promise<ListReaction> {
     return this.listReactionsRepository.createChild(id, listReaction, options);

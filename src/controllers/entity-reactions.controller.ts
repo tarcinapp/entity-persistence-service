@@ -5,6 +5,7 @@ import {
   Filter,
   FilterBuilder,
   FilterExcludingWhere,
+  Options,
   repository,
   Where,
 } from '@loopback/repository';
@@ -18,6 +19,7 @@ import {
   del,
   requestBody,
 } from '@loopback/rest';
+import { transactional } from '../decorators';
 import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
 import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
 import { EntityReaction, HttpErrorResponse } from '../models';
@@ -38,6 +40,7 @@ export class EntityReactionsController {
     private logger: LoggingService,
   ) {}
 
+  @transactional()
   @post('/entity-reactions', {
     operationId: 'createEntityReaction',
     responses: {
@@ -90,8 +93,10 @@ export class EntityReactionsController {
       },
     })
     entityReaction: Omit<EntityReaction, UnmodifiableCommonFields>,
+    @inject('active.transaction.options', { optional: true })
+    options: Options = {},
   ): Promise<EntityReaction> {
-    return this.entityReactionsRepository.create(entityReaction);
+    return this.entityReactionsRepository.create(entityReaction, options);
   }
 
   @get('/entity-reactions/count', {
@@ -192,6 +197,7 @@ export class EntityReactionsController {
     });
   }
 
+  @transactional()
   @patch('/entity-reactions', {
     operationId: 'updateEntityReactions',
     responses: {
@@ -220,6 +226,8 @@ export class EntityReactionsController {
     @param.where(EntityReaction) where?: Where<EntityReaction>,
     @param.query.object('entitySet') entitySet?: Set,
     @param.where(EntityReaction) entityWhere?: Where<EntityReaction>,
+    @inject('active.transaction.options', { optional: true })
+    options: Options = {},
   ): Promise<Count> {
     const filterBuilder = new FilterBuilder<EntityReaction>();
 
@@ -255,6 +263,7 @@ export class EntityReactionsController {
       entityReaction,
       filter.where,
       entityFilter.where,
+      options,
     );
   }
 
@@ -292,6 +301,7 @@ export class EntityReactionsController {
     return this.entityReactionsRepository.findById(id, filter);
   }
 
+  @transactional()
   @patch('/entity-reactions/{id}', {
     operationId: 'updateEntityReactionById',
     responses: {
@@ -332,10 +342,17 @@ export class EntityReactionsController {
       },
     })
     entityReaction: Omit<EntityReaction, UnmodifiableCommonFields>,
+    @inject('active.transaction.options', { optional: true })
+    options: Options = {},
   ): Promise<void> {
-    await this.entityReactionsRepository.updateById(id, entityReaction);
+    await this.entityReactionsRepository.updateById(
+      id,
+      entityReaction,
+      options,
+    );
   }
 
+  @transactional()
   @put('/entity-reactions/{id}', {
     operationId: 'replaceEntityReactionById',
     responses: {
@@ -374,10 +391,17 @@ export class EntityReactionsController {
       },
     })
     entityReaction: Omit<EntityReaction, UnmodifiableCommonFields>,
+    @inject('active.transaction.options', { optional: true })
+    options: Options = {},
   ): Promise<void> {
-    await this.entityReactionsRepository.replaceById(id, entityReaction);
+    await this.entityReactionsRepository.replaceById(
+      id,
+      entityReaction,
+      options,
+    );
   }
 
+  @transactional()
   @del('/entity-reactions/{id}', {
     operationId: 'deleteEntityReactionById',
     responses: {
@@ -394,8 +418,12 @@ export class EntityReactionsController {
       },
     },
   })
-  async deleteById(@param.path.string('id') id: string): Promise<void> {
-    await this.entityReactionsRepository.deleteById(id);
+  async deleteById(
+    @param.path.string('id') id: string,
+    @inject('active.transaction.options', { optional: true })
+    options: Options = {},
+  ): Promise<void> {
+    await this.entityReactionsRepository.deleteById(id, options);
   }
 
   @get('/entity-reactions/{id}/parents', {
@@ -563,6 +591,7 @@ export class EntityReactionsController {
       },
     },
   })
+  @transactional()
   async createChild(
     @param.path.string('id') id: string,
     @requestBody({
@@ -580,7 +609,13 @@ export class EntityReactionsController {
       },
     })
     entityReaction: Omit<EntityReaction, UnmodifiableCommonFields | '_parents'>,
+    @inject('active.transaction.options', { optional: true })
+    options: Options = {},
   ): Promise<EntityReaction> {
-    return this.entityReactionsRepository.createChild(id, entityReaction);
+    return this.entityReactionsRepository.createChild(
+      id,
+      entityReaction,
+      options,
+    );
   }
 }

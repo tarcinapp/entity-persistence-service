@@ -4,6 +4,7 @@ import {
   CountSchema,
   Filter,
   FilterBuilder,
+  Options,
   repository,
   Where,
 } from '@loopback/repository';
@@ -16,6 +17,7 @@ import {
   post,
   requestBody,
 } from '@loopback/rest';
+import { transactional } from '../decorators';
 import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
 import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
 import { ListReaction, HttpErrorResponse } from '../models';
@@ -88,6 +90,7 @@ export class ReactionsThroughListController {
     return this.reactionRepository.find(filter);
   }
 
+  @transactional()
   @post('/lists/{id}/reactions', {
     operationId: 'createReactionByListId',
     responses: {
@@ -152,13 +155,16 @@ export class ReactionsThroughListController {
       },
     })
     listReaction: Omit<ListReaction, UnmodifiableCommonFields | '_listId'>,
+    @inject('active.transaction.options', { optional: true })
+    options: Options = {},
   ): Promise<ListReaction> {
     // Set the source list ID in the repository
     this.reactionRepository.sourceListId = id;
 
-    return this.reactionRepository.create(listReaction);
+    return this.reactionRepository.create(listReaction, options);
   }
 
+  @transactional()
   @patch('/lists/{id}/reactions', {
     operationId: 'updateReactionsByListId',
     responses: {
@@ -196,6 +202,8 @@ export class ReactionsThroughListController {
     listReaction: Omit<ListReaction, UnmodifiableCommonFields | '_listId'>,
     @param.query.object('set') set?: Set,
     @param.query.object('where') where?: Where<ListReaction>,
+    @inject('active.transaction.options', { optional: true })
+    options: Options = {},
   ): Promise<Count> {
     // Set the source list ID in the repository
     this.reactionRepository.sourceListId = id;
@@ -216,9 +224,14 @@ export class ReactionsThroughListController {
 
     sanitizeFilterFields(filter);
 
-    return this.reactionRepository.updateAll(listReaction, filter.where);
+    return this.reactionRepository.updateAll(
+      listReaction,
+      filter.where,
+      options,
+    );
   }
 
+  @transactional()
   @del('/lists/{id}/reactions', {
     operationId: 'deleteReactionsByListId',
     responses: {
@@ -240,6 +253,8 @@ export class ReactionsThroughListController {
     @param.path.string('id') id: string,
     @param.query.object('set') set?: Set,
     @param.query.object('where') where?: Where<ListReaction>,
+    @inject('active.transaction.options', { optional: true })
+    options: Options = {},
   ): Promise<Count> {
     // Set the source list ID in the repository
     this.reactionRepository.sourceListId = id;
@@ -260,6 +275,6 @@ export class ReactionsThroughListController {
 
     sanitizeFilterFields(filter);
 
-    return this.reactionRepository.deleteAll(filter.where);
+    return this.reactionRepository.deleteAll(filter.where, options);
   }
 }

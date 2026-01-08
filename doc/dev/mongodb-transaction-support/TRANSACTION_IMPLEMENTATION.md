@@ -326,6 +326,67 @@
  * ## 🚀 USAGE GUIDE
  * ============================================================================
  * 
+ * ### Adding @transactional() to a Controller Method
+ * 
+ * Controllers are the recommended location for @transactional() decorators.
+ * Use `@inject('active.transaction.options', { optional: true })` to receive
+ * the transaction options from the TransactionalInterceptor.
+ * 
+ * ```typescript
+ * import { transactional } from '../decorators';
+ * import { inject } from '@loopback/core';
+ * import { Options } from '@loopback/repository';
+ * 
+ * export class EntitiesController {
+ *   constructor(
+ *     @repository(EntityRepository)
+ *     public entityRepository: EntityRepository,
+ *   ) {}
+ * 
+ *   @transactional()
+ *   @post('/entities')
+ *   async create(
+ *     @requestBody() data: Omit<GenericEntity, '_id'>,
+ *     @inject('active.transaction.options', { optional: true }) options: Options = {},
+ *   ): Promise<GenericEntity> {
+ *     return this.entityRepository.create(data, options);
+ *   }
+ * 
+ *   @transactional()
+ *   @patch('/entities')
+ *   async updateAll(
+ *     @requestBody() data: DataObject<GenericEntity>,
+ *     @param.where(GenericEntity) where?: Where<GenericEntity>,
+ *     @inject('active.transaction.options', { optional: true }) options: Options = {},
+ *   ): Promise<Count> {
+ *     return this.entityRepository.updateAll(data, where, options);
+ *   }
+ * 
+ *   @transactional()
+ *   @del('/entities/{id}')
+ *   async deleteById(
+ *     @param.path.string('id') id: string,
+ *     @inject('active.transaction.options', { optional: true }) options: Options = {},
+ *   ): Promise<void> {
+ *     return this.entityRepository.deleteById(id, options);
+ *   }
+ * }
+ * ```
+ * 
+ * #### Key Points for Controller-Level Transactions:
+ * 
+ * 1. **optional: true**: The inject decorator MUST have `{ optional: true }` 
+ *    to allow the method to work when no transaction is active
+ * 
+ * 2. **Default value**: Provide `options: Options = {}` as default to ensure
+ *    the options object is never undefined
+ * 
+ * 3. **Pass to repository**: Always pass `options` to ALL repository calls
+ *    to propagate the session
+ * 
+ * 4. **Pass to services**: Also pass `options` to service methods that 
+ *    interact with the database
+ * 
  * ### Adding @transactional() to a Custom Repository
  * 
  * ```typescript
@@ -454,10 +515,28 @@
  * - src/decorators/transactional.decorator.ts (79 lines)
  * - src/decorators/index.ts
  * 
- * **Modified:**
- * - src/application.ts (added interceptors boot config)
+ * **Modified (Controllers - Added @transactional() and Options injection):**
+ * - src/controllers/entities.controller.ts
+ * - src/controllers/lists.controller.ts
+ * - src/controllers/entity-reactions.controller.ts
+ * - src/controllers/list-reactions.controller.ts
+ * - src/controllers/list-entity-relations.controller.ts
+ * - src/controllers/entities-through-list.controller.ts
+ * - src/controllers/reactions-through-entity.controller.ts
+ * - src/controllers/reactions-through-list.controller.ts
+ * 
+ * **Modified (Repositories):**
  * - src/repositories/core/list-entity-relation.repository.ts (async/await refactor)
  * - src/repositories/custom/custom-entity-through-list.repository.ts (@transactional decorator)
+ * 
+ * **Modified (Infrastructure):**
+ * - src/application.ts (added interceptors boot config)
+ * 
+ * **Controller Transaction Pattern:**
+ * All write operations (POST, PATCH, PUT, DELETE) in controllers now:
+ * 1. Have @transactional() decorator
+ * 2. Inject options via @inject('active.transaction.options', { optional: true })
+ * 3. Pass options to all repository and service calls
  * 
  * **Total Lines of Code**: ~250 lines (excluding comments and docs)
  * **Test Coverage**: 100% - All existing tests pass

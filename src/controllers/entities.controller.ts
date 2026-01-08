@@ -96,6 +96,7 @@ export class EntitiesController {
       },
     },
   })
+  @transactional()
   async create(
     @requestBody({
       content: {
@@ -109,8 +110,10 @@ export class EntitiesController {
       },
     })
     entity: Omit<GenericEntity, UnmodifiableCommonFields>,
+    @inject('active.transaction.options', { optional: true })
+    options: Options = {},
   ): Promise<GenericEntity> {
-    return this.entityRepository.create(entity);
+    return this.entityRepository.create(entity, options);
   }
 
   @get('/entities/count', {
@@ -182,6 +185,7 @@ export class EntitiesController {
     return this.entityRepository.find(filter);
   }
 
+  @transactional()
   @patch('/entities', {
     operationId: 'updateEntities',
     responses: {
@@ -207,6 +211,8 @@ export class EntitiesController {
     entity: Omit<GenericEntity, UnmodifiableCommonFields>,
     @param.query.object('set') set?: Set,
     @param.where(GenericEntity) where?: Where<GenericEntity>,
+    @inject('active.transaction.options', { optional: true })
+    options: Options = {},
   ): Promise<Count> {
     const filterBuilder = new FilterBuilder<GenericEntity>();
 
@@ -224,7 +230,7 @@ export class EntitiesController {
 
     sanitizeFilterFields(filter);
 
-    return this.entityRepository.updateAll(entity, filter.where);
+    return this.entityRepository.updateAll(entity, filter.where, options);
   }
 
   @get('/entities/{id}', {
@@ -321,6 +327,7 @@ export class EntitiesController {
     await this.entityRepository.updateById(id, entity, options);
   }
 
+  @transactional()
   @put('/entities/{id}', {
     operationId: 'replaceEntityById',
     responses: {
@@ -367,8 +374,10 @@ export class EntitiesController {
       },
     })
     entity: Omit<GenericEntity, UnmodifiableCommonFields>,
+    @inject('active.transaction.options', { optional: true })
+    options: Options = {},
   ): Promise<void> {
-    await this.entityRepository.replaceById(id, entity);
+    await this.entityRepository.replaceById(id, entity, options);
   }
 
   @transactional()
@@ -563,6 +572,7 @@ export class EntitiesController {
       },
     },
   })
+  @transactional()
   async createChild(
     @param.path.string('id') id: string,
     @requestBody({
@@ -580,7 +590,9 @@ export class EntitiesController {
       },
     })
     entity: Omit<GenericEntity, UnmodifiableCommonFields | '_parents'>,
+    @inject('active.transaction.options', { optional: true })
+    options: Options = {},
   ): Promise<GenericEntity> {
-    return this.entityRepository.createChild(id, entity);
+    return this.entityRepository.createChild(id, entity, options);
   }
 }

@@ -5,6 +5,7 @@ import {
   Filter,
   FilterBuilder,
   FilterExcludingWhere,
+  Options,
   repository,
   Where,
 } from '@loopback/repository';
@@ -21,6 +22,7 @@ import {
   Request,
   RestBindings,
 } from '@loopback/rest';
+import { transactional } from '../decorators';
 import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
 import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
 import { ListToEntityRelation, HttpErrorResponse } from '../models';
@@ -43,6 +45,7 @@ export class ListEntityRelsController {
     private req: Request,
   ) {}
 
+  @transactional()
   @post('/relations', {
     operationId: 'createRelation',
     responses: {
@@ -120,8 +123,13 @@ export class ListEntityRelsController {
       },
     })
     listEntityRelation: Omit<ListToEntityRelation, UnmodifiableCommonFields>,
+    @inject('active.transaction.options', { optional: true })
+    options: Options = {},
   ): Promise<ListToEntityRelation> {
-    return this.listEntityRelationRepository.create(listEntityRelation);
+    return this.listEntityRelationRepository.create(
+      listEntityRelation,
+      options,
+    );
   }
 
   @get('/relations/count', {
@@ -261,6 +269,7 @@ export class ListEntityRelsController {
     );
   }
 
+  @transactional()
   @patch('/relations', {
     operationId: 'updateRelations',
     responses: {
@@ -287,6 +296,8 @@ export class ListEntityRelsController {
     @param.query.object('set') set?: Set,
     @param.where(ListToEntityRelation)
     where?: Where<ListToEntityRelation>,
+    @inject('active.transaction.options', { optional: true })
+    options: Options = {},
   ): Promise<Count> {
     const filterBuilder = new FilterBuilder<ListToEntityRelation>();
 
@@ -305,6 +316,7 @@ export class ListEntityRelsController {
     return this.listEntityRelationRepository.updateAll(
       listEntityRelation,
       filter.where,
+      options,
     );
   }
 
@@ -346,6 +358,7 @@ export class ListEntityRelsController {
     return this.listEntityRelationRepository.findById(id, filter);
   }
 
+  @transactional()
   @patch('/relations/{id}', {
     operationId: 'updateRelationById',
     responses: {
@@ -394,10 +407,17 @@ export class ListEntityRelsController {
       },
     })
     listEntityRelation: Omit<ListToEntityRelation, UnmodifiableCommonFields>,
+    @inject('active.transaction.options', { optional: true })
+    options: Options = {},
   ): Promise<void> {
-    await this.listEntityRelationRepository.updateById(id, listEntityRelation);
+    await this.listEntityRelationRepository.updateById(
+      id,
+      listEntityRelation,
+      options,
+    );
   }
 
+  @transactional()
   @put('/relations/{id}', {
     operationId: 'replaceRelationById',
     responses: {
@@ -445,10 +465,17 @@ export class ListEntityRelsController {
       },
     })
     listEntityRelation: Omit<ListToEntityRelation, UnmodifiableCommonFields>,
+    @inject('active.transaction.options', { optional: true })
+    options: Options = {},
   ): Promise<void> {
-    await this.listEntityRelationRepository.replaceById(id, listEntityRelation);
+    await this.listEntityRelationRepository.replaceById(
+      id,
+      listEntityRelation,
+      options,
+    );
   }
 
+  @transactional()
   @del('/relations/{id}', {
     operationId: 'deleteRelationById',
     responses: {
@@ -469,7 +496,11 @@ export class ListEntityRelsController {
       },
     },
   })
-  async deleteById(@param.path.string('id') id: string): Promise<void> {
-    await this.listEntityRelationRepository.deleteById(id);
+  async deleteById(
+    @param.path.string('id') id: string,
+    @inject('active.transaction.options', { optional: true })
+    options: Options = {},
+  ): Promise<void> {
+    await this.listEntityRelationRepository.deleteById(id, options);
   }
 }
