@@ -72,7 +72,7 @@ describe('ListsController', () => {
       // Assert
       expect(result).to.eql(expectedList);
       sinon.assert.calledOnce(repository.create);
-      sinon.assert.calledWithExactly(repository.create, inputList);
+      sinon.assert.calledWithExactly(repository.create, inputList, {});
     });
 
     it('should throw 409 when list name already exists', async () => {
@@ -270,7 +270,7 @@ describe('ListsController', () => {
 
       // Assert
       sinon.assert.calledOnce(repository.updateById);
-      sinon.assert.calledWithExactly(repository.updateById, id, updateData);
+      sinon.assert.calledWithExactly(repository.updateById, id, updateData, {});
     });
 
     it('should throw 404 when list not found', async () => {
@@ -417,7 +417,7 @@ describe('ListsController', () => {
 
       await controller.replaceById(id, replaceData);
       sinon.assert.calledOnce(repository.replaceById);
-      sinon.assert.calledWithExactly(repository.replaceById, id, replaceData);
+      sinon.assert.calledWithExactly(repository.replaceById, id, replaceData, {});
     });
 
     it('should throw 404 when list to replace not found', async () => {

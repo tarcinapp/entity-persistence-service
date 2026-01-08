@@ -85,7 +85,7 @@ describe('EntitiesController', () => {
       // Assert
       expect(result).to.eql(expectedEntity);
       sinon.assert.calledOnce(repository.create);
-      sinon.assert.calledWithExactly(repository.create, inputEntity);
+      sinon.assert.calledWithExactly(repository.create, inputEntity, {});
     });
 
     it('should throw 409 when entity name already exists', async () => {
@@ -440,7 +440,7 @@ describe('EntitiesController', () => {
 
       await controller.replaceById(id, replaceData);
       sinon.assert.calledOnce(repository.replaceById);
-      sinon.assert.calledWithExactly(repository.replaceById, id, replaceData);
+      sinon.assert.calledWithExactly(repository.replaceById, id, replaceData, {});
     });
 
     it('should throw 404 when entity to replace not found', async () => {
@@ -644,6 +644,7 @@ describe('EntitiesController', () => {
         repository.createChild,
         parentId,
         childData,
+        {}
       );
     });
 
