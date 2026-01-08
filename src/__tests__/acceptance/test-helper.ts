@@ -541,19 +541,26 @@ export async function teardownApplication(appWithClient: AppWithClient) {
   });
 
   if (appWithClient.app) {
-    // Stop the application and disconnect all datasources
-    await appWithClient.app.stop();
+    // Disconnect all datasources BEFORE stopping the app
+    // This ensures MongoDB connections are properly closed
     for (const ds of appWithClient.app.find('datasources.*')) {
-      const dataSource = appWithClient.app.getSync<DataSource>(ds.key);
-      if (dataSource.disconnect) {
-        await dataSource.disconnect();
+      try {
+        const dataSource = appWithClient.app.getSync<DataSource>(ds.key);
+        if (dataSource.disconnect) {
+          await dataSource.disconnect();
+        }
+      } catch (err) {
+        // Ignore errors during disconnect - datasource may already be closed
       }
     }
+
+    // Now stop the application
+    await appWithClient.app.stop();
   }
 
   if (appWithClient.mongod) {
-    // Ensure MongoDB memory server is properly stopped
-    await appWithClient.mongod.stop();
+    // Force stop MongoDB memory server to ensure it doesn't hang
+    await appWithClient.mongod.stop({ doCleanup: true, force: true });
   }
 }
 

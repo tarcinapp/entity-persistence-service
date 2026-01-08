@@ -12,31 +12,19 @@ describe('POST /list-reactions', () => {
   let client: Client;
   let appWithClient: AppWithClient | undefined;
 
-  beforeEach(async () => {
+  afterEach(async function () {
+    // Increase timeout for teardown operations
+    this.timeout(30000);
+
     if (appWithClient) {
       await teardownApplication(appWithClient);
+      appWithClient = undefined;
     }
 
-    appWithClient = undefined;
+    // Clear env vars after teardown
     Object.keys(process.env).forEach((key) => {
       delete process.env[key];
     });
-  });
-
-  afterEach(async () => {
-    if (appWithClient) {
-      await teardownApplication(appWithClient);
-    }
-
-    appWithClient = undefined;
-  });
-
-  after(async () => {
-    if (appWithClient) {
-      await teardownApplication(appWithClient);
-    }
-
-    appWithClient = undefined;
   });
 
   it('creates a new list reaction with default kind', async () => {

@@ -27,8 +27,10 @@
   ],
   "mochaExplorer.files": "src/__tests__/**/*.test.ts",
   "mochaExplorer.require": [
-    "ts-node/register",
+    "ts-node/register"
   ],
+  "mochaExplorer.exit": true,
+  "mochaExplorer.timeout": 60000,
   "mochaExplorer.nodePath": "/home/kdrkrst/.nvm/versions/node/v24.8.0/bin/node",
   "typescript.tsserver.experimental.enableProjectDiagnostics": true,
   "terminal.integrated.defaultProfile.linux": "bash",
