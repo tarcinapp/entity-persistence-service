@@ -181,7 +181,10 @@ export class ListEntityRelationRepository extends EntityPersistenceBaseRepositor
       this.loggingService.debug(
         `Filters: ${JSON.stringify({ filter, entityFilter, listFilter }, null, 2)}\nPipeline: ${JSON.stringify(pipeline, null, 2)}`,
       );
-      const cursor = relationCollection.aggregate(pipeline, options);
+      const cursor = relationCollection.aggregate(pipeline, {
+        session: options?.session,
+        ...options,
+      });
       const result = await cursor.toArray();
 
       return this.injectRecordTypeArray(
@@ -194,14 +197,53 @@ export class ListEntityRelationRepository extends EntityPersistenceBaseRepositor
 
   async count(
     where?: Where<ListToEntityRelation>,
-    listWhere?: Where<List>,
-    entityWhere?: Where<Entity>,
-    _options?: Options,
+    listWhereOrOptions?: Where<List> | Options,
+    entityWhereOrOptions?: Where<Entity> | Options,
+    options?: Options,
   ): Promise<Count> {
+    let actualListWhere: Where<List> | undefined;
+    let actualEntityWhere: Where<Entity> | undefined;
+    let actualOptions: Options | undefined;
+
+    /**
+     * POLYMORPHIC PARAMETER SHIFTING
+     * Detect if parameters are shifted when options is passed in unexpected position.
+     * Possible call patterns:
+     * 1. count(where, options) - 2nd param is options
+     * 2. count(where, listWhere, options) - 3rd param is options
+     * 3. count(where, listWhere, entityWhere, options) - standard 4 params
+     */
+    if (
+      listWhereOrOptions &&
+      (typeof (listWhereOrOptions as any).session === 'object' ||
+        (listWhereOrOptions as any).transaction)
+    ) {
+      // 2nd parameter is 'options' - no filters provided
+      actualOptions = listWhereOrOptions as Options;
+      actualListWhere = undefined;
+      actualEntityWhere = undefined;
+    } else if (
+      entityWhereOrOptions &&
+      (typeof (entityWhereOrOptions as any).session === 'object' ||
+        (entityWhereOrOptions as any).transaction)
+    ) {
+      // 3rd parameter is 'options' - only listWhere provided
+      actualListWhere = listWhereOrOptions as Where<List>;
+      actualOptions = entityWhereOrOptions as Options;
+      actualEntityWhere = undefined;
+    } else {
+      // Standard 4-parameter call
+      actualListWhere = listWhereOrOptions as Where<List>;
+      actualEntityWhere = entityWhereOrOptions as Where<Entity>;
+      actualOptions = options;
+    }
+
     // Convert where to filter for pipeline generation
     const filter = where ? { where } : undefined;
-    const listFilter = listWhere ? { where: listWhere } : undefined;
-    const entityFilter = entityWhere ? { where: entityWhere } : undefined;
+    const listFilter = actualListWhere ? { where: actualListWhere } : undefined;
+    const entityFilter = actualEntityWhere
+      ? { where: actualEntityWhere }
+      : undefined;
 
     // Get collection names from configuration
     const listCollectionName =
@@ -233,11 +275,14 @@ export class ListEntityRelationRepository extends EntityPersistenceBaseRepositor
       // Add a $count stage at the end of the pipeline
       pipeline.push({ $count: 'count' });
 
-      // Use the native MongoDB driver's aggregate method
+      // Use the native MongoDB driver's aggregate method with transaction session
       this.loggingService.debug(
         `Count Filters: ${JSON.stringify({ filter, entityFilter, listFilter }, null, 2)}\nPipeline: ${JSON.stringify(pipeline, null, 2)}`,
       );
-      const cursor = relationCollection.aggregate(pipeline);
+      const cursor = relationCollection.aggregate(pipeline, {
+        session: actualOptions?.session,
+        ...actualOptions,
+      });
       const result = await cursor.toArray();
 
       // Return count object

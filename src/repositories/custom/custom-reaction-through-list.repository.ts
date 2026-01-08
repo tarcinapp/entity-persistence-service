@@ -74,8 +74,8 @@ export class CustomReactionThroughListRepository extends EntityPersistenceBaseRe
       _listId: this.sourceListId,
     };
 
-    // For custom repository, we don't use listWhere since we're already scoped to a specific list
-    return listReactionsRepo.updateAll(data, updatedWhere, undefined);
+    // Pass options for transaction support
+    return listReactionsRepo.updateAll(data, updatedWhere, options);
   }
 
   async deleteAll(
@@ -90,7 +90,7 @@ export class CustomReactionThroughListRepository extends EntityPersistenceBaseRe
       _listId: this.sourceListId,
     };
 
-    // For custom repository, we don't use listWhere since we're already scoped to a specific list
-    return listReactionsRepo.deleteAll(updatedWhere);
+    // Pass options for transaction support
+    return listReactionsRepo.deleteAll(updatedWhere, options);
   }
 }

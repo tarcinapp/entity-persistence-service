@@ -301,15 +301,40 @@ export abstract class EntityPersistenceReactionRepository<
 
   /**
    * Count reactions with optional source filter using MongoDB pipeline.
+   * Handles polymorphic parameter shifting when LoopBack passes options in unexpected position.
    */
   async count(
     where?: Where<E>,
-    sourceWhere?: Where<E>,
+    sourceWhereOrOptions?: Where<E> | Options,
     options?: Options,
   ): Promise<Count> {
+    let actualSourceWhere: Where<E> | undefined;
+    let actualOptions: Options | undefined;
+
+    /**
+     * POLYMORPHIC PARAMETER SHIFTING
+     * Detect if the 2nd parameter is 'sourceWhere' or 'options'.
+     * LoopBack's internal calls may pass: count(where, options) instead of count(where, sourceWhere, options)
+     */
+    if (
+      sourceWhereOrOptions &&
+      (typeof (sourceWhereOrOptions as any).session === 'object' ||
+        (sourceWhereOrOptions as any).transaction)
+    ) {
+      // 2nd parameter is actually 'options' - shift parameters
+      actualOptions = sourceWhereOrOptions as Options;
+      actualSourceWhere = undefined;
+    } else {
+      // Standard call with 3 parameters
+      actualSourceWhere = sourceWhereOrOptions as Where<E>;
+      actualOptions = options;
+    }
+
     try {
       const filter = where ? { where } : undefined;
-      const sourceFilter = sourceWhere ? { where: sourceWhere } : undefined;
+      const sourceFilter = actualSourceWhere
+        ? { where: actualSourceWhere }
+        : undefined;
 
       const sourceCollectionName = this.getSourceCollectionName();
 
@@ -330,7 +355,11 @@ export abstract class EntityPersistenceReactionRepository<
         throw new Error('Collection not found');
       }
 
-      const cursor = collection.aggregate(pipeline, options);
+      // Pass options with session to aggregate for transaction support
+      const cursor = collection.aggregate(pipeline, {
+        session: actualOptions?.session,
+        ...actualOptions,
+      });
       const result = await cursor.toArray();
 
       return { count: result.length > 0 ? result[0].count : 0 };
