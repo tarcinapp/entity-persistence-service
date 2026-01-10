@@ -8,3 +8,4 @@ export * from './lists.controller';
 export * from './ping.controller';
 export * from './entity-reactions.controller';
 export * from './list-reactions.controller';
+export * from './system-info.controller';
