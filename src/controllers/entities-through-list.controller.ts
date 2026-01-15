@@ -114,7 +114,7 @@ export class EntitiesThroughListController {
         content: {
           'application/json': {
             schema: getModelSchemaRef(GenericEntity, {
-              exclude: ALWAYS_HIDDEN_FIELDS as (keyof GenericEntity)[],
+              exclude: [...ALWAYS_HIDDEN_FIELDS, '_relationMetadata'] as (keyof GenericEntity)[],
             }),
           },
         },

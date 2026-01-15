@@ -10,6 +10,7 @@ export const UNMODIFIABLE_COMMON_FIELDS = Object.freeze([
   '_fromMetadata',
   '_toMetadata',
   '_relationMetadata',
+  '_reactions',
   '_version',
   '_idempotencyKey',
 ]) as ReadonlyArray<string>;

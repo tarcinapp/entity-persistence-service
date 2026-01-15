@@ -48,10 +48,7 @@ export class ReactionsThroughEntityController {
               type: 'array',
               items: getModelSchemaRef(EntityReaction, {
                 includeRelations: true,
-                exclude: [
-                  '_relationMetadata',
-                  ...(ALWAYS_HIDDEN_FIELDS as (keyof EntityReaction)[]),
-                ],
+                exclude: ALWAYS_HIDDEN_FIELDS as (keyof EntityReaction)[],
               }),
             },
           },
@@ -99,7 +96,7 @@ export class ReactionsThroughEntityController {
         content: {
           'application/json': {
             schema: getModelSchemaRef(EntityReaction, {
-              exclude: ALWAYS_HIDDEN_FIELDS as (keyof EntityReaction)[],
+              exclude: [...ALWAYS_HIDDEN_FIELDS, '_relationMetadata'] as (keyof EntityReaction)[],
             }),
           },
         },

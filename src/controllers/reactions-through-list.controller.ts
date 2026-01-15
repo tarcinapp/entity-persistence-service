@@ -48,10 +48,7 @@ export class ReactionsThroughListController {
               type: 'array',
               items: getModelSchemaRef(ListReaction, {
                 includeRelations: true,
-                exclude: [
-                  '_relationMetadata',
-                  ...(ALWAYS_HIDDEN_FIELDS as (keyof ListReaction)[]),
-                ],
+                exclude: ALWAYS_HIDDEN_FIELDS as (keyof ListReaction)[],
               }),
             },
           },
@@ -99,7 +96,7 @@ export class ReactionsThroughListController {
         content: {
           'application/json': {
             schema: getModelSchemaRef(ListReaction, {
-              exclude: ALWAYS_HIDDEN_FIELDS as (keyof ListReaction)[],
+              exclude: [...ALWAYS_HIDDEN_FIELDS, '_relationMetadata'] as (keyof ListReaction)[],
             }),
           },
         },

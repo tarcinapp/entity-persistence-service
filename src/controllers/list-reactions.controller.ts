@@ -48,7 +48,7 @@ export class ListReactionsController {
         content: {
           'application/json': {
             schema: getModelSchemaRef(ListReaction, {
-              exclude: ALWAYS_HIDDEN_FIELDS as (keyof ListReaction)[],
+              exclude: [...ALWAYS_HIDDEN_FIELDS, '_relationMetadata'] as (keyof ListReaction)[],
             }),
           },
         },
@@ -157,7 +157,7 @@ export class ListReactionsController {
               type: 'array',
               items: getModelSchemaRef(ListReaction, {
                 includeRelations: true,
-                exclude: ALWAYS_HIDDEN_FIELDS as (keyof ListReaction)[],
+                exclude: [...ALWAYS_HIDDEN_FIELDS, '_relationMetadata'] as (keyof ListReaction)[],
               }),
             },
           },
@@ -272,7 +272,7 @@ export class ListReactionsController {
           'application/json': {
             schema: getModelSchemaRef(ListReaction, {
               includeRelations: true,
-              exclude: ALWAYS_HIDDEN_FIELDS as (keyof ListReaction)[],
+              exclude: [...ALWAYS_HIDDEN_FIELDS, '_relationMetadata'] as (keyof ListReaction)[],
             }),
           },
         },
@@ -425,7 +425,7 @@ export class ListReactionsController {
               type: 'array',
               items: getModelSchemaRef(ListReaction, {
                 includeRelations: true,
-                exclude: ALWAYS_HIDDEN_FIELDS as (keyof ListReaction)[],
+                exclude: [...ALWAYS_HIDDEN_FIELDS, '_relationMetadata'] as (keyof ListReaction)[],
               }),
             },
           },
@@ -481,7 +481,7 @@ export class ListReactionsController {
               type: 'array',
               items: getModelSchemaRef(ListReaction, {
                 includeRelations: true,
-                exclude: ALWAYS_HIDDEN_FIELDS as (keyof ListReaction)[],
+                exclude: [...ALWAYS_HIDDEN_FIELDS, '_relationMetadata'] as (keyof ListReaction)[],
               }),
             },
           },
@@ -535,7 +535,7 @@ export class ListReactionsController {
         content: {
           'application/json': {
             schema: getModelSchemaRef(ListReaction, {
-              exclude: ALWAYS_HIDDEN_FIELDS as (keyof ListReaction)[],
+              exclude: [...ALWAYS_HIDDEN_FIELDS, '_relationMetadata'] as (keyof ListReaction)[],
             }),
           },
         },

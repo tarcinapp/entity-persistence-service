@@ -49,7 +49,7 @@ export class EntityReactionsController {
         content: {
           'application/json': {
             schema: getModelSchemaRef(EntityReaction, {
-              exclude: ALWAYS_HIDDEN_FIELDS as (keyof EntityReaction)[],
+              exclude: [...ALWAYS_HIDDEN_FIELDS, '_relationMetadata'] as (keyof EntityReaction)[],
             }),
           },
         },
@@ -161,7 +161,7 @@ export class EntityReactionsController {
               type: 'array',
               items: getModelSchemaRef(EntityReaction, {
                 includeRelations: true,
-                exclude: ALWAYS_HIDDEN_FIELDS as (keyof EntityReaction)[],
+                exclude: [...ALWAYS_HIDDEN_FIELDS, '_relationMetadata'] as (keyof EntityReaction)[],
               }),
             },
           },
@@ -276,7 +276,7 @@ export class EntityReactionsController {
           'application/json': {
             schema: getModelSchemaRef(EntityReaction, {
               includeRelations: true,
-              exclude: ALWAYS_HIDDEN_FIELDS as (keyof EntityReaction)[],
+              exclude: [...ALWAYS_HIDDEN_FIELDS, '_relationMetadata'] as (keyof EntityReaction)[],
             }),
           },
         },
@@ -437,7 +437,7 @@ export class EntityReactionsController {
               type: 'array',
               items: getModelSchemaRef(EntityReaction, {
                 includeRelations: true,
-                exclude: ALWAYS_HIDDEN_FIELDS as (keyof EntityReaction)[],
+                exclude: [...ALWAYS_HIDDEN_FIELDS, '_relationMetadata'] as (keyof EntityReaction)[],
               }),
             },
           },
@@ -496,7 +496,7 @@ export class EntityReactionsController {
               type: 'array',
               items: getModelSchemaRef(EntityReaction, {
                 includeRelations: true,
-                exclude: ALWAYS_HIDDEN_FIELDS as (keyof EntityReaction)[],
+                exclude: [...ALWAYS_HIDDEN_FIELDS, '_relationMetadata'] as (keyof EntityReaction)[],
               }),
             },
           },
@@ -552,7 +552,7 @@ export class EntityReactionsController {
         content: {
           'application/json': {
             schema: getModelSchemaRef(EntityReaction, {
-              exclude: ALWAYS_HIDDEN_FIELDS as (keyof EntityReaction)[],
+              exclude: [...ALWAYS_HIDDEN_FIELDS, '_relationMetadata'] as (keyof EntityReaction)[],
             }),
           },
         },
