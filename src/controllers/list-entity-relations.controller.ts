@@ -27,8 +27,10 @@ import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
 import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
 import { ListToEntityRelation, HttpErrorResponse } from '../models';
 import {
-  UNMODIFIABLE_COMMON_FIELDS,
-  UnmodifiableCommonFields,
+  STRICTLY_INTERNAL_FIELDS,
+  UPDATE_EXCLUDED_FIELDS,
+  StrictlyInternalFields,
+  UpdateExcludedFields,
   ALWAYS_HIDDEN_FIELDS,
 } from '../models/base-types/unmodifiable-common-fields';
 import { getFilterSchemaFor } from '../openapi/filter-schemas';
@@ -116,13 +118,13 @@ export class ListEntityRelsController {
           schema: getModelSchemaRef(ListToEntityRelation, {
             title: 'NewListEntityRelation',
             exclude:
-              UNMODIFIABLE_COMMON_FIELDS as (keyof ListToEntityRelation)[],
+              STRICTLY_INTERNAL_FIELDS as (keyof ListToEntityRelation)[],
             includeRelations: false,
           }),
         },
       },
     })
-    listEntityRelation: Omit<ListToEntityRelation, UnmodifiableCommonFields>,
+    listEntityRelation: Omit<ListToEntityRelation, StrictlyInternalFields>,
     @inject('active.transaction.options', { optional: true })
     options: Options = {},
   ): Promise<ListToEntityRelation> {
@@ -285,14 +287,14 @@ export class ListEntityRelsController {
         'application/json': {
           schema: getModelSchemaRef(ListToEntityRelation, {
             exclude:
-              UNMODIFIABLE_COMMON_FIELDS as (keyof ListToEntityRelation)[],
+              UPDATE_EXCLUDED_FIELDS as (keyof ListToEntityRelation)[],
             includeRelations: false,
             partial: true,
           }),
         },
       },
     })
-    listEntityRelation: Omit<ListToEntityRelation, UnmodifiableCommonFields>,
+    listEntityRelation: Omit<ListToEntityRelation, UpdateExcludedFields>,
     @param.query.object('set') set?: Set,
     @param.where(ListToEntityRelation)
     where?: Where<ListToEntityRelation>,
@@ -399,14 +401,14 @@ export class ListEntityRelsController {
           schema: getModelSchemaRef(ListToEntityRelation, {
             title: 'PatchListEntityRelation',
             exclude:
-              UNMODIFIABLE_COMMON_FIELDS as (keyof ListToEntityRelation)[],
+              UPDATE_EXCLUDED_FIELDS as (keyof ListToEntityRelation)[],
             includeRelations: false,
             partial: true,
           }),
         },
       },
     })
-    listEntityRelation: Omit<ListToEntityRelation, UnmodifiableCommonFields>,
+    listEntityRelation: Omit<ListToEntityRelation, UpdateExcludedFields>,
     @inject('active.transaction.options', { optional: true })
     options: Options = {},
   ): Promise<void> {
@@ -458,13 +460,13 @@ export class ListEntityRelsController {
           schema: getModelSchemaRef(ListToEntityRelation, {
             title: 'ReplaceListEntityRelation',
             exclude:
-              UNMODIFIABLE_COMMON_FIELDS as (keyof ListToEntityRelation)[],
+              UPDATE_EXCLUDED_FIELDS as (keyof ListToEntityRelation)[],
             includeRelations: false,
           }),
         },
       },
     })
-    listEntityRelation: Omit<ListToEntityRelation, UnmodifiableCommonFields>,
+    listEntityRelation: Omit<ListToEntityRelation, UpdateExcludedFields>,
     @inject('active.transaction.options', { optional: true })
     options: Options = {},
   ): Promise<void> {

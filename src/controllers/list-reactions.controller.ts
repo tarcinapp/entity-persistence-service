@@ -23,8 +23,10 @@ import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
 import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
 import { ListReaction, HttpErrorResponse } from '../models';
 import {
-  UNMODIFIABLE_COMMON_FIELDS,
-  UnmodifiableCommonFields,
+  STRICTLY_INTERNAL_FIELDS,
+  UPDATE_EXCLUDED_FIELDS,
+  StrictlyInternalFields,
+  UpdateExcludedFields,
   ALWAYS_HIDDEN_FIELDS,
 } from '../models/base-types/unmodifiable-common-fields';
 import { getFilterSchemaFor } from '../openapi/filter-schemas';
@@ -85,13 +87,13 @@ export class ListReactionsController {
         'application/json': {
           schema: getModelSchemaRef(ListReaction, {
             title: 'NewListReaction',
-            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof ListReaction)[],
+            exclude: STRICTLY_INTERNAL_FIELDS as (keyof ListReaction)[],
             includeRelations: false,
           }),
         },
       },
     })
-    listReaction: Omit<ListReaction, UnmodifiableCommonFields>,
+    listReaction: Omit<ListReaction, StrictlyInternalFields>,
     @inject('active.transaction.options', { optional: true })
     options: any = {},
   ): Promise<ListReaction> {
@@ -210,14 +212,14 @@ export class ListReactionsController {
           schema: getModelSchemaRef(ListReaction, {
             title: 'PartialListReaction',
             partial: true,
-            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof ListReaction)[],
+            exclude: UPDATE_EXCLUDED_FIELDS as (keyof ListReaction)[],
             includeRelations: false,
             optional: ['_listId'],
           }),
         },
       },
     })
-    listReaction: Omit<ListReaction, UnmodifiableCommonFields>,
+    listReaction: Omit<ListReaction, UpdateExcludedFields>,
     @param.query.object('set') set?: Set,
     @param.where(ListReaction) where?: Where<ListReaction>,
     @param.query.object('listSet') listSet?: Set,
@@ -330,14 +332,14 @@ export class ListReactionsController {
           schema: getModelSchemaRef(ListReaction, {
             title: 'PartialListReaction',
             partial: true,
-            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof ListReaction)[],
+            exclude: UPDATE_EXCLUDED_FIELDS as (keyof ListReaction)[],
             includeRelations: false,
             optional: ['_listId'],
           }),
         },
       },
     })
-    listReaction: Omit<ListReaction, UnmodifiableCommonFields>,
+    listReaction: Omit<ListReaction, UpdateExcludedFields>,
     @inject('active.transaction.options', { optional: true })
     options: any = {},
   ): Promise<void> {
@@ -376,13 +378,13 @@ export class ListReactionsController {
         'application/json': {
           schema: getModelSchemaRef(ListReaction, {
             title: 'ReplaceListReaction',
-            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof ListReaction)[],
+            exclude: UPDATE_EXCLUDED_FIELDS as (keyof ListReaction)[],
             includeRelations: false,
           }),
         },
       },
     })
-    listReaction: Omit<ListReaction, UnmodifiableCommonFields>,
+    listReaction: Omit<ListReaction, UpdateExcludedFields>,
     @inject('active.transaction.options', { optional: true })
     options: any = {},
   ): Promise<void> {
@@ -582,7 +584,7 @@ export class ListReactionsController {
           schema: getModelSchemaRef(ListReaction, {
             title: 'NewChildListReaction',
             exclude: [
-              ...UNMODIFIABLE_COMMON_FIELDS,
+              ...STRICTLY_INTERNAL_FIELDS,
               '_parents',
             ] as (keyof ListReaction)[],
             includeRelations: false,
@@ -590,7 +592,7 @@ export class ListReactionsController {
         },
       },
     })
-    listReaction: Omit<ListReaction, UnmodifiableCommonFields | '_parents'>,
+    listReaction: Omit<ListReaction, StrictlyInternalFields | '_parents'>,
     @inject('active.transaction.options', { optional: true })
     options: any = {},
   ): Promise<ListReaction> {

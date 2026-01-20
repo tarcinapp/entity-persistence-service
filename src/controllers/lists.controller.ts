@@ -29,8 +29,10 @@ import { processLookups } from '../extensions/types/sets-in-lookups';
 import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
 import { List, HttpErrorResponse } from '../models';
 import {
-  UNMODIFIABLE_COMMON_FIELDS,
-  UnmodifiableCommonFields,
+  STRICTLY_INTERNAL_FIELDS,
+  UPDATE_EXCLUDED_FIELDS,
+  StrictlyInternalFields,
+  UpdateExcludedFields,
   ALWAYS_HIDDEN_FIELDS,
 } from '../models/base-types/unmodifiable-common-fields';
 import { getFilterSchemaFor } from '../openapi/filter-schemas';
@@ -105,13 +107,13 @@ export class ListsController {
         'application/json': {
           schema: getModelSchemaRef(List, {
             title: 'NewList',
-            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof List)[],
+            exclude: STRICTLY_INTERNAL_FIELDS as (keyof List)[],
             includeRelations: false,
           }),
         },
       },
     })
-    list: Omit<List, UnmodifiableCommonFields>,
+    list: Omit<List, StrictlyInternalFields>,
     @inject('active.transaction.options', { optional: true })
     options: Options = {},
   ): Promise<List> {
@@ -202,13 +204,13 @@ export class ListsController {
           schema: getModelSchemaRef(List, {
             title: 'PartialList',
             partial: true,
-            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof List)[],
+            exclude: UPDATE_EXCLUDED_FIELDS as (keyof List)[],
             includeRelations: false,
           }),
         },
       },
     })
-    list: Omit<List, UnmodifiableCommonFields>,
+    list: Omit<List, UpdateExcludedFields>,
     @param.query.object('set') set?: Set,
     @param.where(List) where?: Where<List>,
     @inject('active.transaction.options', { optional: true })
@@ -319,13 +321,13 @@ export class ListsController {
           schema: getModelSchemaRef(List, {
             title: 'PartialList',
             partial: true,
-            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof List)[],
+            exclude: UPDATE_EXCLUDED_FIELDS as (keyof List)[],
             includeRelations: false,
           }),
         },
       },
     })
-    list: Omit<List, UnmodifiableCommonFields>,
+    list: Omit<List, UpdateExcludedFields>,
     @inject('active.transaction.options', { optional: true })
     options: Options = {},
   ): Promise<void> {
@@ -372,13 +374,13 @@ export class ListsController {
         'application/json': {
           schema: getModelSchemaRef(List, {
             title: 'NewList',
-            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof List)[],
+            exclude: UPDATE_EXCLUDED_FIELDS as (keyof List)[],
             includeRelations: false,
           }),
         },
       },
     })
-    list: Omit<List, UnmodifiableCommonFields>,
+    list: Omit<List, UpdateExcludedFields>,
     @inject('active.transaction.options', { optional: true })
     options: Options = {},
   ): Promise<void> {
@@ -486,7 +488,7 @@ export class ListsController {
           schema: getModelSchemaRef(List, {
             title: 'NewChildList',
             exclude: [
-              ...UNMODIFIABLE_COMMON_FIELDS,
+              ...STRICTLY_INTERNAL_FIELDS,
               '_parents',
             ] as (keyof List)[],
             includeRelations: false,
@@ -494,7 +496,7 @@ export class ListsController {
         },
       },
     })
-    list: Omit<List, UnmodifiableCommonFields | '_parents'>,
+    list: Omit<List, StrictlyInternalFields | '_parents'>,
     @inject('active.transaction.options', { optional: true })
     options: Options = {},
   ): Promise<List> {

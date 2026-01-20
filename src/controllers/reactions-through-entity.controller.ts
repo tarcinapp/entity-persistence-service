@@ -22,8 +22,10 @@ import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
 import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
 import { EntityReaction, HttpErrorResponse } from '../models';
 import {
-  UNMODIFIABLE_COMMON_FIELDS,
-  UnmodifiableCommonFields,
+  STRICTLY_INTERNAL_FIELDS,
+  UPDATE_EXCLUDED_FIELDS,
+  StrictlyInternalFields,
+  UpdateExcludedFields,
   ALWAYS_HIDDEN_FIELDS,
 } from '../models/base-types/unmodifiable-common-fields';
 import { CustomReactionThroughEntityRepository } from '../repositories/custom/custom-reaction-through-entity.repository';
@@ -158,14 +160,14 @@ export class ReactionsThroughEntityController {
         'application/json': {
           schema: getModelSchemaRef(EntityReaction, {
             title: 'NewReactionInEntity',
-            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof EntityReaction)[],
+            exclude: STRICTLY_INTERNAL_FIELDS as (keyof EntityReaction)[],
             includeRelations: false,
             optional: ['_entityId'],
           }),
         },
       },
     })
-    reaction: Omit<EntityReaction, UnmodifiableCommonFields>,
+    reaction: Omit<EntityReaction, StrictlyInternalFields>,
     @inject('active.transaction.options', { optional: true })
     options: Options = {},
   ): Promise<EntityReaction> {
@@ -217,7 +219,7 @@ export class ReactionsThroughEntityController {
           schema: getModelSchemaRef(EntityReaction, {
             title: 'PatchReactionInEntity',
             partial: true,
-            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof EntityReaction)[],
+            exclude: UPDATE_EXCLUDED_FIELDS as (keyof EntityReaction)[],
             includeRelations: false,
           }),
         },

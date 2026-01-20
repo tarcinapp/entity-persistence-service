@@ -31,8 +31,10 @@ import {
   HttpErrorResponse,
 } from '../models';
 import {
-  UNMODIFIABLE_COMMON_FIELDS,
-  UnmodifiableCommonFields,
+  STRICTLY_INTERNAL_FIELDS,
+  UPDATE_EXCLUDED_FIELDS,
+  StrictlyInternalFields,
+  UpdateExcludedFields,
   ALWAYS_HIDDEN_FIELDS,
 } from '../models/base-types/unmodifiable-common-fields';
 import { ListRepository } from '../repositories';
@@ -176,13 +178,13 @@ export class EntitiesThroughListController {
         'application/json': {
           schema: getModelSchemaRef(GenericEntity, {
             title: 'NewEntityInList',
-            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof GenericEntity)[],
+            exclude: STRICTLY_INTERNAL_FIELDS as (keyof GenericEntity)[],
             includeRelations: false,
           }),
         },
       },
     })
-    entity: Omit<GenericEntity, UnmodifiableCommonFields>,
+    entity: Omit<GenericEntity, StrictlyInternalFields>,
     @inject('active.transaction.options', { optional: true })
     options: any = {},
   ): Promise<GenericEntity> {
@@ -209,7 +211,7 @@ export class EntitiesThroughListController {
           schema: getModelSchemaRef(GenericEntity, {
             title: 'PatchEntityInList',
             partial: true,
-            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof GenericEntity)[],
+            exclude: UPDATE_EXCLUDED_FIELDS as (keyof GenericEntity)[],
             includeRelations: false,
           }),
         },

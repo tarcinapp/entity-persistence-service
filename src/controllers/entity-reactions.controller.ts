@@ -24,8 +24,10 @@ import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
 import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
 import { EntityReaction, HttpErrorResponse } from '../models';
 import {
-  UNMODIFIABLE_COMMON_FIELDS,
-  UnmodifiableCommonFields,
+  STRICTLY_INTERNAL_FIELDS,
+  UPDATE_EXCLUDED_FIELDS,
+  StrictlyInternalFields,
+  UpdateExcludedFields,
   ALWAYS_HIDDEN_FIELDS,
 } from '../models/base-types/unmodifiable-common-fields';
 import { getFilterSchemaFor } from '../openapi/filter-schemas';
@@ -86,13 +88,13 @@ export class EntityReactionsController {
         'application/json': {
           schema: getModelSchemaRef(EntityReaction, {
             title: 'NewEntityReaction',
-            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof EntityReaction)[],
+            exclude: STRICTLY_INTERNAL_FIELDS as (keyof EntityReaction)[],
             includeRelations: false,
           }),
         },
       },
     })
-    entityReaction: Omit<EntityReaction, UnmodifiableCommonFields>,
+    entityReaction: Omit<EntityReaction, StrictlyInternalFields>,
     @inject('active.transaction.options', { optional: true })
     options: Options = {},
   ): Promise<EntityReaction> {
@@ -214,14 +216,14 @@ export class EntityReactionsController {
           schema: getModelSchemaRef(EntityReaction, {
             title: 'PartialEntityReaction',
             partial: true,
-            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof EntityReaction)[],
+            exclude: UPDATE_EXCLUDED_FIELDS as (keyof EntityReaction)[],
             includeRelations: false,
             optional: ['_entityId'],
           }),
         },
       },
     })
-    entityReaction: Omit<EntityReaction, UnmodifiableCommonFields>,
+    entityReaction: Omit<EntityReaction, UpdateExcludedFields>,
     @param.query.object('set') set?: Set,
     @param.where(EntityReaction) where?: Where<EntityReaction>,
     @param.query.object('entitySet') entitySet?: Set,
@@ -334,14 +336,14 @@ export class EntityReactionsController {
           schema: getModelSchemaRef(EntityReaction, {
             title: 'PartialEntityReaction',
             partial: true,
-            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof EntityReaction)[],
+            exclude: UPDATE_EXCLUDED_FIELDS as (keyof EntityReaction)[],
             includeRelations: false,
             optional: ['_entityId'],
           }),
         },
       },
     })
-    entityReaction: Omit<EntityReaction, UnmodifiableCommonFields>,
+    entityReaction: Omit<EntityReaction, UpdateExcludedFields>,
     @inject('active.transaction.options', { optional: true })
     options: Options = {},
   ): Promise<void> {
@@ -384,13 +386,13 @@ export class EntityReactionsController {
         'application/json': {
           schema: getModelSchemaRef(EntityReaction, {
             title: 'ReplaceEntityReaction',
-            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof EntityReaction)[],
+            exclude: UPDATE_EXCLUDED_FIELDS as (keyof EntityReaction)[],
             includeRelations: false,
           }),
         },
       },
     })
-    entityReaction: Omit<EntityReaction, UnmodifiableCommonFields>,
+    entityReaction: Omit<EntityReaction, UpdateExcludedFields>,
     @inject('active.transaction.options', { optional: true })
     options: Options = {},
   ): Promise<void> {
@@ -600,7 +602,7 @@ export class EntityReactionsController {
           schema: getModelSchemaRef(EntityReaction, {
             title: 'NewChildEntityReaction',
             exclude: [
-              ...UNMODIFIABLE_COMMON_FIELDS,
+              ...STRICTLY_INTERNAL_FIELDS,
               '_parents',
             ] as (keyof EntityReaction)[],
             includeRelations: false,
@@ -608,7 +610,7 @@ export class EntityReactionsController {
         },
       },
     })
-    entityReaction: Omit<EntityReaction, UnmodifiableCommonFields | '_parents'>,
+    entityReaction: Omit<EntityReaction, StrictlyInternalFields | '_parents'>,
     @inject('active.transaction.options', { optional: true })
     options: Options = {},
   ): Promise<EntityReaction> {

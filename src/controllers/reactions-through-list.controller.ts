@@ -22,8 +22,10 @@ import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
 import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
 import { ListReaction, HttpErrorResponse } from '../models';
 import {
-  UNMODIFIABLE_COMMON_FIELDS,
-  UnmodifiableCommonFields,
+  STRICTLY_INTERNAL_FIELDS,
+  UPDATE_EXCLUDED_FIELDS,
+  StrictlyInternalFields,
+  UpdateExcludedFields,
   ALWAYS_HIDDEN_FIELDS,
 } from '../models/base-types/unmodifiable-common-fields';
 import { CustomReactionThroughListRepository } from '../repositories/custom/custom-reaction-through-list.repository';
@@ -143,7 +145,7 @@ export class ReactionsThroughListController {
           schema: getModelSchemaRef(ListReaction, {
             title: 'NewListReactionByList',
             exclude: [
-              ...UNMODIFIABLE_COMMON_FIELDS,
+              ...STRICTLY_INTERNAL_FIELDS,
               '_listId',
             ] as (keyof ListReaction)[],
             includeRelations: false,
@@ -151,7 +153,7 @@ export class ReactionsThroughListController {
         },
       },
     })
-    listReaction: Omit<ListReaction, UnmodifiableCommonFields | '_listId'>,
+    listReaction: Omit<ListReaction, StrictlyInternalFields | '_listId'>,
     @inject('active.transaction.options', { optional: true })
     options: Options = {},
   ): Promise<ListReaction> {
@@ -188,7 +190,7 @@ export class ReactionsThroughListController {
             title: 'PartialListReaction',
             partial: true,
             exclude: [
-              ...UNMODIFIABLE_COMMON_FIELDS,
+              ...UPDATE_EXCLUDED_FIELDS,
               '_listId',
             ] as (keyof ListReaction)[],
             includeRelations: false,
@@ -196,7 +198,7 @@ export class ReactionsThroughListController {
         },
       },
     })
-    listReaction: Omit<ListReaction, UnmodifiableCommonFields | '_listId'>,
+    listReaction: Omit<ListReaction, UpdateExcludedFields | '_listId'>,
     @param.query.object('set') set?: Set,
     @param.query.object('where') where?: Where<ListReaction>,
     @inject('active.transaction.options', { optional: true })

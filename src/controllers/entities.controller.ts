@@ -30,8 +30,10 @@ import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
 import { GenericEntity, HttpErrorResponse } from '../models';
 import {
   ALWAYS_HIDDEN_FIELDS,
-  UNMODIFIABLE_COMMON_FIELDS,
-  UnmodifiableCommonFields,
+  STRICTLY_INTERNAL_FIELDS,
+  UPDATE_EXCLUDED_FIELDS,
+  StrictlyInternalFields,
+  UpdateExcludedFields,
 } from '../models/base-types/unmodifiable-common-fields';
 import { getFilterSchemaFor } from '../openapi/filter-schemas';
 import { EntityRepository } from '../repositories';
@@ -103,13 +105,13 @@ export class EntitiesController {
         'application/json': {
           schema: getModelSchemaRef(GenericEntity, {
             title: 'NewEntity',
-            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof GenericEntity)[],
+            exclude: STRICTLY_INTERNAL_FIELDS as (keyof GenericEntity)[],
             includeRelations: false,
           }),
         },
       },
     })
-    entity: Omit<GenericEntity, UnmodifiableCommonFields>,
+    entity: Omit<GenericEntity, StrictlyInternalFields>,
     @inject('active.transaction.options', { optional: true })
     options: Options = {},
   ): Promise<GenericEntity> {
@@ -202,13 +204,13 @@ export class EntitiesController {
           schema: getModelSchemaRef(GenericEntity, {
             title: 'PartialEntity',
             partial: true,
-            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof GenericEntity)[],
+            exclude: UPDATE_EXCLUDED_FIELDS as (keyof GenericEntity)[],
             includeRelations: false,
           }),
         },
       },
     })
-    entity: Omit<GenericEntity, UnmodifiableCommonFields>,
+    entity: Omit<GenericEntity, UpdateExcludedFields>,
     @param.query.object('set') set?: Set,
     @param.where(GenericEntity) where?: Where<GenericEntity>,
     @inject('active.transaction.options', { optional: true })
@@ -314,13 +316,13 @@ export class EntitiesController {
           schema: getModelSchemaRef(GenericEntity, {
             title: 'PartialEntity',
             partial: true,
-            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof GenericEntity)[],
+            exclude: UPDATE_EXCLUDED_FIELDS as (keyof GenericEntity)[],
             includeRelations: false,
           }),
         },
       },
     })
-    entity: Omit<GenericEntity, UnmodifiableCommonFields>,
+    entity: Omit<GenericEntity, UpdateExcludedFields>,
     @inject('active.transaction.options', { optional: true })
     options: any = {},
   ): Promise<void> {
@@ -367,13 +369,13 @@ export class EntitiesController {
         'application/json': {
           schema: getModelSchemaRef(GenericEntity, {
             title: 'ReplaceEntity',
-            exclude: UNMODIFIABLE_COMMON_FIELDS as (keyof GenericEntity)[],
+            exclude: UPDATE_EXCLUDED_FIELDS as (keyof GenericEntity)[],
             includeRelations: false,
           }),
         },
       },
     })
-    entity: Omit<GenericEntity, UnmodifiableCommonFields>,
+    entity: Omit<GenericEntity, UpdateExcludedFields>,
     @inject('active.transaction.options', { optional: true })
     options: Options = {},
   ): Promise<void> {
@@ -581,7 +583,7 @@ export class EntitiesController {
           schema: getModelSchemaRef(GenericEntity, {
             title: 'NewChildEntity',
             exclude: [
-              ...UNMODIFIABLE_COMMON_FIELDS,
+              ...STRICTLY_INTERNAL_FIELDS,
               '_parents',
             ] as (keyof GenericEntity)[],
             includeRelations: false,
@@ -589,7 +591,7 @@ export class EntitiesController {
         },
       },
     })
-    entity: Omit<GenericEntity, UnmodifiableCommonFields | '_parents'>,
+    entity: Omit<GenericEntity, StrictlyInternalFields | '_parents'>,
     @inject('active.transaction.options', { optional: true })
     options: Options = {},
   ): Promise<GenericEntity> {
