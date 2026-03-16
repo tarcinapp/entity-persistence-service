@@ -215,6 +215,7 @@ export abstract class EntityPersistenceReactionRepository<
       filter?.limit ?? this.getResponseLimit(),
       filter,
       sourceFilter,
+      this.sourceIdFieldName,
     );
 
     const collection = this.dataSource.connector?.collection(
@@ -255,6 +256,8 @@ export abstract class EntityPersistenceReactionRepository<
           ...filter,
           where: { _id: id },
         } as Filter<E>,
+        undefined,
+        this.sourceIdFieldName,
       );
 
       const collection = this.dataSource.connector?.collection(
@@ -343,6 +346,7 @@ export abstract class EntityPersistenceReactionRepository<
         0, // No limit for counting
         filter as Filter<E>,
         sourceFilter as Filter<E>,
+        this.sourceIdFieldName,
       );
 
       pipeline.push({ $count: 'count' });
@@ -632,6 +636,7 @@ export abstract class EntityPersistenceReactionRepository<
       0,
       filter as Filter<E>,
       sourceFilter as Filter<E>,
+      this.sourceIdFieldName,
     );
 
     pipeline.push({ $project: { _id: 1 } });

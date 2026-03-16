@@ -327,6 +327,7 @@ export class MongoPipelineHelper {
     finalLimit: number,
     filter?: Filter<any>,
     entityFilter?: Filter<any>,
+    localField: string = '_entityId',
   ): PipelineStage[] {
     const pipeline: PipelineStage[] = [];
 
@@ -344,7 +345,7 @@ export class MongoPipelineHelper {
       {
         $lookup: {
           from: entityCollectionName,
-          localField: '_entityId',
+          localField: localField,
           foreignField: '_id',
           as: 'entity',
         },
