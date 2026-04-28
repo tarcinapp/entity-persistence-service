@@ -76,6 +76,44 @@ export class MySequence implements SequenceHandler {
         // ignore any failure while normalizing error
       }
 
+      // Normalize invalid inclusion filter error. LoopBack uses the underscore variant
+      // INVALID_INCLUSION_FILTER and leaves the name as the generic "Error".
+      try {
+        if (err && err.code === 'INVALID_INCLUSION_FILTER') {
+          err.code = 'INVALID-INCLUSION-FILTER';
+          if (!err.name || err.name === 'Error') {
+            err.name = 'InvalidInclusionFilterError';
+          }
+        }
+      } catch (_) {
+        // ignore any failure while normalizing error
+      }
+
+      // Normalize malformed query/filter errors. LoopBack promotes raw Error objects from
+      // query-parameter coercion and where-clause validation into 400 responses, but leaves
+      // the generic name "Error" and omits a machine-readable code. We detect these by
+      // checking for a 400 status, no existing code, and a message that matches known
+      // query-parsing patterns, then replace them with a consistent name and code.
+      try {
+        const isGenericError =
+          err && (!err.name || err.name === 'Error' || err.name === 'BadRequestError');
+        const isBadRequest =
+          err?.statusCode === 400 || err?.status === 400;
+        const hasNoCode = !err?.code;
+        const isQueryFilterError =
+          typeof err?.message === 'string' &&
+          /the where clause|is not a valid filter|invalid filter syntax|is not an object/i.test(
+            err.message,
+          );
+
+        if (isGenericError && isBadRequest && hasNoCode && isQueryFilterError) {
+          err.name = 'MalformedQueryFilterError';
+          err.code = 'MALFORMED-QUERY-FILTER';
+        }
+      } catch (_) {
+        // ignore any failure while normalizing error
+      }
+
       // Attach requestId to the error payload when available
       try {
         if (request && (request as any).requestId) {

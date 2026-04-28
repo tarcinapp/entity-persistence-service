@@ -2067,6 +2067,8 @@ Summary of common error categories and representative codes
 
 - Missing or Bad Request (400)
   - `RELATION-MISSING-IDS` (400) — "Entity id and list id are required." (Sent when creating relations without both ids.)
+  - `MALFORMED-QUERY-FILTER` (400) — Malformed or incomplete query filter in the request. Raised when a `where` clause or filter expression cannot be interpreted as a valid object (for example, declaring an array element in an `or`/`and` filter without supplying a condition). The `name` field is `MalformedQueryFilterError`. Remediation: review the filter syntax and ensure every declared filter element contains a complete, well-formed condition object.
+  - `INVALID-INCLUSION-FILTER` (400) — One or more `filter.include` entries are invalid. LoopBack emits this as `INVALID_INCLUSION_FILTER`; the service normalizes it to the hyphenated form. The `name` field is `InvalidInclusionFilterError`. Raised when an inclusion entry in the filter is empty, malformed, or references a relation that cannot be resolved. Remediation: verify that all `include` entries are well-formed relation-inclusion descriptors.
 
 - Validation & Immutable Fields (422)
   - `VALIDATION-FAILED` (422) — Generic model validation failure (framework or schema validation). The framework originally emits `VALIDATION_FAILED`; the service normalizes this to `VALIDATION-FAILED`.
