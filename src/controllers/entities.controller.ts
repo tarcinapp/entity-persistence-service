@@ -96,6 +96,30 @@ export class EntitiesController {
           },
         },
       },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
     },
   })
   @transactional()
@@ -124,6 +148,30 @@ export class EntitiesController {
       '200': {
         description: 'Entity model count',
         content: { 'application/json': { schema: CountSchema } },
+      },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
       },
     },
   })
@@ -167,6 +215,30 @@ export class EntitiesController {
           },
         },
       },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
     },
   })
   async find(
@@ -194,6 +266,30 @@ export class EntitiesController {
       '200': {
         description: 'Entity PATCH success count',
         content: { 'application/json': { schema: CountSchema } },
+      },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
       },
     },
   })
@@ -249,6 +345,30 @@ export class EntitiesController {
           },
         },
       },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
     },
     '404': {
       description: 'Entity not found',
@@ -296,6 +416,30 @@ export class EntitiesController {
       },
       '422': {
         description: 'Unprocessable entity',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
         content: {
           'application/json': {
             schema: {
@@ -360,6 +504,30 @@ export class EntitiesController {
           },
         },
       },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
     },
   })
   async replaceById(
@@ -401,6 +569,30 @@ export class EntitiesController {
           },
         },
       },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
     },
   })
   async deleteById(
@@ -430,6 +622,30 @@ export class EntitiesController {
       },
       '404': {
         description: 'Entity not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
         content: {
           'application/json': {
             schema: {
@@ -480,6 +696,30 @@ export class EntitiesController {
       },
       '404': {
         description: 'Entity not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
         content: {
           'application/json': {
             schema: {
@@ -562,6 +802,30 @@ export class EntitiesController {
       },
       '404': {
         description: 'Parent entity not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
         content: {
           'application/json': {
             schema: {

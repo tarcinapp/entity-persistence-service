@@ -77,6 +77,30 @@ export class EntitiesThroughListController {
           },
         },
       },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
     },
   })
   async find(
@@ -169,6 +193,30 @@ export class EntitiesThroughListController {
           },
         },
       },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
     },
   })
   async create(
@@ -200,6 +248,30 @@ export class EntitiesThroughListController {
       '200': {
         description: 'List.entities PATCH success count',
         content: { 'application/json': { schema: CountSchema } },
+      },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
       },
     },
   })
@@ -277,6 +349,30 @@ export class EntitiesThroughListController {
       },
       '404': {
         description: 'List not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
         content: {
           'application/json': {
             schema: {

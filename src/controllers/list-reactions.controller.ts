@@ -91,6 +91,30 @@ export class ListReactionsController {
           },
         },
       },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
     },
   })
   async create(
@@ -118,6 +142,30 @@ export class ListReactionsController {
       '200': {
         description: 'ListReaction model count',
         content: { 'application/json': { schema: CountSchema } },
+      },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
+        },
       },
     },
   })
@@ -177,6 +225,30 @@ export class ListReactionsController {
           },
         },
       },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
     },
   })
   async find(
@@ -214,6 +286,30 @@ export class ListReactionsController {
       '200': {
         description: 'ListReaction PATCH success count',
         content: { 'application/json': { schema: CountSchema } },
+      },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
+        },
       },
     },
   })
@@ -303,6 +399,30 @@ export class ListReactionsController {
           },
         },
       },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
     },
   })
   async findById(
@@ -336,6 +456,30 @@ export class ListReactionsController {
       },
       '422': {
         description: 'Unprocessable entity',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
         content: {
           'application/json': {
             schema: {
@@ -401,6 +545,30 @@ export class ListReactionsController {
           },
         },
       },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
     },
   })
   async replaceById(
@@ -442,6 +610,30 @@ export class ListReactionsController {
           },
         },
       },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
     },
   })
   async deleteById(
@@ -471,6 +663,30 @@ export class ListReactionsController {
       },
       '404': {
         description: 'List reaction not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
         content: {
           'application/json': {
             schema: {
@@ -531,6 +747,30 @@ export class ListReactionsController {
       },
       '404': {
         description: 'List reaction not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
         content: {
           'application/json': {
             schema: {
@@ -624,6 +864,30 @@ export class ListReactionsController {
       },
       '404': {
         description: 'Parent list reaction not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
         content: {
           'application/json': {
             schema: {

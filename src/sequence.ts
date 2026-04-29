@@ -66,6 +66,17 @@ export class MySequence implements SequenceHandler {
       const logger = await context.get<LoggingService>(
         'services.LoggingService',
       );
+      // Normalize EntityNotFoundError: LoopBack's findById throws this error without a
+      // statusCode property, relying on the framework error handler to map it via the code.
+      // We explicitly add statusCode 404 so our 500 catch-all does not intercept it.
+      try {
+        if (err && err.code === 'ENTITY_NOT_FOUND' && !err.statusCode && !err.status) {
+          err.statusCode = 404;
+        }
+      } catch (_) {
+        // ignore any failure while normalizing error
+      }
+
       // Normalize framework validation error code (LoopBack uses VALIDATION_FAILED).
       // We prefer hyphenated code for consistency with other codes used in this project.
       try {
@@ -114,6 +125,28 @@ export class MySequence implements SequenceHandler {
         // ignore any failure while normalizing error
       }
 
+      // Normalize INVALID_PARAMETER_VALUE: LoopBack coercion failure (e.g. malformed JSON
+      // in a filter or where query parameter). Align to the same code as other bad-filter errors.
+      try {
+        if (err && err.code === 'INVALID_PARAMETER_VALUE') {
+          err.code = 'MALFORMED-QUERY-FILTER';
+          err.name = 'MalformedQueryFilterError';
+        }
+      } catch (_) {
+        // ignore any failure while normalizing error
+      }
+
+      // Normalize OPERATOR_NOT_ALLOWED_IN_QUERY: loopback-datasource-juggler rejects
+      // disallowed MongoDB operators (e.g. $badop) passed through filter/where params.
+      try {
+        if (err && err.code === 'OPERATOR_NOT_ALLOWED_IN_QUERY') {
+          err.code = 'MALFORMED-QUERY-FILTER';
+          err.name = 'MalformedQueryFilterError';
+        }
+      } catch (_) {
+        // ignore any failure while normalizing error
+      }
+
       // Attach requestId to the error payload when available
       try {
         if (request && (request as any).requestId) {
@@ -121,6 +154,27 @@ export class MySequence implements SequenceHandler {
         }
       } catch (_) {
         // best-effort only
+      }
+
+      // Sanitize unexpected internal errors (no HTTP status or status >= 500).
+      // The full error details have already been logged by the request logging middleware.
+      // We replace the error object with a sanitized response to avoid leaking stack
+      // traces, MongoDB internals, or other implementation details to the client.
+      try {
+        const httpStatus = (err as any)?.statusCode ?? (err as any)?.status;
+        if (!httpStatus || httpStatus >= 500) {
+          const requestId = (request as any)?.requestId;
+          const sanitized: any = {
+            statusCode: 500,
+            name: 'InternalServerError',
+            message: 'An internal error occurred.',
+            code: 'INTERNAL-SERVER-ERROR',
+          };
+          if (requestId) sanitized.requestId = requestId;
+          err = sanitized;
+        }
+      } catch (_) {
+        // ignore any failure while sanitizing error
       }
 
       // Error logging is handled by the request logging middleware

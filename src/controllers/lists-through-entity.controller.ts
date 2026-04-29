@@ -2,7 +2,7 @@ import { Filter, repository } from '@loopback/repository';
 import { get, getModelSchemaRef, param } from '@loopback/rest';
 import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
 import { Set, SetFilterBuilder } from '../extensions/utils/set-helper';
-import { List, ListToEntityRelation } from '../models';
+import { List, ListToEntityRelation, HttpErrorResponse } from '../models';
 import { ALWAYS_HIDDEN_FIELDS } from '../models/base-types/unmodifiable-common-fields';
 import { EntityRepository } from '../repositories';
 
@@ -22,6 +22,30 @@ export class ListsThroughEntityController {
             schema: {
               type: 'array',
               items: getModelSchemaRef(List, { includeRelations: true }),
+            },
+          },
+        },
+      },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
             },
           },
         },

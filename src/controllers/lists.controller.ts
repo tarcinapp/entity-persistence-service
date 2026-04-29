@@ -87,6 +87,30 @@ export class ListsController {
           },
         },
       },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
     },
     '422': {
       description: 'Unprocessable list',
@@ -126,6 +150,30 @@ export class ListsController {
       '200': {
         description: 'List model count',
         content: { 'application/json': { schema: CountSchema } },
+      },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
       },
     },
   })
@@ -167,6 +215,30 @@ export class ListsController {
           },
         },
       },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
     },
   })
   async find(
@@ -194,6 +266,30 @@ export class ListsController {
       '200': {
         description: 'List PATCH success count',
         content: { 'application/json': { schema: CountSchema } },
+      },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
       },
     },
   })
@@ -244,6 +340,30 @@ export class ListsController {
               includeRelations: true,
               exclude: ALWAYS_HIDDEN_FIELDS as (keyof List)[],
             }),
+          },
+        },
+      },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -311,6 +431,30 @@ export class ListsController {
           },
         },
       },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
     },
   })
   async updateById(
@@ -365,6 +509,30 @@ export class ListsController {
           },
         },
       },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
     },
   })
   async replaceById(
@@ -396,6 +564,30 @@ export class ListsController {
       },
       '404': {
         description: 'List not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
         content: {
           'application/json': {
             schema: {
@@ -477,6 +669,30 @@ export class ListsController {
           },
         },
       },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
     },
   })
   @transactional()
@@ -532,6 +748,30 @@ export class ListsController {
           },
         },
       },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
     },
   })
   async findParents(
@@ -572,6 +812,30 @@ export class ListsController {
       },
       '404': {
         description: 'List not found',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '400': {
+        description: 'Bad request - malformed filter or query parameter',
+        content: {
+          'application/json': {
+            schema: {
+              properties: {
+                error: getJsonSchema(HttpErrorResponse),
+              },
+            },
+          },
+        },
+      },
+      '500': {
+        description: 'Internal server error',
         content: {
           'application/json': {
             schema: {

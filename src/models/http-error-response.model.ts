@@ -62,6 +62,8 @@ export class HttpErrorResponse extends Model {
     required: true,
     jsonSchema: {
       examples: [
+        // 400 Bad Request
+        'MALFORMED-QUERY-FILTER',
         // 404 Not Found
         'ENTITY-NOT-FOUND',
         'LIST-NOT-FOUND',
@@ -76,7 +78,6 @@ export class HttpErrorResponse extends Model {
         'LIST-REACTION-UNIQUENESS-VIOLATION',
         // 422 Unprocessable Entity
         'VALIDATION-FAILED',
-        'MALFORMED-QUERY-FILTER',
         'INVALID-INCLUSION-FILTER',
         'INVALID-ENTITY-KIND',
         'INVALID-LIST-KIND',
@@ -114,6 +115,8 @@ export class HttpErrorResponse extends Model {
         'RELATION-LIMIT-EXCEEDED',
         'ENTITY-REACTION-LIMIT-EXCEEDED',
         'LIST-REACTION-LIMIT-EXCEEDED',
+        // 500 Internal Server Error
+        'INTERNAL-SERVER-ERROR',
       ],
     },
   })
