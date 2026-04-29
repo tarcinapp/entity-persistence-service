@@ -107,7 +107,11 @@ export class ReactionsThroughListController {
         description: 'List reaction limit is exceeded',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -115,7 +119,11 @@ export class ReactionsThroughListController {
         description: 'List reaction already exists.',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -123,7 +131,11 @@ export class ReactionsThroughListController {
         description: 'Unprocessable entity',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -131,7 +143,11 @@ export class ReactionsThroughListController {
         description: 'List not found',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -175,7 +191,11 @@ export class ReactionsThroughListController {
         description: 'List not found',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -242,7 +262,11 @@ export class ReactionsThroughListController {
         description: 'List not found',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },

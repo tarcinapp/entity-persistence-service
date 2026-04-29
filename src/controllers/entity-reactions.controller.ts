@@ -60,7 +60,11 @@ export class EntityReactionsController {
         description: 'Entity reaction limit is exceeded',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -68,7 +72,11 @@ export class EntityReactionsController {
         description: 'Entity reaction already exists.',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -76,7 +84,11 @@ export class EntityReactionsController {
         description: 'Unprocessable entity',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -287,7 +299,11 @@ export class EntityReactionsController {
         description: 'Entity reaction not found',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -314,7 +330,11 @@ export class EntityReactionsController {
         description: 'Entity reaction not found',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -322,7 +342,11 @@ export class EntityReactionsController {
         description: 'Unprocessable entity',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -365,7 +389,11 @@ export class EntityReactionsController {
         description: 'Entity reaction not found',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -373,7 +401,11 @@ export class EntityReactionsController {
         description: 'Unprocessable entity',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -414,7 +446,11 @@ export class EntityReactionsController {
         description: 'Entity reaction not found',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -449,7 +485,11 @@ export class EntityReactionsController {
         description: 'Entity reaction not found',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -508,7 +548,11 @@ export class EntityReactionsController {
         description: 'Entity reaction not found',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -563,7 +607,11 @@ export class EntityReactionsController {
         description: 'Entity reaction limit is exceeded',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -571,7 +619,11 @@ export class EntityReactionsController {
         description: 'Entity reaction already exists.',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -579,7 +631,11 @@ export class EntityReactionsController {
         description: 'Unprocessable entity',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -587,7 +643,11 @@ export class EntityReactionsController {
         description: 'Parent entity reaction not found',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },

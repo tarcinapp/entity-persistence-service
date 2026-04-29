@@ -59,7 +59,11 @@ export class ListReactionsController {
         description: 'List reaction limit is exceeded',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -67,7 +71,11 @@ export class ListReactionsController {
         description: 'List reaction already exists.',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -75,7 +83,11 @@ export class ListReactionsController {
         description: 'Unprocessable entity',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -283,7 +295,11 @@ export class ListReactionsController {
         description: 'List reaction not found',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -310,7 +326,11 @@ export class ListReactionsController {
         description: 'List reaction not found',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -318,7 +338,11 @@ export class ListReactionsController {
         description: 'Unprocessable entity',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -357,7 +381,11 @@ export class ListReactionsController {
         description: 'List reaction not found',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -365,7 +393,11 @@ export class ListReactionsController {
         description: 'Unprocessable entity',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -402,7 +434,11 @@ export class ListReactionsController {
         description: 'List reaction not found',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -437,7 +473,11 @@ export class ListReactionsController {
         description: 'List reaction not found',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -493,7 +533,11 @@ export class ListReactionsController {
         description: 'List reaction not found',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -546,7 +590,11 @@ export class ListReactionsController {
         description: 'List reaction limit is exceeded',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -554,7 +602,11 @@ export class ListReactionsController {
         description: 'List reaction already exists.',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -562,7 +614,11 @@ export class ListReactionsController {
         description: 'Unprocessable entity',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
@@ -570,7 +626,11 @@ export class ListReactionsController {
         description: 'Parent list reaction not found',
         content: {
           'application/json': {
-            schema: getModelSchemaRef(HttpErrorResponse),
+            schema: {
+              properties: {
+                error: getModelSchemaRef(HttpErrorResponse),
+              },
+            },
           },
         },
       },
