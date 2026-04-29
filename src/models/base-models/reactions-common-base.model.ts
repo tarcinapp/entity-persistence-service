@@ -61,7 +61,10 @@ export class ReactionsCommonBase extends AccessControlBase {
 
   @property({
     type: 'object',
-    description: 'Contains the relation metadata for the record',
+    description:
+      'Populated only on through-query endpoints (e.g. GET /entities/{id}/reactions or GET /lists/{id}/reactions). ' +
+      'Contains source and target metadata (_fromMetadata, _toMetadata) describing the record that owns this reaction. ' +
+      'Always empty ({}) on direct reaction endpoints.',
   })
   _relationMetadata?: SourceAndTargetMetadata;
 

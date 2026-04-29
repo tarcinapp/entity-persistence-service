@@ -58,7 +58,7 @@ export class ListsController {
         content: {
           'application/json': {
             schema: getModelSchemaRef(List, {
-              exclude: ALWAYS_HIDDEN_FIELDS as (keyof List)[],
+              exclude: [...ALWAYS_HIDDEN_FIELDS, '_relationMetadata'] as (keyof List)[],
             }),
           },
         },
@@ -209,7 +209,7 @@ export class ListsController {
               type: 'array',
               items: getModelSchemaRef(List, {
                 includeRelations: true,
-                exclude: ALWAYS_HIDDEN_FIELDS as (keyof List)[],
+                exclude: [...ALWAYS_HIDDEN_FIELDS, '_relationMetadata'] as (keyof List)[],
               }),
             },
           },
@@ -338,7 +338,7 @@ export class ListsController {
           'application/json': {
             schema: getModelSchemaRef(List, {
               includeRelations: true,
-              exclude: ALWAYS_HIDDEN_FIELDS as (keyof List)[],
+              exclude: [...ALWAYS_HIDDEN_FIELDS, '_relationMetadata'] as (keyof List)[],
             }),
           },
         },
@@ -616,7 +616,7 @@ export class ListsController {
         content: {
           'application/json': {
             schema: getModelSchemaRef(List, {
-              exclude: ALWAYS_HIDDEN_FIELDS as (keyof List)[],
+              exclude: [...ALWAYS_HIDDEN_FIELDS, '_relationMetadata'] as (keyof List)[],
             }),
           },
         },
@@ -730,7 +730,7 @@ export class ListsController {
               type: 'array',
               items: getModelSchemaRef(List, {
                 includeRelations: true,
-                exclude: ALWAYS_HIDDEN_FIELDS as (keyof List)[],
+                exclude: [...ALWAYS_HIDDEN_FIELDS, '_relationMetadata'] as (keyof List)[],
               }),
             },
           },
@@ -804,7 +804,7 @@ export class ListsController {
               type: 'array',
               items: getModelSchemaRef(List, {
                 includeRelations: true,
-                exclude: ALWAYS_HIDDEN_FIELDS as (keyof List)[],
+                exclude: [...ALWAYS_HIDDEN_FIELDS, '_relationMetadata'] as (keyof List)[],
               }),
             },
           },

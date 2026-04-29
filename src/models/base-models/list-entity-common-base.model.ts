@@ -76,7 +76,11 @@ export class ListEntityCommonBase extends AccessControlBase {
 
   @property({
     type: 'object',
-    description: 'Contains the relation metadata for the record',
+    description:
+      'Populated only on through-query endpoints (e.g. GET /lists/{id}/entities or GET /entities/{id}/lists). ' +
+      'Contains the join-table metadata (_id, _kind, _validFromDateTime, _validUntilDateTime) ' +
+      'from the ListToEntityRelation record that links the returned document to the queried parent. ' +
+      'Always empty ({}) on direct list or entity endpoints.',
   })
   _relationMetadata?: RelationMetadataType;
 
