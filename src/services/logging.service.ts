@@ -3,8 +3,9 @@ import { Request } from '@loopback/rest';
 import winston from 'winston';
 import { LoggingBindings } from '../config/logging.config';
 import { EnvConfigHelper } from '../extensions/config-helpers/env-config-helper';
+import type { RequestContext as RequestScopeContext } from '../providers/request-context.provider';
 
-interface RequestContext {
+interface RequestLogContext {
   method: string;
   url: string;
   statusCode: number;
@@ -19,10 +20,17 @@ export class LoggingService {
   constructor(
     @inject(LoggingBindings.LOGGER)
     private logger: winston.Logger,
+    @inject('request.context', { optional: true })
+    private requestScopeContext?: RequestScopeContext,
   ) {}
 
+  /**
+   * Get request ID from multiple sources in priority order:
+   * 1. Request-scoped context (available in repositories and services)
+   * 2. Request object (available in controllers and middleware)
+   */
   private getRequestId(request?: Request): string | undefined {
-    return (request as any)?.requestId;
+    return this.requestScopeContext?.requestId ?? (request as any)?.requestId;
   }
 
   error(message: string, meta?: Record<string, unknown>, request?: Request) {
@@ -58,7 +66,7 @@ export class LoggingService {
   }
 
   // Helper method for request logging
-  logRequest(context: RequestContext) {
+  logRequest(context: RequestLogContext) {
     const meta = {
       ...context,
       timestamp: new Date().toISOString(),

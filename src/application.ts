@@ -2,6 +2,7 @@ import { BootMixin } from '@loopback/boot';
 import {
   ApplicationConfig,
   asGlobalInterceptor,
+  BindingScope,
   createBindingFromClass,
 } from '@loopback/core';
 import { RepositoryMixin } from '@loopback/repository';
@@ -20,6 +21,7 @@ import {
 import { EnvConfigHelper } from './extensions/config-helpers/env-config-helper';
 import { MongoPipelineHelper } from './extensions/utils/mongo-pipeline-helper';
 import { TransactionalInterceptor } from './interceptors';
+import { RequestContextProvider } from './providers/request-context.provider';
 import { CustomEntityThroughListRepository } from './repositories';
 import { MySequence } from './sequence';
 import { LoggingService } from './services/logging.service';
@@ -51,6 +53,12 @@ export class EntityPersistenceApplication extends BootMixin(
       env.LOG_LEVEL ?? (env.NODE_ENV === 'production' ? 'info' : 'debug');
     const logger = createLoggerInstance(config);
     this.bind(LoggingBindings.LOGGER).to(logger);
+
+    // Bind request context provider with REQUEST scope
+    // This makes request-specific data (like requestId) available throughout the request lifecycle
+    this.bind('request.context')
+      .toProvider(RequestContextProvider)
+      .inScope(BindingScope.REQUEST);
 
     // Bind core services for dependency injection
     this.service(LoggingService);
