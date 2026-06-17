@@ -1,5 +1,6 @@
 import type { ValueOrPromise } from '@loopback/core';
 import type { Middleware, MiddlewareContext } from '@loopback/rest';
+import { EnvConfigHelper } from '../extensions/config-helpers/env-config-helper';
 import type { LoggingService } from '../services/logging.service';
 
 export function requestLoggingMiddleware(logger: LoggingService): Middleware {
@@ -11,14 +12,23 @@ export function requestLoggingMiddleware(logger: LoggingService): Middleware {
     const startTime = Date.now();
 
     // Log request details at debug level
+    const logData: Record<string, unknown> = {
+      method: request.method,
+      url: request.url,
+      query: request.query,
+      headers: request.headers,
+    };
+
+    // Include request body at debug level if LOG_REQUEST_BODY is enabled
+    // WARNING: This can log sensitive data (passwords, tokens, PII)
+    const envConfig = EnvConfigHelper.getInstance();
+    if (envConfig.LOG_REQUEST_BODY === 'true' && request.body) {
+      logData.body = request.body;
+    }
+
     logger.debug(
       `Incoming request ${request.method} ${request.url}`,
-      {
-        method: request.method,
-        url: request.url,
-        query: request.query,
-        headers: request.headers,
-      },
+      logData,
       request,
     );
 

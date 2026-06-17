@@ -177,6 +177,9 @@ export class EnvConfigHelper {
   get LOG_SERVICE(): string | undefined {
     return this.get(['LOG_SERVICE', 'log_service']);
   }
+  get LOG_REQUEST_BODY(): string | undefined {
+    return this.get(['LOG_REQUEST_BODY', 'log_request_body']);
+  }
   get REQUEST_ID_HEADER(): string | undefined {
     return (
       this.get(['REQUEST_ID_HEADER', 'request_id_header']) ?? 'x-request-id'
