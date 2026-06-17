@@ -218,11 +218,11 @@ export class LookupConstraintService {
       return;
     }
 
-    await Promise.all(
-      applicableConstraints.map((constraint) =>
-        this.validateConstraint(item, constraint, recordType, options),
-      ),
-    );
+    // Process constraints sequentially to avoid MongoDB transaction
+    // number conflicts when multiple database operations run in parallel
+    for (const constraint of applicableConstraints) {
+      await this.validateConstraint(item, constraint, recordType, options);
+    }
   }
 
   private async validateConstraint(

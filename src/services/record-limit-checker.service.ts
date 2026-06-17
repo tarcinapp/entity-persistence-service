@@ -469,160 +469,162 @@ export class RecordLimitCheckerService {
   ): Promise<void> {
     const limits = this.getLimitsForModel(modelClass) ?? [];
 
-    // Process all limits in parallel
-    await Promise.all(
-      limits.map(async ({ scope, limit, duration }) => {
-        // Interpolate values from newData into scope
-        const interpolatedScope = this.interpolateScope(scope, newData);
+    // Process all limits sequentially when in a transaction to avoid
+    // transaction number conflicts. Parallel execution can cause MongoDB
+    // to report "Given transaction number X does not match any in-progress
+    // transactions" errors when multiple aggregation operations run simultaneously
+    // with the same session.
+    for (const { scope, limit, duration } of limits) {
+      // Interpolate values from newData into scope
+      const interpolatedScope = this.interpolateScope(scope, newData);
 
-        // Convert scope to filter
-        const { filter, entityFilter, listFilter } =
-          this.scopeToFilter(interpolatedScope);
+      // Convert scope to filter
+      const { filter, entityFilter, listFilter } =
+        this.scopeToFilter(interpolatedScope);
 
-        // Check if new record would match this filter
-        if (!this.recordMatchesFilter(newData, filter)) {
-          return; // Skip if record wouldn't be counted in this scope
-        }
+      // Check if new record would match this filter
+      if (!this.recordMatchesFilter(newData, filter)) {
+        continue; // Skip if record wouldn't be counted in this scope
+      }
 
-        // If a duration is specified for this limit, restrict the counting to
-        // records created after (now - duration). This implements the
-        // "created data in duration" semantics.
-        // Note: the config array items are iterated already so `duration` is
-        // already available for the current item.
-        let startDate: Date | undefined;
-        if (duration) {
-          startDate = this.parseDurationToDate(duration);
+      // If a duration is specified for this limit, restrict the counting to
+      // records created after (now - duration). This implements the
+      // "created data in duration" semantics.
+      // Note: the config array items are iterated already so `duration` is
+      // already available for the current item.
+      let startDate: Date | undefined;
+      if (duration) {
+        startDate = this.parseDurationToDate(duration);
 
-          if (startDate) {
-            // If the incoming data already has a _createdDateTime and it is
-            // outside the requested duration window (i.e. older or equal to
-            // the start), it cannot contribute to the duration-bounded
-            // count — skip counting for this limit.
-            const incomingCreated = _.get(newData as any, '_createdDateTime');
+        if (startDate) {
+          // If the incoming data already has a _createdDateTime and it is
+          // outside the requested duration window (i.e. older or equal to
+          // the start), it cannot contribute to the duration-bounded
+          // count — skip counting for this limit.
+          const incomingCreated = _.get(newData as any, '_createdDateTime');
 
-            if (incomingCreated) {
-              const incomingCreatedDate = new Date(incomingCreated);
+          if (incomingCreated) {
+            const incomingCreatedDate = new Date(incomingCreated);
 
-              if (
-                !Number.isNaN(incomingCreatedDate.getTime()) &&
-                incomingCreatedDate.getTime() <= startDate.getTime()
-              ) {
-                // Skip this limit since the new record is outside the duration
-                return;
-              }
+            if (
+              !Number.isNaN(incomingCreatedDate.getTime()) &&
+              incomingCreatedDate.getTime() <= startDate.getTime()
+            ) {
+              // Skip this limit since the new record is outside the duration
+              continue;
             }
-
-            // Restrict by created date using the canonical field name.
-            const creationCond = {
-              _createdDateTime: { gt: startDate.toISOString() },
-            } as Where<any>;
-            const where = filter.where ? _.cloneDeep(filter.where) : undefined;
-
-            if (!where) {
-              filter.where = creationCond as Where<any>;
-            } else if ((where as any).and) {
-              (where as any).and = Array.isArray((where as any).and)
-                ? [...(where as any).and, creationCond]
-                : [(where as any).and, creationCond];
-              filter.where = where;
-            } else {
-              filter.where = { and: [where, creationCond] } as Where<any>;
-            }
-          } else {
-            this.loggingService.warn(
-              `Invalid duration '${duration}' for record limit scope '${scope}', ignoring duration.`,
-            );
           }
-        }
 
-        // If this looks like an update (has an _id), exclude the record itself
-        // from the counting so updates don't incorrectly trigger the limit.
-        const idToExclude =
-          _.get(newData as any, '_id') ?? _.get(newData as any, 'id');
-        if (idToExclude) {
-          // Ensure we don't mutate original filter objects from callers; clone
-          // only the where clause as that's what we pass to repository.count.
+          // Restrict by created date using the canonical field name.
+          const creationCond = {
+            _createdDateTime: { gt: startDate.toISOString() },
+          } as Where<any>;
           const where = filter.where ? _.cloneDeep(filter.where) : undefined;
-          // Merge exclusion into where: if existing where is present, combine
-          // using an 'and' clause to keep semantics.
-          const exclusion = { _id: { neq: idToExclude } };
+
           if (!where) {
-            filter.where = exclusion as Where<any>;
+            filter.where = creationCond as Where<any>;
           } else if ((where as any).and) {
             (where as any).and = Array.isArray((where as any).and)
-              ? [...(where as any).and, exclusion]
-              : [(where as any).and, exclusion];
+              ? [...(where as any).and, creationCond]
+              : [(where as any).and, creationCond];
             filter.where = where;
           } else {
-            filter.where = { and: [where, exclusion] } as Where<any>;
+            filter.where = { and: [where, creationCond] } as Where<any>;
           }
-        }
-
-        // Count existing records in scope
-        let count: Count;
-        // Debug: log the exact filter/scope that will be used for counting
-        this.loggingService.debug(
-          'RecordLimitCheckerService.count - about to count records',
-          {
-            model: modelClass.modelName,
-            limit,
-            scope: interpolatedScope,
-            duration,
-            startDate: startDate ? startDate.toISOString() : undefined,
-            filterWhere: filter.where,
-          },
-        );
-        if (repository instanceof ListEntityRelationRepository) {
-          // Special handling for ListEntityRelationRepository
-          count = await (
-            repository as unknown as ListEntityRelationRepository
-          ).count(
-            filter.where,
-            listFilter?.where,
-            entityFilter?.where,
-            options,
-          );
         } else {
-          // Standard handling for other repositories
-          count = await repository.count(filter.where, options);
+          this.loggingService.warn(
+            `Invalid duration '${duration}' for record limit scope '${scope}', ignoring duration.`,
+          );
         }
+      }
 
-        // Debug: log the count observed from the repository
-        this.loggingService.debug(
-          'RecordLimitCheckerService.count - observed count',
-          {
-            model: modelClass.modelName,
-            scope: interpolatedScope,
-            count: count.count,
-            limit,
-            filterWhere: filter.where,
-          },
+      // If this looks like an update (has an _id), exclude the record itself
+      // from the counting so updates don't incorrectly trigger the limit.
+      const idToExclude =
+        _.get(newData as any, '_id') ?? _.get(newData as any, 'id');
+      if (idToExclude) {
+        // Ensure we don't mutate original filter objects from callers; clone
+        // only the where clause as that's what we pass to repository.count.
+        const where = filter.where ? _.cloneDeep(filter.where) : undefined;
+        // Merge exclusion into where: if existing where is present, combine
+        // using an 'and' clause to keep semantics.
+        const exclusion = { _id: { neq: idToExclude } };
+        if (!where) {
+          filter.where = exclusion as Where<any>;
+        } else if ((where as any).and) {
+          (where as any).and = Array.isArray((where as any).and)
+            ? [...(where as any).and, exclusion]
+            : [(where as any).and, exclusion];
+          filter.where = where;
+        } else {
+          filter.where = { and: [where, exclusion] } as Where<any>;
+        }
+      }
+
+      // Count existing records in scope
+      let count: Count;
+      // Debug: log the exact filter/scope that will be used for counting
+      this.loggingService.debug(
+        'RecordLimitCheckerService.count - about to count records',
+        {
+          model: modelClass.modelName,
+          limit,
+          scope: interpolatedScope,
+          duration,
+          startDate: startDate ? startDate.toISOString() : undefined,
+          filterWhere: filter.where,
+        },
+      );
+      if (repository instanceof ListEntityRelationRepository) {
+        // Special handling for ListEntityRelationRepository
+        count = await (
+          repository as unknown as ListEntityRelationRepository
+        ).count(
+          filter.where,
+          listFilter?.where,
+          entityFilter?.where,
+          options,
         );
+      } else {
+        // Standard handling for other repositories
+        count = await repository.count(filter.where, options);
+      }
 
-        if (count.count >= limit) {
-          const errorCodePrefix = this.getErrorCodePrefix(modelClass.modelName);
-          const errorCode = `${errorCodePrefix}-LIMIT-EXCEEDED`;
-          const friendlyName = this.getFriendlyModelName(modelClass.modelName);
+      // Debug: log the count observed from the repository
+      this.loggingService.debug(
+        'RecordLimitCheckerService.count - observed count',
+        {
+          model: modelClass.modelName,
+          scope: interpolatedScope,
+          count: count.count,
+          limit,
+          filterWhere: filter.where,
+        },
+      );
 
-          throw new HttpErrorResponse({
-            statusCode: 429,
-            name: 'LimitExceededError',
-            message: `Record limit exceeded for ${friendlyName}`,
-            code: errorCode,
-            details: [
-              new SingleError({
-                code: errorCode,
-                message: `Record limit exceeded for ${friendlyName}`,
-                info: {
-                  limit,
-                  scope: interpolatedScope,
-                },
-              }),
-            ],
-          });
-        }
-      }),
-    );
+      if (count.count >= limit) {
+        const errorCodePrefix = this.getErrorCodePrefix(modelClass.modelName);
+        const errorCode = `${errorCodePrefix}-LIMIT-EXCEEDED`;
+        const friendlyName = this.getFriendlyModelName(modelClass.modelName);
+
+        throw new HttpErrorResponse({
+          statusCode: 429,
+          name: 'LimitExceededError',
+          message: `Record limit exceeded for ${friendlyName}`,
+          code: errorCode,
+          details: [
+            new SingleError({
+              code: errorCode,
+              message: `Record limit exceeded for ${friendlyName}`,
+              info: {
+                limit,
+                scope: interpolatedScope,
+              },
+            }),
+          ],
+        });
+      }
+    }
   }
 
   /**
@@ -642,72 +644,72 @@ export class RecordLimitCheckerService {
       return;
     }
 
-    await Promise.all(
-      uniquenessScopes.map(async (scope) => {
-        const interpolatedScope = this.interpolateScope(scope, newData);
-        const { filter, entityFilter, listFilter } =
-          this.scopeToFilter(interpolatedScope);
+    // Process uniqueness checks sequentially to avoid MongoDB transaction
+    // number conflicts when multiple count operations run in parallel
+    for (const scope of uniquenessScopes) {
+      const interpolatedScope = this.interpolateScope(scope, newData);
+      const { filter, entityFilter, listFilter } =
+        this.scopeToFilter(interpolatedScope);
 
-        if (!this.recordMatchesFilter(newData, filter)) {
-          return;
-        }
+      if (!this.recordMatchesFilter(newData, filter)) {
+        continue;
+      }
 
-        // If this looks like an update (has an _id), exclude the record itself
-        // from the uniqueness check so updating a record doesn't trigger a
-        // uniqueness violation against itself.
-        const idToExclude =
-          _.get(newData as any, '_id') ?? _.get(newData as any, 'id');
-        if (idToExclude) {
-          const where = filter.where ? _.cloneDeep(filter.where) : undefined;
-          const exclusion = { _id: { neq: idToExclude } };
-          if (!where) {
-            filter.where = exclusion as Where<any>;
-          } else if ((where as any).and) {
-            (where as any).and = Array.isArray((where as any).and)
-              ? [...(where as any).and, exclusion]
-              : [(where as any).and, exclusion];
-            filter.where = where;
-          } else {
-            filter.where = { and: [where, exclusion] } as Where<any>;
-          }
-        }
-
-        let count: Count;
-        if (repository instanceof ListEntityRelationRepository) {
-          count = await (
-            repository as unknown as ListEntityRelationRepository
-          ).count(
-            filter.where,
-            listFilter?.where,
-            entityFilter?.where,
-            options,
-          );
+      // If this looks like an update (has an _id), exclude the record itself
+      // from the uniqueness check so updating a record doesn't trigger a
+      // uniqueness violation against itself.
+      const idToExclude =
+        _.get(newData as any, '_id') ?? _.get(newData as any, 'id');
+      if (idToExclude) {
+        const where = filter.where ? _.cloneDeep(filter.where) : undefined;
+        const exclusion = { _id: { neq: idToExclude } };
+        if (!where) {
+          filter.where = exclusion as Where<any>;
+        } else if ((where as any).and) {
+          (where as any).and = Array.isArray((where as any).and)
+            ? [...(where as any).and, exclusion]
+            : [(where as any).and, exclusion];
+          filter.where = where;
         } else {
-          count = await repository.count(filter.where, options);
+          filter.where = { and: [where, exclusion] } as Where<any>;
         }
+      }
 
-        if (count.count > 0) {
-          const errorCodePrefix = this.getErrorCodePrefix(modelName);
-          const errorCode = `${errorCodePrefix}-UNIQUENESS-VIOLATION`;
-          const friendlyName = this.getFriendlyModelName(modelName);
+      let count: Count;
+      if (repository instanceof ListEntityRelationRepository) {
+        count = await (
+          repository as unknown as ListEntityRelationRepository
+        ).count(
+          filter.where,
+          listFilter?.where,
+          entityFilter?.where,
+          options,
+        );
+      } else {
+        count = await repository.count(filter.where, options);
+      }
 
-          throw new HttpErrorResponse({
-            statusCode: 409,
-            name: 'UniquenessViolationError',
-            message: `${friendlyName.charAt(0).toUpperCase() + friendlyName.slice(1)} already exists`,
-            code: errorCode,
-            details: [
-              new SingleError({
-                code: errorCode,
-                message: `${friendlyName.charAt(0).toUpperCase() + friendlyName.slice(1)} already exists`,
-                info: {
-                  scope: interpolatedScope,
-                },
-              }),
-            ],
-          });
-        }
-      }),
-    );
+      if (count.count > 0) {
+        const errorCodePrefix = this.getErrorCodePrefix(modelName);
+        const errorCode = `${errorCodePrefix}-UNIQUENESS-VIOLATION`;
+        const friendlyName = this.getFriendlyModelName(modelName);
+
+        throw new HttpErrorResponse({
+          statusCode: 409,
+          name: 'UniquenessViolationError',
+          message: `${friendlyName.charAt(0).toUpperCase() + friendlyName.slice(1)} already exists`,
+          code: errorCode,
+          details: [
+            new SingleError({
+              code: errorCode,
+              message: `${friendlyName.charAt(0).toUpperCase() + friendlyName.slice(1)} already exists`,
+              info: {
+                scope: interpolatedScope,
+              },
+            }),
+          ],
+        });
+      }
+    }
   }
 }
