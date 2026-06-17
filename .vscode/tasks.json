@@ -16,7 +16,24 @@
         "kind": "build",
         "isDefault": true
       },
-      "problemMatcher": "$tsc-watch"
+      "problemMatcher": "$tsc-watch",
+      "isBackground": true
+    },
+    {
+      "label": "Start Project with Dev Env",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-c",
+        "ENV_FILE=${workspaceFolder}/dev.env npx nodemon --exec \"node -r ./load-env.js -r source-map-support/register\" ${workspaceFolder}/dist/index.js"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "problemMatcher": [],
+      "isBackground": true,
+      "dependsOn": ["Watch and Compile Project"]
     },
     {
       "label": "Start Project",
@@ -28,7 +45,7 @@
       ],
       "group": {
         "kind": "build",
-        "isDefault": true
+        "isDefault": false
       },
       "problemMatcher": "$tsc-watch"
     },
