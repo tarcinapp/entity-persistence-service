@@ -25,9 +25,6 @@ export const UPDATE_EXCLUDED_FIELDS = Object.freeze([
   ...IMMUTABLE_AFTER_CREATION_FIELDS,
 ]) as ReadonlyArray<string>;
 
-// Legacy constant for backward compatibility (deprecated in favor of UPDATE_EXCLUDED_FIELDS)
-export const UNMODIFIABLE_COMMON_FIELDS = UPDATE_EXCLUDED_FIELDS;
-
 export const ALWAYS_HIDDEN_FIELDS = Object.freeze([
   '_idempotencyKey',
   '_ownerUsersCount',
@@ -41,5 +38,3 @@ export const ALWAYS_HIDDEN_FIELDS = Object.freeze([
 export type StrictlyInternalFields = (typeof STRICTLY_INTERNAL_FIELDS)[number];
 export type ImmutableAfterCreationFields = (typeof IMMUTABLE_AFTER_CREATION_FIELDS)[number];
 export type UpdateExcludedFields = (typeof UPDATE_EXCLUDED_FIELDS)[number];
-export type UnmodifiableCommonFields =
-  (typeof UNMODIFIABLE_COMMON_FIELDS)[number];
