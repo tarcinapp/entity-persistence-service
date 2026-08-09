@@ -803,7 +803,7 @@ export abstract class EntityPersistenceReactionRepository<
    * Delete all matching reactions.
    */
   async deleteAll(where?: Where<E>, options?: Options): Promise<Count> {
-    this.loggingService.info(
+    this.loggingService.debug(
       `${this.reactionTypeName}Repository.deleteAll - Where condition:`,
       {
         where,
