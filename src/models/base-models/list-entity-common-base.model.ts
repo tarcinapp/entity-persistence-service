@@ -9,7 +9,8 @@ import { RelationMetadataType } from '../base-types/relation-metadata-under-enti
  * _ownerUsers, _ownerGroups, _viewerUsers, _viewerGroups
  *
  *  Adds:
- * _name, _slug, _ownerUsersCount, _ownerGroupsCount, _viewerUsersCount, _viewerGroupsCount
+ * _name, _slug, _ownerUsersCount, _ownerGroupsCount, _viewerUsersCount, _viewerGroupsCount,
+ * _parentsCount, _childrenCount
  */
 @model({
   settings: {
@@ -67,12 +68,26 @@ export class ListEntityCommonBase extends AccessControlBase {
   })
   _parentsCount?: number;
 
+  @property({
+    type: 'number',
+    default: 0,
+    hidden: true,
+  })
+  _childrenCount?: number;
+
   /**
    * Parent references as URIs. Each concrete model defines this with @property
    * and model-specific regex validation. This type-only definition ensures
    * TypeScript type safety in base repositories.
    */
   _parents?: string[];
+
+  /**
+   * Child references as URIs. Each concrete model defines this with @property
+   * and model-specific regex validation. This type-only definition ensures
+   * TypeScript type safety in base repositories. Server-managed — never set by clients.
+   */
+  _children?: string[];
 
   @property({
     type: 'object',

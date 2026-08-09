@@ -77,7 +77,7 @@ Add `_children` (server-managed array of child URIs, readable in responses) and 
 - `_parentsCount` `@property` in the base models (`hidden: true`) is the exact template for `_childrenCount`.
 - `_children` has no `@property` in the base models — same as `_parents` — because the URI pattern is type-specific and must be declared on each concrete model.
 
-**Status:** `[ ] pending`
+**Status:** `[x] done`
 
 ---
 

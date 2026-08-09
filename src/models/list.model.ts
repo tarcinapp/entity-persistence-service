@@ -37,6 +37,17 @@ export class List extends ListEntityCommonBase {
   })
   _parents?: string[];
 
+  @property({
+    type: 'array',
+    itemType: 'string',
+    jsonSchema: {
+      pattern:
+        '^tapp://localhost/lists/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+      uniqueItems: true,
+    },
+  })
+  _children?: string[];
+
   // Define well-known properties here
 
   // Indexer property to allow additional data
