@@ -211,6 +211,7 @@ export class ReactionsThroughListController {
             exclude: [
               ...STRICTLY_INTERNAL_FIELDS,
               '_listId',
+              '_children',
             ] as (keyof ListReaction)[],
             includeRelations: false,
           }),
@@ -284,6 +285,8 @@ export class ReactionsThroughListController {
             exclude: [
               ...UPDATE_EXCLUDED_FIELDS,
               '_listId',
+              '_children',
+              '_parents',
             ] as (keyof ListReaction)[],
             includeRelations: false,
           }),

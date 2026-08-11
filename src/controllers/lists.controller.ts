@@ -131,7 +131,7 @@ export class ListsController {
         'application/json': {
           schema: getModelSchemaRef(List, {
             title: 'NewList',
-            exclude: STRICTLY_INTERNAL_FIELDS as (keyof List)[],
+            exclude: [...STRICTLY_INTERNAL_FIELDS, '_children'] as (keyof List)[],
             includeRelations: false,
           }),
         },
@@ -300,7 +300,7 @@ export class ListsController {
           schema: getModelSchemaRef(List, {
             title: 'PartialList',
             partial: true,
-            exclude: UPDATE_EXCLUDED_FIELDS as (keyof List)[],
+            exclude: [...UPDATE_EXCLUDED_FIELDS, '_children', '_parents'] as (keyof List)[],
             includeRelations: false,
           }),
         },
@@ -465,7 +465,7 @@ export class ListsController {
           schema: getModelSchemaRef(List, {
             title: 'PartialList',
             partial: true,
-            exclude: UPDATE_EXCLUDED_FIELDS as (keyof List)[],
+            exclude: [...UPDATE_EXCLUDED_FIELDS, '_children'] as (keyof List)[],
             includeRelations: false,
           }),
         },
@@ -542,7 +542,7 @@ export class ListsController {
         'application/json': {
           schema: getModelSchemaRef(List, {
             title: 'NewList',
-            exclude: UPDATE_EXCLUDED_FIELDS as (keyof List)[],
+            exclude: [...UPDATE_EXCLUDED_FIELDS, '_children'] as (keyof List)[],
             includeRelations: false,
           }),
         },
@@ -706,6 +706,7 @@ export class ListsController {
             exclude: [
               ...STRICTLY_INTERNAL_FIELDS,
               '_parents',
+              '_children',
             ] as (keyof List)[],
             includeRelations: false,
           }),

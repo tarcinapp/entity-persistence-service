@@ -124,7 +124,7 @@ export class EntityReactionsController {
         'application/json': {
           schema: getModelSchemaRef(EntityReaction, {
             title: 'NewEntityReaction',
-            exclude: STRICTLY_INTERNAL_FIELDS as (keyof EntityReaction)[],
+            exclude: [...STRICTLY_INTERNAL_FIELDS, '_children'] as (keyof EntityReaction)[],
             includeRelations: false,
           }),
         },
@@ -324,7 +324,7 @@ export class EntityReactionsController {
           schema: getModelSchemaRef(EntityReaction, {
             title: 'PartialEntityReaction',
             partial: true,
-            exclude: UPDATE_EXCLUDED_FIELDS as (keyof EntityReaction)[],
+            exclude: [...UPDATE_EXCLUDED_FIELDS, '_children', '_parents'] as (keyof EntityReaction)[],
             includeRelations: false,
             optional: ['_entityId'],
           }),
@@ -504,7 +504,7 @@ export class EntityReactionsController {
           schema: getModelSchemaRef(EntityReaction, {
             title: 'PartialEntityReaction',
             partial: true,
-            exclude: UPDATE_EXCLUDED_FIELDS as (keyof EntityReaction)[],
+            exclude: [...UPDATE_EXCLUDED_FIELDS, '_children'] as (keyof EntityReaction)[],
             includeRelations: false,
             optional: ['_entityId'],
           }),
@@ -586,7 +586,7 @@ export class EntityReactionsController {
         'application/json': {
           schema: getModelSchemaRef(EntityReaction, {
             title: 'ReplaceEntityReaction',
-            exclude: UPDATE_EXCLUDED_FIELDS as (keyof EntityReaction)[],
+            exclude: [...UPDATE_EXCLUDED_FIELDS, '_children'] as (keyof EntityReaction)[],
             includeRelations: false,
           }),
         },
@@ -928,6 +928,7 @@ export class EntityReactionsController {
             exclude: [
               ...STRICTLY_INTERNAL_FIELDS,
               '_parents',
+              '_children',
             ] as (keyof EntityReaction)[],
             includeRelations: false,
           }),

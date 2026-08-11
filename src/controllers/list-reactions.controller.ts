@@ -123,7 +123,7 @@ export class ListReactionsController {
         'application/json': {
           schema: getModelSchemaRef(ListReaction, {
             title: 'NewListReaction',
-            exclude: STRICTLY_INTERNAL_FIELDS as (keyof ListReaction)[],
+            exclude: [...STRICTLY_INTERNAL_FIELDS, '_children'] as (keyof ListReaction)[],
             includeRelations: false,
           }),
         },
@@ -320,7 +320,7 @@ export class ListReactionsController {
           schema: getModelSchemaRef(ListReaction, {
             title: 'PartialListReaction',
             partial: true,
-            exclude: UPDATE_EXCLUDED_FIELDS as (keyof ListReaction)[],
+            exclude: [...UPDATE_EXCLUDED_FIELDS, '_children', '_parents'] as (keyof ListReaction)[],
             includeRelations: false,
             optional: ['_listId'],
           }),
@@ -500,7 +500,7 @@ export class ListReactionsController {
           schema: getModelSchemaRef(ListReaction, {
             title: 'PartialListReaction',
             partial: true,
-            exclude: UPDATE_EXCLUDED_FIELDS as (keyof ListReaction)[],
+            exclude: [...UPDATE_EXCLUDED_FIELDS, '_children'] as (keyof ListReaction)[],
             includeRelations: false,
             optional: ['_listId'],
           }),
@@ -578,7 +578,7 @@ export class ListReactionsController {
         'application/json': {
           schema: getModelSchemaRef(ListReaction, {
             title: 'ReplaceListReaction',
-            exclude: UPDATE_EXCLUDED_FIELDS as (keyof ListReaction)[],
+            exclude: [...UPDATE_EXCLUDED_FIELDS, '_children'] as (keyof ListReaction)[],
             includeRelations: false,
           }),
         },
@@ -910,6 +910,7 @@ export class ListReactionsController {
             exclude: [
               ...STRICTLY_INTERNAL_FIELDS,
               '_parents',
+              '_children',
             ] as (keyof ListReaction)[],
             includeRelations: false,
           }),

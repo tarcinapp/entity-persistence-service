@@ -129,7 +129,7 @@ export class EntitiesController {
         'application/json': {
           schema: getModelSchemaRef(GenericEntity, {
             title: 'NewEntity',
-            exclude: STRICTLY_INTERNAL_FIELDS as (keyof GenericEntity)[],
+            exclude: [...STRICTLY_INTERNAL_FIELDS, '_children'] as (keyof GenericEntity)[],
             includeRelations: false,
           }),
         },
@@ -300,7 +300,7 @@ export class EntitiesController {
           schema: getModelSchemaRef(GenericEntity, {
             title: 'PartialEntity',
             partial: true,
-            exclude: UPDATE_EXCLUDED_FIELDS as (keyof GenericEntity)[],
+            exclude: [...UPDATE_EXCLUDED_FIELDS, '_children', '_parents'] as (keyof GenericEntity)[],
             includeRelations: false,
           }),
         },
@@ -460,7 +460,7 @@ export class EntitiesController {
           schema: getModelSchemaRef(GenericEntity, {
             title: 'PartialEntity',
             partial: true,
-            exclude: UPDATE_EXCLUDED_FIELDS as (keyof GenericEntity)[],
+            exclude: [...UPDATE_EXCLUDED_FIELDS, '_children'] as (keyof GenericEntity)[],
             includeRelations: false,
           }),
         },
@@ -537,7 +537,7 @@ export class EntitiesController {
         'application/json': {
           schema: getModelSchemaRef(GenericEntity, {
             title: 'ReplaceEntity',
-            exclude: UPDATE_EXCLUDED_FIELDS as (keyof GenericEntity)[],
+            exclude: [...UPDATE_EXCLUDED_FIELDS, '_children'] as (keyof GenericEntity)[],
             includeRelations: false,
           }),
         },
@@ -849,6 +849,7 @@ export class EntitiesController {
             exclude: [
               ...STRICTLY_INTERNAL_FIELDS,
               '_parents',
+              '_children',
             ] as (keyof GenericEntity)[],
             includeRelations: false,
           }),

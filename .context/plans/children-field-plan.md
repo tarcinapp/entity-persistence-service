@@ -129,7 +129,7 @@ For each of [`entities.controller.ts`](../../src/controllers/entities.controller
 - `_childrenCount` does not need to be added explicitly to any exclude array — it is now in `STRICTLY_INTERNAL_FIELDS` (Sub-Task 1) and is auto-excluded wherever that array is spread.
 - `lists-through-entity.controller.ts` has only GET endpoints — no changes needed.
 
-**Status:** `[ ] pending`
+**Status:** `[x] done`
 
 ---
 

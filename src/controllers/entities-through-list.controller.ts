@@ -226,7 +226,7 @@ export class EntitiesThroughListController {
         'application/json': {
           schema: getModelSchemaRef(GenericEntity, {
             title: 'NewEntityInList',
-            exclude: STRICTLY_INTERNAL_FIELDS as (keyof GenericEntity)[],
+            exclude: [...STRICTLY_INTERNAL_FIELDS, '_children'] as (keyof GenericEntity)[],
             includeRelations: false,
           }),
         },
@@ -283,7 +283,7 @@ export class EntitiesThroughListController {
           schema: getModelSchemaRef(GenericEntity, {
             title: 'PatchEntityInList',
             partial: true,
-            exclude: UPDATE_EXCLUDED_FIELDS as (keyof GenericEntity)[],
+            exclude: [...UPDATE_EXCLUDED_FIELDS, '_children', '_parents'] as (keyof GenericEntity)[],
             includeRelations: false,
           }),
         },

@@ -208,7 +208,7 @@ export class ReactionsThroughEntityController {
         'application/json': {
           schema: getModelSchemaRef(EntityReaction, {
             title: 'NewReactionInEntity',
-            exclude: STRICTLY_INTERNAL_FIELDS as (keyof EntityReaction)[],
+            exclude: [...STRICTLY_INTERNAL_FIELDS, '_children'] as (keyof EntityReaction)[],
             includeRelations: false,
             optional: ['_entityId'],
           }),
@@ -291,7 +291,7 @@ export class ReactionsThroughEntityController {
           schema: getModelSchemaRef(EntityReaction, {
             title: 'PatchReactionInEntity',
             partial: true,
-            exclude: UPDATE_EXCLUDED_FIELDS as (keyof EntityReaction)[],
+            exclude: [...UPDATE_EXCLUDED_FIELDS, '_children', '_parents'] as (keyof EntityReaction)[],
             includeRelations: false,
           }),
         },
