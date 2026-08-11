@@ -12,6 +12,7 @@ import * as crypto from 'crypto';
 import _ from 'lodash';
 import slugify from 'slugify';
 import { EntityPersistenceBaseRepository } from './entity-persistence-base.repository';
+import { IDEMPOTENCY_EXCLUDED_FIELDS } from '../../models/base-types/unmodifiable-common-fields';
 import type { IdempotencyConfigurationReader } from '../../extensions/config-helpers/idempotency-config-helper';
 import type { KindConfigurationReader } from '../../extensions/config-helpers/kind-config-helper';
 import type { ResponseLimitConfigurationReader } from '../../extensions/config-helpers/response-limit-config-helper';
@@ -658,13 +659,30 @@ export abstract class EntityPersistenceBusinessRepository<
   /**
    * Calculates the idempotency key for the given data.
    * Uses the configured idempotency fields for this entity type.
+   * Silently filters out any server-managed fields from the configured list
+   * to prevent operator misconfiguration from corrupting idempotency semantics.
    */
   protected calculateIdempotencyKey(data: DataObject<E>): string | undefined {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const kind = (data as any)._kind;
-    const idempotencyFields = this.getIdempotencyFields(kind);
+    const rawFields = this.getIdempotencyFields(kind);
 
-    return this.calculateIdempotencyKeyFromFields(data, idempotencyFields);
+    const safeFields = rawFields.filter(
+      (f) => !IDEMPOTENCY_EXCLUDED_FIELDS.includes(f),
+    );
+
+    if (safeFields.length < rawFields.length) {
+      const discarded = rawFields.filter((f) =>
+        IDEMPOTENCY_EXCLUDED_FIELDS.includes(f),
+      );
+      this.loggingService.warn(
+        `${this.entityTypeName}Repository.calculateIdempotencyKey - ` +
+          `Ignoring server-managed fields configured as idempotency contributors: [${discarded.join(', ')}]. ` +
+          `These fields must not be used for idempotency. Remove them from the idempotency configuration.`,
+      );
+    }
+
+    return this.calculateIdempotencyKeyFromFields(data, safeFields);
   }
 
   // SLUG GENERATION

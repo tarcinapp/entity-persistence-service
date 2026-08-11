@@ -12,6 +12,7 @@ import * as crypto from 'crypto';
 import _ from 'lodash';
 import slugify from 'slugify';
 import { EntityPersistenceBaseRepository } from './entity-persistence-base.repository';
+import { IDEMPOTENCY_EXCLUDED_FIELDS } from '../../models/base-types/unmodifiable-common-fields';
 import type {
   KindConfigurationReader,
   IdempotencyConfigurationReader,
@@ -1123,16 +1124,33 @@ export abstract class EntityPersistenceReactionRepository<
 
   /**
    * Calculate idempotency key from configured fields.
+   * Silently filters out any server-managed fields from the configured list
+   * to prevent operator misconfiguration from corrupting idempotency semantics.
    */
   protected calculateIdempotencyKey(data: DataObject<E>): string | undefined {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const idempotencyFields = this.getIdempotencyFields((data as any)._kind);
+    const rawFields = this.getIdempotencyFields((data as any)._kind);
 
-    if (idempotencyFields.length === 0) {
+    const safeFields = rawFields.filter(
+      (f) => !IDEMPOTENCY_EXCLUDED_FIELDS.includes(f),
+    );
+
+    if (safeFields.length < rawFields.length) {
+      const discarded = rawFields.filter((f) =>
+        IDEMPOTENCY_EXCLUDED_FIELDS.includes(f),
+      );
+      this.loggingService.warn(
+        `${this.reactionTypeName}Repository.calculateIdempotencyKey - ` +
+          `Ignoring server-managed fields configured as idempotency contributors: [${discarded.join(', ')}]. ` +
+          `These fields must not be used for idempotency. Remove them from the idempotency configuration.`,
+      );
+    }
+
+    if (safeFields.length === 0) {
       return undefined;
     }
 
-    const fieldValues = idempotencyFields.map((field) => {
+    const fieldValues = safeFields.map((field) => {
       const value = _.get(data, field);
       if (Array.isArray(value)) {
         return JSON.stringify([...value].sort());

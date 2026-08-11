@@ -155,7 +155,7 @@ For each of [`entities.controller.ts`](../../src/controllers/entities.controller
 - The existing warning log pattern in both repositories (e.g. `this.loggingService.warn(...)`) should be used.
 - The business repository's `calculateIdempotencyKey` delegates to `calculateIdempotencyKeyFromFields`; the reaction repository inlines the hash loop. Both need the filter applied before hashing.
 
-**Status:** `[ ] pending`
+**Status:** `[x] done`
 
 ---
 
