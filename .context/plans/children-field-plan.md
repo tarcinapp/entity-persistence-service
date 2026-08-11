@@ -81,24 +81,14 @@ Add `_children` (server-managed array of child URIs, readable in responses) and 
 
 ---
 
-## Sub-Task 3: `EntityPersistenceBaseRepository` — Add `_children` to `virtualFields`
+## Sub-Task 3: ~~Removed — `virtualFields` is not the right mechanism~~
 
-**Intent:** Ensure `_children`, `_childrenCount`, and `_parentsCount` are stripped from all incoming write data at the repository layer, regardless of what the OpenAPI schema allows through. This is the defense-in-depth enforcement layer that runs unconditionally on every write path, including internal calls and tests that bypass the OpenAPI schema layer.
+**Note:** This sub-task was removed. `_parentsCount`, `_childrenCount`, and `_children` are real persisted fields that must be written to MongoDB — they must not be added to `virtualFields`. `virtualFields` is exclusively for response-only computed fields that are never stored (`_recordType`, `_relationMetadata`, etc.). The enforcement for these fields is:
 
-**Expected Outcomes:**
-- `sanitizeRecordType` strips `_children`, `_childrenCount`, and `_parentsCount` from any `DataObject` before it is persisted.
-- None of these fields can ever be written to MongoDB through any repository call path.
+- `_parentsCount` / `_childrenCount`: in `STRICTLY_INTERNAL_FIELDS` → auto-excluded from all request body schemas. The server sets them via `setCountFields` and the native `updateOne` bookkeeping helpers respectively.
+- `_children`: excluded from all write body schemas explicitly at the controller level (Sub-Task 4). No repository-level stripping needed or appropriate.
 
-**Todo List:**
-1. In [`src/repositories/base/entity-persistence-base.repository.ts`](../../src/repositories/base/entity-persistence-base.repository.ts), add `'_children'`, `'_childrenCount'`, and `'_parentsCount'` to the `virtualFields` array (currently at lines 49–54: `['_recordType', '_relationMetadata', '_fromMetadata', '_toMetadata']`).
-
-**Relevant Context:**
-- `sanitizeRecordType` (lines 122–128) iterates `this.virtualFields` and calls `_.unset(data, field)` for each.
-- `_children` is read-only but not in `STRICTLY_INTERNAL_FIELDS` — the OpenAPI per-endpoint exclusion is the primary guard, and `virtualFields` is the unconditional fallback.
-- `_childrenCount` and `_parentsCount` are both in `STRICTLY_INTERNAL_FIELDS` (auto-excluded from request schemas) but the same defense-in-depth argument applies to them — the `virtualFields` strip closes the gap for internal calls.
-- `sanitizeRecordType` is only called on write paths (`modifyDataForCreation` at line 414, `modifyDataForUpdates` at line 494), so these fields remain readable in GET responses.
-
-**Status:** `[ ] pending`
+**Status:** `[x] n/a — removed`
 
 ---
 
