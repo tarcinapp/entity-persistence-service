@@ -118,6 +118,7 @@
 - `_lastUpdatedBy`
 - `_lastUpdatedDateTime`
 - `_parents`
+- `_children`
 - `_version`
 - `_idempotencyKey`
 - and more...
