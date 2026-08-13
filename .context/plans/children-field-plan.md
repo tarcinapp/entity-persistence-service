@@ -234,7 +234,7 @@ const collection = this.dataSource.connector?.collection(
 **Expected Outcomes:**
 - Confirm `setCountFields` in both base repositories continues to derive `_parentsCount` from `_parents.length` when `_parents` is present in the data being written. This is correct for the record itself.
 - No `_childrenCount` derivation is added to `setCountFields` — `_childrenCount` is maintained exclusively via `$inc`/`$dec` in the bookkeeping helpers, never via `setCountFields`. Adding it to `setCountFields` would be wrong: the incoming data object for a write does not contain the full `_children` array (that lives on the stored document, not in write payloads).
-- Verify that `_children` being in `virtualFields` (Sub-Task 3) means it is stripped before `setCountFields` is called, so `setCountFields` will never see `_children` in write data.
+- Verify that `_children` is stripped before `setCountFields` is called, so `setCountFields` will never see `_children` in write data.
 
 **Todo List:**
 1. Read `setCountFields` in both repositories (business: lines 696–718; reaction: lines 1000–1022) and confirm no `_childrenCount` block needs to be added.

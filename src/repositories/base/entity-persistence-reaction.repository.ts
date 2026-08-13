@@ -1265,4 +1265,97 @@ export abstract class EntityPersistenceReactionRepository<
   protected buildParentUri(parentId: string): string {
     return `tapp://localhost/${this.uriPathSegment}/${parentId}`;
   }
+
+  // HIERARCHY BOOKKEEPING
+
+  /**
+   * Atomically adds a child URI to a parent record's `_children` array
+   * and increments `_childrenCount` by 1.
+   *
+   * Uses a native MongoDB `$addToSet` + `$inc` updateOne — bypasses all
+   * LoopBack lifecycle hooks intentionally. Does NOT touch `_version`,
+   * `_lastUpdatedDateTime`, or `_lastUpdatedBy`.
+   *
+   * The caller is responsible for verifying parent existence before calling.
+   * Runs inside the active transaction session if one is present in `options`.
+   */
+  protected async addChildReference(
+    parentId: string,
+    childUri: string,
+    options?: Options,
+  ): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const collection = (this.dataSource.connector as any)?.collection(
+      this.entityClass.modelName,
+    );
+    await collection.updateOne(
+      { _id: parentId },
+      {
+        $addToSet: { _children: childUri },
+        $inc: { _childrenCount: 1 },
+      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      { session: (options as any)?.session },
+    );
+  }
+
+  /**
+   * Atomically removes a child URI from a parent record's `_children` array
+   * and decrements `_childrenCount` by 1.
+   *
+   * Uses a native MongoDB `$pull` + `$inc` updateOne — bypasses all
+   * LoopBack lifecycle hooks intentionally. Does NOT touch `_version`,
+   * `_lastUpdatedDateTime`, or `_lastUpdatedBy`.
+   *
+   * Runs inside the active transaction session if one is present in `options`.
+   */
+  protected async removeChildReference(
+    parentId: string,
+    childUri: string,
+    options?: Options,
+  ): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const collection = (this.dataSource.connector as any)?.collection(
+      this.entityClass.modelName,
+    );
+    await collection.updateOne(
+      { _id: parentId },
+      {
+        $pull: { _children: childUri },
+        $inc: { _childrenCount: -1 },
+      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      { session: (options as any)?.session },
+    );
+  }
+
+  /**
+   * Atomically removes a parent URI from a child record's `_parents` array
+   * and decrements `_parentsCount` by 1.
+   *
+   * Used during deletion cleanup to remove stale parent references from
+   * child records. Uses a native MongoDB `$pull` + `$inc` updateOne.
+   * Does NOT touch `_version`, `_lastUpdatedDateTime`, or `_lastUpdatedBy`.
+   *
+   * Runs inside the active transaction session if one is present in `options`.
+   */
+  protected async removeParentReference(
+    childId: string,
+    parentUri: string,
+    options?: Options,
+  ): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const collection = (this.dataSource.connector as any)?.collection(
+      this.entityClass.modelName,
+    );
+    await collection.updateOne(
+      { _id: childId },
+      {
+        $pull: { _parents: parentUri },
+        $inc: { _parentsCount: -1 },
+      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      { session: (options as any)?.session },
+    );
+  }
 }
