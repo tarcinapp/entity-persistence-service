@@ -1370,6 +1370,9 @@ Here are the list of common field names.
 | **_viewerUsersCount**    | A number field keeps the number of items in viewerUsers array. Facilitates querying records with no-viewers with allowing queries like: `/lists?filter[where][_viewerUsersCount]=0`                                                                                                                                                                                                                                                                             |
 | **_viewerGroupsCount**   | A number field keeps the number of items in viewerGroups array. Facilitates querying records with no-viewers with allowing queries like: `/lists?filter[where][_viewerGroupsCount]=0`                                                                                                                                                                                                                                                                           |
 | **_parentsCount**        | A number field keeps the number of parents of the record. Facilitates retrieving only parents by this usage: `/entities?filter[where][_parentsCount]=0`                                                                                                                                                                                                                                                                                                         |
+| **_parents**             | An array of parent URIs. Clients can supply it in single-record write bodies (`POST`, `PATCH`, `PUT`). The server keeps the parent's `_children` array in sync automatically. Always included in responses. |
+| **_children**            | A server-managed array of child URIs. Automatically maintained when children are created via `POST /{id}/children` or when `_parents` is supplied in any single-record write. Read-only — clients cannot write this field. Always included in responses for forward traversal. |
+| **_childrenCount**       | A hidden, server-managed integer that mirrors `_children.length`. Maintained via atomic `$inc`/`$dec` operations. Never returned in responses. Powers a future `leaves` set filter. |
 | **_createdBy**           | Id of the user who created the record. Gateway *may* allow caller to modify this field. By default only admin users can modify this field.                                                                                                                                                                                                                                                                                                                      |
 | **_createdDateTime**    | A date time object automatically filled with the datetime of entity create operation. Gateway *may* allow caller to modify this field. By default only admin users can modify this field.                                                                                                                                                                                                                                                                       |
 | **_lastUpdatedDateTime** | A date time object automatically filled with the datetime of any entity update operation. Gateway *may* allow caller to modify this field. By default only admin users can modify this field.                                                                                                                                                                                                                                                                   |
@@ -1381,13 +1384,13 @@ Here are the list of common field names.
 
 **(\*)** Required fields
 
-**Strictly Managed Fields**: `_version`, `_idempotencyKey`, `_parentsCount`,  `_viewerUsersCount`, `_viewerGroupsCount`, `_ownerUsersCount` and `_ownerGroupsCount` fields are calculated at the application logic no matter what value is sent by the caller.  
+**Strictly Managed Fields**: `_version`, `_idempotencyKey`, `_parentsCount`, `_childrenCount`, `_viewerUsersCount`, `_viewerGroupsCount`, `_ownerUsersCount` and `_ownerGroupsCount` fields are calculated at the application logic no matter what value is sent by the caller.
 
 **Fields Set by Application when Empty**: `_kind`, `_visibility`, `_validFromDateTime`, `_slug`, `_createdDateTime` and `_lastUpdatedDateTime` are calculated at the application logic if it is not specified in the request body. entity-persistence-gateway decides if user is authorized to send these fields by evaluating authorization policies.   
 
 **Gateway Managed Fields**: `_viewerUsers`, `_viewerGroups`, `_ownerUsers`, `_ownerGroups`, `_createdBy`, `_createdDateTime`, `_lastUpdatedBy`, `_lastUpdatedDateTime`, `_validFromDateTime` fields *may* be modified by entity-persistence-gateway. Gateway decides whether it accepts the given value, modifies it, or allows the caller to modify it by evaluating security policies.
 
-**Always Hidden Fields**: `_parentsCount`, `_ownerUsersCount`, `_ownerGroupsCount`, `_viewerUsersCount`, `_viewerGroupsCount` and `_idempotencyKey` fields are hidden from the caller in the response. Yet, these fields can be used while querying records. Gateway decides if caller is authorized to read and query by these fields by evaluating security policies.
+**Always Hidden Fields**: `_parentsCount`, `_childrenCount`, `_ownerUsersCount`, `_ownerGroupsCount`, `_viewerUsersCount`, `_viewerGroupsCount` and `_idempotencyKey` fields are hidden from the caller in the response. Yet, these fields can be used while querying records. Gateway decides if caller is authorized to read and query by these fields by evaluating security policies.
 
 **Immutable Fields**: The `_id`, and `_kind` fields are immutable and cannot be changed after record creation. This constraint is enforced because many system configurations and data integrity rules are based on the `_kind` value. Changing the `_kind` of an existing record could lead to inconsistencies in uniqueness constraints, validation rules, visibility settings, and other kind-specific configurations. Any attempt to modify the `_kind` field during update or replace operations will result in a 422 error (Unprocessable Entity) with the code `IMMUTABLE-ENTITY-KIND`.
 
@@ -1931,6 +1934,12 @@ When performing PATCH or PUT operations on a single record, the version field (_
 
 ### 4. Dot Notation in Connected Model Filters for List-Entity Relations
 When querying list-entity relations, dot notation filtering (e.g., `metadata.status.current`) is not supported in `listFilter` and `entityFilter` parameters for connected models. While other filtering approaches work normally, nested property filtering using dot notation specifically for connected List and Entity models through their relations is not available.
+
+### 5. `_parents` cannot be set in bulk PATCH operations
+
+When performing a bulk `PATCH /{segment}` (updateAll) request, the `_parents` field is excluded from the request body. The server cannot guarantee bidirectional consistency between `_children` on parent records and `_parents` on child records when updating an unbounded number of records without per-record pre-fetches. Any `_parents` value supplied in a bulk PATCH body is silently ignored. Use single-record `PATCH /{id}` or `PUT /{id}` to update hierarchy relationships.
+
+
 
 # References
 

@@ -13,7 +13,7 @@ The hierarchy is intentionally flexible:
 
 A record with no parents is called a **root**. A record with no children is a **leaf**. A record can be both (a standalone record) or neither (a node somewhere in the middle of a deep DAG).
 
-Each child record carries its parent references directly inside its own `_parents` field. Each parent record carries its children references inside its own `_children` field, maintained automatically by the server when children are created via `POST /{id}/children`. `_childrenCount` mirrors `_children.length` and is visible in responses so the UI can check whether a record has children without fetching them.
+Each child record carries its parent references in `_parents`. Each parent record carries its children references in `_children`, maintained automatically by the server. `_childrenCount` mirrors `_children.length` but is always hidden from responses — its sole purpose is server-side query optimisation (powering a future `leaves` set filter).
 
 This feature intentionally does not express hierarchy through separate relationship records (the list-to-entity pivot table). This keeps hierarchy reads cheap: a single document fetch returns the full ancestry or child list.
 
@@ -30,7 +30,7 @@ POST /{segment}/{id}/children
 
 Creates a new record and automatically links it as a child of the record identified by `{id}`. The client provides the same fields as a normal creation request. The `_parents` field is not part of the request body: the server constructs and injects it from the path parameter.
 
-The operation verifies that the parent record exists before creating the child, and the two steps run atomically inside a MongoDB transaction. If the parent does not exist the request returns 404. For reaction types, the operation additionally validates that the child's source-record field (`_entityId` or `_listId`) matches the parent's, because a reaction hierarchy must stay bound to the same source record.
+The operation verifies that the parent record exists before creating the child, and the two steps run atomically inside a MongoDB transaction. After the child is created, the server atomically adds the child's URI to the parent's `_children` array and increments the parent's `_childrenCount` — all within the same transaction. If the parent does not exist the request returns 404. For reaction types, the operation additionally validates that the child's source-record field (`_entityId` or `_listId`) matches the parent's, because a reaction hierarchy must stay bound to the same source record.
 
 ### Fetching parents
 
@@ -49,6 +49,12 @@ GET /{segment}/{id}/children
 ```
 
 Returns the full records of all direct children of the given record. The response format is identical to the parents endpoint. If the record has no children, the response is an empty array. If the record itself does not exist, the request returns 404.
+
+Children are resolved via a **forward lookup** on the parent's `_children` array — the server reads the parent document to obtain child IDs, then queries `{ _id: { inq: childIds } }`. This mirrors the structure of `findParents` and eliminates full-collection scans.
+
+`_children` is populated by two write paths:
+- `POST /{segment}/{id}/children` — the dedicated child-creation endpoint.
+- `POST /{segment}`, `PATCH /{segment}/{id}`, or `PUT /{segment}/{id}` with `_parents` in the request body — the server diffs the old and new `_parents` values and atomically calls `addChildReference` / `removeChildReference` on every affected parent.
 
 All standard query parameters are supported on this endpoint as well, making it possible to filter, sort, paginate, and expand children in the same way as any other collection query.
 
@@ -106,6 +112,8 @@ A record with two parents:
 
 `_parents` is a user-settable field. Clients can supply it directly in a `POST` body or omit it and use the dedicated `POST /{id}/children` endpoint instead. The field is always included in responses so clients can traverse the ancestry upward without a separate query. See the [Managed Fields](../README.md#managed-fields) section in the main README for the full field contract, including how its mutability and visibility are controlled at the gateway level.
 
+> **Note:** `_parents` is excluded from bulk `PATCH /{segment}` (updateAll) request bodies. Maintaining bidirectional consistency across an unbounded number of records cannot be guaranteed without per-record pre-fetches, which makes the cost non-viable for bulk operations. This is a known limitation — see the [Known Limitations](../README.md#known-limitations) section of the main README.
+
 #### Why URIs rather than bare IDs
 
 Using full URIs rather than plain UUIDs serves a purpose that goes beyond this service instance. The `tapp://` scheme is the native reference format for the entire platform. An instance of this service that is named `localhost` (the default, meaning "this instance") stores references as `tapp://localhost/...`. An instance named `library` would store `tapp://library/...`.
@@ -141,16 +149,52 @@ Each concrete model defines the regex that `_parents` entries must match, lockin
 
 > The regex currently enforces `localhost` as the host, meaning `_parents` can only point to records within the same service instance. Cross-instance parent references are a future capability; when supported, the regex would be relaxed to accept any valid instance name.
 
+### `_children`
+
+Each parent record stores its children as an array of URI strings in the `_children` field, using the same URI format as `_parents`. The server maintains this array automatically — clients cannot write it directly. It is excluded from all write endpoint request body schemas and any client-supplied value is stripped before persistence.
+
+`_children` is always included in `GET` responses so clients can perform forward traversal without a separate query.
+
+```json
+{
+  "_id": "book-uuid",
+  "_name": "My Book",
+  "_children": [
+    "tapp://localhost/entities/chapter-1-uuid",
+    "tapp://localhost/entities/chapter-2-uuid"
+  ]
+}
+```
+
+**How `_children` is populated:**
+
+1. `POST /{segment}/{id}/children` — after child creation, the server atomically calls `$addToSet: { _children: childUri }` on the parent document within the same transaction.
+2. `POST /{segment}`, `PATCH /{segment}/{id}`, or `PUT /{segment}/{id}` with `_parents` in the body — the server diffs old vs new `_parents` and calls `addChildReference` on added parents and `removeChildReference` on removed parents. All operations run in the active transaction session.
+
+Each `$addToSet` / `$pull` is idempotent, so retried transactions cannot produce duplicate entries.
+
 ### `_parentsCount`
 
 A hidden, server-managed integer that always mirrors `_parents.length`. The server sets it automatically on every write operation that touches `_parents`. Clients cannot set or read it directly: it is excluded from all API responses and rejected in all request bodies. Its classification as a strictly managed and always-hidden field is defined in the [Managed Fields](../README.md#managed-fields) section of the main README.
 
 Its sole purpose is query efficiency. The `roots` set filter uses `{ _parentsCount: 0 }` to find all root-level records without scanning the `_parents` array. An integer field filter is substantially cheaper than an array-length check at the database level.
 
+### `_childrenCount`
+
+A hidden, server-managed integer that always mirrors `_children.length`. Unlike `_parentsCount` (which is derived from the incoming write payload via `setCountFields`), `_childrenCount` is maintained exclusively through atomic MongoDB `$inc`/`$dec` operations in the hierarchy bookkeeping helpers. It is never derived from in-memory data and is never touched by `setCountFields`.
+
+Clients cannot set or read it: it is excluded from all API responses, all request body schemas, and all aggregation pipeline output. Its future purpose is powering a `leaves` set filter (`{ _childrenCount: 0 }`) — mirroring how `_parentsCount` powers `roots`.
+
 
 ## Transactional Context
 
-Only `createChild` participates in a MongoDB transaction. Read endpoints are stateless.
+The following operations participate in a MongoDB transaction:
+
+- `POST /{segment}/{id}/children` (`createChild`) — parent existence check + child creation + parent `_children` update.
+- `DELETE /{segment}/{id}` (`deleteById`) — hierarchy reference cleanup (removing stale URIs from parents' `_children` and children's `_parents`) then record deletion.
+- `DELETE /{segment}` (`deleteAll`) — same cleanup, applied per record, then bulk deletion.
+
+Read endpoints (`GET /{id}/children`, `GET /{id}/parents`) are stateless.
 
 The flow for `POST /{segment}/{id}/children`:
 
@@ -158,31 +202,38 @@ The flow for `POST /{segment}/{id}/children`:
 2. The [`TransactionalInterceptor`](../src/interceptors/transactional.interceptor.ts) detects the marker, opens a MongoDB `ClientSession`, and starts a transaction.
 3. The session is bound to `'active.transaction.options'` in the request context.
 4. The controller injects `options` via `@inject('active.transaction.options', { optional: true })` and passes it through to the repository.
-5. All sub-operations run inside that session: parent existence check then child creation.
+5. All sub-operations run inside that session: parent existence check, child creation, and parent `_children` / `_childrenCount` update.
 6. On commit the transaction is finalised. On write-conflict errors (MongoDB code 112 / `TransientTransactionError`) the interceptor retries up to three times with back-off.
 
 
-## Children Query: Current Approach and Its Trade-offs
+## Children Query: Forward Lookup
 
-`findChildren` queries the collection for all records whose `_parents` array contains the parent's URI:
+`findChildren` reads the parent document's `_children` array and queries `{ _id: { inq: childIds } }`. This mirrors the structure of `findParents` and was chosen for the following reasons:
 
-```
-{ _parents: "tapp://localhost/{segment}/{id}" }
-```
+- **No collection scan.** The query targets specific IDs — MongoDB resolves them directly via the `_id` index.
+- **Consistency.** A child can only appear in `GET /{id}/children` if the parent's `_children` array contains its URI. The forward array and the child's `_parents` field are always kept in sync by the bookkeeping helpers.
+- **Symmetry.** `findParents` and `findChildren` follow the same pattern: fetch the record, extract IDs from the reference array, query by ID.
 
-MongoDB treats a scalar equality filter against an array field as an element-match, returning every document where the array contains that string. The approach is simple and correct.
+The flow:
 
-**Advantages:**
-- No write to the parent record is needed on child creation or deletion.
-- A child can be created by supplying `_parents` directly in a `POST` body, without going through the `/children` endpoint.
-- Multiple-parent DAGs work naturally: a record just lists all its parent URIs.
+1. `findById(id, { fields: { _children: true } })` — throws 404 if the parent does not exist.
+2. Early return `[]` if `_children` is absent or empty.
+3. Extract child IDs: `childIds = _children.map(uri => uri.split('/').pop())`.
+4. Query: `find({ where: { and: [{ _id: { inq: childIds } }, ...callerFilter] } })`.
 
-**Disadvantages:**
-- Without an index on `_parents`, every `findChildren` call scans the full collection.
-- Counting children requires a separate query rather than reading a field.
-- There is no quick way to tell whether a record has children without a database round-trip.
 
-A MongoDB multikey index on `_parents` makes element-match queries efficient without any code change. An alternative approach would be to store a `_children` array on the parent, mirroring the `_parents` approach and enabling forward traversal, but it requires transactional bookkeeping on every child creation and deletion. That trade-off is analysed in [21-IMPLEMENTATION-CHILDREN-FIELD.md](./21-IMPLEMENTATION-CHILDREN-FIELD.md).
+## Deletion and Reference Cleanup
+
+When a record is deleted, the server performs **bidirectional reference cleanup** before the actual MongoDB delete:
+
+- For each URI in the deleted record's `_parents`: calls `removeChildReference(parentId, deletedRecordUri)` — removes the URI from the parent's `_children` array and decrements `_childrenCount`.
+- For each URI in the deleted record's `_children`: calls `removeParentReference(childId, deletedRecordUri)` — removes the URI from the child's `_parents` array and decrements `_parentsCount`.
+
+All cleanup operations and the final delete run within the same `@transactional()` session. This ensures no partial cleanup is ever committed.
+
+**Cascade behaviour:** Deletion is not cascading. Only stale URI references are removed — related records survive.
+
+**Implementation:** `cleanupHierarchyReferences` is a protected method on both base repositories. `EntityPersistenceBusinessRepository.deleteById` and `deleteAll` are new overrides that sit between the concrete repositories and `DefaultTransactionalRepository`. The concrete `EntityRepository` and `ListRepository` do not need changes — their cascade-delete logic calls `super.deleteById` / `super.deleteAll` which flows through the new business-base override. For the reaction base, the existing `deleteById` and `deleteAll` methods are augmented in place.
 
 
 ## Tests
@@ -191,11 +242,11 @@ A MongoDB multikey index on `_parents` makes element-match queries efficient wit
 
 | File | Coverage |
 |------|----------|
-| [`entity/create-child-entity.test.ts`](../src/__tests__/acceptance/entity/create-child-entity.test.ts) | POST /entities/{id}/children: 404 parent, creates child, verifies `_parents`, verifies children endpoint |
-| [`entity/get-entity-children.test.ts`](../src/__tests__/acceptance/entity/get-entity-children.test.ts) | GET /entities/{id}/children: basic, filter by kind / date range / visibility / owner / custom field |
+| [`entity/create-child-entity.test.ts`](../src/__tests__/acceptance/entity/create-child-entity.test.ts) | POST /entities/{id}/children: creates child, verifies `_parents`, verifies `_children` updated on parent, verifies `_childrenCount` hidden |
+| [`entity/get-entity-children.test.ts`](../src/__tests__/acceptance/entity/get-entity-children.test.ts) | GET /entities/{id}/children: basic, filter by kind / date range / visibility / owner / custom field; both creation paths (via endpoint and direct POST) |
 | [`entity/get-entity-parents.test.ts`](../src/__tests__/acceptance/entity/get-entity-parents.test.ts) | GET /entities/{id}/parents: basic, filter by kind / date range / visibility / owner, field selection |
-| [`list/create-child-list.test.ts`](../src/__tests__/acceptance/list/create-child-list.test.ts) | POST /lists/{id}/children: 404 parent, creates child, verifies children endpoint |
-| [`list/get-list-children.test.ts`](../src/__tests__/acceptance/list/get-list-children.test.ts) | GET /lists/{id}/children: nested lookup with field selection, 404 |
+| [`list/create-child-list.test.ts`](../src/__tests__/acceptance/list/create-child-list.test.ts) | POST /lists/{id}/children: creates child, verifies `_children` updated on parent, verifies `_childrenCount` hidden |
+| [`list/get-list-children.test.ts`](../src/__tests__/acceptance/list/get-list-children.test.ts) | GET /lists/{id}/children: nested lookup with field selection, 404; both creation paths |
 | [`list/get-list-parents.test.ts`](../src/__tests__/acceptance/list/get-list-parents.test.ts) | GET /lists/{id}/parents: lookup with complex filter, 404 |
 | [`entity-reaction/get-entity-reaction-parents.test.ts`](../src/__tests__/acceptance/entity-reaction/get-entity-reaction-parents.test.ts) | GET /entity-reactions/{id}/parents: basic, filter by kind / date / visibility / owner |
 | [`list-reaction/get-list-reaction-parents.test.ts`](../src/__tests__/acceptance/list-reaction/get-list-reaction-parents.test.ts) | GET /list-reactions/{id}/parents: basic, filter by kind / date / visibility / owner |
@@ -205,26 +256,28 @@ A MongoDB multikey index on `_parents` makes element-match queries efficient wit
 | File | Coverage |
 |------|----------|
 | [`unit/controllers/entity.controller.test.ts`](../src/__tests__/unit/controllers/entity.controller.test.ts) | `findChildren()`, `findParents()`, `createChild()`: success, 404, 422, 429 |
+| [`unit/repositories/entity.repository.test.ts`](../src/__tests__/unit/repositories/entity.repository.test.ts) | `findChildren`: forward lookup, empty result, 404; `createChild`: `addChildReference` called; `deleteById`: `removeChildReference`/`removeParentReference` per reference; `calculateIdempotencyKey`: managed fields stripped, warning logged |
+| [`unit/repositories/list.repository.test.ts`](../src/__tests__/unit/repositories/list.repository.test.ts) | Same coverage as entity repository tests |
 
 
 ## Related Files
 
 | File | Role |
 |------|------|
-| [`src/models/entity.model.ts`](../src/models/entity.model.ts) | `_parents` `@property` with entity URI pattern |
-| [`src/models/list.model.ts`](../src/models/list.model.ts) | `_parents` `@property` with list URI pattern |
-| [`src/models/entity-reactions.model.ts`](../src/models/entity-reactions.model.ts) | `_parents` `@property` with entity-reaction URI pattern |
-| [`src/models/list-reactions.model.ts`](../src/models/list-reactions.model.ts) | `_parents` `@property` with list-reaction URI pattern |
-| [`src/models/base-models/list-entity-common-base.model.ts`](../src/models/base-models/list-entity-common-base.model.ts) | `_parentsCount` property; TypeScript-only `_parents` type |
-| [`src/models/base-models/reactions-common-base.model.ts`](../src/models/base-models/reactions-common-base.model.ts) | `_parentsCount` property; TypeScript-only `_parents` type |
-| [`src/models/base-types/unmodifiable-common-fields.ts`](../src/models/base-types/unmodifiable-common-fields.ts) | `_parentsCount` in `STRICTLY_INTERNAL_FIELDS` and `ALWAYS_HIDDEN_FIELDS` |
-| [`src/repositories/base/entity-persistence-business.repository.ts`](../src/repositories/base/entity-persistence-business.repository.ts) | `findParents`, `findChildren`, `createChild`, `setCountFields`, `buildParentUri` |
+| [`src/models/entity.model.ts`](../src/models/entity.model.ts) | `_parents` and `_children` `@property` with entity URI pattern |
+| [`src/models/list.model.ts`](../src/models/list.model.ts) | `_parents` and `_children` `@property` with list URI pattern |
+| [`src/models/entity-reactions.model.ts`](../src/models/entity-reactions.model.ts) | `_parents` and `_children` `@property` with entity-reaction URI pattern |
+| [`src/models/list-reactions.model.ts`](../src/models/list-reactions.model.ts) | `_parents` and `_children` `@property` with list-reaction URI pattern |
+| [`src/models/base-models/list-entity-common-base.model.ts`](../src/models/base-models/list-entity-common-base.model.ts) | `_parentsCount`, `_childrenCount` properties; TypeScript-only `_parents`, `_children` type |
+| [`src/models/base-models/reactions-common-base.model.ts`](../src/models/base-models/reactions-common-base.model.ts) | `_parentsCount`, `_childrenCount` properties; TypeScript-only `_parents`, `_children` type |
+| [`src/models/base-types/unmodifiable-common-fields.ts`](../src/models/base-types/unmodifiable-common-fields.ts) | `_parentsCount`, `_childrenCount` in `STRICTLY_INTERNAL_FIELDS` and `ALWAYS_HIDDEN_FIELDS`; `IDEMPOTENCY_EXCLUDED_FIELDS` |
+| [`src/repositories/base/entity-persistence-business.repository.ts`](../src/repositories/base/entity-persistence-business.repository.ts) | `findParents`, `findChildren`, `createChild`, `deleteById`, `deleteAll`, `syncParentChildReferences`, `cleanupHierarchyReferences`, `addChildReference`, `removeChildReference`, `removeParentReference`, `buildParentUri` |
 | [`src/repositories/base/entity-persistence-reaction.repository.ts`](../src/repositories/base/entity-persistence-reaction.repository.ts) | Same methods for reactions |
 | [`src/controllers/entities.controller.ts`](../src/controllers/entities.controller.ts) | REST endpoints for entity hierarchy |
 | [`src/controllers/lists.controller.ts`](../src/controllers/lists.controller.ts) | REST endpoints for list hierarchy |
 | [`src/controllers/entity-reactions.controller.ts`](../src/controllers/entity-reactions.controller.ts) | REST endpoints for entity-reaction hierarchy |
 | [`src/controllers/list-reactions.controller.ts`](../src/controllers/list-reactions.controller.ts) | REST endpoints for list-reaction hierarchy |
 | [`src/extensions/utils/set-helper.ts`](../src/extensions/utils/set-helper.ts) | `roots` set using `_parentsCount: 0` |
-| [`src/extensions/utils/mongo-pipeline-helper.ts`](../src/extensions/utils/mongo-pipeline-helper.ts) | Excludes `_parentsCount` from aggregation pipeline output |
-| [`src/decorators/transactional.decorator.ts`](../src/decorators/transactional.decorator.ts) | `@transactional()` used on `createChild` controller methods |
+| [`src/extensions/utils/mongo-pipeline-helper.ts`](../src/extensions/utils/mongo-pipeline-helper.ts) | Excludes `_parentsCount` and `_childrenCount` from aggregation pipeline output |
+| [`src/decorators/transactional.decorator.ts`](../src/decorators/transactional.decorator.ts) | `@transactional()` used on `createChild`, `deleteById`, `deleteAll` controller methods |
 | [`src/interceptors/transactional.interceptor.ts`](../src/interceptors/transactional.interceptor.ts) | MongoDB session management and write-conflict retry logic |
