@@ -88,5 +88,17 @@ describe('POST /entities/{id}/children', () => {
 
     expect(childrenResponse.body).to.be.Array().lengthOf(1);
     expect(childrenResponse.body[0]._id).to.be.equal(childResponse.body._id);
+
+    // Verify that the parent's _children array was updated and _childrenCount is hidden
+    const parentGetResponse = await client
+      .get(`/entities/${parentResponse.body._id}`)
+      .expect(200);
+
+    expect(parentGetResponse.body._children).to.be.Array().lengthOf(1);
+    expect(parentGetResponse.body._children[0]).to.equal(
+      `tapp://localhost/entities/${childResponse.body._id}`,
+    );
+    // _childrenCount is an ALWAYS_HIDDEN field — must not appear in responses
+    expect(parentGetResponse.body._childrenCount).to.be.undefined();
   });
 });

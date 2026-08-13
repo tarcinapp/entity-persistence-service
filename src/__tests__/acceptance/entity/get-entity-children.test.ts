@@ -1583,4 +1583,62 @@ describe('GET /entities/{entityId}/children', () => {
     );
     expect(response.body.error).to.have.property('code', 'ENTITY-NOT-FOUND');
   });
+
+  it('creation-path: child created via POST /entities/{id}/children appears in GET /entities/{id}/children', async () => {
+    appWithClient = await setupApplication({ entity_kinds: 'book' });
+    ({ client } = appWithClient);
+
+    // Create parent
+    const parentRes = await client
+      .post('/entities')
+      .send({ _name: 'Parent', _kind: 'book' })
+      .expect(200);
+    const parentId: string = parentRes.body._id;
+
+    // Create child via the /children endpoint
+    const childRes = await client
+      .post(`/entities/${parentId}/children`)
+      .send({ _name: 'Child via endpoint', _kind: 'book' })
+      .expect(200);
+
+    // Child should appear in GET /children
+    const childrenRes = await client
+      .get(`/entities/${parentId}/children`)
+      .expect(200);
+
+    expect(childrenRes.body).to.be.Array().and.have.length(1);
+    expect(childrenRes.body[0]._id).to.equal(childRes.body._id);
+    expect(childrenRes.body[0]._name).to.equal('Child via endpoint');
+  });
+
+  it('creation-path: child created via POST /entities with _parents appears in GET /entities/{id}/children', async () => {
+    appWithClient = await setupApplication({ entity_kinds: 'book' });
+    ({ client } = appWithClient);
+
+    // Create parent
+    const parentRes = await client
+      .post('/entities')
+      .send({ _name: 'Parent', _kind: 'book' })
+      .expect(200);
+    const parentId: string = parentRes.body._id;
+
+    // Create child via direct POST with _parents in body
+    const childRes = await client
+      .post('/entities')
+      .send({
+        _name: 'Child via direct POST',
+        _kind: 'book',
+        _parents: [`tapp://localhost/entities/${parentId}`],
+      })
+      .expect(200);
+
+    // Child should appear in GET /children (forward lookup on _children)
+    const childrenRes = await client
+      .get(`/entities/${parentId}/children`)
+      .expect(200);
+
+    expect(childrenRes.body).to.be.Array().and.have.length(1);
+    expect(childrenRes.body[0]._id).to.equal(childRes.body._id);
+    expect(childrenRes.body[0]._name).to.equal('Child via direct POST');
+  });
 });

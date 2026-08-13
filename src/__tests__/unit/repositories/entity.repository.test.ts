@@ -1375,4 +1375,250 @@ describe('EntityRepository', () => {
       expect(result.count).to.equal(2);
     });
   });
+
+  describe('findChildren', () => {
+    let superFindByIdStub: sinon.SinonStub;
+    let superFindStub: sinon.SinonStub;
+
+    beforeEach(() => {
+      superFindByIdStub = sinon
+        .stub(getBaseRepoPrototype(), 'findById')
+        .resolves(undefined);
+      superFindStub = sinon
+        .stub(getBaseRepoPrototype(), 'find')
+        .resolves([]);
+    });
+
+    afterEach(() => {
+      sinon.restore();
+    });
+
+    it('returns [] when parent has no _children', async () => {
+      superFindByIdStub.resolves({ _id: 'parent-id' });
+
+      const result = await repository.findChildren('parent-id');
+
+      expect(result).to.be.Array().and.have.length(0);
+      expect(superFindStub.called).to.be.false();
+    });
+
+    it('returns [] when parent _children is empty', async () => {
+      superFindByIdStub.resolves({ _id: 'parent-id', _children: [] });
+
+      const result = await repository.findChildren('parent-id');
+
+      expect(result).to.be.Array().and.have.length(0);
+      expect(superFindStub.called).to.be.false();
+    });
+
+    it('queries by child IDs extracted from _children URIs', async () => {
+      const childId = 'child-abc';
+      superFindByIdStub.resolves({
+        _id: 'parent-id',
+        _children: [`tapp://localhost/entities/${childId}`],
+      });
+      const childEntity = { _id: childId, _name: 'Child' };
+      superFindStub.resolves([childEntity]);
+
+      const result = await repository.findChildren('parent-id');
+
+      expect(superFindStub.calledOnce).to.be.true();
+      const calledFilter = superFindStub.firstCall.args[0] as any;
+      expect(calledFilter.where.and[0]).to.deepEqual({
+        _id: { inq: [childId] },
+      });
+      expect(result).to.deepEqual([childEntity]);
+    });
+
+    it('throws 404 when parent does not exist', async () => {
+      superFindByIdStub.rejects(
+        new HttpErrorResponse({
+          statusCode: 404,
+          name: 'NotFoundError',
+          message: "Entity with id 'missing' could not be found.",
+          code: 'ENTITY-NOT-FOUND',
+        }),
+      );
+
+      try {
+        await repository.findChildren('missing');
+        throw new Error('Expected error not thrown');
+      } catch (e: any) {
+        expect(e.statusCode).to.equal(404);
+      }
+    });
+  });
+
+  describe('createChild (hierarchy bookkeeping)', () => {
+    let superCreateStub: sinon.SinonStub;
+    let superFindByIdStub: sinon.SinonStub;
+    let superFindOneStub: sinon.SinonStub;
+    let addChildRefStub: sinon.SinonStub;
+
+    const parentId = 'parent-id';
+    const childId = 'child-id';
+
+    beforeEach(() => {
+      superFindByIdStub = sinon
+        .stub(getBaseRepoPrototype(), 'findById')
+        .resolves({ _id: parentId, _children: [], _parents: [] });
+
+      superCreateStub = sinon
+        .stub(getBaseRepoPrototype(), 'create')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .callsFake(async (data: any) => ({ ...data, _id: childId }));
+
+      superFindOneStub = sinon
+        .stub(getBaseRepoPrototype(), 'findOne')
+        .resolves(null);
+
+      addChildRefStub = sinon
+        .stub(repository as any, 'addChildReference')
+        .resolves();
+
+      // stub syncParentChildReferences to be a no-op so only addChildRef from createChild is observed
+      sinon.stub(repository as any, 'syncParentChildReferences').resolves();
+    });
+
+    afterEach(() => {
+      sinon.restore();
+    });
+
+    it('calls addChildReference with correct parentId and childUri after creation', async () => {
+      await repository.createChild(parentId, {
+        _name: 'Child',
+        _kind: 'entity',
+      } as any);
+
+      expect(addChildRefStub.calledOnce).to.be.true();
+      expect(addChildRefStub.firstCall.args[0]).to.equal(parentId);
+      expect(addChildRefStub.firstCall.args[1]).to.equal(
+        `tapp://localhost/entities/${childId}`,
+      );
+    });
+  });
+
+  describe('deleteById (hierarchy cleanup)', () => {
+    let superDeleteByIdStub: sinon.SinonStub;
+    let superFindByIdStub: sinon.SinonStub;
+    let removeChildRefStub: sinon.SinonStub;
+    let removeParentRefStub: sinon.SinonStub;
+    let reactionsRepoStub: sinon.SinonStubbedInstance<EntityReactionsRepository>;
+    let listEntityRelationRepoStub: sinon.SinonStubbedInstance<ListEntityRelationRepository>;
+
+    beforeEach(() => {
+      reactionsRepoStub = sinon.createStubInstance(EntityReactionsRepository);
+      listEntityRelationRepoStub = sinon.createStubInstance(
+        ListEntityRelationRepository,
+      );
+      (repository as any).reactionsRepositoryGetter = () =>
+        Promise.resolve(reactionsRepoStub);
+      (repository as any).listEntityRelationRepositoryGetter = () =>
+        Promise.resolve(listEntityRelationRepoStub);
+
+      superFindByIdStub = sinon
+        .stub(getBaseRepoPrototype(), 'findById')
+        .resolves({
+          _id: 'rec-id',
+          _parents: ['tapp://localhost/entities/parent-a'],
+          _children: ['tapp://localhost/entities/child-b'],
+        });
+
+      superDeleteByIdStub = sinon
+        .stub(getBaseRepoPrototype(), 'deleteById')
+        .resolves();
+
+      removeChildRefStub = sinon
+        .stub(repository as any, 'removeChildReference')
+        .resolves();
+
+      removeParentRefStub = sinon
+        .stub(repository as any, 'removeParentReference')
+        .resolves();
+    });
+
+    afterEach(() => {
+      sinon.restore();
+    });
+
+    it('calls removeChildReference for each parent before deleting', async () => {
+      await repository.deleteById('rec-id' as any);
+
+      expect(removeChildRefStub.calledOnce).to.be.true();
+      expect(removeChildRefStub.firstCall.args[0]).to.equal('parent-a');
+      expect(removeChildRefStub.firstCall.args[1]).to.equal(
+        'tapp://localhost/entities/rec-id',
+      );
+    });
+
+    it('calls removeParentReference for each child before deleting', async () => {
+      await repository.deleteById('rec-id' as any);
+
+      expect(removeParentRefStub.calledOnce).to.be.true();
+      expect(removeParentRefStub.firstCall.args[0]).to.equal('child-b');
+      expect(removeParentRefStub.firstCall.args[1]).to.equal(
+        'tapp://localhost/entities/rec-id',
+      );
+    });
+
+    it('calls super.deleteById after cleanup', async () => {
+      await repository.deleteById('rec-id' as any);
+
+      expect(superDeleteByIdStub.calledOnce).to.be.true();
+    });
+
+    it('skips cleanup when record has no parents or children', async () => {
+      superFindByIdStub.resolves({ _id: 'rec-id' });
+
+      await repository.deleteById('rec-id' as any);
+
+      expect(removeChildRefStub.called).to.be.false();
+      expect(removeParentRefStub.called).to.be.false();
+      expect(superDeleteByIdStub.calledOnce).to.be.true();
+    });
+  });
+
+  describe('calculateIdempotencyKey (managed field exclusion)', () => {
+    let superFindOneStub: sinon.SinonStub;
+
+    beforeEach(() => {
+      superFindOneStub = sinon
+        .stub(getBaseRepoPrototype(), 'findOne')
+        .resolves(null);
+    });
+
+    afterEach(() => {
+      sinon.restore();
+    });
+
+    it('silently strips IDEMPOTENCY_EXCLUDED_FIELDS from the configured field list', async () => {
+      // Configure _children and _version as idempotency fields — both are excluded
+      sinon
+        .stub(
+          repository['idempotencyConfigReader'],
+          'getIdempotencyForEntities',
+        )
+        .returns(['_name', '_children', '_version']);
+
+      const warnStub = sinon.stub(
+        (repository as any).loggingService,
+        'warn',
+      );
+
+      const superCreateStub = sinon
+        .stub(getBaseRepoPrototype(), 'create')
+        .callsFake(async (data) => data);
+
+      const created = await repository.create({ _name: 'test' } as any);
+
+      // The idempotency key must have been calculated (returned on the entity)
+      expect(typeof (created as any)._idempotencyKey).to.equal('string');
+
+      // A warning must have been logged about the excluded fields
+      expect(warnStub.called).to.be.true();
+
+      // Suppress unused var warning
+      void superCreateStub;
+    });
+  });
 });

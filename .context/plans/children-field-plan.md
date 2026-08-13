@@ -467,7 +467,7 @@ const collection = this.dataSource.connector?.collection(
 2. In [`src/__tests__/acceptance/entity/get-entity-children.test.ts`](../../src/__tests__/acceptance/entity/get-entity-children.test.ts): add a test case that creates a child via `POST /entities/{parentId}/children` and asserts it appears in `GET /entities/{parentId}/children`.
 3. In [`src/__tests__/acceptance/list/get-list-children.test.ts`](../../src/__tests__/acceptance/list/get-list-children.test.ts): add the equivalent test for lists.
 
-**Status:** `[ ] pending`
+**Status:** `[x] done`
 
 ---
 
@@ -483,7 +483,7 @@ const collection = this.dataSource.connector?.collection(
 1. In [`src/__tests__/acceptance/entity/create-child-entity.test.ts`](../../src/__tests__/acceptance/entity/create-child-entity.test.ts): after existing assertions, add `GET /entities/{parentId}` and assert `response.body._children` is an array of length 1 containing `tapp://localhost/entities/{childId}`, and `response.body._childrenCount` is `undefined` (hidden field not in response).
 2. In [`src/__tests__/acceptance/list/create-child-list.test.ts`](../../src/__tests__/acceptance/list/create-child-list.test.ts): apply the same pattern for lists.
 
-**Status:** `[ ] pending`
+**Status:** `[x] done`
 
 ---
 
@@ -504,7 +504,7 @@ const collection = this.dataSource.connector?.collection(
 **Relevant Context:**
 - Existing tests stub methods at the prototype chain using `getBaseRepoPrototype()` — follow this exact pattern.
 
-**Status:** `[ ] pending`
+**Status:** `[x] done`
 
 ---
 

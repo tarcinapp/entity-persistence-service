@@ -143,4 +143,62 @@ describe('GET /lists/{id}/children', () => {
     );
     expect(response.body.error).to.have.property('code', 'LIST-NOT-FOUND');
   });
+
+  it('creation-path: child created via POST /lists/{id}/children appears in GET /lists/{id}/children', async () => {
+    appWithClient = await setupApplication({ list_kinds: 'reading' });
+    ({ client } = appWithClient);
+
+    // Create parent
+    const parentRes = await client
+      .post('/lists')
+      .send({ _name: 'Parent List', _kind: 'reading' })
+      .expect(200);
+    const parentId: string = parentRes.body._id;
+
+    // Create child via the /children endpoint
+    const childRes = await client
+      .post(`/lists/${parentId}/children`)
+      .send({ _name: 'Child via endpoint', _kind: 'reading' })
+      .expect(200);
+
+    // Child should appear in GET /children
+    const childrenRes = await client
+      .get(`/lists/${parentId}/children`)
+      .expect(200);
+
+    expect(childrenRes.body).to.be.Array().and.have.length(1);
+    expect(childrenRes.body[0]._id).to.equal(childRes.body._id);
+    expect(childrenRes.body[0]._name).to.equal('Child via endpoint');
+  });
+
+  it('creation-path: child created via POST /lists with _parents appears in GET /lists/{id}/children', async () => {
+    appWithClient = await setupApplication({ list_kinds: 'reading' });
+    ({ client } = appWithClient);
+
+    // Create parent
+    const parentRes = await client
+      .post('/lists')
+      .send({ _name: 'Parent List', _kind: 'reading' })
+      .expect(200);
+    const parentId: string = parentRes.body._id;
+
+    // Create child via direct POST with _parents in body
+    const childRes = await client
+      .post('/lists')
+      .send({
+        _name: 'Child via direct POST',
+        _kind: 'reading',
+        _parents: [`tapp://localhost/lists/${parentId}`],
+      })
+      .expect(200);
+
+    // Child should appear in GET /children (forward lookup on _children)
+    const childrenRes = await client
+      .get(`/lists/${parentId}/children`)
+      .expect(200);
+
+    expect(childrenRes.body).to.be.Array().and.have.length(1);
+    expect(childrenRes.body[0]._id).to.equal(childRes.body._id);
+    expect(childrenRes.body[0]._name).to.equal('Child via direct POST');
+  });
 });
