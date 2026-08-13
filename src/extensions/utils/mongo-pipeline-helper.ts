@@ -531,6 +531,7 @@ export class MongoPipelineHelper {
         _viewerUsersCount: 0,
         _viewerGroupsCount: 0,
         _parentsCount: 0,
+        _childrenCount: 0,
       },
     });
 

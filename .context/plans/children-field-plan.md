@@ -223,7 +223,7 @@ const collection = this.dataSource.connector?.collection(
 - `$addToSet` is preferred over `$push` because it is idempotent — duplicate URIs are never inserted, which is safe if the transaction retries.
 - The business repository does not currently use `this.dataSource.connector` directly but it is available via inheritance.
 
-**Status:** `[ ] pending`
+**Status:** `[x] done`
 
 ---
 
@@ -244,7 +244,7 @@ const collection = this.dataSource.connector?.collection(
 - `setCountFields` is called inside `modifyDataForCreation` (business line 448) and `modifyDataForUpdates` (business line 517) and equivalent reaction paths.
 - The incoming `data` at those points never contains `_children` (stripped by `sanitizeRecordType` before `setCountFields` runs).
 
-**Status:** `[ ] pending`
+**Status:** `[x] done`
 
 ---
 
@@ -272,7 +272,7 @@ const collection = this.dataSource.connector?.collection(
 - `buildParentUri(id)` constructs `tapp://localhost/{uriPathSegment}/{id}` (business repository line 1025–1027). The same method is used for child URIs because all records of the same type share the same segment.
 - The `options` object already carries `{ session: ClientSession }` — passing it to `addChildReference` keeps both calls in the same transaction.
 
-**Status:** `[ ] pending`
+**Status:** `[x] done`
 
 ---
 
@@ -313,7 +313,7 @@ const collection = this.dataSource.connector?.collection(
 - `buildParentUri(id)` is available on both base repositories.
 - `options` carries the session throughout.
 
-**Status:** `[ ] pending`
+**Status:** `[x] done`
 
 ---
 
@@ -340,7 +340,7 @@ const collection = this.dataSource.connector?.collection(
 - The current reverse scan `{ _parents: uri }` (business repo line 1114; reaction repo line 889) is replaced entirely.
 - `findParents` in both repositories is the exact structural template.
 
-**Status:** `[ ] pending`
+**Status:** `[x] done`
 
 ---
 
@@ -432,7 +432,7 @@ const collection = this.dataSource.connector?.collection(
 - The reaction base owns its delete methods directly; they are augmented in place, not replaced.
 - The prototype chain after this change: `EntityRepository → EntityPersistenceBusinessRepository → EntityPersistenceBaseRepository → DefaultTransactionalRepository`. The new business-base `deleteById`/`deleteAll` sit between the concrete repos and the LoopBack base.
 
-**Status:** `[ ] pending`
+**Status:** `[x] done`
 
 ---
 
@@ -449,7 +449,7 @@ const collection = this.dataSource.connector?.collection(
 **Relevant Context:**
 - Current exclusions: `_ownerUsersCount`, `_ownerGroupsCount`, `_viewerUsersCount`, `_viewerGroupsCount`, `_parentsCount` — all `ALWAYS_HIDDEN_FIELDS`. `_childrenCount` joins this list.
 
-**Status:** `[ ] pending`
+**Status:** `[x] done`
 
 ---
 

@@ -404,7 +404,22 @@ export abstract class EntityPersistenceReactionRepository<
       data._idempotencyKey = idempotencyKey;
     }
 
-    return this.createRecordFacade(data, options);
+    // Capture _parents before enrichment (modifyDataForCreation may mutate data)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const newParents: string[] = Array.isArray((data as any)._parents)
+      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        [...(data as any)._parents]
+      : [];
+
+    const created = await this.createRecordFacade(data, options);
+
+    if (newParents.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const recordUri = this.buildParentUri((created as any)._id as string);
+      await this.syncParentChildReferences(recordUri, [], newParents, options);
+    }
+
+    return created;
   }
 
   /**
@@ -513,6 +528,13 @@ export abstract class EntityPersistenceReactionRepository<
     data: DataObject<E>,
     options?: Options,
   ): Promise<void> {
+    // Capture _parents before modifyDataForUpdate sanitizes data
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const newParents: string[] | undefined = Array.isArray((data as any)._parents)
+      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        [...(data as any)._parents]
+      : undefined;
+
     const { data: modifiedData, existingData } = await this.modifyDataForUpdate(
       id as string,
       data,
@@ -535,7 +557,18 @@ export abstract class EntityPersistenceReactionRepository<
       options,
     );
 
-    return super.updateById(id as IdType, validatedData, options);
+    await super.updateById(id as IdType, validatedData, options);
+
+    if (newParents !== undefined) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const recordUri = this.buildParentUri(id as string);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const oldParents: string[] = Array.isArray((existingData as any)._parents)
+        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (existingData as any)._parents
+        : [];
+      await this.syncParentChildReferences(recordUri, oldParents, newParents, options);
+    }
   }
 
   /**
@@ -546,6 +579,13 @@ export abstract class EntityPersistenceReactionRepository<
     data: DataObject<E>,
     options?: Options,
   ): Promise<void> {
+    // Capture _parents before modifyDataForUpdate sanitizes data
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const newParents: string[] | undefined = Array.isArray((data as any)._parents)
+      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        [...(data as any)._parents]
+      : undefined;
+
     const { data: modifiedData, existingData } = await this.modifyDataForUpdate(
       id as string,
       data,
@@ -564,7 +604,18 @@ export abstract class EntityPersistenceReactionRepository<
       options,
     );
 
-    return super.replaceById(id as IdType, validatedData, options);
+    await super.replaceById(id as IdType, validatedData, options);
+
+    if (newParents !== undefined) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const recordUri = this.buildParentUri(id as string);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const oldParents: string[] = Array.isArray((existingData as any)._parents)
+        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (existingData as any)._parents
+        : [];
+      await this.syncParentChildReferences(recordUri, oldParents, newParents, options);
+    }
   }
 
   /**
@@ -797,6 +848,7 @@ export abstract class EntityPersistenceReactionRepository<
     // Verify existence first
     await this.findById(id, undefined, options);
 
+    await this.cleanupHierarchyReferences(id as string, options);
     return super.deleteById(id, options);
   }
 
@@ -811,7 +863,52 @@ export abstract class EntityPersistenceReactionRepository<
       },
     );
 
+    const records = await this.find(
+      {
+        where,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        fields: { _id: true, _parents: true, _children: true } as any,
+      },
+      options,
+    );
+    for (const record of records) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await this.cleanupHierarchyReferences((record as any)._id as string, options);
+    }
+
     return super.deleteAll(where, options);
+  }
+
+  /**
+   * Removes this record's URI from parents' `_children` arrays and
+   * children's `_parents` arrays before the record is deleted.
+   * All operations run inside the active transaction session if present.
+   */
+  protected async cleanupHierarchyReferences(
+    id: string,
+    options?: Options,
+  ): Promise<void> {
+    const record = await this.findById(
+      id as IdType,
+      {
+        fields: { _id: true, _parents: true, _children: true },
+      } as FilterExcludingWhere<E>,
+      options,
+    );
+
+    const recordUri = this.buildParentUri(id);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    for (const parentUri of (record as any)._parents ?? []) {
+      const parentId = (parentUri as string).split('/').pop() as string;
+      await this.removeChildReference(parentId, recordUri, options);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    for (const childUri of (record as any)._children ?? []) {
+      const childId = (childUri as string).split('/').pop() as string;
+      await this.removeParentReference(childId, recordUri, options);
+    }
   }
 
   // ============================================================================
@@ -868,6 +965,7 @@ export abstract class EntityPersistenceReactionRepository<
 
   /**
    * Find child reactions of a given reaction.
+   * Uses a forward lookup on the parent's `_children` array — mirrors `findParents`.
    */
   async findChildren(
     reactionId: string,
@@ -875,19 +973,29 @@ export abstract class EntityPersistenceReactionRepository<
     sourceFilter?: Filter<E>,
     options?: Options,
   ): Promise<(E & Relations)[]> {
-    // Verify reaction exists
-    await this.findById(
+    // Throws 404 if the parent does not exist
+    const reaction = await this.findById(
       reactionId as IdType,
-      { fields: { _id: true } } as FilterExcludingWhere<E>,
+      { fields: { _children: true } } as FilterExcludingWhere<E>,
       options,
     );
 
-    const uri = this.buildParentUri(reactionId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const children = (reaction as any)._children as string[] | undefined;
+    if (!children || children.length === 0) {
+      return [];
+    }
+
+    // Extract child IDs from the URIs
+    const childIds = children.map((uri: string) => uri.split('/').pop());
 
     const childFilter: Filter<E> = {
       ...filter,
       where: {
-        and: [{ _parents: uri }, ...(filter?.where ? [filter.where] : [])],
+        and: [
+          { _id: { inq: childIds } },
+          ...(filter?.where ? [filter.where] : []),
+        ],
       } as Where<E>,
     };
 
@@ -942,7 +1050,10 @@ export abstract class EntityPersistenceReactionRepository<
         _parents: [this.buildParentUri(parentId)],
       } as DataObject<E>;
 
-      return this.create(childReaction, options);
+      const created = await this.create(childReaction, options);
+      const childUri = this.buildParentUri((created as any)._id as string);
+      await this.addChildReference(parentId, childUri, options);
+      return created;
     } catch (error) {
       this.loggingService.error(
         `${this.reactionTypeName}Repository.createChild - Error:`,
@@ -1267,6 +1378,35 @@ export abstract class EntityPersistenceReactionRepository<
   }
 
   // HIERARCHY BOOKKEEPING
+
+  /**
+   * Diffs the old and new `_parents` arrays for a record and calls
+   * `addChildReference` / `removeChildReference` on each affected parent.
+   *
+   * - Added parents (in newParents but not oldParents): gain the record URI in `_children`.
+   * - Removed parents (in oldParents but not newParents): have the record URI pulled from `_children`.
+   *
+   * All operations run inside the active transaction session if present in `options`.
+   */
+  protected async syncParentChildReferences(
+    recordUri: string,
+    oldParents: string[],
+    newParents: string[],
+    options?: Options,
+  ): Promise<void> {
+    const added = newParents.filter(p => !oldParents.includes(p));
+    const removed = oldParents.filter(p => !newParents.includes(p));
+
+    for (const parentUri of added) {
+      const parentId = parentUri.split('/').pop() as string;
+      await this.addChildReference(parentId, recordUri, options);
+    }
+
+    for (const parentUri of removed) {
+      const parentId = parentUri.split('/').pop() as string;
+      await this.removeChildReference(parentId, recordUri, options);
+    }
+  }
 
   /**
    * Atomically adds a child URI to a parent record's `_children` array

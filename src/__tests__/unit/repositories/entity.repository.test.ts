@@ -948,18 +948,18 @@ describe('EntityRepository', () => {
           _ownerUsers: ['user3'],
         };
 
-        const result = await repository.updateById(existingId, updateData);
+        await repository.updateById(existingId, updateData);
 
-        expect(result).to.containDeep({
+        // Verify the patch data passed to super.updateById contains the update fields
+        const calledWith = superUpdateByIdStub.firstCall.args[1] as Record<string, unknown>;
+        expect(calledWith).to.containDeep({
           _name: 'Updated Name',
-          _kind: 'test-kind', // Preserved from existing
           _ownerUsers: ['user3'],
-          _ownerGroups: ['group1'], // Preserved from existing
-          _viewerUsers: ['user2'], // Preserved from existing
-          _viewerGroups: ['group2'], // Preserved from existing
           _version: 2,
           _ownerUsersCount: 1,
         });
+        // Verify super.updateById was called with the record id
+        expect(superUpdateByIdStub.firstCall.args[0]).to.equal(existingId);
       });
 
       it('should enrich entity with managed fields', async () => {
@@ -971,9 +971,10 @@ describe('EntityRepository', () => {
           _viewerGroups: ['group3', 'group4'],
         };
 
-        const result = await repository.updateById(existingId, updateData);
+        await repository.updateById(existingId, updateData);
 
-        expect(result).to.containDeep({
+        const calledWith = superUpdateByIdStub.firstCall.args[1] as Record<string, unknown>;
+        expect(calledWith).to.containDeep({
           _name: 'Updated Entity',
           _slug: 'updated-entity',
           _version: 2,
@@ -1052,13 +1053,10 @@ describe('EntityRepository', () => {
           )
           .returns(idempotencyFields);
 
-        const result = (await repository.updateById(
-          existingId,
-          updateData,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        )) as any;
+        await repository.updateById(existingId, updateData);
 
-        expect(typeof result._idempotencyKey).to.equal('string');
+        const calledWith = superUpdateByIdStub.firstCall.args[1] as any;
+        expect(typeof calledWith._idempotencyKey).to.equal('string');
       });
 
       it('should skip idempotency key calculation when not configured', async () => {
@@ -1071,13 +1069,10 @@ describe('EntityRepository', () => {
           )
           .returns([]);
 
-        const result = (await repository.updateById(
-          existingId,
-          updateData,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        )) as any;
+        await repository.updateById(existingId, updateData);
 
-        expect(result._idempotencyKey).to.equal(undefined);
+        const calledWith = superUpdateByIdStub.firstCall.args[1] as any;
+        expect(calledWith._idempotencyKey).to.equal(undefined);
       });
 
       it('should preserve existing fields when doing partial update', async () => {
@@ -1178,6 +1173,12 @@ describe('EntityRepository', () => {
         Promise.resolve(reactionsRepoStub);
       (repository as any).listEntityRelationRepositoryGetter = () =>
         Promise.resolve(listEntityRelationRepoStub);
+
+      // Stub findById so cleanupHierarchyReferences can resolve the record
+      // (no _parents or _children → cleanup is a no-op)
+      sinon
+        .stub(getBaseRepoPrototype(), 'findById')
+        .resolves({ _id: 'test-id', _parents: [], _children: [] });
 
       // Stub DefaultTransactionalRepository.deleteById (4 levels up)
       superDeleteByIdStub = sinon
