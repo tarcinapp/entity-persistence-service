@@ -17,6 +17,7 @@ Each child record carries its parent references in `_parents`. Each parent recor
 
 This feature intentionally does not express hierarchy through separate relationship records (the list-to-entity pivot table). This keeps hierarchy reads cheap: a single document fetch returns the full ancestry or child list.
 
+See the main README for related guidance on hierarchical modeling under [Build Hierarchical Structures Across Models](../README.md#build-hierarchical-structures-across-models).
 
 ## API Operations
 
@@ -56,7 +57,49 @@ Children are resolved via a **forward lookup** on the parent's `_children` array
 - `POST /{segment}/{id}/children` — the dedicated child-creation endpoint.
 - `POST /{segment}`, `PATCH /{segment}/{id}`, or `PUT /{segment}/{id}` with `_parents` in the request body — the server diffs the old and new `_parents` values and atomically calls `addChildReference` / `removeChildReference` on every affected parent.
 
-All standard query parameters are supported on this endpoint as well, making it possible to filter, sort, paginate, and expand children in the same way as any other collection query.
+All standard query parameters are supported on this endpoint as well, making it possible to filter, sort, paginate, and expand children in the same way as any other collection query. See the [OpenAPI Specification](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/tarcinapp/entity-persistence-service/refs/heads/main/openapi.json) for the endpoint contract.
+
+#### Resolving `_children` with lookup
+
+Clients can also expand `_children` references on a queried record using the standard lookup syntax. For example:
+
+```
+GET /entities/{id}?filter[lookup][0][prop]=_children
+```
+
+Without this lookup parameter, a record response includes only URIs in `_children`:
+
+```json
+{
+  "_id": "book-uuid",
+  "_name": "My Book",
+  "_children": [
+    "tapp://localhost/entities/chapter-1-uuid"
+  ]
+}
+```
+
+With `filter[lookup][0][prop]=_children`, the same query resolves the child records in place:
+
+```json
+{
+  "_id": "book-uuid",
+  "_name": "My Book",
+  "_children": [
+    {
+      "_id": "chapter-1-uuid",
+      "_name": "Chapter 1",
+      "_parents": [
+        "tapp://localhost/entities/book-uuid"
+      ]
+      // ...other fields...
+    }
+  ]
+}
+```
+
+This pattern is useful when querying a single record and wanting its children expanded in the same response. The same lookup-style expansion can also be applied to `GET /{segment}/{id}/children` or `GET /{segment}/{id}/parents` requests when nested references are needed.
+
 
 ### Roots: a special filter shortcut
 
@@ -82,6 +125,8 @@ GET /lists?set[roots]&filter[order]=_createdDateTime%20DESC
 
 
 ## Data Model
+
+For general schema guidance, see the main README [Data Model](../README.md#data-model).
 
 ### `_parents`
 
@@ -116,14 +161,18 @@ A record with two parents:
 
 #### Why URIs rather than bare IDs
 
-Using full URIs rather than plain UUIDs serves a purpose that goes beyond this service instance. The `tapp://` scheme is the native reference format for the entire platform. An instance of this service that is named `localhost` (the default, meaning "this instance") stores references as `tapp://localhost/...`. An instance named `library` would store `tapp://library/...`.
+Using full URIs rather than plain UUIDs serves a purpose that reaches beyond this backend service. The `tapp://` format is the native reference convention for the Tarcinapp platform and is also used by the service's lookup feature. In this repository, the URI structure ensures that references are self-describing and can later be resolved by the gateway or orchestration layer.
 
-When the platform's orchestration layer resolves a reference, it reads the host segment of the URI and maps it to the endpoint of the appropriate service instance. References with `localhost` are resolved within the current service. References with any other host name are forwarded to the remote instance whose name matches. This is the foundation for cross-instance lookups. The detailed mechanics of URI resolution are covered in [25-FEATURES-LOOKUPS.md](./25-FEATURES-LOOKUPS.md).
+The current field validation in this service enforces `localhost` as the host for `_parents` and `_children` entries, which means references are restricted to records owned by the same service instance. This repository is not itself an orchestration layer; it is a backend service that stores and validates in-instance references. Cross-instance routing is enabled by the broader Tarcinapp platform and gateway architecture, not by this service alone.
+
+For lookup-specific behavior, see the main README's [Lookup References](../README.md#lookup-references) section.
+
+For broader query and filter syntax, see [Querying Data](../README.md#querying-data).
 
 For hierarchy specifically, using full URIs means:
-- A `_parents` entry is self-describing: the record type and the instance that owns it are encoded in the URI.
+- A `_parents` or `_children` entry is self-describing: the record type and the owning instance are encoded into the URI.
 - The model can validate the URI pattern at the schema level, ensuring that an entity's `_parents` only contain entity URIs and not list or reaction URIs.
-- If records are migrated between instances, the URIs remain stable references that the orchestration layer can route.
+- If records are migrated between instances in the future, the URIs remain stable references that a routing layer can use.
 
 #### URI structure
 
@@ -151,7 +200,7 @@ Each concrete model defines the regex that `_parents` entries must match, lockin
 
 ### `_children`
 
-Each parent record stores its children as an array of URI strings in the `_children` field, using the same URI format as `_parents`. The server maintains this array automatically — clients cannot write it directly. It is excluded from all write endpoint request body schemas and any client-supplied value is stripped before persistence.
+Each parent record stores its children as an array of URI strings in the `_children` field, using the same URI format as `_parents`. The server maintains this array automatically and clients cannot write it directly. It is excluded from all write endpoint request body schemas and any client-supplied value is stripped before persistence.
 
 `_children` is always included in `GET` responses so clients can perform forward traversal without a separate query.
 
@@ -186,15 +235,18 @@ A hidden, server-managed integer that always mirrors `_children.length`. Unlike 
 Clients cannot set or read it: it is excluded from all API responses, all request body schemas, and all aggregation pipeline output. Its future purpose is powering a `leaves` set filter (`{ _childrenCount: 0 }`) — mirroring how `_parentsCount` powers `roots`.
 
 
-## Transactional Context
+## Transactional Context for Hierarchy Writes
 
-The following operations participate in a MongoDB transaction:
+The broader service uses MongoDB transactions in many places. This section focuses only on the main hierarchy-related write paths and the consistency guarantees they require.
 
-- `POST /{segment}/{id}/children` (`createChild`) — parent existence check + child creation + parent `_children` update.
+The hierarchy operations described here participate in a transaction to keep `_parents`, `_children`, `_parentsCount`, and `_childrenCount` consistent across records.
+
+- `POST /{segment}/{id}/children` (`createChild`) — parent existence check, child creation, parent `_children` update, and count bookkeeping all occur in the same transaction.
+- `POST /{segment}`, `PATCH /{segment}/{id}`, or `PUT /{segment}/{id}` with `_parents` in the body — the repository diff logic synchronizes parent/child references within the active transaction session.
 - `DELETE /{segment}/{id}` (`deleteById`) — hierarchy reference cleanup (removing stale URIs from parents' `_children` and children's `_parents`) then record deletion.
 - `DELETE /{segment}` (`deleteAll`) — same cleanup, applied per record, then bulk deletion.
 
-Read endpoints (`GET /{id}/children`, `GET /{id}/parents`) are stateless.
+Read endpoints (`GET /{id}/children`, `GET /{id}/parents`) are stateless and do not open transactions.
 
 The flow for `POST /{segment}/{id}/children`:
 
@@ -236,31 +288,9 @@ All cleanup operations and the final delete run within the same `@transactional(
 **Implementation:** `cleanupHierarchyReferences` is a protected method on both base repositories. `EntityPersistenceBusinessRepository.deleteById` and `deleteAll` are new overrides that sit between the concrete repositories and `DefaultTransactionalRepository`. The concrete `EntityRepository` and `ListRepository` do not need changes — their cascade-delete logic calls `super.deleteById` / `super.deleteAll` which flows through the new business-base override. For the reaction base, the existing `deleteById` and `deleteAll` methods are augmented in place.
 
 
-## Tests
-
-### Acceptance tests
-
-| File | Coverage |
-|------|----------|
-| [`entity/create-child-entity.test.ts`](../src/__tests__/acceptance/entity/create-child-entity.test.ts) | POST /entities/{id}/children: creates child, verifies `_parents`, verifies `_children` updated on parent, verifies `_childrenCount` hidden |
-| [`entity/get-entity-children.test.ts`](../src/__tests__/acceptance/entity/get-entity-children.test.ts) | GET /entities/{id}/children: basic, filter by kind / date range / visibility / owner / custom field; both creation paths (via endpoint and direct POST) |
-| [`entity/get-entity-parents.test.ts`](../src/__tests__/acceptance/entity/get-entity-parents.test.ts) | GET /entities/{id}/parents: basic, filter by kind / date range / visibility / owner, field selection |
-| [`list/create-child-list.test.ts`](../src/__tests__/acceptance/list/create-child-list.test.ts) | POST /lists/{id}/children: creates child, verifies `_children` updated on parent, verifies `_childrenCount` hidden |
-| [`list/get-list-children.test.ts`](../src/__tests__/acceptance/list/get-list-children.test.ts) | GET /lists/{id}/children: nested lookup with field selection, 404; both creation paths |
-| [`list/get-list-parents.test.ts`](../src/__tests__/acceptance/list/get-list-parents.test.ts) | GET /lists/{id}/parents: lookup with complex filter, 404 |
-| [`entity-reaction/get-entity-reaction-parents.test.ts`](../src/__tests__/acceptance/entity-reaction/get-entity-reaction-parents.test.ts) | GET /entity-reactions/{id}/parents: basic, filter by kind / date / visibility / owner |
-| [`list-reaction/get-list-reaction-parents.test.ts`](../src/__tests__/acceptance/list-reaction/get-list-reaction-parents.test.ts) | GET /list-reactions/{id}/parents: basic, filter by kind / date / visibility / owner |
-
-### Unit tests
-
-| File | Coverage |
-|------|----------|
-| [`unit/controllers/entity.controller.test.ts`](../src/__tests__/unit/controllers/entity.controller.test.ts) | `findChildren()`, `findParents()`, `createChild()`: success, 404, 422, 429 |
-| [`unit/repositories/entity.repository.test.ts`](../src/__tests__/unit/repositories/entity.repository.test.ts) | `findChildren`: forward lookup, empty result, 404; `createChild`: `addChildReference` called; `deleteById`: `removeChildReference`/`removeParentReference` per reference; `calculateIdempotencyKey`: managed fields stripped, warning logged |
-| [`unit/repositories/list.repository.test.ts`](../src/__tests__/unit/repositories/list.repository.test.ts) | Same coverage as entity repository tests |
-
-
 ## Related Files
+
+### Models
 
 | File | Role |
 |------|------|
@@ -271,13 +301,33 @@ All cleanup operations and the final delete run within the same `@transactional(
 | [`src/models/base-models/list-entity-common-base.model.ts`](../src/models/base-models/list-entity-common-base.model.ts) | `_parentsCount`, `_childrenCount` properties; TypeScript-only `_parents`, `_children` type |
 | [`src/models/base-models/reactions-common-base.model.ts`](../src/models/base-models/reactions-common-base.model.ts) | `_parentsCount`, `_childrenCount` properties; TypeScript-only `_parents`, `_children` type |
 | [`src/models/base-types/unmodifiable-common-fields.ts`](../src/models/base-types/unmodifiable-common-fields.ts) | `_parentsCount`, `_childrenCount` in `STRICTLY_INTERNAL_FIELDS` and `ALWAYS_HIDDEN_FIELDS`; `IDEMPOTENCY_EXCLUDED_FIELDS` |
+
+### Repositories
+
+| File | Role |
+|------|------|
 | [`src/repositories/base/entity-persistence-business.repository.ts`](../src/repositories/base/entity-persistence-business.repository.ts) | `findParents`, `findChildren`, `createChild`, `deleteById`, `deleteAll`, `syncParentChildReferences`, `cleanupHierarchyReferences`, `addChildReference`, `removeChildReference`, `removeParentReference`, `buildParentUri` |
 | [`src/repositories/base/entity-persistence-reaction.repository.ts`](../src/repositories/base/entity-persistence-reaction.repository.ts) | Same methods for reactions |
+
+### Controllers
+
+| File | Role |
+|------|------|
 | [`src/controllers/entities.controller.ts`](../src/controllers/entities.controller.ts) | REST endpoints for entity hierarchy |
 | [`src/controllers/lists.controller.ts`](../src/controllers/lists.controller.ts) | REST endpoints for list hierarchy |
 | [`src/controllers/entity-reactions.controller.ts`](../src/controllers/entity-reactions.controller.ts) | REST endpoints for entity-reaction hierarchy |
 | [`src/controllers/list-reactions.controller.ts`](../src/controllers/list-reactions.controller.ts) | REST endpoints for list-reaction hierarchy |
+
+### Helpers and extensions
+
+| File | Role |
+|------|------|
 | [`src/extensions/utils/set-helper.ts`](../src/extensions/utils/set-helper.ts) | `roots` set using `_parentsCount: 0` |
 | [`src/extensions/utils/mongo-pipeline-helper.ts`](../src/extensions/utils/mongo-pipeline-helper.ts) | Excludes `_parentsCount` and `_childrenCount` from aggregation pipeline output |
-| [`src/decorators/transactional.decorator.ts`](../src/decorators/transactional.decorator.ts) | `@transactional()` used on `createChild`, `deleteById`, `deleteAll` controller methods |
+
+### Transaction support
+
+| File | Role |
+|------|------|
+| [`src/decorators/transactional.decorator.ts`](../src/decorators/transactional.decorator.ts) | `@transactional()` used on create, update, and delete controller methods |
 | [`src/interceptors/transactional.interceptor.ts`](../src/interceptors/transactional.interceptor.ts) | MongoDB session management and write-conflict retry logic |
