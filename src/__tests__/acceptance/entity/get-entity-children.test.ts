@@ -1336,22 +1336,21 @@ describe('GET /entities/{entityId}/children', () => {
       ),
     );
 
-    // Create child entities with author references
-    await Promise.all(
-      authorResponses.map((authorResponse, i) =>
-        client
-          .post('/entities')
-          .send({
-            _name: `Child with Author ${i + 1}`,
-            _kind: 'book',
-            relatedAuthors: [
-              `tapp://localhost/entities/${authorResponse.body._id}`,
-            ],
-            _parents: [`tapp://localhost/entities/${parentResponse.body._id}`],
-          })
-          .expect(200),
-      ),
-    );
+    // Create child entities with author references sequentially to avoid
+    // WriteConflicts from concurrent writes to the same parent document.
+    for (const [i, authorResponse] of authorResponses.entries()) {
+      await client
+        .post('/entities')
+        .send({
+          _name: `Child with Author ${i + 1}`,
+          _kind: 'book',
+          relatedAuthors: [
+            `tapp://localhost/entities/${authorResponse.body._id}`,
+          ],
+          _parents: [`tapp://localhost/entities/${parentResponse.body._id}`],
+        })
+        .expect(200);
+    }
 
     // Get children with lookup filter and pagination
     const queryStr =

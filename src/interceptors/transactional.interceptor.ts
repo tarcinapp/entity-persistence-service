@@ -64,6 +64,15 @@ export class TransactionalInterceptor {
         const result = await next();
         await session.commitTransaction();
 
+        if (result === undefined) {
+          // next() returned undefined — this happens when LoopBack's interceptor
+          // chain is invoked more than once (retry path). Treat as non-retryable.
+          throw new Error(
+            'TransactionalInterceptor: next() returned undefined on retry. ' +
+              'LoopBack interceptor next() is single-use per request.',
+          );
+        }
+
         return result; // Success: Exit the loop
       } catch (error) {
         await session.abortTransaction();
