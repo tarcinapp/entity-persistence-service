@@ -22,6 +22,10 @@ export function getFilterSchemaFor(modelRef: typeof Model): SchemaObject {
             type: 'object' as const,
             additionalProperties: true,
           },
+          include: {
+            type: 'array' as const,
+            items: { $ref: '#/definitions/InclusionFilter' },
+          },
           limit: {
             type: 'integer' as const,
             minimum: 0,

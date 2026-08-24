@@ -1,4 +1,4 @@
-import type { Where } from '@loopback/repository';
+import type { Where, Inclusion } from '@loopback/repository';
 import type { Set } from '../utils/set-helper';
 
 // Define the structure for lookup property configuration
@@ -8,6 +8,7 @@ export interface LookupScope<T extends object = object> {
   scope?: {
     fields?: { [key: string]: boolean };
     where?: Where<T>;
+    include?: Inclusion[];
     limit?: number;
     skip?: number;
     order?: string[];

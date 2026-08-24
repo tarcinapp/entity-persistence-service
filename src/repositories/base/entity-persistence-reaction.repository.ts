@@ -183,8 +183,9 @@ export abstract class EntityPersistenceReactionRepository<
       limit: Math.min(limit, this.getResponseLimit()),
     };
 
-    // Ensure _kind is always included
+    // Ensure _kind and the foreign key are always included
     filter = this.forceKindInclusion(filter);
+    filter = this.forceSourceIdInclusion(filter);
 
     this.loggingService.info(
       `${this.reactionTypeName}Repository.find - Modified filter:`,
@@ -1164,6 +1165,43 @@ export abstract class EntityPersistenceReactionRepository<
     const updatedFields = { ...filter.fields } as Record<string, boolean>;
     if (updatedFields._kind === false) {
       delete updatedFields._kind;
+    }
+
+    return { ...filter, fields: updatedFields as typeof filter.fields };
+  }
+
+  // LoopBack's HasMany resolver uses the foreign key to group results by parent;
+  // omitting it from a fields projection silently drops the entire included array.
+  protected forceSourceIdInclusion(
+    filter: Filter<E> | undefined,
+  ): Filter<E> | undefined {
+    if (!filter?.fields) {
+      return filter;
+    }
+
+    const fk = this.sourceIdFieldName;
+
+    if (Array.isArray(filter.fields)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (!filter.fields.includes(fk as any)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return { ...filter, fields: [...filter.fields, fk as any] };
+      }
+
+      return filter;
+    }
+
+    const fieldEntries = Object.entries(filter.fields);
+    const hasInclusionMode = fieldEntries.some(([_, value]) => value === true);
+
+    if (hasInclusionMode) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return { ...filter, fields: { ...filter.fields, [fk]: true } as any };
+    }
+
+    const updatedFields = { ...filter.fields } as Record<string, boolean>;
+    if (updatedFields[fk] === false) {
+      delete updatedFields[fk];
     }
 
     return { ...filter, fields: updatedFields as typeof filter.fields };
