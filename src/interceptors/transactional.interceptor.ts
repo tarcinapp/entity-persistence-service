@@ -60,22 +60,17 @@ export class TransactionalInterceptor {
         invocationCtx.parent.bind('active.transaction.options').to(options);
       }
 
+      let committed = false;
       try {
         const result = await next();
         await session.commitTransaction();
+        committed = true;
 
-        if (result === undefined) {
-          // next() returned undefined — this happens when LoopBack's interceptor
-          // chain is invoked more than once (retry path). Treat as non-retryable.
-          throw new Error(
-            'TransactionalInterceptor: next() returned undefined on retry. ' +
-              'LoopBack interceptor next() is single-use per request.',
-          );
-        }
-
-        return result; // Success: Exit the loop
+        return result; // Success: Exit the loop (result may be undefined for void endpoints)
       } catch (error) {
-        await session.abortTransaction();
+        if (!committed) {
+          await session.abortTransaction();
+        }
 
         /**
          * Check if the error is a WriteConflict or a TransientTransactionError.
