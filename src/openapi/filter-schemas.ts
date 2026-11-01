@@ -1,142 +1,132 @@
 import type { Model } from '@loopback/repository';
 import type { SchemaObject } from '@loopback/rest';
 
-export function getFilterSchemaFor(modelRef: typeof Model): SchemaObject {
-  // Define the recursive lookup filter schema
-  const lookupFilterSchema: SchemaObject = {
-    type: 'object' as const,
-    properties: {
-      prop: { type: 'string' as const },
-      set: {
-        type: 'object' as const,
-        additionalProperties: true,
-      },
-      scope: {
-        type: 'object' as const,
-        properties: {
-          fields: {
-            type: 'object' as const,
-            additionalProperties: { type: 'boolean' as const },
-          },
-          where: {
-            type: 'object' as const,
-            additionalProperties: true,
-          },
-          limit: {
-            type: 'integer' as const,
-            minimum: 0,
-          },
-          skip: {
-            type: 'integer' as const,
-            minimum: 0,
-          },
-          order: {
-            oneOf: [
-              { type: 'string' as const },
-              {
-                type: 'array' as const,
-                items: { type: 'string' as const },
-              },
-            ],
-          },
-          lookup: {
-            type: 'array' as const,
-            items: { $ref: '#/definitions/LookupFilter' },
-          },
-        },
-      },
+/**
+ * Scope object shared by both LookupFilter and InclusionFilter.
+ * Inlined at every nesting level to avoid $ref usage, which AJV cannot
+ * resolve when the schema is compiled as a standalone parameter schema
+ * (AJV's '#' root is the parameter schema object, not the full OAS document).
+ */
+function makeLookupScope(depth: number): SchemaObject {
+  const scopeProps: Record<string, SchemaObject> = {
+    fields: {
+      type: 'object',
+      additionalProperties: { type: 'boolean' },
+    },
+    where: {
+      type: 'object',
+      additionalProperties: true,
+    },
+    limit: { type: 'integer', minimum: 0 },
+    skip: { type: 'integer', minimum: 0 },
+    order: {
+      oneOf: [
+        { type: 'string' },
+        { type: 'array', items: { type: 'string' } },
+      ],
     },
   };
 
-  // Define the recursive inclusion filter schema
-  const inclusionFilterSchema: SchemaObject = {
+  // Add one more level of nesting unless we've hit the depth limit
+  if (depth > 0) {
+    scopeProps.lookup = {
+      type: 'array',
+      items: makeLookupFilter(depth - 1),
+    };
+  }
+
+  return { type: 'object', properties: scopeProps };
+}
+
+function makeLookupFilter(depth: number): SchemaObject {
+  return {
+    type: 'object',
+    properties: {
+      prop: { type: 'string' },
+      set: { type: 'object', additionalProperties: true },
+      scope: makeLookupScope(depth),
+    },
+  };
+}
+
+function makeInclusionScope(depth: number): SchemaObject {
+  const scopeProps: Record<string, SchemaObject> = {
+    fields: {
+      type: 'object',
+      additionalProperties: { type: 'boolean' },
+    },
+    where: {
+      type: 'object',
+      additionalProperties: true,
+    },
+    limit: { type: 'integer', minimum: 0 },
+    skip: { type: 'integer', minimum: 0 },
+    order: {
+      oneOf: [
+        { type: 'string' },
+        { type: 'array', items: { type: 'string' } },
+      ],
+    },
+  };
+
+  if (depth > 0) {
+    scopeProps.include = {
+      type: 'array',
+      items: makeInclusionFilter(depth - 1),
+    };
+  }
+
+  return { type: 'object', properties: scopeProps };
+}
+
+function makeInclusionFilter(depth: number): SchemaObject {
+  return {
     oneOf: [
-      { type: 'string' as const },
+      { type: 'string' },
       {
-        type: 'object' as const,
+        type: 'object',
         properties: {
-          relation: { type: 'string' as const },
-          set: {
-            type: 'object' as const,
-            additionalProperties: true,
-          },
-          setThrough: {
-            type: 'object' as const,
-            additionalProperties: true,
-          },
-          whereThrough: {
-            type: 'object' as const,
-            additionalProperties: true,
-          },
-          scope: {
-            type: 'object' as const,
-            properties: {
-              fields: {
-                type: 'object' as const,
-                additionalProperties: { type: 'boolean' as const },
-              },
-              where: {
-                type: 'object' as const,
-                additionalProperties: true,
-              },
-              limit: {
-                type: 'integer' as const,
-                minimum: 0,
-              },
-              skip: {
-                type: 'integer' as const,
-                minimum: 0,
-              },
-              order: {
-                oneOf: [
-                  { type: 'string' as const },
-                  {
-                    type: 'array' as const,
-                    items: { type: 'string' as const },
-                  },
-                ],
-              },
-              include: {
-                type: 'array' as const,
-                items: { $ref: '#/definitions/InclusionFilter' },
-              },
-            },
-          },
+          relation: { type: 'string' },
+          set: { type: 'object', additionalProperties: true },
+          setThrough: { type: 'object', additionalProperties: true },
+          whereThrough: { type: 'object', additionalProperties: true },
+          scope: makeInclusionScope(depth),
         },
       },
     ],
   };
+}
 
-  const baseSchema: SchemaObject = {
-    type: 'object' as const,
+// Max observed nesting depth in tests and production usage is 2
+// (e.g. filter[lookup][0][scope][lookup][0][scope][lookup][0]).
+// 3 levels gives one extra margin without schema bloat.
+const RECURSION_DEPTH = 3;
+
+export function getFilterSchemaFor(modelRef: typeof Model): SchemaObject {
+  return {
+    type: 'object',
     title: `${modelRef.name}Filter`,
     properties: {
-      where: { type: 'object' as const },
-      fields: { type: 'object' as const },
-      offset: { type: 'integer' as const, minimum: 0 },
-      limit: { type: 'integer' as const, minimum: 1 },
-      skip: { type: 'integer' as const, minimum: 0 },
+      where: { type: 'object' },
+      fields: { type: 'object' },
+      offset: { type: 'integer', minimum: 0 },
+      limit: { type: 'integer', minimum: 1 },
+      skip: { type: 'integer', minimum: 0 },
       order: {
         oneOf: [
-          { type: 'string' as const },
-          { type: 'array' as const, items: { type: 'string' as const } },
+          { type: 'string' },
+          { type: 'array', items: { type: 'string' } },
         ],
       },
       include: {
-        type: 'array' as const,
-        items: inclusionFilterSchema,
+        type: 'array',
+        items: makeInclusionFilter(RECURSION_DEPTH),
       },
       lookup: {
-        type: 'array' as const,
-        items: lookupFilterSchema,
+        type: 'array',
+        items: makeLookupFilter(RECURSION_DEPTH),
       },
     },
     additionalProperties: false,
-    definitions: {
-      InclusionFilter: inclusionFilterSchema,
-      LookupFilter: lookupFilterSchema,
-    },
   };
-
-  return baseSchema;
 }
