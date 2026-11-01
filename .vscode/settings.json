@@ -26,15 +26,16 @@
     "typescript"
   ],
   "mochaExplorer.files": "src/__tests__/**/*.test.ts",
+  "mochaExplorer.cwd": "${workspaceFolder}/entity-persistence-service",
   "mochaExplorer.require": [
     "ts-node/register"
   ],
   "mochaExplorer.exit": true,
   "mochaExplorer.timeout": 60000,
-  "mochaExplorer.nodePath": "/home/kdrkrst/.nvm/versions/node/v24.8.0/bin/node",
+  "mochaExplorer.nodePath": "/home/ubuntu/.bobide-server/bin/243e5e6d09f627d6dbf53f3351da0c5033c8fefa/node",
   "typescript.tsserver.experimental.enableProjectDiagnostics": true,
   "terminal.integrated.defaultProfile.linux": "bash",
   "terminal.integrated.env.linux": {
-    "NODE_PATH": "/home/kdrkrst/.nvm/versions/node/v24.8.0/bin/node"
+    "NODE_PATH": ""
   }
 }
