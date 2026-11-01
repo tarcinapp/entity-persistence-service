@@ -96,6 +96,7 @@
   },
   "overrides": {
     "diff": ">=8.0.3",
+    "handlebars": ">=4.7.8",
     "serialize-javascript": "7.0.5",
     "hyperid": ">=4.0.0",
     "@openapi-contrib/openapi-schema-to-json-schema": {
