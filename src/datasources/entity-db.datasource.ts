@@ -19,8 +19,6 @@ export class EntityDbDataSource
       connector: 'mongodb',
       url: env.MONGODB_URL,
       database: env.MONGODB_DATABASE,
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
       ...(env.MONGODB_URL
         ? {}
         : {
