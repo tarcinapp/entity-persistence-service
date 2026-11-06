@@ -1531,6 +1531,10 @@ The uniqueness configuration uses a query-like syntax with these components:
 
 For available sets and their behaviors that can be used in uniqueness rules, see the [Sets](#sets) section.
 
+#### Concurrency note
+
+Uniqueness checks inside EPS follow a check-then-act pattern and are subject to a TOCTOU race under concurrent load (see Known Issues). When `entity-persistence-cache` (EPC) is deployed in the topology, it acquires a distributed Redis lock keyed on the interpolated uniqueness dimensions before forwarding each write to EPS, serialising concurrent requests that share the same logical unique key. No additional configuration is required for uniqueness rules — EPC always locks them. This is safe because every valid uniqueness rule must contain at least one interpolatable field (`${_kind}`, `${_slug}`, `${_ownerUsers}`, etc.), so the lock key is always scoped to specific runtime values and never global. Contrast this with record limits, where wide-scope rules require the explicit `enforceSerialisation` flag (see [Record Limits](#record-limits)).
+
 #### Error Response
 
 When a uniqueness violation occurs, the API returns a detailed error response:
@@ -1624,9 +1628,14 @@ Each environment variable accepts a JSON array of limit configurations:
 ```json
 [
   {
-    "scope": "string",  // Where clauses or set expressions defining where the limit applies
-    "limit": number,     // Maximum number of records allowed in this scope
-    "duration": "string" // OPTIONAL sliding time window. Examples: "30d", "1M", "15min"
+    "scope": "string",               // Where clauses or set expressions defining where the limit applies
+    "limit": number,                 // Maximum number of records allowed in this scope
+    "duration": "string",            // OPTIONAL sliding time window. Examples: "30d", "1M", "15min"
+    "enforceSerialisation": boolean  // OPTIONAL. When true, signals entity-persistence-cache (EPC) to
+                                     // acquire a global distributed lock for this rule even when the scope
+                                     // contains no interpolatable fields (wide-scope / global limits).
+                                     // EPS itself ignores this field — it is a passthrough consumed by EPC
+                                     // via /system-info. Default: false (best-effort).
   }
 ]
 ```
@@ -1933,6 +1942,14 @@ When performing PATCH or PUT operations on a single record, the version field (_
 ### 4. Dot Notation in Connected Model Filters for List-Entity Relations
 When querying list-entity relations, dot notation filtering (e.g., `metadata.status.current`) is not supported in `listFilter` and `entityFilter` parameters for connected models. While other filtering approaches work normally, nested property filtering using dot notation specifically for connected List and Entity models through their relations is not available.
 
+### 5. Uniqueness and Record-Limit Checks are Best-Effort Under Concurrent Load (TOCTOU)
+
+Both uniqueness and record-limit enforcement follow a **check-then-act** pattern: EPS counts existing records matching the rule, decides to accept or reject, then inserts. Under concurrent load, two requests opening MongoDB transactions at nearly the same time both read the same snapshot, both pass the check, and both insert — potentially producing a duplicate record or an over-limit count. MongoDB snapshot isolation does not prevent this race.
+
+**Mitigation:** Deploy `entity-persistence-cache` (EPC) in the topology. EPC acquires a Redis distributed lock keyed on the interpolated uniqueness/limit scope before forwarding each write to EPS, serialising concurrent requests that share the same logical key. For uniqueness rules, locking is always applied (no configuration needed). For record-limit rules with wide or global scopes (no interpolatable fields), set `"enforceSerialisation": true` on the rule to opt into global lock serialisation — or accept best-effort behaviour for soft quotas where a small overshoot is tolerable.
+
+For scalar uniqueness rules (e.g. `(_kind, _slug)`), a MongoDB unique index provides an atomic backstop. EPS translates `E11000 duplicate key` errors into HTTP 409 responses (see `UNIQUENESS-VIOLATION` in the [Error Codes Reference](#error-codes-reference)).
+
 # References
 
 
@@ -2081,7 +2098,8 @@ Summary of common error categories and representative codes
     - For list reactions: "Source record _listId does not match parent. Parent _listId: '{parentListId}', child _listId: '{childListId}'."
 
 - Uniqueness (409)
-  - `<RESOURCE>-UNIQUENESS-VIOLATION` (409) — Pattern used for uniqueness errors. Examples: `ENTITY-UNIQUENESS-VIOLATION`, `LIST-UNIQUENESS-VIOLATION`, `RELATION-UNIQUENESS-VIOLATION`. Message typically: "<Resource> already exists" and `details.info.scope` contains the uniqueness scope.
+  - `<RESOURCE>-UNIQUENESS-VIOLATION` (409) — Pattern used for uniqueness errors. Examples: `ENTITY-UNIQUENESS-VIOLATION`, `LIST-UNIQUENESS-VIOLATION`, `RELATION-UNIQUENESS-VIOLATION`. Message typically: "<Resource> already exists" and `details.info.scope` contains the uniqueness scope that was violated.
+  - `UNIQUENESS-VIOLATION` (409) — Generic uniqueness violation emitted when a **MongoDB unique index** (rather than an application-level rule) catches a duplicate key. Produced by the sequence-level error normaliser when MongoDB returns error code 11000 or 11001. `details.info.scope` is set to `"mongodb-unique-index"` to distinguish it from application-level violations. This can occur when a unique index is in place as a defence-in-depth backstop and the application-level check was bypassed (e.g. concurrent inserts that both passed the check-then-act window before EPC serialisation was in place).
 
 - Limits (429)
   - `<RESOURCE>-LIMIT-EXCEEDED` (429) — Pattern used when record limits are hit. Examples: `ENTITY-LIMIT-EXCEEDED`, `LIST-LIMIT-EXCEEDED`, `RELATION-LIMIT-EXCEEDED`, `ENTITYREACTION-LIMIT-EXCEEDED`. Message: "Record limit exceeded for [type]". `details.info` contains `limit` and `scope`.

@@ -19,7 +19,7 @@ import type { ValidfromConfigurationReader } from '../../extensions/config-helpe
 import type { VisibilityConfigurationReader } from '../../extensions/config-helpers/visibility-config-helper';
 import type { LookupHelper } from '../../extensions/utils/lookup-helper';
 import type { ListEntityCommonBase } from '../../models';
-import { HttpErrorResponse } from '../../models';
+import { HttpErrorResponse, SingleError } from '../../models';
 import type { LoggingService } from '../../services/logging.service';
 import type { LookupConstraintService } from '../../services/lookup-constraint.service';
 import type { RecordLimitCheckerService } from '../../services/record-limit-checker.service';
@@ -398,8 +398,8 @@ export abstract class EntityPersistenceBusinessRepository<
       enrichedData,
       options,
     );
-    const created = await super.create(validEnrichedData, options);
 
+    const created = await super.create(validEnrichedData, options);
     return this.injectRecordType(created);
   }
 

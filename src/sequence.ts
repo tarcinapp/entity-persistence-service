@@ -147,6 +147,23 @@ export class MySequence implements SequenceHandler {
         // ignore any failure while normalizing error
       }
 
+      // Normalize MongoDB E11000/E11001 duplicate key errors into HTTP 409.
+      // These occur when a MongoDB unique index catches a duplicate that slipped
+      // through application-level uniqueness checks. Without this normaliser they
+      // would be caught by the >= 500 sanitizer below and returned as a generic 500.
+      try {
+        const mongoCode = (err as any)?.code;
+        if (mongoCode === 11000 || mongoCode === 11001) {
+          err.statusCode = 409;
+          err.status = 409;
+          err.name = 'UniquenessViolationError';
+          err.code = 'UNIQUENESS-VIOLATION';
+          err.message = 'Record already exists (duplicate key)';
+        }
+      } catch (_) {
+        // ignore any failure while normalizing error
+      }
+
       // Attach requestId to the error payload when available
       try {
         if (request && (request as any).requestId) {
