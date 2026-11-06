@@ -22,6 +22,15 @@ export interface RecordLimit {
   scope: string;
   limit: number;
   duration?: string;
+  /**
+   * When true, signals to entity-persistence-cache (EPC) that a distributed
+   * lock should be acquired for this rule even when the scope contains no
+   * interpolatable fields (i.e. wide-scope / global limits). EPS itself does
+   * not act on this field — it is a passthrough that EPC reads via /system-info
+   * to decide whether to serialise concurrent writes on a global lock key.
+   * Defaults to false (best-effort) when absent.
+   */
+  enforceSerialisation?: boolean;
 }
 
 export interface RecordLimitConfig {
@@ -286,6 +295,10 @@ export class RecordLimitCheckerService {
         scope: item.scope,
         limit: Number(item.limit),
         duration: item.duration,
+        // Preserve as-is for EPC consumption via /system-info; EPS ignores it
+        ...(item.enforceSerialisation !== undefined && {
+          enforceSerialisation: Boolean(item.enforceSerialisation),
+        }),
       });
     }
 
