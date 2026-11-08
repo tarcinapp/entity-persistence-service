@@ -79,9 +79,6 @@ describe('ListRepository', () => {
       Getter.fromValue(customListEntityRelRepoStub),
       Getter.fromValue(listRepoStub),
       testSetup.configReaders.kindConfigReader,
-      testSetup.configReaders.visibilityConfigReader,
-      testSetup.configReaders.validfromConfigReader,
-      testSetup.configReaders.idempotencyConfigReader,
       testSetup.configReaders.responseLimitConfigReader,
       mockLookupHelper,
       loggingServiceStub,
@@ -201,121 +198,40 @@ describe('ListRepository', () => {
       sinon.restore();
     });
 
-    describe('idempotency', () => {
-      it('should return existing list when idempotent list exists', async () => {
-        const existingList = { _id: '123', _name: 'test' };
-        const idempotencyFields = ['_name'];
-
-        // Setup stubs
-        sinon
-          .stub(repository['idempotencyConfigReader'], 'getIdempotencyForLists')
-          .returns(idempotencyFields);
-        superFindOneStub.resolves(existingList);
-
-        const result = await repository.create({ _name: 'test' });
-
-        expect(result).to.deepEqual(existingList);
-        expect(superCreateStub.called).to.be.false();
-      });
-
-      it('should proceed with creation when no idempotent list exists', async () => {
-        const idempotencyFields = ['_name'];
-        const inputData = { _name: 'test', _kind: 'test-kind' };
-
-        // Setup stubs
-        sinon
-          .stub(repository['idempotencyConfigReader'], 'getIdempotencyForLists')
-          .returns(idempotencyFields);
-        sinon
-          .stub(repository['kindConfigReader'], 'isKindAcceptableForList')
-          .returns(true);
-        sinon
-          .stub(repository['visibilityConfigReader'], 'getVisibilityForLists')
-          .returns('public');
-        sinon
-          .stub(repository['validfromConfigReader'], 'getValidFromForLists')
-          .returns(true);
-
-        await repository.create(inputData);
-
-        expect(superCreateStub.calledOnce).to.be.true();
-        const createdData = superCreateStub.firstCall.args[0];
-        expect(typeof createdData._idempotencyKey).to.equal('string');
-      });
-
-      it('should skip idempotency check when not configured', async () => {
-        const inputData = { _name: 'test', _kind: 'test-kind' };
-
-        // Setup stubs
-        sinon
-          .stub(repository['idempotencyConfigReader'], 'getIdempotencyForLists')
-          .returns([]);
-        sinon
-          .stub(repository['kindConfigReader'], 'isKindAcceptableForList')
-          .returns(true);
-        sinon
-          .stub(repository['visibilityConfigReader'], 'getVisibilityForLists')
-          .returns('public');
-        sinon
-          .stub(repository['validfromConfigReader'], 'getValidFromForLists')
-          .returns(true);
-
-        await repository.create(inputData);
-
-        expect(superFindOneStub.called).to.be.false();
-        expect(superCreateStub.calledOnce).to.be.true();
-      });
-    });
-
     describe('validation and enrichment', () => {
       let kindStub: sinon.SinonStub;
 
       beforeEach(() => {
         // Common stubs for validation tests
-        sinon
-          .stub(repository['idempotencyConfigReader'], 'getIdempotencyForLists')
-          .returns([]);
         kindStub = sinon
           .stub(repository['kindConfigReader'], 'isKindAcceptableForList')
           .returns(true);
-        sinon
-          .stub(repository['visibilityConfigReader'], 'getVisibilityForLists')
-          .returns('public');
-        sinon
-          .stub(repository['validfromConfigReader'], 'getValidFromForLists')
-          .returns(true);
       });
 
-      it('should enrich list with managed fields', async () => {
+      it('should set count fields on create', async () => {
         const inputData = {
           _name: 'Test List',
           _kind: 'test-kind',
-          _ownerUsers: [],
-          _ownerGroups: [],
-          _viewerUsers: [],
-          _viewerGroups: [],
+          _ownerUsers: ['user1', 'user2'],
+          _ownerGroups: ['group1'],
+          _viewerUsers: ['user3'],
+          _viewerGroups: ['group2', 'group3'],
         };
 
         const result = await repository.create(inputData);
 
         expect(result).to.containDeep({
-          _name: 'Test List',
-          _kind: 'test-kind',
-          _slug: 'test-list',
-          _version: 1,
-          _visibility: 'public',
-          _createdDateTime: now,
-          _lastUpdatedDateTime: now,
-          _validFromDateTime: now,
-          _ownerUsers: [],
-          _ownerGroups: [],
-          _viewerUsers: [],
-          _viewerGroups: [],
-          _ownerUsersCount: 0,
-          _ownerGroupsCount: 0,
-          _viewerUsersCount: 0,
-          _viewerGroupsCount: 0,
+          _ownerUsersCount: 2,
+          _ownerGroupsCount: 1,
+          _viewerUsersCount: 1,
+          _viewerGroupsCount: 2,
         });
+      });
+
+      it('should set version=1 on create', async () => {
+        const inputData = { _name: 'Test List', _kind: 'test-kind' };
+        const result = await repository.create(inputData);
+        expect(result._version).to.equal(1);
       });
 
       it('should throw error for invalid kind format', async () => {
@@ -485,12 +401,6 @@ describe('ListRepository', () => {
     describe('validation and enrichment', () => {
       beforeEach(() => {
         // Common stubs for validation tests
-        sinon
-          .stub(repository['visibilityConfigReader'], 'getVisibilityForLists')
-          .returns('public');
-        sinon
-          .stub(repository['validfromConfigReader'], 'getValidFromForLists')
-          .returns(true);
       });
 
       it('should throw error when trying to change kind field', async () => {
@@ -686,40 +596,6 @@ describe('ListRepository', () => {
         });
       });
 
-      // New tests for idempotency handling
-      it('should generate new idempotency key when idempotent fields are updated', async () => {
-        const existingIdempotencyKey =
-          '63ea389183badf7004ee26e06f5ecf13995d26b088d9fcb8a7fe17502eb218a4';
-        const existingData = {
-          _id: existingId,
-          _name: 'Original Name',
-          _kind: 'test-kind',
-          _version: 1,
-          _createdDateTime: '2023-01-01T00:00:00.000Z',
-          _lastUpdatedDateTime: '2023-01-01T00:00:00.000Z',
-          _idempotencyKey: existingIdempotencyKey,
-        };
-        superFindByIdStub.resolves(existingData);
-
-        // Setup idempotency configuration
-        sinon
-          .stub(repository['idempotencyConfigReader'], 'getIdempotencyForLists')
-          .returns(['_name']);
-
-        const updateData = {
-          _name: 'Updated Name',
-          _kind: 'test-kind',
-        };
-
-        await repository.replaceById(existingId, updateData);
-
-        expect(superReplaceByIdStub.calledOnce).to.be.true();
-        const replacedData = superReplaceByIdStub.firstCall.args[1];
-        expect(replacedData._idempotencyKey).to.not.equal(
-          existingIdempotencyKey,
-        );
-        expect(typeof replacedData._idempotencyKey).to.equal('string');
-      });
     });
   });
 
@@ -791,12 +667,6 @@ describe('ListRepository', () => {
     describe('validation and enrichment', () => {
       beforeEach(() => {
         // Common stubs for validation tests
-        sinon
-          .stub(repository['visibilityConfigReader'], 'getVisibilityForLists')
-          .returns('public');
-        sinon
-          .stub(repository['validfromConfigReader'], 'getValidFromForLists')
-          .returns(true);
       });
 
       it('should merge update data with existing data', async () => {
@@ -898,39 +768,6 @@ describe('ListRepository', () => {
         expect(superUpdateByIdStub.called).to.be.false();
       });
 
-      it('should calculate idempotency key based on merged data', async () => {
-        const updateData = { _name: 'test', _kind: 'test-kind' };
-        const idempotencyFields = ['_name', '_kind']; // Both fields for idempotency
-
-        sinon
-          .stub(repository['idempotencyConfigReader'], 'getIdempotencyForLists')
-          .returns(idempotencyFields);
-
-        const result = (await repository.updateById(
-          existingId,
-          updateData,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        )) as any;
-
-        expect(typeof result._idempotencyKey).to.equal('string');
-      });
-
-      it('should skip idempotency key calculation when not configured', async () => {
-        const updateData = { _name: 'test' };
-
-        sinon
-          .stub(repository['idempotencyConfigReader'], 'getIdempotencyForLists')
-          .returns([]);
-
-        const result = (await repository.updateById(
-          existingId,
-          updateData,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        )) as any;
-
-        expect(result._idempotencyKey).to.equal(undefined);
-      });
-
       it('should preserve existing fields when doing partial update', async () => {
         const existingData = {
           _id: existingId,
@@ -966,46 +803,6 @@ describe('ListRepository', () => {
         expect(calledData._lastUpdatedDateTime).to.equal(now);
       });
 
-      it('should preserve existing idempotency key when updating with same values', async () => {
-        const existingIdempotencyKey =
-          'af22eeac96b104f4cb95921a35bed984c7903b57378a771520aa85c4d3baf408';
-        const existingData = {
-          _id: existingId,
-          _name: 'Test List',
-          _kind: 'test-kind',
-          _version: 1,
-          _createdDateTime: '2023-01-01T00:00:00.000Z',
-          _lastUpdatedDateTime: '2023-01-01T00:00:00.000Z',
-          _validFromDateTime: null,
-          _validUntilDateTime: null,
-          _ownerUsers: ['user1'],
-          _ownerGroups: ['group1'],
-          _viewerUsers: ['user2'],
-          _viewerGroups: ['group2'],
-          _idempotencyKey: existingIdempotencyKey,
-          foo: null,
-          bar: undefined,
-        };
-        superFindByIdStub.resolves(existingData);
-
-        // Setup idempotency configuration
-        sinon
-          .stub(repository['idempotencyConfigReader'], 'getIdempotencyForLists')
-          .returns(['_name', '_kind', 'foo', 'bar']);
-
-        // Update with same values
-        const updateData = {
-          _name: 'Test List',
-          _kind: 'test-kind',
-        };
-
-        await repository.updateById(existingId, updateData);
-
-        expect(superUpdateByIdStub.calledOnce).to.be.true();
-        const [calledId, calledData] = superUpdateByIdStub.firstCall.args;
-        expect(calledId).to.equal(existingId);
-        expect(calledData._idempotencyKey).to.equal(existingIdempotencyKey);
-      });
     });
   });
 

@@ -89,79 +89,7 @@ export class EnvConfigHelper {
       'list_reaction_lookup_constraint',
     ]);
   }
-  // Idempotency config getters
-  get IDEMPOTENCY_ENTITY(): string | undefined {
-    return this.get(['IDEMPOTENCY_ENTITY', 'idempotency_entity']);
-  }
-  get IDEMPOTENCY_LIST(): string | undefined {
-    return this.get(['IDEMPOTENCY_LIST', 'idempotency_list']);
-  }
-  get IDEMPOTENCY_ENTITY_REACTION(): string | undefined {
-    return this.get([
-      'IDEMPOTENCY_ENTITY_REACTION',
-      'idempotency_entity_reaction',
-    ]);
-  }
-  get IDEMPOTENCY_LIST_REACTION(): string | undefined {
-    return this.get(['IDEMPOTENCY_LIST_REACTION', 'idempotency_list_reaction']);
-  }
-  get IDEMPOTENCY_LIST_ENTITY_REL(): string | undefined {
-    return this.get([
-      'IDEMPOTENCY_LIST_ENTITY_REL',
-      'idempotency_list_entity_rel',
-    ]);
-  }
 
-  getIdempotencyEntityForKind(kind?: string): string | undefined {
-    if (!kind) {
-      return undefined;
-    }
-
-    return this.get([
-      `IDEMPOTENCY_ENTITY_FOR_${kind.toUpperCase()}`,
-      `idempotency_entity_for_${kind}`,
-    ]);
-  }
-  getIdempotencyListForKind(kind?: string): string | undefined {
-    if (!kind) {
-      return undefined;
-    }
-
-    return this.get([
-      `IDEMPOTENCY_LIST_FOR_${kind.toUpperCase()}`,
-      `idempotency_list_for_${kind}`,
-    ]);
-  }
-  getIdempotencyEntityReactionForKind(kind?: string): string | undefined {
-    if (!kind) {
-      return undefined;
-    }
-
-    return this.get([
-      `IDEMPOTENCY_ENTITY_REACTION_FOR_${kind.toUpperCase()}`,
-      `idempotency_entity_reaction_for_${kind}`,
-    ]);
-  }
-  getIdempotencyListReactionForKind(kind?: string): string | undefined {
-    if (!kind) {
-      return undefined;
-    }
-
-    return this.get([
-      `IDEMPOTENCY_LIST_REACTION_FOR_${kind.toUpperCase()}`,
-      `idempotency_list_reaction_for_${kind}`,
-    ]);
-  }
-  getIdempotencyListEntityRelForKind(kind?: string): string | undefined {
-    if (!kind) {
-      return undefined;
-    }
-
-    return this.get([
-      `IDEMPOTENCY_LIST_ENTITY_REL_FOR_${kind.toUpperCase()}`,
-      `idempotency_list_entity_rel_for_${kind}`,
-    ]);
-  }
   get NODE_ENV(): string | undefined {
     return this.get(['NODE_ENV', 'node_env']);
   }
@@ -236,48 +164,27 @@ export class EnvConfigHelper {
   get ENTITY_KINDS(): string[] {
     const val = this.get(['ENTITY_KINDS', 'entity_kinds']);
 
-    return val ? val.split(',').map((v) => v.trim()) : [];
+    return val ? val.split(',').map((k) => k.trim()) : [];
   }
   get LIST_KINDS(): string[] {
     const val = this.get(['LIST_KINDS', 'list_kinds']);
 
-    return val ? val.split(',').map((v) => v.trim()) : [];
+    return val ? val.split(',').map((k) => k.trim()) : [];
   }
   get LIST_ENTITY_REL_KINDS(): string[] {
     const val = this.get(['LIST_ENTITY_REL_KINDS', 'list_entity_rel_kinds']);
 
-    return val ? val.split(',').map((v) => v.trim()) : [];
+    return val ? val.split(',').map((k) => k.trim()) : [];
   }
   get ENTITY_REACTION_KINDS(): string[] {
     const val = this.get(['ENTITY_REACTION_KINDS', 'entity_reaction_kinds']);
 
-    return val ? val.split(',').map((v) => v.trim()) : [];
+    return val ? val.split(',').map((k) => k.trim()) : [];
   }
   get LIST_REACTION_KINDS(): string[] {
     const val = this.get(['LIST_REACTION_KINDS', 'list_reaction_kinds']);
 
-    return val ? val.split(',').map((v) => v.trim()) : [];
-  }
-  get DEFAULT_ENTITY_KIND(): string | undefined {
-    return this.get(['DEFAULT_ENTITY_KIND', 'default_entity_kind']);
-  }
-  get DEFAULT_LIST_KIND(): string | undefined {
-    return this.get(['DEFAULT_LIST_KIND', 'default_list_kind']);
-  }
-  get DEFAULT_RELATION_KIND(): string | undefined {
-    return this.get(['DEFAULT_RELATION_KIND', 'default_relation_kind']);
-  }
-  get DEFAULT_ENTITY_REACTION_KIND(): string | undefined {
-    return this.get([
-      'DEFAULT_ENTITY_REACTION_KIND',
-      'default_entity_reaction_kind',
-    ]);
-  }
-  get DEFAULT_LIST_REACTION_KIND(): string | undefined {
-    return this.get([
-      'DEFAULT_LIST_REACTION_KIND',
-      'default_list_reaction_kind',
-    ]);
+    return val ? val.split(',').map((k) => k.trim()) : [];
   }
   get ENTITY_UNIQUENESS(): string | undefined {
     return this.get(['ENTITY_UNIQUENESS', 'entity_uniqueness']);
@@ -296,41 +203,6 @@ export class EnvConfigHelper {
   }
   get LIST_REACTION_UNIQUENESS(): string | undefined {
     return this.get(['LIST_REACTION_UNIQUENESS', 'list_reaction_uniqueness']);
-  }
-  get AUTOAPPROVE_ENTITY(): boolean {
-    return this.get(['AUTOAPPROVE_ENTITY', 'autoapprove_entity']) === 'true';
-  }
-  get AUTOAPPROVE_LIST(): boolean {
-    return this.get(['AUTOAPPROVE_LIST', 'autoapprove_list']) === 'true';
-  }
-  get AUTOAPPROVE_ENTITY_REACTION(): boolean {
-    return (
-      this.get([
-        'AUTOAPPROVE_ENTITY_REACTION',
-        'autoapprove_entity_reaction',
-      ]) === 'true'
-    );
-  }
-  get AUTOAPPROVE_LIST_REACTION(): boolean {
-    return (
-      this.get(['AUTOAPPROVE_LIST_REACTION', 'autoapprove_list_reaction']) ===
-      'true'
-    );
-  }
-  get VISIBILITY_ENTITY(): string | undefined {
-    return this.get(['VISIBILITY_ENTITY', 'visibility_entity']);
-  }
-  get VISIBILITY_LIST(): string | undefined {
-    return this.get(['VISIBILITY_LIST', 'visibility_list']);
-  }
-  get VISIBILITY_ENTITY_REACTION(): string | undefined {
-    return this.get([
-      'VISIBILITY_ENTITY_REACTION',
-      'visibility_entity_reaction',
-    ]);
-  }
-  get VISIBILITY_LIST_REACTION(): string | undefined {
-    return this.get(['VISIBILITY_LIST_REACTION', 'visibility_list_reaction']);
   }
   get RESPONSE_LIMIT_ENTITY(): number | undefined {
     const val = this.get(['RESPONSE_LIMIT_ENTITY', 'response_limit_entity']);
@@ -385,136 +257,6 @@ export class EnvConfigHelper {
     return this.get([
       'LIST_REACTION_RECORD_LIMITS',
       'list_reaction_record_limits',
-    ]);
-  }
-
-  // Autoapprove config getters
-  getAutoApproveEntityForKind(kind?: string): boolean | undefined {
-    if (!kind) {
-      return undefined;
-    }
-
-    const val = this.get([
-      `AUTOAPPROVE_ENTITY_FOR_${kind.toUpperCase()}`,
-      `autoapprove_entity_for_${kind}`,
-    ]);
-    if (val === undefined) {
-      return undefined;
-    }
-
-    return val === 'true';
-  }
-  getAutoApproveListForKind(kind?: string): boolean | undefined {
-    if (!kind) {
-      return undefined;
-    }
-
-    const val = this.get([
-      `AUTOAPPROVE_LIST_FOR_${kind.toUpperCase()}`,
-      `autoapprove_list_for_${kind}`,
-    ]);
-    if (val === undefined) {
-      return undefined;
-    }
-
-    return val === 'true';
-  }
-  getAutoApproveListEntityRelationsForKind(kind?: string): boolean | undefined {
-    if (!kind) {
-      return undefined;
-    }
-
-    const val = this.get([
-      `AUTOAPPROVE_LIST_ENTITY_RELATIONS_FOR_${kind.toUpperCase()}`,
-      `autoapprove_list_entity_relations_for_${kind}`,
-    ]);
-    if (val === undefined) {
-      return undefined;
-    }
-
-    return val === 'true';
-  }
-  get AUTOAPPROVE_LIST_ENTITY_RELATIONS(): boolean | undefined {
-    const val = this.get([
-      'AUTOAPPROVE_LIST_ENTITY_RELATIONS',
-      'autoapprove_list_entity_relations',
-    ]);
-    if (val === undefined) {
-      return undefined;
-    }
-
-    return val === 'true';
-  }
-  getAutoApproveEntityReactionForKind(kind?: string): boolean | undefined {
-    if (!kind) {
-      return undefined;
-    }
-
-    const val = this.get([
-      `AUTOAPPROVE_ENTITY_REACTION_FOR_${kind.toUpperCase()}`,
-      `autoapprove_entity_reaction_for_${kind}`,
-    ]);
-    if (val === undefined) {
-      return undefined;
-    }
-
-    return val === 'true';
-  }
-  getAutoApproveListReactionForKind(kind?: string): boolean | undefined {
-    if (!kind) {
-      return undefined;
-    }
-
-    const val = this.get([
-      `AUTOAPPROVE_LIST_REACTION_FOR_${kind.toUpperCase()}`,
-      `autoapprove_list_reaction_for_${kind}`,
-    ]);
-    if (val === undefined) {
-      return undefined;
-    }
-
-    return val === 'true';
-  }
-  // Add more strongly-typed getters as needed for new env variables
-  // Visibility config getters
-  getVisibilityEntityForKind(kind?: string): string | undefined {
-    if (!kind) {
-      return undefined;
-    }
-
-    return this.get([
-      `VISIBILITY_ENTITY_FOR_${kind.toUpperCase()}`,
-      `visibility_entity_for_${kind}`,
-    ]);
-  }
-  getVisibilityListForKind(kind?: string): string | undefined {
-    if (!kind) {
-      return undefined;
-    }
-
-    return this.get([
-      `VISIBILITY_LIST_FOR_${kind.toUpperCase()}`,
-      `visibility_list_for_${kind}`,
-    ]);
-  }
-  getVisibilityEntityReactionForKind(kind?: string): string | undefined {
-    if (!kind) {
-      return undefined;
-    }
-
-    return this.get([
-      `VISIBILITY_ENTITY_REACTION_FOR_${kind.toUpperCase()}`,
-      `visibility_entity_reaction_for_${kind}`,
-    ]);
-  }
-  getVisibilityListReactionForKind(kind?: string): string | undefined {
-    if (!kind) {
-      return undefined;
-    }
-
-    return this.get([
-      `VISIBILITY_LIST_REACTION_FOR_${kind.toUpperCase()}`,
-      `visibility_list_reaction_for_${kind}`,
     ]);
   }
 }

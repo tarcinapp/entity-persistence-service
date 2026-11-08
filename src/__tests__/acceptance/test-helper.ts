@@ -12,12 +12,6 @@ import { parse } from 'qs';
 import { EntityPersistenceApplication } from '../..';
 import { EntityDbDataSource } from '../../datasources/entity-db.datasource';
 import {
-  VisibilityConfigBindings,
-  VisibilityConfigurationReader,
-  IdempotencyConfigBindings,
-  IdempotencyConfigurationReader,
-  ValidFromConfigBindings,
-  ValidfromConfigurationReader,
   ResponseLimitConfigBindings,
   ResponseLimitConfigurationReader,
   KindBindings,
@@ -462,18 +456,6 @@ export async function setupApplication(
 
   // add kind limits configuration reader to context
   app.bind(KindBindings.CONFIG_READER).toClass(KindConfigurationReader);
-
-  app
-    .bind(VisibilityConfigBindings.CONFIG_READER)
-    .toClass(VisibilityConfigurationReader);
-
-  app
-    .bind(IdempotencyConfigBindings.CONFIG_READER)
-    .toClass(IdempotencyConfigurationReader);
-
-  app
-    .bind(ValidFromConfigBindings.CONFIG_READER)
-    .toClass(ValidfromConfigurationReader);
 
   // add response limit configuration reader to context
   app

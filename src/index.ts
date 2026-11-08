@@ -9,12 +9,6 @@ import { parse } from 'qs';
 import type { ApplicationConfig } from './application';
 import { EntityPersistenceApplication } from './application';
 import {
-  VisibilityConfigBindings,
-  VisibilityConfigurationReader,
-  IdempotencyConfigBindings,
-  IdempotencyConfigurationReader,
-  ValidFromConfigBindings,
-  ValidfromConfigurationReader,
   ResponseLimitConfigBindings,
   ResponseLimitConfigurationReader,
   KindBindings,
@@ -76,20 +70,6 @@ export async function main(options: ApplicationConfig = {}) {
     debug: env.NODE_ENV !== 'production',
     safeFields: ['errorCode', 'message'],
   });
-
-  // add kind limits configuration reader to context
-
-  app
-    .bind(VisibilityConfigBindings.CONFIG_READER)
-    .toClass(VisibilityConfigurationReader);
-
-  app
-    .bind(IdempotencyConfigBindings.CONFIG_READER)
-    .toClass(IdempotencyConfigurationReader);
-
-  app
-    .bind(ValidFromConfigBindings.CONFIG_READER)
-    .toClass(ValidfromConfigurationReader);
 
   // add response limit configuration reader to context
   app

@@ -2,11 +2,8 @@ import { juggler } from '@loopback/repository';
 import { EntityPersistenceApplication } from '../../..';
 import type { EntityDbDataSource } from '../../../datasources';
 import {
-  IdempotencyConfigurationReader,
   KindConfigurationReader,
   ResponseLimitConfigurationReader,
-  ValidfromConfigurationReader,
-  VisibilityConfigurationReader,
 } from '../../../extensions';
 import {
   LookupBindings,
@@ -18,9 +15,6 @@ export async function setupRepositoryTest(): Promise<{
   dataSource: juggler.DataSource;
   configReaders: {
     kindConfigReader: KindConfigurationReader;
-    visibilityConfigReader: VisibilityConfigurationReader;
-    validfromConfigReader: ValidfromConfigurationReader;
-    idempotencyConfigReader: IdempotencyConfigurationReader;
     responseLimitConfigReader: ResponseLimitConfigurationReader;
   };
 }> {
@@ -40,9 +34,6 @@ export async function setupRepositoryTest(): Promise<{
 
   // Create configuration readers with default test settings
   const kindConfigReader = new KindConfigurationReader();
-  const visibilityConfigReader = new VisibilityConfigurationReader();
-  const validfromConfigReader = new ValidfromConfigurationReader();
-  const idempotencyConfigReader = new IdempotencyConfigurationReader();
   const responseLimitConfigReader = new ResponseLimitConfigurationReader();
 
   // Add lookup helper binding for tests
@@ -53,9 +44,6 @@ export async function setupRepositoryTest(): Promise<{
     dataSource,
     configReaders: {
       kindConfigReader,
-      visibilityConfigReader,
-      validfromConfigReader,
-      idempotencyConfigReader,
       responseLimitConfigReader,
     },
   };

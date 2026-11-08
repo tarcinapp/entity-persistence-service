@@ -9,33 +9,27 @@ export const KindBindings = {
 } as const;
 
 export interface KindConfig {
-  defaultKind: string;
   allowedKinds: string[];
 }
 
 export class KindConfiguration {
   private readonly entityConfig: KindConfig = {
-    defaultKind: 'entity',
     allowedKinds: ['entity'],
   };
 
   private readonly listConfig: KindConfig = {
-    defaultKind: 'list',
     allowedKinds: ['list'],
   };
 
   private readonly relationConfig: KindConfig = {
-    defaultKind: 'relation',
     allowedKinds: ['relation'],
   };
 
   private readonly entityReactionConfig: KindConfig = {
-    defaultKind: 'entity-reaction',
     allowedKinds: ['entity-reaction'],
   };
 
   private readonly listReactionConfig: KindConfig = {
-    defaultKind: 'list-reaction',
     allowedKinds: ['list-reaction'],
   };
 
@@ -46,35 +40,10 @@ export class KindConfiguration {
   private loadConfigurations() {
     const env = EnvConfigHelper.getInstance();
 
-    // Update default kinds from environment variables if specified
-    if (env.DEFAULT_ENTITY_KIND) {
-      this.entityConfig.defaultKind = env.DEFAULT_ENTITY_KIND;
-    }
-
-    if (env.DEFAULT_LIST_KIND) {
-      this.listConfig.defaultKind = env.DEFAULT_LIST_KIND;
-    }
-
-    if (env.DEFAULT_RELATION_KIND) {
-      this.relationConfig.defaultKind = env.DEFAULT_RELATION_KIND;
-    }
-
-    if (env.DEFAULT_ENTITY_REACTION_KIND) {
-      this.entityReactionConfig.defaultKind = env.DEFAULT_ENTITY_REACTION_KIND;
-    }
-
-    if (env.DEFAULT_LIST_REACTION_KIND) {
-      this.listReactionConfig.defaultKind = env.DEFAULT_LIST_REACTION_KIND;
-    }
-
     // Load entity kinds if specified
     if (env.ENTITY_KINDS.length > 0) {
       const kinds = env.ENTITY_KINDS;
       this.entityConfig.allowedKinds = [...new Set(kinds)];
-      // Only add default kind to allowed kinds if it's explicitly configured
-      if (env.DEFAULT_ENTITY_KIND) {
-        this.entityConfig.allowedKinds.push(env.DEFAULT_ENTITY_KIND);
-      }
     } else {
       // If no allowed kinds specified, allow all kinds
       this.entityConfig.allowedKinds = [];
@@ -84,9 +53,6 @@ export class KindConfiguration {
     if (env.LIST_KINDS.length > 0) {
       const kinds = env.LIST_KINDS;
       this.listConfig.allowedKinds = [...new Set(kinds)];
-      if (env.DEFAULT_LIST_KIND) {
-        this.listConfig.allowedKinds.push(env.DEFAULT_LIST_KIND);
-      }
     } else {
       this.listConfig.allowedKinds = [];
     }
@@ -95,9 +61,6 @@ export class KindConfiguration {
     if (env.LIST_ENTITY_REL_KINDS.length > 0) {
       const kinds = env.LIST_ENTITY_REL_KINDS;
       this.relationConfig.allowedKinds = [...new Set(kinds)];
-      if (env.DEFAULT_RELATION_KIND) {
-        this.relationConfig.allowedKinds.push(env.DEFAULT_RELATION_KIND);
-      }
     } else {
       this.relationConfig.allowedKinds = [];
     }
@@ -106,11 +69,6 @@ export class KindConfiguration {
     if (env.ENTITY_REACTION_KINDS.length > 0) {
       const kinds = env.ENTITY_REACTION_KINDS;
       this.entityReactionConfig.allowedKinds = [...new Set(kinds)];
-      if (env.DEFAULT_ENTITY_REACTION_KIND) {
-        this.entityReactionConfig.allowedKinds.push(
-          env.DEFAULT_ENTITY_REACTION_KIND,
-        );
-      }
     } else {
       this.entityReactionConfig.allowedKinds = [];
     }
@@ -119,11 +77,6 @@ export class KindConfiguration {
     if (env.LIST_REACTION_KINDS.length > 0) {
       const kinds = env.LIST_REACTION_KINDS;
       this.listReactionConfig.allowedKinds = [...new Set(kinds)];
-      if (env.DEFAULT_LIST_REACTION_KIND) {
-        this.listReactionConfig.allowedKinds.push(
-          env.DEFAULT_LIST_REACTION_KIND,
-        );
-      }
     } else {
       this.listReactionConfig.allowedKinds = [];
     }
@@ -157,10 +110,6 @@ export class KindConfiguration {
 
     return config.allowedKinds.includes(kind);
   }
-
-  public getDefaultKind(config: KindConfig): string {
-    return config.defaultKind;
-  }
 }
 
 export class KindConfigurationReader {
@@ -168,26 +117,6 @@ export class KindConfigurationReader {
 
   constructor() {
     this.kindConfig = new KindConfiguration();
-  }
-
-  public get defaultEntityKind(): string {
-    return this.kindConfig.getEntityConfig().defaultKind;
-  }
-
-  public get defaultListKind(): string {
-    return this.kindConfig.getListConfig().defaultKind;
-  }
-
-  public get defaultRelationKind(): string {
-    return this.kindConfig.getRelationConfig().defaultKind;
-  }
-
-  public get defaultEntityReactionKind(): string {
-    return this.kindConfig.getEntityReactionConfig().defaultKind;
-  }
-
-  public get defaultListReactionKind(): string {
-    return this.kindConfig.getListReactionConfig().defaultKind;
   }
 
   public get allowedKindsForEntities(): string[] {
