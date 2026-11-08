@@ -97,41 +97,12 @@ const SYSTEM_INFO_RESPONSE: ResponseObject = {
                   listReaction: { type: 'array', items: { type: 'string' } },
                 },
               },
-              defaultKinds: {
-                type: 'object',
-                properties: {
-                  entity: { type: 'string' },
-                  list: { type: 'string' },
-                  relation: { type: 'string' },
-                  entityReaction: { type: 'string' },
-                  listReaction: { type: 'string' },
-                },
-              },
               uniqueness: {
                 type: 'object',
                 properties: {
                   entity: { type: 'string' },
                   list: { type: 'string' },
                   relation: { type: 'string' },
-                  entityReaction: { type: 'string' },
-                  listReaction: { type: 'string' },
-                },
-              },
-              autoApprove: {
-                type: 'object',
-                properties: {
-                  entity: { type: 'boolean' },
-                  list: { type: 'boolean' },
-                  entityReaction: { type: 'boolean' },
-                  listReaction: { type: 'boolean' },
-                  listEntityRelations: { type: 'boolean' },
-                },
-              },
-              visibility: {
-                type: 'object',
-                properties: {
-                  entity: { type: 'string' },
-                  list: { type: 'string' },
                   entityReaction: { type: 'string' },
                   listReaction: { type: 'string' },
                 },
@@ -154,16 +125,6 @@ const SYSTEM_INFO_RESPONSE: ResponseObject = {
                   relation: { type: 'string' },
                   entityReaction: { type: 'string' },
                   listReaction: { type: 'string' },
-                },
-              },
-              idempotency: {
-                type: 'object',
-                properties: {
-                  entity: { type: 'string' },
-                  list: { type: 'string' },
-                  entityReaction: { type: 'string' },
-                  listReaction: { type: 'string' },
-                  listEntityRel: { type: 'string' },
                 },
               },
             },

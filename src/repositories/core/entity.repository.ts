@@ -12,10 +12,7 @@ import { ListEntityRelationRepository } from './list-entity-relation.repository'
 import { ListRepository } from './list.repository';
 import { EntityDbDataSource } from '../../datasources';
 import {
-  IdempotencyConfigurationReader,
   KindConfigurationReader,
-  ValidfromConfigurationReader,
-  VisibilityConfigurationReader,
 } from '../../extensions';
 
 import { ResponseLimitConfigurationReader } from '../../extensions/config-helpers/response-limit-config-helper';
@@ -52,8 +49,7 @@ import {
  *
  * ## Inherited from Base:
  * - find, findById, create, replaceById, updateById, updateAll
- * - Validation, idempotency, slug generation, count fields
- * - Kind validation, lookup processing
+ * - Validation, count fields, kind validation, lookup processing
  */
 export class EntityRepository extends EntityPersistenceBusinessRepository<
   GenericEntity,
@@ -97,15 +93,6 @@ export class EntityRepository extends EntityPersistenceBusinessRepository<
     @inject('extensions.kind.configurationreader')
     protected readonly kindConfigReader: KindConfigurationReader,
 
-    @inject('extensions.visibility.configurationreader')
-    protected readonly visibilityConfigReader: VisibilityConfigurationReader,
-
-    @inject('extensions.validfrom.configurationreader')
-    protected readonly validfromConfigReader: ValidfromConfigurationReader,
-
-    @inject('extensions.idempotency.configurationreader')
-    protected readonly idempotencyConfigReader: IdempotencyConfigurationReader,
-
     @inject('extensions.response-limit.configurationreader')
     protected readonly responseLimitConfigReader: ResponseLimitConfigurationReader,
 
@@ -144,22 +131,6 @@ export class EntityRepository extends EntityPersistenceBusinessRepository<
   }
 
   // ABSTRACT HOOK METHOD IMPLEMENTATIONS
-  protected getDefaultKind(): string {
-    return this.kindConfigReader.defaultEntityKind;
-  }
-
-  protected getIdempotencyFields(kind?: string): string[] {
-    return this.idempotencyConfigReader.getIdempotencyForEntities(kind);
-  }
-
-  protected getVisibilityForKind(kind?: string): string {
-    return this.visibilityConfigReader.getVisibilityForEntities(kind);
-  }
-
-  protected getValidFromForKind(kind?: string): boolean {
-    return this.validfromConfigReader.getValidFromForEntities(kind);
-  }
-
   protected getResponseLimit(): number {
     return this.responseLimitConfigReader.getEntityResponseLimit();
   }

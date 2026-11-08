@@ -9,15 +9,12 @@ import {
   Count,
   Entity,
 } from '@loopback/repository';
-import * as crypto from 'crypto';
 import _ from 'lodash';
 import { EntityRepository } from './entity.repository';
 import { ListRepository } from './list.repository';
 import { EntityDbDataSource } from '../../datasources';
 import {
-  IdempotencyConfigurationReader,
   KindConfigurationReader,
-  ValidfromConfigurationReader,
 } from '../../extensions';
 import { CollectionConfigHelper } from '../../extensions/config-helpers/collection-config-helper';
 import { ResponseLimitConfigurationReader } from '../../extensions/config-helpers/response-limit-config-helper';
@@ -56,14 +53,8 @@ export class ListEntityRelationRepository extends EntityPersistenceBaseRepositor
     @repository.getter('ListRepository')
     protected listRepositoryGetter: Getter<ListRepository>,
 
-    @inject('extensions.idempotency.configurationreader')
-    private idempotencyConfigReader: IdempotencyConfigurationReader,
-
     @inject('extensions.kind.configurationreader')
     private kindConfigReader: KindConfigurationReader,
-
-    @inject('extensions.validfrom.configurationreader')
-    private validfromConfigReader: ValidfromConfigurationReader,
 
     @inject('extensions.response-limit.configurationreader')
     private responseLimitConfigReader: ResponseLimitConfigurationReader,
@@ -360,19 +351,16 @@ export class ListEntityRelationRepository extends EntityPersistenceBaseRepositor
   }
 
   /**
-   * Create a new relation ensuring idempotency and validation.
+   * Creates a new relation with enrichment and validation.
    */
   async create(data: DataObject<ListToEntityRelation>, options?: Options) {
-    const idempotencyKey = this.calculateIdempotencyKey(data);
-
-    const foundIdempotent = await this.findIdempotentRelation(idempotencyKey);
-    if (foundIdempotent) {
-      return this.injectRecordType(foundIdempotent);
-    }
-
-    data._idempotencyKey = idempotencyKey;
-
-    return this.createNewRelationFacade(data, options);
+    const enrichedData = await this.enrichIncomingRelationForCreation(data);
+    const validEnrichedData = await this.validateIncomingRelationForCreation(
+      enrichedData,
+      options,
+    );
+    const created = await super.create(validEnrichedData, options);
+    return this.injectRecordType(created);
   }
 
   async replaceById(
@@ -381,12 +369,6 @@ export class ListEntityRelationRepository extends EntityPersistenceBaseRepositor
     options?: Options,
   ) {
     const collection = await this.enrichIncomingRelForUpdates(id, data);
-
-    // calculate idempotencyKey
-    const idempotencyKey = this.calculateIdempotencyKey(collection.data);
-
-    // set idempotencyKey
-    collection.data._idempotencyKey = idempotencyKey;
 
     const validEnrichedData = await this.validateIncomingRelForReplace(
       id,
@@ -403,18 +385,6 @@ export class ListEntityRelationRepository extends EntityPersistenceBaseRepositor
     options?: Options,
   ) {
     const collection = await this.enrichIncomingRelForUpdates(id, data);
-
-    const mergedData = {
-      ...data,
-      ...(collection.existingData &&
-        _.pickBy(collection.existingData, (value) => value !== null)),
-    };
-
-    // calculate idempotencyKey
-    const idempotencyKey = this.calculateIdempotencyKey(mergedData);
-
-    // set idempotencyKey
-    collection.data._idempotencyKey = idempotencyKey;
 
     const validEnrichedData = await this.validateIncomingRelForUpdate(
       id,
@@ -446,25 +416,6 @@ export class ListEntityRelationRepository extends EntityPersistenceBaseRepositor
     data._lastUpdatedDateTime = now;
 
     return super.updateAll(data, where, options);
-  }
-
-  /**
-   * Handle creation flow: Enrich, validate, and store relation.
-   */
-  async createNewRelationFacade(
-    data: DataObject<ListToEntityRelation>,
-    options?: Options,
-  ): Promise<ListToEntityRelation> {
-    const enrichedData = await this.enrichIncomingRelationForCreation(data);
-
-    const validEnrichedData = await this.validateIncomingRelationForCreation(
-      enrichedData,
-      options,
-    );
-
-    const created = await super.create(validEnrichedData, options);
-
-    return this.injectRecordType(created);
   }
 
   /**
@@ -655,7 +606,9 @@ export class ListEntityRelationRepository extends EntityPersistenceBaseRepositor
   }
 
   /**
-   * Add system fields and prepare data for storage.
+   * Enrich incoming relation for creation.
+   * Field normalisation (_kind, _validFromDateTime, _validUntilDateTime) is performed
+   * upstream by EPBO before the request reaches EPS.
    */
   enrichIncomingRelationForCreation(
     data: DataObject<ListToEntityRelation>,
@@ -665,63 +618,13 @@ export class ListEntityRelationRepository extends EntityPersistenceBaseRepositor
 
     const now = new Date().toISOString();
 
-    data._kind = data._kind ?? this.kindConfigReader.defaultRelationKind;
+    // Defensive checks — EPG is the primary injector, EPBO is the secondary injector;
+    // EPS retains these as a last-resort safety net only.
     data._createdDateTime = data._createdDateTime ?? now;
     data._lastUpdatedDateTime = data._lastUpdatedDateTime ?? now;
     data._version = 1;
 
-    // auto approve
-    const shouldAutoApprove =
-      this.validfromConfigReader.getValidFromForListEntityRelations(data._kind);
-    data._validFromDateTime =
-      data._validFromDateTime ?? (shouldAutoApprove ? now : undefined);
-
-    // we need to explicitly set validUntilDateTime to null
-    // to make filter matcher work correctly while checking record limits
-    data._validUntilDateTime = data._validUntilDateTime ?? null;
-
     return Promise.resolve(data);
-  }
-
-  /**
-   * Calculate idempotency key for deduplication.
-   */
-  calculateIdempotencyKey(data: DataObject<ListToEntityRelation>) {
-    const idempotencyFields =
-      this.idempotencyConfigReader.getIdempotencyForListEntityRels(data._kind);
-
-    if (idempotencyFields.length === 0) {
-      return undefined;
-    }
-
-    const keyString = idempotencyFields
-      .map((field) => {
-        const value = _.get(data, field);
-
-        return typeof value === 'object' ? JSON.stringify(value) : value;
-      })
-      .join(',');
-
-    return crypto.createHash('sha256').update(keyString).digest('hex');
-  }
-
-  /**
-   * Check if an idempotent relation already exists.
-   */
-  private async findIdempotentRelation(
-    idempotencyKey: string | undefined,
-    options?: Options,
-  ): Promise<ListToEntityRelation | null> {
-    if (_.isString(idempotencyKey) && !_.isEmpty(idempotencyKey)) {
-      return this.findOne(
-        {
-          where: { _idempotencyKey: idempotencyKey },
-        },
-        options,
-      );
-    }
-
-    return null;
   }
 
   /**

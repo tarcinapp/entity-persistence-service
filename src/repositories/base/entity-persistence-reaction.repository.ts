@@ -8,15 +8,10 @@ import type {
   Where,
   juggler,
 } from '@loopback/repository';
-import * as crypto from 'crypto';
 import _ from 'lodash';
-import slugify from 'slugify';
 import { EntityPersistenceBaseRepository } from './entity-persistence-base.repository';
 import type {
   KindConfigurationReader,
-  IdempotencyConfigurationReader,
-  VisibilityConfigurationReader,
-  ValidfromConfigurationReader,
 } from '../../extensions';
 import type { ResponseLimitConfigurationReader } from '../../extensions/config-helpers/response-limit-config-helper';
 import type { LookupHelper } from '../../extensions/utils/lookup-helper';
@@ -34,7 +29,6 @@ import type { RecordLimitCheckerService } from '../../services/record-limit-chec
  * - CRUD operations with response limiting, lookup processing, and record type injection
  * - Lifecycle orchestration (Modify -> Validate -> Create)
  * - MongoDB pipeline aggregation for filtered reactions
- * - Idempotency management
  * - Hierarchical relationships (findParents, findChildren, createChild)
  * - Immutability enforcement for _kind and source ID fields
  *
@@ -46,7 +40,7 @@ import type { RecordLimitCheckerService } from '../../services/record-limit-chec
  *
  * ## Template Method Pattern:
  * Concrete repositories implement abstract hooks:
- * - Configuration getters: getDefaultKind, getIdempotencyFields, getVisibilityForKind, etc.
+ * - Configuration getters: getDefaultKind, getVisibilityForKind, etc.
  * - Target existence: checkTargetExistence (verify Entity/List exists)
  * - Pipeline building: getSourceCollectionName, buildPipeline
  *
@@ -83,9 +77,6 @@ export abstract class EntityPersistenceReactionRepository<
 
   // ABSTRACT DEPENDENCY PROPERTIES
   protected abstract readonly kindConfigReader: KindConfigurationReader;
-  protected abstract readonly visibilityConfigReader: VisibilityConfigurationReader;
-  protected abstract readonly validfromConfigReader: ValidfromConfigurationReader;
-  protected abstract readonly idempotencyConfigReader: IdempotencyConfigurationReader;
   protected abstract readonly responseLimitConfigReader: ResponseLimitConfigurationReader;
   protected abstract readonly lookupHelper: LookupHelper;
   protected abstract readonly loggingService: LoggingService;
@@ -94,26 +85,6 @@ export abstract class EntityPersistenceReactionRepository<
   protected abstract readonly mongoPipelineHelper: MongoPipelineHelper;
 
   // ABSTRACT HOOK METHODS - Configuration
-  /**
-   * Gets the default kind for reactions when none is provided.
-   */
-  protected abstract getDefaultKind(): string;
-
-  /**
-   * Gets the idempotency fields for a given kind.
-   */
-  protected abstract getIdempotencyFields(kind?: string): string[];
-
-  /**
-   * Gets the default visibility for a given kind.
-   */
-  protected abstract getVisibilityForKind(kind?: string): string;
-
-  /**
-   * Gets whether validFrom should be auto-set for a given kind.
-   */
-  protected abstract getValidFromForKind(kind?: string): boolean;
-
   /**
    * Gets the response limit for this reaction type.
    */
@@ -381,50 +352,22 @@ export abstract class EntityPersistenceReactionRepository<
   // ============================================================================
 
   /**
-   * Create a new reaction with idempotency support.
+   * Creates a new reaction with validation and enrichment.
    */
   async create(data: DataObject<E>, options?: Options): Promise<E> {
-    const idempotencyKey = this.calculateIdempotencyKey(data);
-    const foundIdempotent = await this.findIdempotentReaction(
-      idempotencyKey,
-      options,
-    );
-
-    if (foundIdempotent) {
-      this.loggingService.info(
-        `${this.reactionTypeName}Repository.create - Idempotent reaction found. Skipping creation.`,
-        { idempotencyKey, existingReaction: foundIdempotent },
-      );
-
-      return this.injectRecordType(foundIdempotent);
-    }
-
-    if (idempotencyKey) {
-      data._idempotencyKey = idempotencyKey;
-    }
-
-    return this.createRecordFacade(data, options);
-  }
-
-  /**
-   * Lifecycle facade: Modify -> Validate -> Create
-   */
-  protected async createRecordFacade(
-    data: DataObject<E>,
-    options?: Options,
-  ): Promise<E> {
     const modifiedData = await this.modifyDataForCreation(data);
     const validatedData = await this.validateDataForCreation(
       modifiedData,
       options,
     );
     const created = await super.create(validatedData, options);
-
     return this.injectRecordType(created);
   }
 
   /**
-   * Modify data before creation: set defaults, timestamps, version, counts.
+   * Modify data before creation: set timestamps, version, counts.
+   * Field normalisation (_kind, _visibility, _validFromDateTime, _validUntilDateTime, _slug)
+   * is performed upstream by EPBO before the request reaches EPS.
    */
   protected async modifyDataForCreation(
     data: DataObject<E>,
@@ -432,35 +375,17 @@ export abstract class EntityPersistenceReactionRepository<
     // Strip virtual fields before persisting
     data = this.sanitizeRecordType(data);
 
-    // Set default kind if not provided
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (data as any)._kind = (data as any)._kind ?? this.getDefaultKind();
-
     const now = new Date().toISOString();
 
-    // Set timestamps
+    // Defensive checks — EPG is the primary injector, EPBO is the secondary injector;
+    // EPS retains these as a last-resort safety net only.
     data._createdDateTime = data._createdDateTime ?? now;
     data._lastUpdatedDateTime = data._lastUpdatedDateTime ?? now;
-
-    // Set validFromDateTime based on kind configuration
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const shouldAutoApprove = this.getValidFromForKind((data as any)._kind);
-    data._validFromDateTime =
-      data._validFromDateTime ?? (shouldAutoApprove ? now : undefined);
-
-    // Explicitly set validUntilDateTime to null for filter matcher
-    data._validUntilDateTime = data._validUntilDateTime ?? null;
 
     // New record starts at version 1
     data._version = 1;
 
-    // Set default visibility based on kind configuration
-
-    data._visibility =
-      data._visibility ?? this.getVisibilityForKind((data as any)._kind);
-
-    // Generate slug and count fields
-    this.generateSlug(data);
+    // Set count fields
     this.setCountFields(data);
 
     return data;
@@ -518,15 +443,6 @@ export abstract class EntityPersistenceReactionRepository<
       options,
     );
 
-    // Merge incoming data with existing reaction data
-    const mergedData = _.defaults({}, modifiedData, existingData);
-
-    // Calculate and set idempotencyKey based on merged data
-    const idempotencyKey = this.calculateIdempotencyKey(mergedData);
-    if (idempotencyKey) {
-      modifiedData._idempotencyKey = idempotencyKey;
-    }
-
     const validatedData = await this.validateDataForUpdate(
       id as string,
       existingData,
@@ -549,12 +465,6 @@ export abstract class EntityPersistenceReactionRepository<
       id as string,
       data,
     );
-
-    // Calculate and set idempotencyKey
-    const idempotencyKey = this.calculateIdempotencyKey(modifiedData);
-    if (idempotencyKey) {
-      modifiedData._idempotencyKey = idempotencyKey;
-    }
 
     const validatedData = await this.validateDataForReplace(
       id as string,
@@ -612,7 +522,6 @@ export abstract class EntityPersistenceReactionRepository<
     // Update timestamps and metadata
     const now = new Date().toISOString();
     data._lastUpdatedDateTime = now;
-    this.generateSlug(data);
     this.setCountFields(data);
 
     this.loggingService.info(
@@ -683,7 +592,7 @@ export abstract class EntityPersistenceReactionRepository<
   }
 
   /**
-   * Modify data before update: strip virtual fields, set version, timestamps.
+   * Modify data before update: strip virtual fields, set version, timestamps, counts.
    */
   protected async modifyDataForUpdate(
     id: string,
@@ -702,10 +611,9 @@ export abstract class EntityPersistenceReactionRepository<
     // Increment version
     data._version = (existingData._version ?? 1) + 1;
 
-    // Set lastUpdatedDateTime
+    // Defensive check — EPG is the primary injector; EPS retains this as a last resort.
     data._lastUpdatedDateTime = data._lastUpdatedDateTime ?? now;
 
-    this.generateSlug(data);
     this.setCountFields(data);
 
     return { data, existingData };
@@ -981,20 +889,6 @@ export abstract class EntityPersistenceReactionRepository<
   }
 
   /**
-   * Generate slug from _name field.
-   */
-  protected generateSlug(data: DataObject<E>): void {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const reactionData = data as any;
-    if (reactionData._name && !reactionData._slug) {
-      reactionData._slug = slugify(reactionData._name ?? '', {
-        lower: true,
-        strict: true,
-      });
-    }
-  }
-
-  /**
    * Update count fields from arrays.
    */
   protected setCountFields(data: DataObject<E>): void {
@@ -1094,56 +988,6 @@ export abstract class EntityPersistenceReactionRepository<
       filter as any,
       options,
     ) as unknown as Promise<E>;
-  }
-
-  // ============================================================================
-  // IDEMPOTENCY MANAGEMENT
-  // ============================================================================
-
-  /**
-   * Find an existing reaction with the same idempotency key.
-   */
-  protected async findIdempotentReaction(
-    idempotencyKey: string | undefined,
-    options?: Options,
-  ): Promise<E | null> {
-    if (_.isString(idempotencyKey) && !_.isEmpty(idempotencyKey)) {
-      return this.findOne(
-        {
-          where: {
-            and: [{ _idempotencyKey: idempotencyKey }],
-          } as Where<E>,
-        },
-        options,
-      );
-    }
-
-    return null;
-  }
-
-  /**
-   * Calculate idempotency key from configured fields.
-   */
-  protected calculateIdempotencyKey(data: DataObject<E>): string | undefined {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const idempotencyFields = this.getIdempotencyFields((data as any)._kind);
-
-    if (idempotencyFields.length === 0) {
-      return undefined;
-    }
-
-    const fieldValues = idempotencyFields.map((field) => {
-      const value = _.get(data, field);
-      if (Array.isArray(value)) {
-        return JSON.stringify([...value].sort());
-      }
-
-      return typeof value === 'object' ? JSON.stringify(value) : value;
-    });
-
-    const keyString = fieldValues.join(',');
-
-    return crypto.createHash('sha256').update(keyString).digest('hex');
   }
 
   // ============================================================================

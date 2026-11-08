@@ -58,37 +58,11 @@ export interface SystemConfiguration {
     listReaction: string[];
   };
 
-  // Default Kinds
-  defaultKinds: {
-    entity?: string;
-    list?: string;
-    relation?: string;
-    entityReaction?: string;
-    listReaction?: string;
-  };
-
   // Uniqueness Constraints
   uniqueness: {
     entity?: string;
     list?: string;
     relation?: string;
-    entityReaction?: string;
-    listReaction?: string;
-  };
-
-  // Auto-Approve Settings
-  autoApprove: {
-    entity: boolean;
-    list: boolean;
-    entityReaction: boolean;
-    listReaction: boolean;
-    listEntityRelations?: boolean;
-  };
-
-  // Visibility Settings
-  visibility: {
-    entity?: string;
-    list?: string;
     entityReaction?: string;
     listReaction?: string;
   };
@@ -111,14 +85,6 @@ export interface SystemConfiguration {
     listReaction?: string;
   };
 
-  // Idempotency
-  idempotency: {
-    entity?: string;
-    list?: string;
-    entityReaction?: string;
-    listReaction?: string;
-    listEntityRel?: string;
-  };
 }
 
 /**
@@ -230,36 +196,12 @@ export class SystemInfoRepository {
         listReaction: this.parseCommaSeparated(process.env.LIST_REACTION_KINDS),
       },
 
-      defaultKinds: {
-        entity: process.env.DEFAULT_ENTITY_KIND,
-        list: process.env.DEFAULT_LIST_KIND,
-        relation: process.env.DEFAULT_RELATION_KIND,
-        entityReaction: process.env.DEFAULT_ENTITY_REACTION_KIND,
-        listReaction: process.env.DEFAULT_LIST_REACTION_KIND,
-      },
-
       uniqueness: {
         entity: process.env.ENTITY_UNIQUENESS,
         list: process.env.LIST_UNIQUENESS,
         relation: process.env.RELATION_UNIQUENESS,
         entityReaction: process.env.ENTITY_REACTION_UNIQUENESS,
         listReaction: process.env.LIST_REACTION_UNIQUENESS,
-      },
-
-      autoApprove: {
-        entity: process.env.AUTOAPPROVE_ENTITY === 'true',
-        list: process.env.AUTOAPPROVE_LIST === 'true',
-        entityReaction: process.env.AUTOAPPROVE_ENTITY_REACTION === 'true',
-        listReaction: process.env.AUTOAPPROVE_LIST_REACTION === 'true',
-        listEntityRelations:
-          process.env.AUTOAPPROVE_LIST_ENTITY_RELATIONS === 'true',
-      },
-
-      visibility: {
-        entity: process.env.VISIBILITY_ENTITY,
-        list: process.env.VISIBILITY_LIST,
-        entityReaction: process.env.VISIBILITY_ENTITY_REACTION,
-        listReaction: process.env.VISIBILITY_LIST_REACTION,
       },
 
       responseLimits: {
@@ -278,13 +220,6 @@ export class SystemInfoRepository {
         listReaction: process.env.LIST_REACTION_RECORD_LIMITS,
       },
 
-      idempotency: {
-        entity: process.env.IDEMPOTENCY_ENTITY,
-        list: process.env.IDEMPOTENCY_LIST,
-        entityReaction: process.env.IDEMPOTENCY_ENTITY_REACTION,
-        listReaction: process.env.IDEMPOTENCY_LIST_REACTION,
-        listEntityRel: process.env.IDEMPOTENCY_LIST_ENTITY_REL,
-      },
     };
   }
 

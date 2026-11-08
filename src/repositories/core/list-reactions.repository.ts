@@ -4,9 +4,6 @@ import { ListRepository } from './list.repository';
 import { EntityDbDataSource } from '../../datasources';
 import {
   KindConfigurationReader,
-  ValidfromConfigurationReader,
-  VisibilityConfigurationReader,
-  IdempotencyConfigurationReader,
 } from '../../extensions';
 import { CollectionConfigHelper } from '../../extensions/config-helpers/collection-config-helper';
 import { ResponseLimitConfigurationReader } from '../../extensions/config-helpers/response-limit-config-helper';
@@ -41,8 +38,7 @@ import { EntityPersistenceReactionRepository } from '../base/entity-persistence-
  * ## Inherited from Base:
  * - find, findById, count, create, updateById, replaceById, updateAll, deleteById, deleteAll
  * - findParents, findChildren, createChild
- * - Idempotency, validation, slug generation, count fields
- * - MongoDB pipeline aggregation
+ * - Validation, count fields, MongoDB pipeline aggregation
  */
 export class ListReactionsRepository extends EntityPersistenceReactionRepository<
   ListReaction,
@@ -61,15 +57,6 @@ export class ListReactionsRepository extends EntityPersistenceReactionRepository
 
     @inject('extensions.kind.configurationreader')
     protected readonly kindConfigReader: KindConfigurationReader,
-
-    @inject('extensions.visibility.configurationreader')
-    protected readonly visibilityConfigReader: VisibilityConfigurationReader,
-
-    @inject('extensions.validfrom.configurationreader')
-    protected readonly validfromConfigReader: ValidfromConfigurationReader,
-
-    @inject('extensions.idempotency.configurationreader')
-    protected readonly idempotencyConfigReader: IdempotencyConfigurationReader,
 
     @inject('extensions.response-limit.configurationreader')
     protected readonly responseLimitConfigReader: ResponseLimitConfigurationReader,
@@ -96,22 +83,6 @@ export class ListReactionsRepository extends EntityPersistenceReactionRepository
   }
 
   // ABSTRACT HOOK METHOD IMPLEMENTATIONS - Configuration
-  protected getDefaultKind(): string {
-    return this.kindConfigReader.defaultListReactionKind;
-  }
-
-  protected getIdempotencyFields(kind?: string): string[] {
-    return this.idempotencyConfigReader.getIdempotencyForListReactions(kind);
-  }
-
-  protected getVisibilityForKind(kind?: string): string {
-    return this.visibilityConfigReader.getVisibilityForListReactions(kind);
-  }
-
-  protected getValidFromForKind(kind?: string): boolean {
-    return this.validfromConfigReader.getValidFromForListReactions(kind);
-  }
-
   protected getResponseLimit(): number {
     return this.responseLimitConfigReader.getListReactionResponseLimit();
   }

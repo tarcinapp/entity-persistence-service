@@ -8,15 +8,10 @@ import type {
   Count,
   juggler,
 } from '@loopback/repository';
-import * as crypto from 'crypto';
 import _ from 'lodash';
-import slugify from 'slugify';
 import { EntityPersistenceBaseRepository } from './entity-persistence-base.repository';
-import type { IdempotencyConfigurationReader } from '../../extensions/config-helpers/idempotency-config-helper';
 import type { KindConfigurationReader } from '../../extensions/config-helpers/kind-config-helper';
 import type { ResponseLimitConfigurationReader } from '../../extensions/config-helpers/response-limit-config-helper';
-import type { ValidfromConfigurationReader } from '../../extensions/config-helpers/validfrom-config-helper';
-import type { VisibilityConfigurationReader } from '../../extensions/config-helpers/visibility-config-helper';
 import type { LookupHelper } from '../../extensions/utils/lookup-helper';
 import type { ListEntityCommonBase } from '../../models';
 import { HttpErrorResponse, SingleError } from '../../models';
@@ -31,10 +26,8 @@ import type { RecordLimitCheckerService } from '../../services/record-limit-chec
  * Entity and List repositories. It extends EntityPersistenceBaseRepository (Level 1).
  *
  * ## Responsibilities:
- * - Slug generation from entity names
  * - Count field management for owner/viewer arrays
  * - Kind-based filter manipulation to ensure _kind is always included
- * - Idempotency key calculation and idempotent record lookup
  * - Lookup processing for related entities
  * - Kind format and value validation
  * - Uniqueness checking for create and update operations
@@ -97,28 +90,10 @@ export abstract class EntityPersistenceBusinessRepository<
   protected abstract readonly loggingService: LoggingService;
 
   /**
-   * KindConfigurationReader for kind validation and defaults.
+   * KindConfigurationReader for kind validation.
    * Must be injected by subclasses.
    */
   protected abstract readonly kindConfigReader: KindConfigurationReader;
-
-  /**
-   * VisibilityConfigurationReader for visibility defaults.
-   * Must be injected by subclasses.
-   */
-  protected abstract readonly visibilityConfigReader: VisibilityConfigurationReader;
-
-  /**
-   * ValidfromConfigurationReader for auto-approval settings.
-   * Must be injected by subclasses.
-   */
-  protected abstract readonly validfromConfigReader: ValidfromConfigurationReader;
-
-  /**
-   * IdempotencyConfigurationReader for idempotency field configuration.
-   * Must be injected by subclasses.
-   */
-  protected abstract readonly idempotencyConfigReader: IdempotencyConfigurationReader;
 
   /**
    * ResponseLimitConfigurationReader for response limit settings.
@@ -134,30 +109,6 @@ export abstract class EntityPersistenceBusinessRepository<
   }
 
   // ABSTRACT HOOK METHODS (Template Method Pattern)
-
-  /**
-   * Returns the default kind for this entity type.
-   * Subclasses override to provide entity-specific default kind.
-   */
-  protected abstract getDefaultKind(): string;
-
-  /**
-   * Returns the idempotency fields for the given kind.
-   * Subclasses override to use their specific config reader method.
-   */
-  protected abstract getIdempotencyFields(kind?: string): string[];
-
-  /**
-   * Returns the visibility for the given kind.
-   * Subclasses override to use their specific config reader method.
-   */
-  protected abstract getVisibilityForKind(kind?: string): string;
-
-  /**
-   * Returns whether auto-approval is enabled for the given kind.
-   * Subclasses override to use their specific config reader method.
-   */
-  protected abstract getValidFromForKind(kind?: string): boolean;
 
   /**
    * Returns the response limit for this entity type.
@@ -265,31 +216,16 @@ export abstract class EntityPersistenceBusinessRepository<
   }
 
   /**
-   * Creates a new record with idempotency and validation.
+   * Creates a new record with validation and enrichment.
    */
   async create(data: DataObject<E>, options?: Options): Promise<E> {
-    const idempotencyKey = this.calculateIdempotencyKey(data);
-    const foundIdempotent = await this.findIdempotentRecord(idempotencyKey);
-
-    if (foundIdempotent) {
-      this.loggingService.info(
-        `${this.entityTypeName}Repository.create - Idempotent record found. Skipping creation.`,
-        {
-          idempotencyKey,
-          existingRecord: foundIdempotent,
-        },
-      );
-
-      return this.injectRecordType(foundIdempotent);
-    }
-
-    if (idempotencyKey) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (data as any)._idempotencyKey = idempotencyKey;
-    }
-
-    // Validate, enrich, and create
-    return this.createRecordFacade(data, options);
+    const enrichedData = await this.modifyDataForCreation(data);
+    const validEnrichedData = await this.validateDataForCreation(
+      enrichedData,
+      options,
+    );
+    const created = await super.create(validEnrichedData, options);
+    return this.injectRecordType(created);
   }
 
   /**
@@ -301,13 +237,6 @@ export abstract class EntityPersistenceBusinessRepository<
     options?: Options,
   ): Promise<void> {
     const collection = await this.modifyDataForUpdates(String(id), data);
-
-    // Calculate idempotencyKey and assign it if present
-    const idempotencyKey = this.calculateIdempotencyKey(collection.data);
-    if (idempotencyKey) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (collection.data as any)._idempotencyKey = idempotencyKey;
-    }
 
     const validEnrichedData = await this.validateDataForReplace(
       String(id),
@@ -327,18 +256,6 @@ export abstract class EntityPersistenceBusinessRepository<
     options?: Options,
   ): Promise<void> {
     const collection = await this.modifyDataForUpdates(String(id), data);
-
-    // Merge incoming data with existing data to ensure completeness
-    const mergedData = _.defaults({}, collection.data, collection.existingData);
-
-    // Calculate idempotencyKey based on the fully merged entity
-    const idempotencyKey = this.calculateIdempotencyKey(mergedData);
-
-    // Store the idempotencyKey in the data being updated
-    if (idempotencyKey) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (collection.data as any)._idempotencyKey = idempotencyKey;
-    }
 
     const validEnrichedData = await this.validateDataForUpdate(
       String(id),
@@ -368,8 +285,7 @@ export abstract class EntityPersistenceBusinessRepository<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (data as any)._lastUpdatedDateTime = now;
 
-    // Generate slug and set count fields
-    this.generateSlug(data);
+    // Set count fields
     this.setCountFields(data);
 
     this.loggingService.info(
@@ -383,29 +299,11 @@ export abstract class EntityPersistenceBusinessRepository<
     return super.updateAll(data, where, options);
   }
 
-  // LIFECYCLE FACADES
-
-  /**
-   * Creates a new record with full validation and enrichment pipeline.
-   * This is the main entry point for record creation after idempotency check.
-   */
-  protected async createRecordFacade(
-    data: DataObject<E>,
-    options?: Options,
-  ): Promise<E> {
-    const enrichedData = await this.modifyDataForCreation(data);
-    const validEnrichedData = await this.validateDataForCreation(
-      enrichedData,
-      options,
-    );
-
-    const created = await super.create(validEnrichedData, options);
-    return this.injectRecordType(created);
-  }
-
   /**
    * Modifies incoming data for creation with all managed fields.
-   * Sets defaults for timestamps, version, visibility, slug, and counts.
+   * Sets defaults for timestamps, version, and counts.
+   * Field normalisation (_kind, _visibility, _validFromDateTime, _validUntilDateTime, _slug)
+   * is performed upstream by EPBO before the request reaches EPS.
    */
   protected async modifyDataForCreation(
     data: DataObject<E>,
@@ -416,33 +314,17 @@ export abstract class EntityPersistenceBusinessRepository<
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const businessData = data as any;
 
-    businessData._kind = businessData._kind ?? this.getDefaultKind();
-
     // Take the date of now to make sure we have exactly the same date in all date fields
     const now = new Date().toISOString();
 
-    // Use incoming creationDateTime and lastUpdateDateTime if given
+    // Defensive checks — EPG is the primary injector, EPBO is the secondary injector;
+    // EPS retains these as a last-resort safety net only.
     businessData._createdDateTime = businessData._createdDateTime ?? now;
     businessData._lastUpdatedDateTime =
       businessData._lastUpdatedDateTime ?? now;
 
-    // Auto-approve the record if it is configured
-    const shouldAutoApprove = this.getValidFromForKind(businessData._kind);
-    businessData._validFromDateTime =
-      businessData._validFromDateTime ?? (shouldAutoApprove ? now : undefined);
-
-    // Explicitly set validUntilDateTime to null if not provided
-    businessData._validUntilDateTime = businessData._validUntilDateTime ?? null;
-
     // New data is starting from version 1
     businessData._version = 1;
-
-    // Set visibility
-    businessData._visibility =
-      businessData._visibility ?? this.getVisibilityForKind(businessData._kind);
-
-    // Prepare slug from the name and set to the record
-    this.generateSlug(data);
 
     // Set owners count to make searching easier
     this.setCountFields(data);
@@ -509,11 +391,10 @@ export abstract class EntityPersistenceBusinessRepository<
     // Set new version
     businessData._version = (existingBusinessData._version ?? 1) + 1;
 
-    // Use current date if not provided
+    // Defensive check — EPG is the primary injector; EPS retains this as a last resort.
     businessData._lastUpdatedDateTime =
       businessData._lastUpdatedDateTime ?? now;
 
-    this.generateSlug(data);
     this.setCountFields(data);
 
     return {
@@ -619,7 +500,6 @@ export abstract class EntityPersistenceBusinessRepository<
       ),
     ]);
 
-    this.generateSlug(data);
     this.setCountFields(data);
 
     return data;
@@ -650,38 +530,6 @@ export abstract class EntityPersistenceBusinessRepository<
     const kind = (data as any)._kind;
     if (kind && !this.isKindAcceptable(kind)) {
       throw this.createInvalidKindValueError(kind, this.getAllowedKinds());
-    }
-  }
-
-  // IDEMPOTENCY
-
-  /**
-   * Calculates the idempotency key for the given data.
-   * Uses the configured idempotency fields for this entity type.
-   */
-  protected calculateIdempotencyKey(data: DataObject<E>): string | undefined {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const kind = (data as any)._kind;
-    const idempotencyFields = this.getIdempotencyFields(kind);
-
-    return this.calculateIdempotencyKeyFromFields(data, idempotencyFields);
-  }
-
-  // SLUG GENERATION
-
-  /**
-   * Generates a URL-friendly slug from the entity's _name field.
-   * Only generates a slug if _name is present and _slug is not already set.
-   *
-   * @param data - The data object containing _name to slugify
-   */
-  protected generateSlug(data: DataObject<E>): void {
-    const businessData = data as DataObject<ListEntityCommonBase>;
-    if (businessData._name && !businessData._slug) {
-      businessData._slug = slugify(businessData._name ?? '', {
-        lower: true,
-        strict: true,
-      });
     }
   }
 
@@ -827,68 +675,6 @@ export abstract class EntityPersistenceBusinessRepository<
       filter as any,
       options,
     ) as Promise<E & Relations>;
-  }
-
-  // IDEMPOTENCY MANAGEMENT
-
-  /**
-   * Searches for an existing record with the same idempotency key.
-   *
-   * @param idempotencyKey - The idempotency key to search for
-   * @returns The existing record if found, null otherwise
-   */
-  protected async findIdempotentRecord(
-    idempotencyKey: string | undefined,
-  ): Promise<E | null> {
-    if (_.isString(idempotencyKey) && !_.isEmpty(idempotencyKey)) {
-      const sameRecord = await this.findOne({
-        where: {
-          and: [
-            {
-              _idempotencyKey: idempotencyKey,
-            },
-          ],
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any,
-      });
-
-      return sameRecord;
-    }
-
-    return null;
-  }
-
-  /**
-   * Calculates an idempotency key hash from the specified fields.
-   * Must be implemented by subclasses to use their specific idempotency configuration.
-   *
-   * @param data - The data object to calculate the key from
-   * @param idempotencyFields - Array of field paths to include in the hash
-   * @returns SHA-256 hash of the field values, or undefined if no fields configured
-   */
-  protected calculateIdempotencyKeyFromFields(
-    data: DataObject<E>,
-    idempotencyFields: string[],
-  ): string | undefined {
-    if (idempotencyFields.length === 0) {
-      return undefined;
-    }
-
-    const fieldValues = idempotencyFields.map((idempotencyField) => {
-      const value = _.get(data, idempotencyField);
-
-      // If value is an array, sort it before stringifying
-      if (Array.isArray(value)) {
-        return JSON.stringify([...value].sort());
-      }
-
-      return typeof value === 'object' ? JSON.stringify(value) : value;
-    });
-
-    const keyString = fieldValues.join(',');
-    const hash = crypto.createHash('sha256').update(keyString);
-
-    return hash.digest('hex');
   }
 
   // UNIQUENESS CHECKING
