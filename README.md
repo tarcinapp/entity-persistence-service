@@ -1396,17 +1396,18 @@ Here are the list of common field names.
 
 # Configuration
 
-We can divide configurations into 9 categories:
+We can divide configurations into 6 categories:
 
 * [Database configurations](#database)
 * [Kind configurations](#allowed-kinds)
 * [Uniqueness configurations](#uniqueness)
-* [Auto approve configurations](#auto-approve)
-* [Default visibility configuration](#visibility)
 * [Response limits configurations](#response-limits)
 * [Record limit configurations](#record-limits)
 * [Lookup Configuration](#lookup-configuration)
-* [Idempotency configurations](#idempotency)
+
+> **Normalization is EPBO's responsibility.** Default `_kind`, default `_visibility`, `_validFromDateTime` auto-approve, `_validUntilDateTime` null-coercion, and `_slug` derivation are all computed by `entity-persistence-base-orchestrator` (EPBO) — the service that sits between the Gateway and EPC in the chain `EPG → EPBO → EPC → EPS`. EPS is a pure schema-validating persistence store; it does not inject or compute these fields. See [`31_OPS_configuration-reference.md`](../tarcinapp-suite/.context/31_OPS_configuration-reference.md) for the EPBO configuration schema.
+
+> **Idempotency is client-supplied.** There is no stack-level `_idempotencyKey` computation. Callers supply an `X-Idempotency-Key` request header; the Gateway uses it as the distributed lock key.
 
 ### Database
 
@@ -1564,34 +1565,6 @@ The error response includes:
 - The specific uniqueness rule that was violated
 - The scope where the violation occurred
 - The field values that caused the conflict
-
-### Auto Approve
-
-| Configration                                         | Description                                                                                                          | Default Value | Example Value |
-| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------- | ------------- |
-| **autoapprove_entity**                               | If true, `validFromDateTime` field of entity record is automatically filled with the creation datetime.              | false         | true          |
-| **autoapprove_entity_for_{kindName}**                | If true, `validFromDateTime` field of entity record in this kind is automatically filled with the creation datetime. | false         | true          |
-| **autoapprove_list**                                 | If true, `validFromDateTime` field of list record is automatically filled with the creation datetime.                | false         | true          |
-| **autoapprove_list_for_{kindName}**                  | If true, `validFromDateTime` field of list record in this kind is automatically filled with the creation datetime.   | true          | false         |
-| **autoapprove_list_entity_relations**                | If true, `validFromDateTime` field of relation record is automatically filled with the creation datetime.            | false         | true          |
-| **autoapprove_list_entity_relations_for_{kindName}** | If true, `validFromDateTime` field of relation record is automatically filled with the creation datetime.            | false         | true          |
-| **autoapprove_entity_reaction**                      | If true, `validFromDateTime` field of entity reaction record is automatically filled with the creation datetime.     | false         | true          |
-| **autoapprove_list_reaction**                        | If true, `validFromDateTime` field of list reaction record is automatically filled with the creation datetime.       | false         | true          |
-
-### Visibility
-
-This option only applies when visibility field is not provided. If you want to apply a visibility rule bu user role, please see entity-persistence-gateway.
-
-| Configuration                                  | Description                                                                                                                                      | Default Value | Example Values  |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------- | --------------- |
-| **visibility_entity**                          | Default value to be filled for `visibility` field while entity creation.                                                                         | protected     | public, private |
-| **visibility_entity_for_{kind_name}**          | Default value to be filled for `visibility` field while entity creation. This configuration will only be applied to that specific kind.          | protected     | public, private |
-| **visibility_list**                            | Default value to be filled for `visibility` field while list creation.                                                                           | protected     | public, private |
-| **visibility_list_for_{kind_name}**            | Default value to be filled for `visibility` field while list creation. This configuration will only be applied to that specific kind.            | protected     | public, private |
-| **visibility_entity_reaction**                 | Default value to be filled for `visibility` field while entity reaction creation.                                                                | protected     | public, private |
-| **visibility_entity_reaction_for_{kind_name}** | Default value to be filled for `visibility` field while entity reaction creation. This configuration will only be applied to that specific kind. | protected     | public, private |
-| **visibility_list_reaction**                   | Default value to be filled for `visibility` field while list reaction creation.                                                                  | protected     | public, private |
-| **visibility_list_reaction_for_{kind_name}**   | Default value to be filled for `visibility` field while list reaction creation. This configuration will only be applied to that specific kind.   | protected     | public, private |
 
 ### Response Limits
 
@@ -1860,25 +1833,6 @@ Examples:
 [{"propertyPath":"metadata.references.company","record":"entity","targetKind":"company"}]
 ```
 
-### Idempotency
-
-entity-persistence-service ensures data creation is efficient and predictable. You can define JSON field paths, and the system generates a unique key based on these values. When clients attempt to create records, the system checks if a matching record exists using this key. If found, it returns the result as if it were a new record.
-
-| Configuration                                  | Description                                                                                                                                               | Default Value | Example Values         |
-| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | ---------------------- |
-| **idempotency_entity**                         | comma seperated list of field names for entity records that are contributing to the calculation of idempotency key                                        | -             | kind, slug, author     |
-| **idempotency_entity_for_{kindName}**          | comma seperated list of field names for entity records with kind value is {kindName} that are contributing to the calculation of idempotency key          | -             | kind, slug, author     |
-| **idempotency_list**                           | comma seperated list of field names for list records that are contributing to the calculation of idempotency key                                          | -             | kind, slug             |
-| **idempotency_list_for_{kindName}**            | comma seperated list of field names for list records with kind value is {kindName} that are contributing to the calculation of idempotency key            | -             | kind, slug, author     |
-| **idempotency_list_entity_rel**                | comma seperated list of field names for entity records that are contributing to the calculation of idempotency key                                        | -             | kind, listId, entityId |
-| **idempotency_list_entity_rel_for_{kindName}** | comma seperated list of field names for entity records with kind value is {kindName} that are contributing to the calculation of idempotency key          | -             | kind, listId, entityId |
-| **idempotency_entity_reaction**                | comma seperated list of field names for entity reaction records that are contributing to the calculation of idempotency key                               | -             | kind, entityId, type   |
-| **idempotency_entity_reaction_for_{kindName}** | comma seperated list of field names for entity reaction records with kind value is {kindName} that are contributing to the calculation of idempotency key | -             | kind, entityId, type   |
-| **idempotency_list_reaction**                  | comma seperated list of field names for list reaction records that are contributing to the calculation of idempotency key                                 | -             | kind, listId, type     |
-| **idempotency_list_reaction_for_{kindName}**   | comma seperated list of field names for list reaction records with kind value is {kindName} that are contributing to the calculation of idempotency key   | -             | kind, listId, type     |
-
-Please note that idempotency calculation takes place before populating managed fields. Thus, do not use managed fields as contributor to the idempotency. For instance, use `name` instead of `slug`.
-
 # Deployment
 
 * A configmap and secret sample yaml files are provided
@@ -1905,10 +1859,9 @@ For VSCode, create a dev.env file at the root of your workspace folder. Add loca
 
 # Known Issues and Limitations
 
-### 1. Idempotency and Visibility
+### 1. Idempotency is client-supplied
 
-If a user creates a record idempotently, they may receive a success response, even if the previously created idempotent record is set as private. However, due to the visibility settings, the user who attempted to create idempotent record won't be able to view private records created by someone else. This can create a situation where it appears as if the data was created successfully, but it may not be visible to whom created it because of the privacy settings. It's essential to be aware of this behavior when working with idempotent data creation and privacy settings.
-This issue is going to be addressed with making `set`s can contribute to the idempotency calculation.
+There is no stack-level `_idempotencyKey` computation. Callers may send an `X-Idempotency-Key` HTTP header; the Gateway's `AcquireLockForCreation` filter uses this value as the distributed lock key, serialising concurrent requests with the same key.
 
 ### 2. Field Selection with Arbitrary Fields
 
