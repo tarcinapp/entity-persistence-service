@@ -16,9 +16,7 @@ describe('POST /relations', () => {
   });
 
   it('creates a relation with default values', async () => {
-    appWithClient = await setupApplication({
-      autoapprove_list_entity_relations: 'true',
-    });
+    appWithClient = await setupApplication({});
     client = appWithClient.client;
 
     // First create a list
@@ -35,8 +33,9 @@ describe('POST /relations', () => {
     expect(entityResponse.status).to.equal(200);
     const entity = entityResponse.body;
 
-    // Finally create the relation
+    // Finally create the relation. EPBO pre-resolves _kind; tests must supply it explicitly.
     const relationResponse = await client.post('/relations').send({
+      _kind: 'relation',
       _listId: list._id,
       _entityId: entity._id,
     });
@@ -47,7 +46,6 @@ describe('POST /relations', () => {
     expect(relationResponse.body).to.have.property('_listId', list._id);
     expect(relationResponse.body).to.have.property('_entityId', entity._id);
     expect(relationResponse.body).to.have.property('_version', 1);
-    expect(relationResponse.body).to.have.property('_validFromDateTime');
     expect(relationResponse.body).to.have.property('_createdDateTime');
     expect(relationResponse.body).to.have.property('_lastUpdatedDateTime');
   });

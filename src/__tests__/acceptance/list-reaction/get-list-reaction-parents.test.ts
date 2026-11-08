@@ -474,12 +474,13 @@ describe('GET /list-reactions/{id}/parents', () => {
   it('set-filter: filters reactions by audience', async () => {
     appWithClient = await setupApplication({
       list_kinds: 'reading-list',
-      autoapprove_list_reaction: 'true',
     });
     ({ client } = appWithClient);
     const owner = 'user-123';
     const viewer = 'user-456';
     const otherUser = 'user-789';
+    // EPBO pre-resolves _validFromDateTime; tests must supply it explicitly.
+    const now = new Date().toISOString();
     const listId = await createTestList(client, {
       _name: 'Reading List 11',
       _kind: 'reading-list',
@@ -488,15 +489,18 @@ describe('GET /list-reactions/{id}/parents', () => {
       _listId: listId,
       _kind: 'like',
       _ownerUsers: [owner],
+      _validFromDateTime: now,
     });
     const viewerParentId = await createTestListReaction(client, {
       _listId: listId,
       _kind: 'like',
       _viewerUsers: [viewer],
+      _validFromDateTime: now,
     });
     const otherParentId = await createTestListReaction(client, {
       _listId: listId,
       _kind: 'like',
+      _validFromDateTime: now,
     });
     const childId = await createTestListReaction(client, {
       _listId: listId,
@@ -736,13 +740,13 @@ describe('GET /list-reactions/{id}/parents', () => {
   it('set-filter: filters reactions by audience groups', async () => {
     appWithClient = await setupApplication({
       list_kinds: 'reading-list',
-      visibility_list_reaction: 'protected',
-      autoapprove_list_reaction: 'true',
     });
     ({ client } = appWithClient);
     const ownerGroup = 'group-123';
     const viewerGroup = 'group-456';
     const otherGroup = 'group-789';
+    // EPBO pre-resolves _validFromDateTime; tests must supply it explicitly.
+    const now = new Date().toISOString();
     const listId = await createTestList(client, {
       _name: 'Reading List 16',
       _kind: 'reading-list',
@@ -751,15 +755,18 @@ describe('GET /list-reactions/{id}/parents', () => {
       _listId: listId,
       _kind: 'like',
       _ownerGroups: [ownerGroup],
+      _validFromDateTime: now,
     });
     const viewerGroupParentId = await createTestListReaction(client, {
       _listId: listId,
       _kind: 'like',
       _viewerGroups: [viewerGroup],
+      _validFromDateTime: now,
     });
     const otherParentId = await createTestListReaction(client, {
       _listId: listId,
       _kind: 'like',
+      _validFromDateTime: now,
     });
     const childId = await createTestListReaction(client, {
       _listId: listId,

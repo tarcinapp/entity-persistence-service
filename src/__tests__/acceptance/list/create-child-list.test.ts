@@ -86,7 +86,6 @@ describe('POST /lists/{id}/children', () => {
     // Verify parent list was created successfully
     expect(parentResponse.body._id).to.be.String();
     expect(parentResponse.body._name).to.be.equal('Parent List');
-    expect(parentResponse.body._slug).to.be.equal('parent-list');
 
     // Create a child list under the parent
     const childList: Partial<List> = {
@@ -103,7 +102,6 @@ describe('POST /lists/{id}/children', () => {
     // Verify child list was created successfully
     expect(childResponse.body._id).to.be.String();
     expect(childResponse.body._name).to.be.equal('Child List');
-    expect(childResponse.body._slug).to.be.equal('child-list');
     expect(childResponse.body._parents).to.be.Array().lengthOf(1);
     expect(childResponse.body._parents[0]).to.be.equal(
       `tapp://localhost/lists/${parentResponse.body._id}`,

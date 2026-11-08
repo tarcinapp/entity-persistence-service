@@ -474,12 +474,13 @@ describe('GET /entity-reactions/{id}/parents', () => {
   it('set-filter: filters reactions by audience', async () => {
     appWithClient = await setupApplication({
       entity_kinds: 'book',
-      autoapprove_entity_reaction: 'true',
     });
     ({ client } = appWithClient);
     const owner = 'user-123';
     const viewer = 'user-456';
     const otherUser = 'user-789';
+    // EPBO pre-resolves _validFromDateTime; tests must supply it explicitly.
+    const now = new Date().toISOString();
     const entityId = await createTestEntity(client, {
       _name: 'Book 11',
       _kind: 'book',
@@ -488,15 +489,18 @@ describe('GET /entity-reactions/{id}/parents', () => {
       _entityId: entityId,
       _kind: 'like',
       _ownerUsers: [owner],
+      _validFromDateTime: now,
     });
     const viewerParentId = await createTestEntityReaction(client, {
       _entityId: entityId,
       _kind: 'like',
       _viewerUsers: [viewer],
+      _validFromDateTime: now,
     });
     const otherParentId = await createTestEntityReaction(client, {
       _entityId: entityId,
       _kind: 'like',
+      _validFromDateTime: now,
     });
     const childId = await createTestEntityReaction(client, {
       _entityId: entityId,
@@ -736,13 +740,13 @@ describe('GET /entity-reactions/{id}/parents', () => {
   it('set-filter: filters reactions by audience groups', async () => {
     appWithClient = await setupApplication({
       entity_kinds: 'book',
-      visibility_entity_reaction: 'protected',
-      autoapprove_entity_reaction: 'true',
     });
     ({ client } = appWithClient);
     const ownerGroup = 'group-123';
     const viewerGroup = 'group-456';
     const otherGroup = 'group-789';
+    // EPBO pre-resolves _validFromDateTime; tests must supply it explicitly.
+    const now = new Date().toISOString();
     const entityId = await createTestEntity(client, {
       _name: 'Book 16',
       _kind: 'book',
@@ -751,15 +755,18 @@ describe('GET /entity-reactions/{id}/parents', () => {
       _entityId: entityId,
       _kind: 'like',
       _ownerGroups: [ownerGroup],
+      _validFromDateTime: now,
     });
     const viewerGroupParentId = await createTestEntityReaction(client, {
       _entityId: entityId,
       _kind: 'like',
       _viewerGroups: [viewerGroup],
+      _validFromDateTime: now,
     });
     const otherParentId = await createTestEntityReaction(client, {
       _entityId: entityId,
       _kind: 'like',
+      _validFromDateTime: now,
     });
     const childId = await createTestEntityReaction(client, {
       _entityId: entityId,

@@ -5,7 +5,6 @@ import type { AppWithClient } from '../test-helper';
 import {
   setupApplication,
   teardownApplication,
-  expectResponseToMatch,
 } from '../test-helper';
 
 describe('POST /entities', () => {
@@ -41,29 +40,39 @@ describe('POST /entities', () => {
     appWithClient = undefined;
   });
 
-  it('creates a new entity with default kind', async () => {
+  it('creates a new entity with explicitly provided managed fields', async () => {
     appWithClient = await setupApplication({
-      // use default values
+      entity_kinds: 'entity',
     });
     ({ client } = appWithClient);
 
-    const newEntity: Partial<GenericEntity> = {
+    // EPBO pre-resolves all managed fields before the request reaches EPS.
+    // Tests must supply them explicitly, matching what EPBO would inject.
+    const newEntity = {
       _name: 'Sample Book',
+      _kind: 'entity',
+      _slug: 'sample-book',
+      _visibility: 'protected',
+      _validFromDateTime: null,
+      _validUntilDateTime: null,
       description: 'A sample book entity',
     };
 
     const response = await client.post('/entities').send(newEntity).expect(200);
 
     // checks name and description
-    expect(response.body).to.containDeep(newEntity);
+    expect(response.body).to.containDeep({
+      _name: 'Sample Book',
+      description: 'A sample book entity',
+    });
 
-    // checks managed fields
+    // checks managed fields stored by EPS
     expect(response.body._id).to.be.String();
-    expect(response.body._kind).to.be.equal('entity'); // default entity kind
+    expect(response.body._kind).to.be.equal('entity');
     expect(response.body._slug).to.be.equal('sample-book');
     expect(response.body._createdDateTime).to.be.String();
     expect(response.body._lastUpdatedDateTime).to.be.String();
-    expect(response.body._visibility).to.be.equal('protected'); // default visibility
+    expect(response.body._visibility).to.be.equal('protected');
     expect(response.body._validFromDateTime).to.be.equal(null);
     expect(response.body._validUntilDateTime).to.be.equal(null);
     expect(response.body._version).to.be.equal(1);
@@ -124,10 +133,11 @@ describe('POST /entities', () => {
     });
     ({ client } = appWithClient);
 
-    // First entity creation - should succeed
+    // EPBO pre-resolves _slug; tests must supply it explicitly.
     const firstEntity: Partial<GenericEntity> = {
       _name: 'The Great Gatsby',
       _kind: 'book',
+      _slug: 'the-great-gatsby',
       description: 'A classic novel by F. Scott Fitzgerald',
     };
 
@@ -139,10 +149,11 @@ describe('POST /entities', () => {
     expect(response.body._slug).to.be.equal('the-great-gatsby');
     expect(response.body._kind).to.be.equal('book');
 
-    // Second entity with same resulting slug and kind - should fail
+    // Second entity with same slug and kind - should fail
     const secondEntity: Partial<GenericEntity> = {
-      _name: 'The Great Gatsby', // Will generate same slug
+      _name: 'The Great Gatsby',
       _kind: 'book',
+      _slug: 'the-great-gatsby',
       description: 'Another copy of the same book',
     };
 
@@ -177,10 +188,11 @@ describe('POST /entities', () => {
     });
     ({ client } = appWithClient);
 
-    // First entity creation - should succeed
+    // EPBO pre-resolves _slug; tests must supply it explicitly.
     const firstEntity: Partial<GenericEntity> = {
       _name: 'The Great Gatsby',
       _kind: 'book',
+      _slug: 'the-great-gatsby',
       _ownerUsers: ['user-123'],
       description: 'A classic novel by F. Scott Fitzgerald',
     };
@@ -194,10 +206,11 @@ describe('POST /entities', () => {
     expect(response.body._kind).to.be.equal('book');
     expect(response.body._ownerUsers).to.containDeep(['user-123']);
 
-    // Second entity with same resulting slug, kind and owner - should fail
+    // Second entity with same slug, kind and owner - should fail
     const secondEntity: Partial<GenericEntity> = {
-      _name: 'The Great Gatsby', // Will generate same slug
+      _name: 'The Great Gatsby',
       _kind: 'book',
+      _slug: 'the-great-gatsby',
       _ownerUsers: ['user-123'],
       description: 'Another copy of the same book',
     };
@@ -234,10 +247,11 @@ describe('POST /entities', () => {
     });
     ({ client } = appWithClient);
 
-    // First entity creation with multiple owners - should succeed
+    // EPBO pre-resolves _slug; tests must supply it explicitly.
     const firstEntity: Partial<GenericEntity> = {
       _name: 'The Great Gatsby',
       _kind: 'book',
+      _slug: 'the-great-gatsby',
       _ownerUsers: ['user-123', 'user-456', 'user-789'],
       description: 'A classic novel by F. Scott Fitzgerald',
     };
@@ -255,10 +269,11 @@ describe('POST /entities', () => {
       'user-789',
     ]);
 
-    // Second entity with same name and kind, and one overlapping owner - should fail
+    // Second entity with same slug, kind, and one overlapping owner - should fail
     const secondEntity: Partial<GenericEntity> = {
       _name: 'The Great Gatsby',
       _kind: 'book',
+      _slug: 'the-great-gatsby',
       _ownerUsers: ['user-123', 'user-999'], // user-123 exists in first entity
       description: 'Another copy of the same book',
     };
@@ -302,10 +317,11 @@ describe('POST /entities', () => {
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + 7); // 7 days from now
 
-    // First entity creation with validity period - should succeed
+    // EPBO pre-resolves _slug; tests must supply it explicitly.
     const firstEntity: Partial<GenericEntity> = {
       _name: 'The Great Gatsby',
       _kind: 'book',
+      _slug: 'the-great-gatsby',
       _ownerUsers: ['user-123'],
       _validFromDateTime: pastDate.toISOString(),
       _validUntilDateTime: futureDate.toISOString(),
@@ -326,10 +342,11 @@ describe('POST /entities', () => {
       futureDate.toISOString(),
     );
 
-    // Second entity with same name and kind, different owner, but also active - should fail
+    // Second entity with same slug and kind, different owner, but also active - should fail
     const secondEntity: Partial<GenericEntity> = {
       _name: 'The Great Gatsby',
       _kind: 'book',
+      _slug: 'the-great-gatsby',
       _ownerUsers: ['user-999'], // Different owner
       _validFromDateTime: pastDate.toISOString(),
       _validUntilDateTime: null, // No end date, meaning indefinitely active
@@ -377,10 +394,11 @@ describe('POST /entities', () => {
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + 7); // 7 days from now
 
-    // First entity creation with validity period in the past - should succeed
+    // EPBO pre-resolves _slug; tests must supply it explicitly.
     const firstEntity: Partial<GenericEntity> = {
       _name: 'The Great Gatsby',
       _kind: 'book',
+      _slug: 'the-great-gatsby',
       _ownerUsers: ['user-123'],
       _validFromDateTime: pastStartDate.toISOString(),
       _validUntilDateTime: pastEndDate.toISOString(), // Entity is now inactive
@@ -401,10 +419,11 @@ describe('POST /entities', () => {
       pastEndDate.toISOString(),
     );
 
-    // Second entity with same name and kind, different owner, and active - should succeed since first entity is inactive
+    // Second entity with same slug and kind, different owner, and active - should succeed since first entity is inactive
     const secondEntity: Partial<GenericEntity> = {
       _name: 'The Great Gatsby',
       _kind: 'book',
+      _slug: 'the-great-gatsby',
       _ownerUsers: ['user-999'], // Different owner
       _validFromDateTime: new Date().toISOString(),
       _validUntilDateTime: futureDate.toISOString(),
@@ -428,142 +447,6 @@ describe('POST /entities', () => {
     expect(getAllResponse.body).to.be.Array().lengthOf(2); // Two records should exist
   });
 
-  it('automatically sets validFromDateTime when autoapprove_entity is true', async () => {
-    // Set up the environment variables with autoapprove_entity enabled
-    appWithClient = await setupApplication({
-      entity_kinds: 'book',
-      autoapprove_entity: 'true',
-    });
-    ({ client } = appWithClient);
-
-    const newEntity: Partial<GenericEntity> = {
-      _name: 'Auto Approved Entity',
-      _kind: 'book',
-      description: 'An entity that should be auto-approved',
-    };
-
-    const response = await client.post('/entities').send(newEntity).expect(200);
-
-    // Verify the response
-    expect(response.body._slug).to.be.equal('auto-approved-entity');
-    expect(response.body._kind).to.be.equal('book');
-
-    // Verify that _validFromDateTime was automatically set to current time
-    const now = new Date();
-    const validFrom = new Date(response.body._validFromDateTime);
-    expect(validFrom).to.be.Date();
-    expect(validFrom.getTime()).to.be.approximately(now.getTime(), 5000); // Allow 5 second difference
-
-    // Verify other fields
-    expect(response.body.description).to.be.equal(
-      'An entity that should be auto-approved',
-    );
-  });
-
-  it('automatically sets validFromDateTime when autoapprove_entity_for_kind matches', async () => {
-    // Set up the environment variables with kind-specific auto-approve
-    appWithClient = await setupApplication({
-      entity_kinds: 'book,movie',
-      autoapprove_entity_for_book: 'true',
-    });
-    ({ client } = appWithClient);
-
-    const newEntity: Partial<GenericEntity> = {
-      _name: 'Auto Approved Book',
-      _kind: 'book',
-      description: 'A book that should be auto-approved',
-    };
-
-    const response = await client.post('/entities').send(newEntity).expect(200);
-
-    // Verify the response
-    expect(response.body._slug).to.be.equal('auto-approved-book');
-    expect(response.body._kind).to.be.equal('book');
-
-    // Verify that _validFromDateTime was automatically set to current time
-    const now = new Date();
-    const validFrom = new Date(response.body._validFromDateTime);
-    expect(validFrom).to.be.Date();
-    expect(validFrom.getTime()).to.be.approximately(now.getTime(), 5000); // Allow 5 second difference
-
-    // Verify other fields
-    expect(response.body.description).to.be.equal(
-      'A book that should be auto-approved',
-    );
-  });
-
-  it('does not set validFromDateTime when autoapprove_entity_for_kind does not match', async () => {
-    // Set up the environment variables with kind-specific auto-approve for a different kind
-    appWithClient = await setupApplication({
-      entity_kinds: 'book,movie',
-      autoapprove_entity_for_movie: 'true',
-    });
-    ({ client } = appWithClient);
-
-    const newEntity: Partial<GenericEntity> = {
-      _name: 'Non Auto Approved Book',
-      _kind: 'book',
-      description: 'A book that should not be auto-approved',
-    };
-
-    const response = await client.post('/entities').send(newEntity).expect(200);
-
-    // Verify the response
-    expect(response.body._slug).to.be.equal('non-auto-approved-book');
-    expect(response.body._kind).to.be.equal('book');
-
-    // Verify that _validFromDateTime was not automatically set
-    expect(response.body._validFromDateTime).to.be.null();
-
-    // Verify other fields
-    expect(response.body.description).to.be.equal(
-      'A book that should not be auto-approved',
-    );
-  });
-
-  it('sets visibility to private when visibility_entity is configured as private', async () => {
-    // Set up the environment variables with visibility configuration
-    appWithClient = await setupApplication({
-      entity_kinds: 'book',
-      visibility_entity: 'private',
-    });
-    ({ client } = appWithClient);
-
-    const newEntity: Partial<GenericEntity> = {
-      _name: 'Private Entity',
-      _kind: 'book',
-      description: 'An entity that should be private by default',
-    };
-
-    const response = await client.post('/entities').send(newEntity).expect(200);
-
-    // Verify the response
-    expect(response.body._slug).to.be.equal('private-entity');
-    expect(response.body._kind).to.be.equal('book');
-    expect(response.body._visibility).to.be.equal('private');
-  });
-
-  it('sets visibility to public when visibility_entity_for_kind is configured as public', async () => {
-    // Set up the environment variables with kind-specific visibility
-    appWithClient = await setupApplication({
-      entity_kinds: 'book,movie',
-      visibility_entity_for_book: 'public',
-    });
-    ({ client } = appWithClient);
-
-    const newEntity: Partial<GenericEntity> = {
-      _name: 'Public Book Entity',
-      _kind: 'book',
-      description: 'A book entity that should be public by default',
-    };
-
-    const response = await client.post('/entities').send(newEntity).expect(200);
-
-    // Verify the response
-    expect(response.body._slug).to.be.equal('public-book-entity');
-    expect(response.body._kind).to.be.equal('book');
-    expect(response.body._visibility).to.be.equal('public');
-  });
 
   it('rejects entity creation with invalid visibility value', async () => {
     appWithClient = await setupApplication({
@@ -997,220 +880,6 @@ describe('POST /entities', () => {
     });
   });
 
-  it('enforces idempotency based on configured fields', async () => {
-    // Set up the environment variables with idempotency configuration
-    appWithClient = await setupApplication({
-      entity_kinds: 'book',
-      idempotency_entity: '_kind,_slug,description', // Configure idempotency fields
-    });
-    ({ client } = appWithClient);
-
-    // First entity creation - should succeed
-    const firstEntity = {
-      _name: 'Science Book',
-      _kind: 'book',
-      description: 'A book about science', // This will be part of idempotency check
-      _ownerUsers: ['user-123'], // This field is not part of idempotency
-      _visibility: 'private', // This field is not part of idempotency
-    };
-
-    const firstResponse = await client
-      .post('/entities')
-      .send(firstEntity)
-      .expect(200);
-
-    // Verify the first response
-    expect(firstResponse.body._slug).to.be.equal('science-book');
-    expect(firstResponse.body._kind).to.be.equal('book');
-    expect(firstResponse.body.description).to.be.equal('A book about science');
-    expect(firstResponse.body._ownerUsers).to.containDeep(['user-123']);
-    expect(firstResponse.body._visibility).to.be.equal('private');
-
-    // Second entity with same idempotency fields but different other fields
-    const secondEntity = {
-      _name: 'Science Book', // Same name will generate same slug
-      _kind: 'book', // Same kind
-      description: 'A book about science', // Same description
-      _ownerUsers: ['user-456'], // Different owner
-      _visibility: 'public', // Different visibility
-    };
-
-    const secondResponse = await client
-      .post('/entities')
-      .send(secondEntity)
-      .expect(200);
-
-    // Verify all fields in the second response match the first response
-    expectResponseToMatch(secondResponse.body, firstResponse.body);
-
-    // Verify only one record exists by getting all entities
-    const getAllResponse = await client.get('/entities').expect(200);
-    expect(getAllResponse.body).to.be.Array().lengthOf(1); // Only one record should exist
-  });
-
-  it('enforces kind-specific idempotency configuration', async () => {
-    // Set up the environment variables with kind-specific idempotency
-    appWithClient = await setupApplication({
-      entity_kinds: 'book,movie',
-      idempotency_entity_for_book: '_kind,_slug,_ownerUsers', // Different fields for book
-      idempotency_entity_for_movie: '_kind,description', // Different fields for movie
-    });
-    ({ client } = appWithClient);
-
-    // First book entity - should succeed
-    const firstBookEntity = {
-      _name: 'Science Book',
-      _kind: 'book',
-      description: 'First description', // Not part of idempotency for book
-      _ownerUsers: ['user-123'], // Part of idempotency for book
-    };
-
-    const firstBookResponse = await client
-      .post('/entities')
-      .send(firstBookEntity)
-      .expect(200);
-
-    // Second book entity with same idempotency fields - should return same record
-    const secondBookEntity = {
-      _name: 'Science Book', // Will generate same slug
-      _kind: 'book',
-      description: 'Different description', // Can be different as not part of idempotency
-      _ownerUsers: ['user-123'], // Same owner
-    };
-
-    const secondBookResponse = await client
-      .post('/entities')
-      .send(secondBookEntity)
-      .expect(200);
-
-    // Verify responses match
-    expectResponseToMatch(secondBookResponse.body, firstBookResponse.body);
-
-    // First movie entity - should succeed
-    const firstMovieEntity = {
-      _name: 'Featured Movie',
-      _kind: 'movie',
-      description: 'Movie description', // Part of idempotency for movie
-      _ownerUsers: ['user-456'], // Not part of idempotency for movie
-    };
-
-    const firstMovieResponse = await client
-      .post('/entities')
-      .send(firstMovieEntity)
-      .expect(200);
-
-    // Second movie entity with same idempotency fields - should return same record
-    const secondMovieEntity = {
-      _name: 'Different Name', // Can be different as not part of idempotency
-      _kind: 'movie',
-      description: 'Movie description', // Same description
-      _ownerUsers: ['user-789'], // Can be different as not part of idempotency
-    };
-
-    const secondMovieResponse = await client
-      .post('/entities')
-      .send(secondMovieEntity)
-      .expect(200);
-
-    // Verify responses match
-    expectResponseToMatch(secondMovieResponse.body, firstMovieResponse.body);
-
-    // Verify only two records exist (one for each kind)
-    const getAllResponse = await client.get('/entities').expect(200);
-    expect(getAllResponse.body).to.be.Array().lengthOf(2);
-  });
-
-  it('enforces idempotency with array fields', async () => {
-    // Set up the environment variables with array fields in idempotency
-    appWithClient = await setupApplication({
-      entity_kinds: 'book',
-      idempotency_entity: '_kind,_ownerUsers,_viewerUsers', // Using array fields for idempotency
-    });
-    ({ client } = appWithClient);
-
-    // First entity - should succeed
-    const firstEntity = {
-      _name: 'First Entity',
-      _kind: 'book',
-      _ownerUsers: ['user-123', 'user-456'],
-      _viewerUsers: ['viewer-1', 'viewer-2'],
-      description: 'First description',
-    };
-
-    const firstResponse = await client
-      .post('/entities')
-      .send(firstEntity)
-      .expect(200);
-
-    // Second entity with same array values but different order - should return same record
-    const secondEntity = {
-      _name: 'Different Name',
-      _kind: 'book',
-      _ownerUsers: ['user-456', 'user-123'], // Same values, different order
-      _viewerUsers: ['viewer-2', 'viewer-1'], // Same values, different order
-      description: 'Different description',
-    };
-
-    const secondResponse = await client
-      .post('/entities')
-      .send(secondEntity)
-      .expect(200);
-
-    // Verify responses match
-    expectResponseToMatch(secondResponse.body, firstResponse.body);
-
-    // Verify only one record exists
-    const getAllResponse = await client.get('/entities').expect(200);
-    expect(getAllResponse.body).to.be.Array().lengthOf(1);
-  });
-
-  it('enforces idempotency with date fields', async () => {
-    // Set up the environment variables with date fields in idempotency
-    appWithClient = await setupApplication({
-      entity_kinds: 'book',
-      idempotency_entity: '_kind,_validFromDateTime,_validUntilDateTime', // Using date fields for idempotency
-    });
-    ({ client } = appWithClient);
-
-    const validFrom = new Date();
-    const validUntil = new Date();
-    validUntil.setDate(validUntil.getDate() + 7);
-
-    // First entity - should succeed
-    const firstEntity = {
-      _name: 'First Entity',
-      _kind: 'book',
-      _validFromDateTime: validFrom.toISOString(),
-      _validUntilDateTime: validUntil.toISOString(),
-      description: 'First description',
-    };
-
-    const firstResponse = await client
-      .post('/entities')
-      .send(firstEntity)
-      .expect(200);
-
-    // Second entity with same dates but different other fields - should return same record
-    const secondEntity = {
-      _name: 'Different Name',
-      _kind: 'book',
-      _validFromDateTime: validFrom.toISOString(),
-      _validUntilDateTime: validUntil.toISOString(),
-      description: 'Different description',
-    };
-
-    const secondResponse = await client
-      .post('/entities')
-      .send(secondEntity)
-      .expect(200);
-
-    // Verify responses match
-    expectResponseToMatch(secondResponse.body, firstResponse.body);
-
-    // Verify only one record exists
-    const getAllResponse = await client.get('/entities').expect(200);
-    expect(getAllResponse.body).to.be.Array().lengthOf(1);
-  });
 
   describe('lookup constraint validation', () => {
     it('should reject entity with invalid entity reference when record=entity is configured', async () => {

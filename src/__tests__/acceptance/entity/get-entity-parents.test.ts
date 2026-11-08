@@ -1180,14 +1180,14 @@ describe('GET /entities/{entityId}/parents', () => {
     // Set up the application
     appWithClient = await setupApplication({
       entity_kinds: 'book',
-      visibility_entity: 'protected',
-      autoapprove_entity: 'true',
     });
     ({ client } = appWithClient);
 
     const ownerGroup = 'group-123';
     const viewerGroup = 'group-456';
     const otherGroup = 'group-789';
+    // EPBO pre-resolves _validFromDateTime; tests must supply it explicitly.
+    const now = new Date().toISOString();
 
     // Create parent entity with owner group
     const ownerGroupParent = await client
@@ -1196,6 +1196,7 @@ describe('GET /entities/{entityId}/parents', () => {
         _name: 'Owner Group Parent',
         _kind: 'book',
         _ownerGroups: [ownerGroup],
+        _validFromDateTime: now,
       })
       .expect(200);
 
@@ -1206,6 +1207,7 @@ describe('GET /entities/{entityId}/parents', () => {
         _name: 'Viewer Group Parent',
         _kind: 'book',
         _viewerGroups: [viewerGroup],
+        _validFromDateTime: now,
       })
       .expect(200);
 
@@ -1215,6 +1217,7 @@ describe('GET /entities/{entityId}/parents', () => {
       .send({
         _name: 'Other Parent',
         _kind: 'book',
+        _validFromDateTime: now,
       })
       .expect(200);
 

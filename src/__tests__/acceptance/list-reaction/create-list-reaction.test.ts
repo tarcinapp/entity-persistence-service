@@ -27,19 +27,29 @@ describe('POST /list-reactions', () => {
     });
   });
 
-  it('creates a new list reaction with default kind', async () => {
-    appWithClient = await setupApplication({});
+  it('creates a new list reaction with explicitly provided managed fields', async () => {
+    appWithClient = await setupApplication({
+      list_reaction_kinds: 'list-reaction',
+    });
     ({ client } = appWithClient);
 
     // First, create a list to react to
     const listId = await createTestList(client, {
       _name: 'Sample Book List',
+      _kind: 'list',
       description: 'A sample book list',
     });
 
-    const newReaction: Partial<ListReaction> = {
+    // EPBO pre-resolves all managed fields before the request reaches EPS.
+    // Tests must supply them explicitly, matching what EPBO would inject.
+    const newReaction = {
       _listId: listId,
+      _kind: 'list-reaction',
       _name: 'Like',
+      _slug: 'like',
+      _visibility: 'protected',
+      _validFromDateTime: null,
+      _validUntilDateTime: null,
       description: 'A like reaction',
     };
 
@@ -48,10 +58,14 @@ describe('POST /list-reactions', () => {
       .send(newReaction)
       .expect(200);
 
-    expect(response.body).to.containDeep(newReaction);
+    expect(response.body).to.containDeep({
+      _listId: listId,
+      _name: 'Like',
+      description: 'A like reaction',
+    });
     expect(response.body._id).to.be.String();
     expect(response.body._listId).to.equal(listId);
-    expect(response.body._kind).to.be.equal('list-reaction'); // default kind
+    expect(response.body._kind).to.be.equal('list-reaction');
     expect(response.body._slug).to.be.equal('like');
     expect(response.body._createdDateTime).to.be.String();
     expect(response.body._lastUpdatedDateTime).to.be.String();
@@ -172,11 +186,12 @@ describe('POST /list-reactions', () => {
       description: 'A classic list',
     });
 
-    // First reaction creation - should succeed
+    // EPBO pre-resolves _slug; tests must supply it explicitly.
     const firstReaction: Partial<ListReaction> = {
       _listId: listId,
       _kind: 'like',
       _name: 'Like',
+      _slug: 'like',
       _ownerUsers: ['user-123'],
       description: 'A like reaction',
     };
@@ -193,6 +208,7 @@ describe('POST /list-reactions', () => {
       _listId: listId,
       _kind: 'like',
       _name: 'Like',
+      _slug: 'like',
       _ownerUsers: ['user-123'],
       description: 'Another like',
     };
@@ -267,11 +283,12 @@ describe('POST /list-reactions', () => {
       description: 'A classic list',
     });
 
-    // First reaction creation with multiple owners - should succeed
+    // EPBO pre-resolves _slug; tests must supply it explicitly.
     const firstReaction: Partial<ListReaction> = {
       _listId: listId,
       _kind: 'like',
       _name: 'Like',
+      _slug: 'like',
       _ownerUsers: ['user-123', 'user-456', 'user-789'],
       description: 'A like reaction',
     };
@@ -285,11 +302,12 @@ describe('POST /list-reactions', () => {
       'user-789',
     ]);
 
-    // Second reaction with overlapping owner - should fail
+    // Second reaction with same slug, kind, overlapping owner - should fail
     const secondReaction: Partial<ListReaction> = {
       _listId: listId,
       _kind: 'like',
       _name: 'Like',
+      _slug: 'like',
       _ownerUsers: ['user-123', 'user-999'],
       description: 'Another like',
     };
@@ -323,11 +341,12 @@ describe('POST /list-reactions', () => {
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + 7);
 
-    // First reaction creation with validity period - should succeed
+    // EPBO pre-resolves _slug; tests must supply it explicitly.
     const firstReaction: Partial<ListReaction> = {
       _listId: listId,
       _kind: 'like',
       _name: 'Like',
+      _slug: 'like',
       _validFromDateTime: pastDate.toISOString(),
       _validUntilDateTime: futureDate.toISOString(),
       description: 'A like reaction',
@@ -343,11 +362,12 @@ describe('POST /list-reactions', () => {
       futureDate.toISOString(),
     );
 
-    // Second reaction with same name, kind, and also active - should fail
+    // Second reaction with same slug, kind, and also active - should fail
     const secondReaction: Partial<ListReaction> = {
       _listId: listId,
       _kind: 'like',
       _name: 'Like',
+      _slug: 'like',
       _validFromDateTime: pastDate.toISOString(),
       _validUntilDateTime: null, // Indefinitely active
       description: 'Another like',
@@ -421,150 +441,6 @@ describe('POST /list-reactions', () => {
     );
   });
 
-  it('automatically sets validFromDateTime when autoapprove_list_reaction is true', async () => {
-    appWithClient = await setupApplication({
-      list_reaction_kinds: 'like',
-      autoapprove_list_reaction: 'true',
-    });
-    ({ client } = appWithClient);
-
-    const listId = await createTestList(client, {
-      _name: 'Auto Approved List',
-      _kind: 'reading-list',
-    });
-
-    const newReaction: Partial<ListReaction> = {
-      _listId: listId,
-      _kind: 'like',
-      description: 'A reaction that should be auto-approved',
-    };
-
-    const response = await client
-      .post('/list-reactions')
-      .send(newReaction)
-      .expect(200);
-
-    const now = new Date();
-    const validFrom = new Date(response.body._validFromDateTime);
-    expect(validFrom).to.be.Date();
-    expect(validFrom.getTime()).to.be.approximately(now.getTime(), 5000); // Allow 5 second difference
-    expect(response.body.description).to.be.equal(
-      'A reaction that should be auto-approved',
-    );
-  });
-
-  it('automatically sets validFromDateTime when autoapprove_list_reaction_for_kind matches', async () => {
-    appWithClient = await setupApplication({
-      list_reaction_kinds: 'like,dislike',
-      autoapprove_list_reaction_for_like: 'true',
-    });
-    ({ client } = appWithClient);
-
-    const listId = await createTestList(client, {
-      _name: 'Auto Approved List',
-      _kind: 'reading-list',
-    });
-
-    const newReaction: Partial<ListReaction> = {
-      _listId: listId,
-      _kind: 'like',
-      description: 'A like reaction that should be auto-approved',
-    };
-
-    const response = await client
-      .post('/list-reactions')
-      .send(newReaction)
-      .expect(200);
-
-    const now = new Date();
-    const validFrom = new Date(response.body._validFromDateTime);
-    expect(validFrom).to.be.Date();
-    expect(validFrom.getTime()).to.be.approximately(now.getTime(), 5000); // Allow 5 second difference
-    expect(response.body.description).to.be.equal(
-      'A like reaction that should be auto-approved',
-    );
-  });
-
-  it('does not set validFromDateTime when autoapprove_list_reaction_for_kind does not match', async () => {
-    appWithClient = await setupApplication({
-      list_reaction_kinds: 'like,dislike',
-      autoapprove_list_reaction_for_dislike: 'true',
-    });
-    ({ client } = appWithClient);
-
-    const listId = await createTestList(client, {
-      _name: 'Non Auto Approved List',
-      _kind: 'reading-list',
-    });
-
-    const newReaction: Partial<ListReaction> = {
-      _listId: listId,
-      _kind: 'like',
-      description: 'A like reaction that should not be auto-approved',
-    };
-
-    const response = await client
-      .post('/list-reactions')
-      .send(newReaction)
-      .expect(200);
-
-    expect(response.body._validFromDateTime).to.be.null();
-    expect(response.body.description).to.be.equal(
-      'A like reaction that should not be auto-approved',
-    );
-  });
-
-  it('sets visibility to private when visibility_list_reaction is configured as private', async () => {
-    appWithClient = await setupApplication({
-      list_reaction_kinds: 'like',
-      visibility_list_reaction: 'private',
-    });
-    ({ client } = appWithClient);
-
-    const listId = await createTestList(client, {
-      _name: 'Private List',
-      _kind: 'reading-list',
-    });
-
-    const newReaction: Partial<ListReaction> = {
-      _listId: listId,
-      _kind: 'like',
-      description: 'A reaction that should be private by default',
-    };
-
-    const response = await client
-      .post('/list-reactions')
-      .send(newReaction)
-      .expect(200);
-
-    expect(response.body._visibility).to.be.equal('private');
-  });
-
-  it('sets visibility to public when visibility_list_reaction_for_kind is configured as public', async () => {
-    appWithClient = await setupApplication({
-      list_reaction_kinds: 'like,dislike',
-      visibility_list_reaction_for_like: 'public',
-    });
-    ({ client } = appWithClient);
-
-    const listId = await createTestList(client, {
-      _name: 'Public List',
-      _kind: 'reading-list',
-    });
-
-    const newReaction: Partial<ListReaction> = {
-      _listId: listId,
-      _kind: 'like',
-      description: 'A like reaction that should be public by default',
-    };
-
-    const response = await client
-      .post('/list-reactions')
-      .send(newReaction)
-      .expect(200);
-
-    expect(response.body._visibility).to.be.equal('public');
-  });
 
   it('rejects list reaction creation with invalid visibility value', async () => {
     appWithClient = await setupApplication({
@@ -934,179 +810,6 @@ describe('POST /list-reactions', () => {
       name: 'LimitExceededError',
       code: 'LISTREACTION-LIMIT-EXCEEDED',
     });
-  });
-
-  it('enforces idempotency based on configured fields for list reactions', async () => {
-    appWithClient = await setupApplication({
-      list_reaction_kinds: 'like',
-      idempotency_list_reaction: '_kind,_listId,description',
-    });
-    ({ client } = appWithClient);
-
-    const listId = await createTestList(client, {
-      _name: 'List',
-      _kind: 'reading-list',
-    });
-
-    // First reaction - should succeed
-    const firstReaction = {
-      _listId: listId,
-      _kind: 'like',
-      description: 'A reaction',
-    };
-    const firstResponse4 = await client
-      .post('/list-reactions')
-      .send(firstReaction)
-      .expect(200);
-    // Second reaction with same idempotency fields but different other fields
-    const secondReaction4 = {
-      _listId: listId,
-      _kind: 'like',
-      description: 'A reaction',
-      _ownerUsers: ['user-456'],
-    };
-    const secondResponse4 = await client
-      .post('/list-reactions')
-      .send(secondReaction4)
-      .expect(200);
-    expect(secondResponse4.body._id).to.equal(firstResponse4.body._id);
-  });
-
-  it('enforces kind-specific idempotency configuration for list reactions', async () => {
-    appWithClient = await setupApplication({
-      list_reaction_kinds: 'like,dislike',
-      idempotency_list_reaction_for_like: '_kind,_listId,_ownerUsers',
-      idempotency_list_reaction_for_dislike: '_kind,description',
-    });
-    ({ client } = appWithClient);
-
-    const listId = await createTestList(client, {
-      _name: 'List',
-      _kind: 'reading-list',
-    });
-
-    // First like reaction - should succeed
-    const firstLike = {
-      _listId: listId,
-      _kind: 'like',
-      _ownerUsers: ['user-123'],
-    };
-    const firstLikeResponse = await client
-      .post('/list-reactions')
-      .send(firstLike)
-      .expect(200);
-    // Second like reaction with same idempotency fields - should return same record
-    const secondLike = {
-      _listId: listId,
-      _kind: 'like',
-      _ownerUsers: ['user-123'],
-    };
-    const secondLikeResponse = await client
-      .post('/list-reactions')
-      .send(secondLike)
-      .expect(200);
-    expect(secondLikeResponse.body._id).to.equal(firstLikeResponse.body._id);
-
-    // First dislike reaction - should succeed
-    const firstDislike = {
-      _listId: listId,
-      _kind: 'dislike',
-      description: 'desc',
-    };
-    const firstDislikeResponse = await client
-      .post('/list-reactions')
-      .send(firstDislike)
-      .expect(200);
-    // Second dislike reaction with same idempotency fields - should return same record
-    const secondDislike = {
-      _listId: listId,
-      _kind: 'dislike',
-      description: 'desc',
-    };
-    const secondDislikeResponse = await client
-      .post('/list-reactions')
-      .send(secondDislike)
-      .expect(200);
-    expect(secondDislikeResponse.body._id).to.equal(
-      firstDislikeResponse.body._id,
-    );
-  });
-
-  it('enforces idempotency with array fields for list reactions', async () => {
-    appWithClient = await setupApplication({
-      list_reaction_kinds: 'like',
-      idempotency_list_reaction: '_kind,_ownerUsers',
-    });
-    ({ client } = appWithClient);
-
-    const listId = await createTestList(client, {
-      _name: 'List',
-      _kind: 'reading-list',
-    });
-
-    // First reaction - should succeed
-    const firstReaction2 = {
-      _listId: listId,
-      _kind: 'like',
-      _ownerUsers: ['user-123', 'user-456'],
-    };
-    const firstResponse5 = await client
-      .post('/list-reactions')
-      .send(firstReaction2)
-      .expect(200);
-    // Second reaction with same array values but different order - should return same record
-    const secondReaction5 = {
-      _listId: listId,
-      _kind: 'like',
-      _ownerUsers: ['user-456', 'user-123'],
-    };
-    const secondResponse5 = await client
-      .post('/list-reactions')
-      .send(secondReaction5)
-      .expect(200);
-    expect(secondResponse5.body._id).to.equal(firstResponse5.body._id);
-  });
-
-  it('enforces idempotency with date fields for list reactions', async () => {
-    appWithClient = await setupApplication({
-      list_reaction_kinds: 'like',
-      idempotency_list_reaction: '_kind,_validFromDateTime,_validUntilDateTime',
-    });
-    ({ client } = appWithClient);
-
-    const listId = await createTestList(client, {
-      _name: 'List',
-      _kind: 'reading-list',
-    });
-
-    const validFrom = new Date();
-    const validUntil = new Date();
-    validUntil.setDate(validUntil.getDate() + 7);
-
-    // First reaction - should succeed
-    const firstReaction4 = {
-      _listId: listId,
-      _kind: 'like',
-      _validFromDateTime: validFrom.toISOString(),
-      _validUntilDateTime: validUntil.toISOString(),
-    };
-    const firstResponse6 = await client
-      .post('/list-reactions')
-      .send(firstReaction4)
-      .expect(200);
-    // Second reaction with same dates but different other fields - should return same record
-    const secondReaction6 = {
-      _listId: listId,
-      _kind: 'like',
-      _validFromDateTime: validFrom.toISOString(),
-      _validUntilDateTime: validUntil.toISOString(),
-      description: 'Different',
-    };
-    const secondResponse6 = await client
-      .post('/list-reactions')
-      .send(secondReaction6)
-      .expect(200);
-    expect(secondResponse6.body._id).to.equal(firstResponse6.body._id);
   });
 
   it('should return 404 if list specified by _listId does not exist', async () => {

@@ -39,19 +39,29 @@ describe('POST /entity-reactions', () => {
     appWithClient = undefined;
   });
 
-  it('creates a new entity reaction with default kind', async () => {
-    appWithClient = await setupApplication({});
+  it('creates a new entity reaction with explicitly provided managed fields', async () => {
+    appWithClient = await setupApplication({
+      entity_reaction_kinds: 'entity-reaction',
+    });
     ({ client } = appWithClient);
 
     // First, create an entity to react to
     const entityId = await createTestEntity(client, {
       _name: 'Sample Book',
+      _kind: 'entity',
       description: 'A sample book entity',
     });
 
-    const newReaction: Partial<EntityReaction> = {
+    // EPBO pre-resolves all managed fields before the request reaches EPS.
+    // Tests must supply them explicitly, matching what EPBO would inject.
+    const newReaction = {
       _entityId: entityId,
+      _kind: 'entity-reaction',
       _name: 'Like',
+      _slug: 'like',
+      _visibility: 'protected',
+      _validFromDateTime: null,
+      _validUntilDateTime: null,
       description: 'A like reaction',
     };
 
@@ -60,10 +70,14 @@ describe('POST /entity-reactions', () => {
       .send(newReaction)
       .expect(200);
 
-    expect(response.body).to.containDeep(newReaction);
+    expect(response.body).to.containDeep({
+      _entityId: entityId,
+      _name: 'Like',
+      description: 'A like reaction',
+    });
     expect(response.body._id).to.be.String();
     expect(response.body._entityId).to.equal(entityId);
-    expect(response.body._kind).to.be.equal('entity-reaction'); // default kind
+    expect(response.body._kind).to.be.equal('entity-reaction');
     expect(response.body._slug).to.be.equal('like');
     expect(response.body._createdDateTime).to.be.String();
     expect(response.body._lastUpdatedDateTime).to.be.String();
@@ -190,11 +204,12 @@ describe('POST /entity-reactions', () => {
       description: 'A classic novel',
     });
 
-    // First reaction creation - should succeed
+    // EPBO pre-resolves _slug; tests must supply it explicitly.
     const firstReaction: Partial<EntityReaction> = {
       _entityId: entityId,
       _kind: 'like',
       _name: 'Like',
+      _slug: 'like',
       _ownerUsers: ['user-123'],
       description: 'A like reaction',
     };
@@ -211,6 +226,7 @@ describe('POST /entity-reactions', () => {
       _entityId: entityId,
       _kind: 'like',
       _name: 'Like',
+      _slug: 'like',
       _ownerUsers: ['user-123'],
       description: 'Another like',
     };
@@ -285,11 +301,12 @@ describe('POST /entity-reactions', () => {
       description: 'A classic novel',
     });
 
-    // First reaction creation with multiple owners - should succeed
+    // EPBO pre-resolves _slug; tests must supply it explicitly.
     const firstReaction: Partial<EntityReaction> = {
       _entityId: entityId,
       _kind: 'like',
       _name: 'Like',
+      _slug: 'like',
       _ownerUsers: ['user-123', 'user-456', 'user-789'],
       description: 'A like reaction',
     };
@@ -303,11 +320,12 @@ describe('POST /entity-reactions', () => {
       'user-789',
     ]);
 
-    // Second reaction with overlapping owner - should fail
+    // Second reaction with same slug, kind, overlapping owner - should fail
     const secondReaction: Partial<EntityReaction> = {
       _entityId: entityId,
       _kind: 'like',
       _name: 'Like',
+      _slug: 'like',
       _ownerUsers: ['user-123', 'user-999'],
       description: 'Another like',
     };
@@ -341,11 +359,12 @@ describe('POST /entity-reactions', () => {
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + 7);
 
-    // First reaction creation with validity period - should succeed
+    // EPBO pre-resolves _slug; tests must supply it explicitly.
     const firstReaction: Partial<EntityReaction> = {
       _entityId: entityId,
       _kind: 'like',
       _name: 'Like',
+      _slug: 'like',
       _validFromDateTime: pastDate.toISOString(),
       _validUntilDateTime: futureDate.toISOString(),
       description: 'A like reaction',
@@ -361,11 +380,12 @@ describe('POST /entity-reactions', () => {
       futureDate.toISOString(),
     );
 
-    // Second reaction with same name, kind, and also active - should fail
+    // Second reaction with same slug, kind, and also active - should fail
     const secondReaction: Partial<EntityReaction> = {
       _entityId: entityId,
       _kind: 'like',
       _name: 'Like',
+      _slug: 'like',
       _validFromDateTime: pastDate.toISOString(),
       _validUntilDateTime: null, // Indefinitely active
       description: 'Another like',
@@ -439,150 +459,9 @@ describe('POST /entity-reactions', () => {
     );
   });
 
-  it('automatically sets validFromDateTime when autoapprove_entity_reaction is true', async () => {
-    appWithClient = await setupApplication({
-      entity_reaction_kinds: 'like',
-      autoapprove_entity_reaction: 'true',
-    });
-    ({ client } = appWithClient);
-
-    const entityId = await createTestEntity(client, {
-      _name: 'Auto Approved Entity',
-      _kind: 'book',
-    });
-
-    const newReaction: Partial<EntityReaction> = {
-      _entityId: entityId,
-      _kind: 'like',
-      description: 'A reaction that should be auto-approved',
-    };
-
-    const response = await client
-      .post('/entity-reactions')
-      .send(newReaction)
-      .expect(200);
-
-    const now = new Date();
-    const validFrom = new Date(response.body._validFromDateTime);
-    expect(validFrom).to.be.Date();
-    expect(validFrom.getTime()).to.be.approximately(now.getTime(), 5000); // Allow 5 second difference
-    expect(response.body.description).to.be.equal(
-      'A reaction that should be auto-approved',
-    );
-  });
-
-  it('automatically sets validFromDateTime when autoapprove_entity_reaction_for_kind matches', async () => {
-    appWithClient = await setupApplication({
-      entity_reaction_kinds: 'like,dislike',
-      autoapprove_entity_reaction_for_like: 'true',
-    });
-    ({ client } = appWithClient);
-
-    const entityId = await createTestEntity(client, {
-      _name: 'Auto Approved Entity',
-      _kind: 'book',
-    });
-
-    const newReaction: Partial<EntityReaction> = {
-      _entityId: entityId,
-      _kind: 'like',
-      description: 'A like reaction that should be auto-approved',
-    };
-
-    const response = await client
-      .post('/entity-reactions')
-      .send(newReaction)
-      .expect(200);
-
-    const now = new Date();
-    const validFrom = new Date(response.body._validFromDateTime);
-    expect(validFrom).to.be.Date();
-    expect(validFrom.getTime()).to.be.approximately(now.getTime(), 5000); // Allow 5 second difference
-    expect(response.body.description).to.be.equal(
-      'A like reaction that should be auto-approved',
-    );
-  });
-
-  it('does not set validFromDateTime when autoapprove_entity_reaction_for_kind does not match', async () => {
-    appWithClient = await setupApplication({
-      entity_reaction_kinds: 'like,dislike',
-      autoapprove_entity_reaction_for_dislike: 'true',
-    });
-    ({ client } = appWithClient);
-
-    const entityId = await createTestEntity(client, {
-      _name: 'Non Auto Approved Entity',
-      _kind: 'book',
-    });
-
-    const newReaction: Partial<EntityReaction> = {
-      _entityId: entityId,
-      _kind: 'like',
-      description: 'A like reaction that should not be auto-approved',
-    };
-
-    const response = await client
-      .post('/entity-reactions')
-      .send(newReaction)
-      .expect(200);
-
-    expect(response.body._validFromDateTime).to.be.null();
-    expect(response.body.description).to.be.equal(
-      'A like reaction that should not be auto-approved',
-    );
-  });
-
-  it('sets visibility to private when visibility_entity_reaction is configured as private', async () => {
-    appWithClient = await setupApplication({
-      entity_reaction_kinds: 'like',
-      visibility_entity_reaction: 'private',
-    });
-    ({ client } = appWithClient);
-
-    const entityId = await createTestEntity(client, {
-      _name: 'Private Entity',
-      _kind: 'book',
-    });
-
-    const newReaction: Partial<EntityReaction> = {
-      _entityId: entityId,
-      _kind: 'like',
-      description: 'A reaction that should be private by default',
-    };
-
-    const response = await client
-      .post('/entity-reactions')
-      .send(newReaction)
-      .expect(200);
-
-    expect(response.body._visibility).to.be.equal('private');
-  });
-
-  it('sets visibility to public when visibility_entity_reaction_for_kind is configured as public', async () => {
-    appWithClient = await setupApplication({
-      entity_reaction_kinds: 'like,dislike',
-      visibility_entity_reaction_for_like: 'public',
-    });
-    ({ client } = appWithClient);
-
-    const entityId = await createTestEntity(client, {
-      _name: 'Public Entity',
-      _kind: 'book',
-    });
-
-    const newReaction: Partial<EntityReaction> = {
-      _entityId: entityId,
-      _kind: 'like',
-      description: 'A like reaction that should be public by default',
-    };
-
-    const response = await client
-      .post('/entity-reactions')
-      .send(newReaction)
-      .expect(200);
-
-    expect(response.body._visibility).to.be.equal('public');
-  });
+  // Autoapprove and visibility tests are removed: EPS no longer reads AUTOAPPROVE_* or VISIBILITY_*
+  // env vars. Those responsibilities moved to EPBO. Tests for those behaviors belong in EPBO's
+  // own test suite.
 
   it('rejects entity reaction creation with invalid visibility value', async () => {
     appWithClient = await setupApplication({
@@ -955,179 +834,9 @@ describe('POST /entity-reactions', () => {
     });
   });
 
-  it('enforces idempotency based on configured fields for entity reactions', async () => {
-    appWithClient = await setupApplication({
-      entity_reaction_kinds: 'like',
-      idempotency_entity_reaction: '_kind,_entityId,description',
-    });
-    ({ client } = appWithClient);
-
-    const entityId = await createTestEntity(client, {
-      _name: 'Entity',
-      _kind: 'book',
-    });
-
-    // First reaction - should succeed
-    const firstReaction = {
-      _entityId: entityId,
-      _kind: 'like',
-      description: 'A reaction',
-    };
-    const firstResponse = await client
-      .post('/entity-reactions')
-      .send(firstReaction)
-      .expect(200);
-    // Second reaction with same idempotency fields but different other fields
-    const secondReaction = {
-      _entityId: entityId,
-      _kind: 'like',
-      description: 'A reaction',
-      _ownerUsers: ['user-456'],
-    };
-    const secondResponse = await client
-      .post('/entity-reactions')
-      .send(secondReaction)
-      .expect(200);
-    expect(secondResponse.body._id).to.equal(firstResponse.body._id);
-  });
-
-  it('enforces kind-specific idempotency configuration for entity reactions', async () => {
-    appWithClient = await setupApplication({
-      entity_reaction_kinds: 'like,dislike',
-      idempotency_entity_reaction_for_like: '_kind,_entityId,_ownerUsers',
-      idempotency_entity_reaction_for_dislike: '_kind,description',
-    });
-    ({ client } = appWithClient);
-
-    const entityId = await createTestEntity(client, {
-      _name: 'Entity',
-      _kind: 'book',
-    });
-
-    // First like reaction - should succeed
-    const firstLike = {
-      _entityId: entityId,
-      _kind: 'like',
-      _ownerUsers: ['user-123'],
-    };
-    const firstLikeResponse = await client
-      .post('/entity-reactions')
-      .send(firstLike)
-      .expect(200);
-    // Second like reaction with same idempotency fields - should return same record
-    const secondLike = {
-      _entityId: entityId,
-      _kind: 'like',
-      _ownerUsers: ['user-123'],
-    };
-    const secondLikeResponse = await client
-      .post('/entity-reactions')
-      .send(secondLike)
-      .expect(200);
-    expect(secondLikeResponse.body._id).to.equal(firstLikeResponse.body._id);
-
-    // First dislike reaction - should succeed
-    const firstDislike = {
-      _entityId: entityId,
-      _kind: 'dislike',
-      description: 'desc',
-    };
-    const firstDislikeResponse = await client
-      .post('/entity-reactions')
-      .send(firstDislike)
-      .expect(200);
-    // Second dislike reaction with same idempotency fields - should return same record
-    const secondDislike = {
-      _entityId: entityId,
-      _kind: 'dislike',
-      description: 'desc',
-    };
-    const secondDislikeResponse = await client
-      .post('/entity-reactions')
-      .send(secondDislike)
-      .expect(200);
-    expect(secondDislikeResponse.body._id).to.equal(
-      firstDislikeResponse.body._id,
-    );
-  });
-
-  it('enforces idempotency with array fields for entity reactions', async () => {
-    appWithClient = await setupApplication({
-      entity_reaction_kinds: 'like',
-      idempotency_entity_reaction: '_kind,_ownerUsers',
-    });
-    ({ client } = appWithClient);
-
-    const entityId = await createTestEntity(client, {
-      _name: 'Entity',
-      _kind: 'book',
-    });
-
-    // First reaction - should succeed
-    const firstReaction = {
-      _entityId: entityId,
-      _kind: 'like',
-      _ownerUsers: ['user-123', 'user-456'],
-    };
-    const firstResponse = await client
-      .post('/entity-reactions')
-      .send(firstReaction)
-      .expect(200);
-    // Second reaction with same array values but different order - should return same record
-    const secondReaction = {
-      _entityId: entityId,
-      _kind: 'like',
-      _ownerUsers: ['user-456', 'user-123'],
-    };
-    const secondResponse = await client
-      .post('/entity-reactions')
-      .send(secondReaction)
-      .expect(200);
-    expect(secondResponse.body._id).to.equal(firstResponse.body._id);
-  });
-
-  it('enforces idempotency with date fields for entity reactions', async () => {
-    appWithClient = await setupApplication({
-      entity_reaction_kinds: 'like',
-      idempotency_entity_reaction:
-        '_kind,_validFromDateTime,_validUntilDateTime',
-    });
-    ({ client } = appWithClient);
-
-    const entityId = await createTestEntity(client, {
-      _name: 'Entity',
-      _kind: 'book',
-    });
-
-    const validFrom = new Date();
-    const validUntil = new Date();
-    validUntil.setDate(validUntil.getDate() + 7);
-
-    // First reaction - should succeed
-    const firstReaction = {
-      _entityId: entityId,
-      _kind: 'like',
-      _validFromDateTime: validFrom.toISOString(),
-      _validUntilDateTime: validUntil.toISOString(),
-    };
-    const firstResponse = await client
-      .post('/entity-reactions')
-      .send(firstReaction)
-      .expect(200);
-    // Second reaction with same dates but different other fields - should return same record
-    const secondReaction = {
-      _entityId: entityId,
-      _kind: 'like',
-      _validFromDateTime: validFrom.toISOString(),
-      _validUntilDateTime: validUntil.toISOString(),
-      description: 'Different',
-    };
-    const secondResponse = await client
-      .post('/entity-reactions')
-      .send(secondReaction)
-      .expect(200);
-    expect(secondResponse.body._id).to.equal(firstResponse.body._id);
-  });
+  // Idempotency tests are removed: EPS no longer computes or checks _idempotencyKey.
+  // Idempotency is now a client responsibility — clients send explicit idempotency keys.
+  // Tests for idempotency behavior do not belong in EPS's test suite.
 
   it('should return 404 if entity specified by _entityId does not exist', async () => {
     appWithClient = await setupApplication({

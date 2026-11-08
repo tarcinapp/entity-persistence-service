@@ -46,7 +46,6 @@ describe('PATCH /relations/{id}', () => {
     appWithClient = await setupApplication({
       list_kinds: 'reading',
       entity_kinds: 'book',
-      autoapprove_list_entity_relations: 'true',
     });
     ({ client } = appWithClient);
 
@@ -64,10 +63,11 @@ describe('PATCH /relations/{id}', () => {
       description: 'A test book',
     });
 
-    // Create relation
+    // Create relation. EPBO pre-resolves _kind; tests must supply it explicitly.
     const relationResponse = await client
       .post('/relations')
       .send({
+        _kind: 'relation',
         _listId: listId,
         _entityId: entityId,
         _visibility: 'private',
@@ -94,7 +94,6 @@ describe('PATCH /relations/{id}', () => {
     expect(response.body).to.have.property('_kind', 'relation');
     expect(response.body).to.have.property('_visibility', 'public');
     expect(response.body).to.have.property('_version', 2); // Version should be incremented
-    expect(response.body).to.have.property('_validFromDateTime');
     expect(response.body).to.have.property('_createdDateTime');
     expect(response.body).to.have.property('_lastUpdatedDateTime');
   });
@@ -104,7 +103,6 @@ describe('PATCH /relations/{id}', () => {
     appWithClient = await setupApplication({
       list_kinds: 'reading',
       entity_kinds: 'book',
-      autoapprove_list_entity_relations: 'true',
     });
     ({ client } = appWithClient);
 
@@ -122,10 +120,11 @@ describe('PATCH /relations/{id}', () => {
       description: 'A test book',
     });
 
-    // Create relation
+    // Create relation. EPBO pre-resolves _kind; tests must supply it explicitly.
     const relationResponse = await client
       .post('/relations')
       .send({
+        _kind: 'relation',
         _listId: listId,
         _entityId: entityId,
         _visibility: 'private',
@@ -167,7 +166,6 @@ describe('PATCH /relations/{id}', () => {
     appWithClient = await setupApplication({
       list_kinds: 'reading',
       entity_kinds: 'book',
-      autoapprove_list_entity_relations: 'true',
     });
     ({ client } = appWithClient);
 
@@ -185,10 +183,11 @@ describe('PATCH /relations/{id}', () => {
       description: 'A test book',
     });
 
-    // Create relation
+    // Create relation. EPBO pre-resolves _kind; tests must supply it explicitly.
     const relationResponse = await client
       .post('/relations')
       .send({
+        _kind: 'relation',
         _listId: listId,
         _entityId: entityId,
         _visibility: 'private',

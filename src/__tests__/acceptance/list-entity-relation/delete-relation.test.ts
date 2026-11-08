@@ -46,7 +46,6 @@ describe('DELETE /relations/{id}', () => {
     appWithClient = await setupApplication({
       list_kinds: 'reading',
       entity_kinds: 'book',
-      autoapprove_list_entity_relations: 'true',
     });
     ({ client } = appWithClient);
 
@@ -64,10 +63,11 @@ describe('DELETE /relations/{id}', () => {
       description: 'A test book',
     });
 
-    // Create relation
+    // Create relation. EPBO pre-resolves _kind; tests must supply it explicitly.
     const relationResponse = await client
       .post('/relations')
       .send({
+        _kind: 'relation',
         _listId: listId,
         _entityId: entityId,
         _visibility: 'private',

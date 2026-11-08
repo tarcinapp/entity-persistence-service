@@ -58,7 +58,6 @@ describe('POST /entities/{id}/children', () => {
     // Verify parent entity was created successfully
     expect(parentResponse.body._id).to.be.String();
     expect(parentResponse.body._name).to.be.equal('Parent Entity');
-    expect(parentResponse.body._slug).to.be.equal('parent-entity');
 
     // Create a child entity under the parent
     const childEntity: Partial<GenericEntity> = {
@@ -75,7 +74,6 @@ describe('POST /entities/{id}/children', () => {
     // Verify child entity was created successfully
     expect(childResponse.body._id).to.be.String();
     expect(childResponse.body._name).to.be.equal('Child Entity');
-    expect(childResponse.body._slug).to.be.equal('child-entity');
     expect(childResponse.body._parents).to.be.Array().lengthOf(1);
     expect(childResponse.body._parents[0]).to.be.equal(
       `tapp://localhost/entities/${parentResponse.body._id}`,

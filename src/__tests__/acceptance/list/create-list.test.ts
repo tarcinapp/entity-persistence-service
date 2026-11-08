@@ -6,7 +6,6 @@ import type { AppWithClient } from '../test-helper';
 import {
   setupApplication,
   teardownApplication,
-  expectResponseToMatch,
 } from '../test-helper';
 
 describe('POST /lists', () => {
@@ -42,30 +41,39 @@ describe('POST /lists', () => {
     appWithClient = undefined;
   });
 
-  it('creates a new generic list with default kind', async () => {
+  it('creates a new generic list with explicitly provided managed fields', async () => {
     appWithClient = await setupApplication({
-      // use default values
+      list_kinds: 'list',
     });
     ({ client } = appWithClient);
 
-    const newList: Partial<List> = {
+    // EPBO pre-resolves all managed fields before the request reaches EPS.
+    // Tests must supply them explicitly, matching what EPBO would inject.
+    const newList = {
       _name: "Editor's Pick",
+      _kind: 'list',
+      _slug: 'editors-pick',
+      _visibility: 'protected',
+      _validFromDateTime: null,
+      _validUntilDateTime: null,
       description: 'List of items that the editor has picked',
     };
 
-    const response = await client.post('/lists').send(newList);
-    //.expect(200);
+    const response = await client.post('/lists').send(newList).expect(200);
 
     // checks name and description
-    expect(response.body).to.containDeep(newList);
+    expect(response.body).to.containDeep({
+      _name: "Editor's Pick",
+      description: 'List of items that the editor has picked',
+    });
 
-    // checks managed fields
+    // checks managed fields stored by EPS
     expect(response.body._id).to.be.String();
-    expect(response.body._kind).to.be.equal('list'); // default list kind
+    expect(response.body._kind).to.be.equal('list');
     expect(response.body._slug).to.be.equal('editors-pick');
     expect(response.body._createdDateTime).to.be.String();
     expect(response.body._lastUpdatedDateTime).to.be.String();
-    expect(response.body._visibility).to.be.equal('protected'); // default visibility
+    expect(response.body._visibility).to.be.equal('protected');
     expect(response.body._validFromDateTime).to.be.equal(null);
     expect(response.body._validUntilDateTime).to.be.equal(null);
     expect(response.body._version).to.be.equal(1);
@@ -115,10 +123,11 @@ describe('POST /lists', () => {
     });
     ({ client } = appWithClient);
 
-    // First list creation - should succeed
+    // EPBO pre-resolves _slug; tests must supply it explicitly.
     const firstList: Partial<List> = {
       _name: 'Science Fiction Books',
       _kind: 'book-list',
+      _slug: 'science-fiction-books',
       description: 'A list of science fiction books',
     };
 
@@ -127,10 +136,11 @@ describe('POST /lists', () => {
     expect(response.body._slug).to.be.equal('science-fiction-books');
     expect(response.body._kind).to.be.equal('book-list');
 
-    // Second list with same resulting slug and kind - should fail
+    // Second list with same slug and kind - should fail
     const secondList: Partial<List> = {
-      _name: 'Science Fiction Books', // Will generate same slug
+      _name: 'Science Fiction Books',
       _kind: 'book-list',
+      _slug: 'science-fiction-books',
       description: 'Another list of science fiction books',
     };
 
@@ -166,10 +176,11 @@ describe('POST /lists', () => {
     });
     ({ client } = appWithClient);
 
-    // First list creation - should succeed
+    // EPBO pre-resolves _slug; tests must supply it explicitly.
     const firstList: Partial<List> = {
       _name: 'Science Fiction Books',
       _kind: 'book-list',
+      _slug: 'science-fiction-books',
       _ownerUsers: ['user-123'],
       description: 'A list of science fiction books',
     };
@@ -180,10 +191,11 @@ describe('POST /lists', () => {
     expect(response.body._kind).to.be.equal('book-list');
     expect(response.body._ownerUsers).to.containDeep(['user-123']);
 
-    // Second list with same resulting slug, kind and owner - should fail
+    // Second list with same slug, kind and owner - should fail
     const secondList: Partial<List> = {
-      _name: 'Science Fiction Books', // Will generate same slug
+      _name: 'Science Fiction Books',
       _kind: 'book-list',
+      _slug: 'science-fiction-books',
       _ownerUsers: ['user-123'],
       description: 'Another list of science fiction books',
     };
@@ -220,10 +232,11 @@ describe('POST /lists', () => {
     });
     ({ client } = appWithClient);
 
-    // First list creation with multiple owners - should succeed
+    // EPBO pre-resolves _slug; tests must supply it explicitly.
     const firstList: Partial<List> = {
       _name: 'Science Fiction Books',
       _kind: 'book-list',
+      _slug: 'science-fiction-books',
       _ownerUsers: ['user-123', 'user-456', 'user-789'],
       description: 'A list of science fiction books',
     };
@@ -241,10 +254,11 @@ describe('POST /lists', () => {
       'user-789',
     ]);
 
-    // Second list with same name and kind, and one overlapping owner - should fail
+    // Second list with same slug, kind, and one overlapping owner - should fail
     const secondList: Partial<List> = {
       _name: 'Science Fiction Books',
       _kind: 'book-list',
+      _slug: 'science-fiction-books',
       _ownerUsers: ['user-123', 'user-999'], // user-123 exists in first list
       description: 'Another list of science fiction books',
     };
@@ -287,10 +301,11 @@ describe('POST /lists', () => {
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + 7); // 7 days from now
 
-    // First list creation with validity period - should succeed
+    // EPBO pre-resolves _slug; tests must supply it explicitly.
     const firstList: DataObject<List> = {
       _name: 'Science Fiction Books',
       _kind: 'book-list',
+      _slug: 'science-fiction-books',
       _ownerUsers: ['user-123'],
       _validFromDateTime: pastDate.toISOString(),
       _validUntilDateTime: futureDate.toISOString(),
@@ -311,10 +326,11 @@ describe('POST /lists', () => {
       futureDate.toISOString(),
     );
 
-    // Second list with same name and kind, different owner, but also active - should fail
+    // Second list with same slug and kind, different owner, but also active - should fail
     const secondList: Partial<List> = {
       _name: 'Science Fiction Books',
       _kind: 'book-list',
+      _slug: 'science-fiction-books',
       _ownerUsers: ['user-999'], // Different owner
       _validFromDateTime: pastDate.toISOString(),
       _validUntilDateTime: null, // No end date, meaning indefinitely active
@@ -362,10 +378,11 @@ describe('POST /lists', () => {
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + 7); // 7 days from now
 
-    // First list creation with validity period in the past - should succeed
+    // EPBO pre-resolves _slug; tests must supply it explicitly.
     const firstList: DataObject<List> = {
       _name: 'Science Fiction Books',
       _kind: 'book-list',
+      _slug: 'science-fiction-books',
       _ownerUsers: ['user-123'],
       _validFromDateTime: pastStartDate.toISOString(),
       _validUntilDateTime: pastEndDate.toISOString(), // List is now inactive
@@ -386,10 +403,11 @@ describe('POST /lists', () => {
       pastEndDate.toISOString(),
     );
 
-    // Second list with same name and kind, different owner, and active - should succeed since first list is inactive
+    // Second list with same slug and kind, different owner, and active - should succeed since first list is inactive
     const secondList: Partial<List> = {
       _name: 'Science Fiction Books',
       _kind: 'book-list',
+      _slug: 'science-fiction-books',
       _ownerUsers: ['user-999'], // Different owner
       _validFromDateTime: new Date().toISOString(),
       _validUntilDateTime: futureDate.toISOString(),
@@ -413,142 +431,6 @@ describe('POST /lists', () => {
     expect(getAllResponse.body).to.be.Array().lengthOf(2); // Two records should exist
   });
 
-  it('automatically sets validFromDateTime when autoapprove_list is true', async () => {
-    // Set up the environment variables with autoapprove_list enabled
-    appWithClient = await setupApplication({
-      list_kinds: 'book-list',
-      autoapprove_list: 'true',
-    });
-    ({ client } = appWithClient);
-
-    const newList: Partial<List> = {
-      _name: 'Auto Approved List',
-      _kind: 'book-list',
-      description: 'A list that should be auto-approved',
-    };
-
-    const response = await client.post('/lists').send(newList).expect(200);
-
-    // Verify the response
-    expect(response.body._slug).to.be.equal('auto-approved-list');
-    expect(response.body._kind).to.be.equal('book-list');
-
-    // Verify that _validFromDateTime was automatically set to current time
-    const now = new Date();
-    const validFrom = new Date(response.body._validFromDateTime);
-    expect(validFrom).to.be.Date();
-    expect(validFrom.getTime()).to.be.approximately(now.getTime(), 5000); // Allow 5 second difference
-
-    // Verify other fields
-    expect(response.body.description).to.be.equal(
-      'A list that should be auto-approved',
-    );
-  });
-
-  it('automatically sets validFromDateTime when autoapprove_list_for_kind matches', async () => {
-    // Set up the environment variables with kind-specific auto-approve
-    appWithClient = await setupApplication({
-      list_kinds: 'book-list,featured-list',
-      'autoapprove_list_for_book-list': 'true',
-    });
-    ({ client } = appWithClient);
-
-    const newList: Partial<List> = {
-      _name: 'Auto Approved Book List',
-      _kind: 'book-list',
-      description: 'A book list that should be auto-approved',
-    };
-
-    const response = await client.post('/lists').send(newList).expect(200);
-
-    // Verify the response
-    expect(response.body._slug).to.be.equal('auto-approved-book-list');
-    expect(response.body._kind).to.be.equal('book-list');
-
-    // Verify that _validFromDateTime was automatically set to current time
-    const now = new Date();
-    const validFrom = new Date(response.body._validFromDateTime);
-    expect(validFrom).to.be.Date();
-    expect(validFrom.getTime()).to.be.approximately(now.getTime(), 5000); // Allow 5 second difference
-
-    // Verify other fields
-    expect(response.body.description).to.be.equal(
-      'A book list that should be auto-approved',
-    );
-  });
-
-  it('does not set validFromDateTime when autoapprove_list_for_kind does not match', async () => {
-    // Set up the environment variables with kind-specific auto-approve for a different kind
-    appWithClient = await setupApplication({
-      list_kinds: 'book-list,featured-list',
-      'autoapprove-list-for-featured-list': 'true',
-    });
-    ({ client } = appWithClient);
-
-    const newList: Partial<List> = {
-      _name: 'Non Auto Approved Book List',
-      _kind: 'book-list',
-      description: 'A book list that should not be auto-approved',
-    };
-
-    const response = await client.post('/lists').send(newList).expect(200);
-
-    // Verify the response
-    expect(response.body._slug).to.be.equal('non-auto-approved-book-list');
-    expect(response.body._kind).to.be.equal('book-list');
-
-    // Verify that _validFromDateTime was not automatically set
-    expect(response.body._validFromDateTime).to.be.null();
-
-    // Verify other fields
-    expect(response.body.description).to.be.equal(
-      'A book list that should not be auto-approved',
-    );
-  });
-
-  it('sets visibility to private when visibility_list is configured as private', async () => {
-    // Set up the environment variables with visibility configuration
-    appWithClient = await setupApplication({
-      list_kinds: 'book-list',
-      visibility_list: 'private',
-    });
-    ({ client } = appWithClient);
-
-    const newList: Partial<List> = {
-      _name: 'Private List',
-      _kind: 'book-list',
-      description: 'A list that should be private by default',
-    };
-
-    const response = await client.post('/lists').send(newList).expect(200);
-
-    // Verify the response
-    expect(response.body._slug).to.be.equal('private-list');
-    expect(response.body._kind).to.be.equal('book-list');
-    expect(response.body._visibility).to.be.equal('private');
-  });
-
-  it('sets visibility to public when visibility_list_for_kind is configured as public', async () => {
-    // Set up the environment variables with kind-specific visibility
-    appWithClient = await setupApplication({
-      list_kinds: 'book-list,featured-list',
-      'visibility_list_for_book-list': 'public',
-    });
-    ({ client } = appWithClient);
-
-    const newList: Partial<List> = {
-      _name: 'Public Book List',
-      _kind: 'book-list',
-      description: 'A book list that should be public by default',
-    };
-
-    const response = await client.post('/lists').send(newList).expect(200);
-
-    // Verify the response
-    expect(response.body._slug).to.be.equal('public-book-list');
-    expect(response.body._kind).to.be.equal('book-list');
-    expect(response.body._visibility).to.be.equal('public');
-  });
 
   it('rejects list creation with invalid visibility value', async () => {
     appWithClient = await setupApplication({
@@ -1008,223 +890,4 @@ describe('POST /lists', () => {
     });
   });
 
-  it('enforces idempotency based on configured fields', async () => {
-    // Set up the environment variables with idempotency configuration
-    appWithClient = await setupApplication({
-      list_kinds: 'book-list',
-      idempotency_list: '_kind,_slug,description', // Configure idempotency fields
-    });
-    ({ client } = appWithClient);
-
-    // First list creation - should succeed
-    const firstList = {
-      _name: 'Science Books',
-      _kind: 'book-list',
-      description: 'A list of science books', // This will be part of idempotency check
-      _ownerUsers: ['user-123'], // This field is not part of idempotency
-      _visibility: 'private', // This field is not part of idempotency
-    };
-
-    const firstResponse = await client
-      .post('/lists')
-      .send(firstList)
-      .expect(200);
-
-    // Verify the first response
-    expect(firstResponse.body._slug).to.be.equal('science-books');
-    expect(firstResponse.body._kind).to.be.equal('book-list');
-    expect(firstResponse.body.description).to.be.equal(
-      'A list of science books',
-    );
-    expect(firstResponse.body._ownerUsers).to.containDeep(['user-123']);
-    expect(firstResponse.body._visibility).to.be.equal('private');
-
-    // Second list with same idempotency fields but different other fields
-    const secondList = {
-      _name: 'Science Books', // Same name will generate same slug
-      _kind: 'book-list', // Same kind
-      description: 'A list of science books', // Same description
-      _ownerUsers: ['user-456'], // Different owner
-      _visibility: 'public', // Different visibility
-    };
-
-    const secondResponse = await client
-      .post('/lists')
-      .send(secondList)
-      .expect(200);
-
-    // Verify all fields in the second response match the first response
-    expectResponseToMatch(secondResponse.body, firstResponse.body);
-
-    // Verify only one record exists by getting all lists
-    const getAllResponse = await client.get('/lists').expect(200);
-    expect(getAllResponse.body).to.be.Array().lengthOf(1); // Only one record should exist
-  });
-
-  it('enforces kind-specific idempotency configuration', async () => {
-    // Set up the environment variables with kind-specific idempotency
-    appWithClient = await setupApplication({
-      list_kinds: 'book-list,featured-list',
-      'idempotency_list_for_book-list': '_kind,_slug,_ownerUsers', // Different fields for book-list
-      'idempotency_list_for_featured-list': '_kind,description', // Different fields for featured-list
-    });
-    ({ client } = appWithClient);
-
-    // First book list - should succeed
-    const firstBookList = {
-      _name: 'Science Books',
-      _kind: 'book-list',
-      description: 'First description', // Not part of idempotency for book-list
-      _ownerUsers: ['user-123'], // Part of idempotency for book-list
-    };
-
-    const firstBookResponse = await client
-      .post('/lists')
-      .send(firstBookList)
-      .expect(200);
-
-    // Second book list with same idempotency fields - should return same record
-    const secondBookList = {
-      _name: 'Science Books', // Will generate same slug
-      _kind: 'book-list',
-      description: 'Different description', // Can be different as not part of idempotency
-      _ownerUsers: ['user-123'], // Same owner
-    };
-
-    const secondBookResponse = await client
-      .post('/lists')
-      .send(secondBookList)
-      .expect(200);
-
-    // Verify responses match
-    expectResponseToMatch(secondBookResponse.body, firstBookResponse.body);
-
-    // First featured list - should succeed
-    const firstFeaturedList = {
-      _name: 'Featured Books',
-      _kind: 'featured-list',
-      description: 'Featured description', // Part of idempotency for featured-list
-      _ownerUsers: ['user-456'], // Not part of idempotency for featured-list
-    };
-
-    const firstFeaturedResponse = await client
-      .post('/lists')
-      .send(firstFeaturedList)
-      .expect(200);
-
-    // Second featured list with same idempotency fields - should return same record
-    const secondFeaturedList = {
-      _name: 'Different Name', // Can be different as not part of idempotency
-      _kind: 'featured-list',
-      description: 'Featured description', // Same description
-      _ownerUsers: ['user-789'], // Can be different as not part of idempotency
-    };
-
-    const secondFeaturedResponse = await client
-      .post('/lists')
-      .send(secondFeaturedList)
-      .expect(200);
-
-    // Verify responses match
-    expectResponseToMatch(
-      secondFeaturedResponse.body,
-      firstFeaturedResponse.body,
-    );
-
-    // Verify only two records exist (one for each kind)
-    const getAllResponse = await client.get('/lists').expect(200);
-    expect(getAllResponse.body).to.be.Array().lengthOf(2);
-  });
-
-  it('enforces idempotency with array fields', async () => {
-    // Set up the environment variables with array fields in idempotency
-    appWithClient = await setupApplication({
-      list_kinds: 'book-list',
-      idempotency_list: '_kind,_ownerUsers,_viewerUsers', // Using array fields for idempotency
-    });
-    ({ client } = appWithClient);
-
-    // First list - should succeed
-    const firstList = {
-      _name: 'First List',
-      _kind: 'book-list',
-      _ownerUsers: ['user-123', 'user-456'],
-      _viewerUsers: ['viewer-1', 'viewer-2'],
-      description: 'First description',
-    };
-
-    const firstResponse = await client
-      .post('/lists')
-      .send(firstList)
-      .expect(200);
-
-    // Second list with same array values but different order - should return same record
-    const secondList = {
-      _name: 'Different Name',
-      _kind: 'book-list',
-      _ownerUsers: ['user-456', 'user-123'], // Same values, different order
-      _viewerUsers: ['viewer-2', 'viewer-1'], // Same values, different order
-      description: 'Different description',
-    };
-
-    const secondResponse = await client
-      .post('/lists')
-      .send(secondList)
-      .expect(200);
-
-    // Verify responses match
-    expectResponseToMatch(secondResponse.body, firstResponse.body);
-
-    // Verify only one record exists
-    const getAllResponse = await client.get('/lists').expect(200);
-    expect(getAllResponse.body).to.be.Array().lengthOf(1);
-  });
-
-  it('enforces idempotency with date fields', async () => {
-    // Set up the environment variables with date fields in idempotency
-    appWithClient = await setupApplication({
-      list_kinds: 'book-list',
-      idempotency_list: '_kind,_validFromDateTime,_validUntilDateTime', // Using date fields for idempotency
-    });
-    ({ client } = appWithClient);
-
-    const validFrom = new Date();
-    const validUntil = new Date();
-    validUntil.setDate(validUntil.getDate() + 7);
-
-    // First list - should succeed
-    const firstList = {
-      _name: 'First List',
-      _kind: 'book-list',
-      _validFromDateTime: validFrom.toISOString(),
-      _validUntilDateTime: validUntil.toISOString(),
-      description: 'First description',
-    };
-
-    const firstResponse = await client
-      .post('/lists')
-      .send(firstList)
-      .expect(200);
-
-    // Second list with same dates but different other fields - should return same record
-    const secondList = {
-      _name: 'Different Name',
-      _kind: 'book-list',
-      _validFromDateTime: validFrom.toISOString(),
-      _validUntilDateTime: validUntil.toISOString(),
-      description: 'Different description',
-    };
-
-    const secondResponse = await client
-      .post('/lists')
-      .send(secondList)
-      .expect(200);
-
-    // Verify responses match
-    expectResponseToMatch(secondResponse.body, firstResponse.body);
-
-    // Verify only one record exists
-    const getAllResponse = await client.get('/lists').expect(200);
-    expect(getAllResponse.body).to.be.Array().lengthOf(1);
-  });
 });

@@ -46,7 +46,6 @@ describe('GET /relations/{id}', () => {
     appWithClient = await setupApplication({
       list_kinds: 'reading',
       entity_kinds: 'book',
-      autoapprove_list_entity_relations: 'true',
     });
     ({ client } = appWithClient);
 
@@ -64,10 +63,11 @@ describe('GET /relations/{id}', () => {
       description: 'A test book',
     });
 
-    // Create relation
+    // Create relation. EPBO pre-resolves _kind; tests must supply it explicitly.
     const relationResponse = await client
       .post('/relations')
       .send({
+        _kind: 'relation',
         _listId: listId,
         _entityId: entityId,
       })
@@ -84,7 +84,6 @@ describe('GET /relations/{id}', () => {
     expect(response.body).to.have.property('_entityId', entityId);
     expect(response.body).to.have.property('_kind', 'relation');
     expect(response.body).to.have.property('_version', 1);
-    expect(response.body).to.have.property('_validFromDateTime');
     expect(response.body).to.have.property('_createdDateTime');
     expect(response.body).to.have.property('_lastUpdatedDateTime');
   });

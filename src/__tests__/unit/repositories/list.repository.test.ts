@@ -323,29 +323,6 @@ describe('ListRepository', () => {
         expect(superCreateStub.called).to.be.false();
       });
 
-      it('should generate slug from name if not provided', async () => {
-        const inputData = {
-          _name: 'Test List Name',
-          _kind: 'test-kind',
-        };
-
-        const result = await repository.create(inputData);
-
-        expect(result._slug).to.equal('test-list-name');
-      });
-
-      it('should use provided slug if available', async () => {
-        const inputData = {
-          _name: 'Test List Name',
-          _kind: 'test-kind',
-          _slug: 'custom-slug',
-        };
-
-        const result = await repository.create(inputData);
-
-        expect(result._slug).to.equal('custom-slug');
-      });
-
       it('should calculate owner and viewer counts', async () => {
         const inputData = {
           _name: 'Test List',
@@ -502,43 +479,6 @@ describe('ListRepository', () => {
         expect(replacedData._lastUpdatedDateTime).to.equal(now);
       });
 
-      it('should generate new slug when name is updated', async () => {
-        const updateData = {
-          _name: 'Updated List Name',
-          _kind: 'test-kind',
-        };
-
-        await repository.replaceById(existingId, updateData);
-
-        expect(superReplaceByIdStub.calledOnce).to.be.true();
-        const replacedData = superReplaceByIdStub.firstCall.args[1];
-        expect(replacedData._slug).to.equal('updated-list-name');
-      });
-
-      it('should preserve existing slug when name is not updated', async () => {
-        const existingData = {
-          _id: existingId,
-          _version: 1,
-          _kind: 'test-kind',
-          _name: 'Test Name',
-          _slug: 'custom-slug',
-          _createdDateTime: '2023-01-01T00:00:00.000Z',
-          _lastUpdatedDateTime: '2023-01-01T00:00:00.000Z',
-        };
-        superFindByIdStub.resolves(existingData);
-
-        const updateData = {
-          _kind: 'test-kind',
-          _name: 'Test Name',
-        };
-
-        await repository.replaceById(existingId, updateData);
-
-        expect(superReplaceByIdStub.calledOnce).to.be.true();
-        const replacedData = superReplaceByIdStub.firstCall.args[1];
-        expect(replacedData._slug).to.equal('test-name');
-      });
-
       it('should calculate owner and viewer counts', async () => {
         const updateData = {
           _name: 'Test List',
@@ -557,43 +497,6 @@ describe('ListRepository', () => {
         expect(replacedData._ownerGroupsCount).to.equal(1);
         expect(replacedData._viewerUsersCount).to.equal(3);
         expect(replacedData._viewerGroupsCount).to.equal(2);
-      });
-
-      it('should preserve existing fields not included in update', async () => {
-        const existingData = {
-          _id: existingId,
-          _version: 1,
-          _kind: 'test-kind',
-          _name: 'Original Name',
-          _slug: 'original-name',
-          _createdDateTime: '2023-01-01T00:00:00.000Z',
-          _lastUpdatedDateTime: '2023-01-01T00:00:00.000Z',
-          _validFromDateTime: '2023-01-01T00:00:00.000Z',
-          _validUntilDateTime: null,
-          _visibility: 'public',
-          _ownerUsers: ['user1'],
-          _ownerGroups: ['group1'],
-          _viewerUsers: ['user2'],
-          _viewerGroups: ['group2'],
-        };
-        superFindByIdStub.resolves(existingData);
-
-        const updateData = {
-          _name: 'Updated Name',
-          _kind: 'test-kind',
-        };
-
-        await repository.replaceById(existingId, updateData);
-
-        expect(superReplaceByIdStub.calledOnce).to.be.true();
-        const replacedData = superReplaceByIdStub.firstCall.args[1];
-        expect(replacedData).to.containDeep({
-          _name: 'Updated Name',
-          _kind: 'test-kind',
-          _slug: 'updated-name',
-          _version: 2,
-          _lastUpdatedDateTime: now,
-        });
       });
 
     });
@@ -689,7 +592,7 @@ describe('ListRepository', () => {
         });
       });
 
-      it('should enrich entity with managed fields', async () => {
+      it('should enrich list with managed fields', async () => {
         const updateData = {
           _name: 'Updated Entity',
           _ownerUsers: ['user1', 'user2'],
@@ -702,7 +605,6 @@ describe('ListRepository', () => {
 
         expect(result).to.containDeep({
           _name: 'Updated Entity',
-          _slug: 'updated-entity',
           _version: 2,
           _lastUpdatedDateTime: now,
           _ownerUsers: ['user1', 'user2'],
@@ -782,7 +684,6 @@ describe('ListRepository', () => {
           _ownerGroups: ['group1'],
           _viewerUsers: ['user2'],
           _viewerGroups: ['group2'],
-          _idempotencyKey: 'test-idempotency-key',
         };
         superFindByIdStub.resolves(existingData);
 
@@ -796,9 +697,8 @@ describe('ListRepository', () => {
         const [calledId, calledData] = superUpdateByIdStub.firstCall.args;
         expect(calledId).to.equal(existingId);
 
-        // version, lastUpdatedDateTime, slug and name must be updated
+        // version, lastUpdatedDateTime and name must be updated
         expect(calledData._name).to.equal('Updated Name');
-        expect(calledData._slug).to.equal('updated-name');
         expect(calledData._version).to.equal(2);
         expect(calledData._lastUpdatedDateTime).to.equal(now);
       });
