@@ -1193,5 +1193,52 @@ describe('POST /list-reactions', () => {
         references: validReferences2,
       });
     });
+  
+    describe('idempotency', () => {
+      it('returns the same list reaction on retry with the same X-Idempotency-Key', async () => {
+        appWithClient = await setupApplication({ list_reaction_kinds: 'like' });
+        ({ client } = appWithClient);
+  
+        // Create a source list first
+        const listId = await createTestList(client, {
+          _name: 'Source List',
+          _kind: 'list',
+        });
+  
+        const payload = { _listId: listId, _name: 'Like', _kind: 'like' };
+        const key = 'idem-list-reaction-key-001';
+  
+        const first = await client
+          .post('/list-reactions')
+          .set('X-Idempotency-Key', key)
+          .send(payload)
+          .expect(200);
+  
+        const retry = await client
+          .post('/list-reactions')
+          .set('X-Idempotency-Key', key)
+          .send(payload)
+          .expect(200);
+  
+        expect(retry.body._id).to.equal(first.body._id);
+      });
+  
+      it('creates a new list reaction when no X-Idempotency-Key is supplied', async () => {
+        appWithClient = await setupApplication({ list_reaction_kinds: 'like' });
+        ({ client } = appWithClient);
+  
+        const listId = await createTestList(client, {
+          _name: 'Source List',
+          _kind: 'list',
+        });
+  
+        const response = await client
+          .post('/list-reactions')
+          .send({ _listId: listId, _name: 'Like', _kind: 'like' })
+          .expect(200);
+  
+        expect(response.body._id).to.be.String();
+      });
+    });
   });
 });

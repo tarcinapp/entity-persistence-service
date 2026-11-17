@@ -1085,4 +1085,75 @@ describe('POST /entities', () => {
       });
     });
   });
+
+  describe('idempotency', () => {
+    it('returns the same entity on retry with the same X-Idempotency-Key (200)', async () => {
+      appWithClient = await setupApplication({ entity_kinds: 'book' });
+      ({ client } = appWithClient);
+
+      const payload = { _name: 'Idempotent Book', _kind: 'book' };
+      const key = 'idem-entity-test-key-001';
+
+      const first = await client
+        .post('/entities')
+        .set('X-Idempotency-Key', key)
+        .send(payload)
+        .expect(200);
+
+      const retry = await client
+        .post('/entities')
+        .set('X-Idempotency-Key', key)
+        .send(payload)
+        .expect(200);
+
+      expect(retry.body._id).to.equal(first.body._id);
+      expect(retry.body._name).to.equal(first.body._name);
+    });
+
+    it('creates a new entity when no X-Idempotency-Key is supplied (behaviour unchanged)', async () => {
+      appWithClient = await setupApplication({ entity_kinds: 'book' });
+      ({ client } = appWithClient);
+
+      const response = await client
+        .post('/entities')
+        .send({ _name: 'No-key Book', _kind: 'book' })
+        .expect(200);
+
+      expect(response.body._id).to.be.String();
+    });
+
+    it('creates a distinct entity for a different X-Idempotency-Key', async () => {
+      appWithClient = await setupApplication({ entity_kinds: 'book' });
+      ({ client } = appWithClient);
+
+      const payload = { _kind: 'book' };
+
+      const first = await client
+        .post('/entities')
+        .set('X-Idempotency-Key', 'key-entity-alpha')
+        .send({ ...payload, _name: 'Alpha Book' })
+        .expect(200);
+
+      const second = await client
+        .post('/entities')
+        .set('X-Idempotency-Key', 'key-entity-beta')
+        .send({ ...payload, _name: 'Beta Book' })
+        .expect(200);
+
+      expect(first.body._id).to.not.equal(second.body._id);
+    });
+
+    it('does not expose _idempotencyKey in the response body', async () => {
+      appWithClient = await setupApplication({ entity_kinds: 'book' });
+      ({ client } = appWithClient);
+
+      const response = await client
+        .post('/entities')
+        .set('X-Idempotency-Key', 'hidden-field-test-key')
+        .send({ _name: 'Hidden Key Book', _kind: 'book' })
+        .expect(200);
+
+      expect(response.body._idempotencyKey).to.be.undefined();
+    });
+  });
 });

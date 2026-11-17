@@ -139,6 +139,10 @@ export class EntitiesController {
     @inject('active.transaction.options', { optional: true })
     options: Options = {},
   ): Promise<GenericEntity> {
+    const idempotencyKey = this.req.headers['x-idempotency-key'];
+    if (idempotencyKey) {
+      options = { ...options, idempotencyKey: String(idempotencyKey) };
+    }
     return this.entityRepository.create(entity, options);
   }
 
@@ -859,6 +863,10 @@ export class EntitiesController {
     @inject('active.transaction.options', { optional: true })
     options: Options = {},
   ): Promise<GenericEntity> {
+    const idempotencyKey = this.req.headers['x-idempotency-key'];
+    if (idempotencyKey) {
+      options = { ...options, idempotencyKey: String(idempotencyKey) };
+    }
     return this.entityRepository.createChild(id, entity, options);
   }
 }

@@ -352,10 +352,34 @@ export abstract class EntityPersistenceReactionRepository<
   // ============================================================================
 
   /**
-   * Creates a new reaction with validation and enrichment.
+   * Creates a new reaction record with validation and enrichment.
+   *
+   * Idempotency: if `options.idempotencyKey` is provided, the repository checks
+   * whether a record with that key already exists. If found, the existing record
+   * is returned without creating a duplicate. If not found, the key is written
+   * onto the new document before it is persisted.
    */
   async create(data: DataObject<E>, options?: Options): Promise<E> {
+    const idempotencyKey = options?.idempotencyKey as string | undefined;
+
+    if (idempotencyKey) {
+      const existing = await super.findOne(
+        { where: { _idempotencyKey: idempotencyKey } as unknown as Where<E> },
+        options,
+      );
+
+      if (existing) {
+        return this.injectRecordType(existing);
+      }
+    }
+
     const modifiedData = await this.modifyDataForCreation(data);
+
+    if (idempotencyKey) {
+      (modifiedData as unknown as Record<string, unknown>)._idempotencyKey =
+        idempotencyKey;
+    }
+
     const validatedData = await this.validateDataForCreation(
       modifiedData,
       options,

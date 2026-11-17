@@ -141,6 +141,10 @@ export class ListsController {
     @inject('active.transaction.options', { optional: true })
     options: Options = {},
   ): Promise<List> {
+    const idempotencyKey = this.request.headers['x-idempotency-key'];
+    if (idempotencyKey) {
+      options = { ...options, idempotencyKey: String(idempotencyKey) };
+    }
     return this.listRepository.create(list, options);
   }
 
@@ -716,6 +720,10 @@ export class ListsController {
     @inject('active.transaction.options', { optional: true })
     options: Options = {},
   ): Promise<List> {
+    const idempotencyKey = this.request.headers['x-idempotency-key'];
+    if (idempotencyKey) {
+      options = { ...options, idempotencyKey: String(idempotencyKey) };
+    }
     return this.listRepository.createChild(id, list, options);
   }
 

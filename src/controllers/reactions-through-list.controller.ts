@@ -16,6 +16,8 @@ import {
   patch,
   post,
   requestBody,
+  Request,
+  RestBindings,
 } from '@loopback/rest';
 import { transactional } from '../decorators';
 import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
@@ -37,6 +39,8 @@ export class ReactionsThroughListController {
     protected reactionRepository: CustomReactionThroughListRepository,
     @inject('services.LoggingService')
     private logger: LoggingService,
+    @inject(RestBindings.Http.REQUEST)
+    private req: Request,
   ) {}
 
   @get('/lists/{id}/reactions', {
@@ -221,6 +225,10 @@ export class ReactionsThroughListController {
     @inject('active.transaction.options', { optional: true })
     options: Options = {},
   ): Promise<ListReaction> {
+    const idempotencyKey = this.req.headers['x-idempotency-key'];
+    if (idempotencyKey) {
+      options = { ...options, idempotencyKey: String(idempotencyKey) };
+    }
     // Set the source list ID in the repository
     this.reactionRepository.sourceListId = id;
 

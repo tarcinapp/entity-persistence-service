@@ -16,6 +16,8 @@ import {
   patch,
   post,
   requestBody,
+  Request,
+  RestBindings,
 } from '@loopback/rest';
 import { transactional } from '../decorators';
 import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
@@ -37,6 +39,8 @@ export class ReactionsThroughEntityController {
     protected reactionRepository: CustomReactionThroughEntityRepository,
     @inject('services.LoggingService')
     private logger: LoggingService,
+    @inject(RestBindings.Http.REQUEST)
+    private req: Request,
   ) {}
 
   @get('/entities/{id}/reactions', {
@@ -219,6 +223,10 @@ export class ReactionsThroughEntityController {
     @inject('active.transaction.options', { optional: true })
     options: Options = {},
   ): Promise<EntityReaction> {
+    const idempotencyKey = this.req.headers['x-idempotency-key'];
+    if (idempotencyKey) {
+      options = { ...options, idempotencyKey: String(idempotencyKey) };
+    }
     // Set the source entity ID in the repository
     this.reactionRepository.sourceEntityId = id;
 

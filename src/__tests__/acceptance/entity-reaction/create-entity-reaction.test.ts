@@ -1219,5 +1219,54 @@ describe('POST /entity-reactions', () => {
         references: validReferences,
       });
     });
+  
+    describe('idempotency', () => {
+      it('returns the same entity reaction on retry with the same X-Idempotency-Key', async () => {
+        appWithClient = await setupApplication({ entity_reaction_kinds: 'like' });
+        ({ client } = appWithClient);
+  
+        // Create a source entity first
+        const entityResponse = await client
+          .post('/entities')
+          .send({ _name: 'Source Entity', _kind: 'entity' })
+          .expect(200);
+        const entityId = entityResponse.body._id;
+  
+        const payload = { _entityId: entityId, _name: 'Like', _kind: 'like' };
+        const key = 'idem-entity-reaction-key-001';
+  
+        const first = await client
+          .post('/entity-reactions')
+          .set('X-Idempotency-Key', key)
+          .send(payload)
+          .expect(200);
+  
+        const retry = await client
+          .post('/entity-reactions')
+          .set('X-Idempotency-Key', key)
+          .send(payload)
+          .expect(200);
+  
+        expect(retry.body._id).to.equal(first.body._id);
+      });
+  
+      it('creates a new entity reaction when no X-Idempotency-Key is supplied', async () => {
+        appWithClient = await setupApplication({ entity_reaction_kinds: 'like' });
+        ({ client } = appWithClient);
+  
+        const entityResponse = await client
+          .post('/entities')
+          .send({ _name: 'Source Entity', _kind: 'entity' })
+          .expect(200);
+        const entityId = entityResponse.body._id;
+  
+        const response = await client
+          .post('/entity-reactions')
+          .send({ _entityId: entityId, _name: 'Like', _kind: 'like' })
+          .expect(200);
+  
+        expect(response.body._id).to.be.String();
+      });
+    });
   });
 });

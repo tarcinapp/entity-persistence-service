@@ -5,6 +5,7 @@ import {
   Filter,
   FilterBuilder,
   FilterExcludingWhere,
+  Options,
   repository,
   Where,
 } from '@loopback/repository';
@@ -17,6 +18,8 @@ import {
   put,
   del,
   requestBody,
+  Request,
+  RestBindings,
 } from '@loopback/rest';
 import { transactional } from '../decorators';
 import { sanitizeFilterFields } from '../extensions/utils/filter-helper';
@@ -39,6 +42,8 @@ export class ListReactionsController {
     public listReactionsRepository: ListReactionsRepository,
     @inject('services.LoggingService')
     private logger: LoggingService,
+    @inject(RestBindings.Http.REQUEST)
+    private req: Request,
   ) {}
 
   @transactional()
@@ -131,8 +136,12 @@ export class ListReactionsController {
     })
     listReaction: Omit<ListReaction, StrictlyInternalFields>,
     @inject('active.transaction.options', { optional: true })
-    options: any = {},
+    options: Options = {},
   ): Promise<ListReaction> {
+    const idempotencyKey = this.req.headers['x-idempotency-key'];
+    if (idempotencyKey) {
+      options = { ...options, idempotencyKey: String(idempotencyKey) };
+    }
     return this.listReactionsRepository.create(listReaction, options);
   }
 
@@ -918,8 +927,12 @@ export class ListReactionsController {
     })
     listReaction: Omit<ListReaction, StrictlyInternalFields | '_parents'>,
     @inject('active.transaction.options', { optional: true })
-    options: any = {},
+    options: Options = {},
   ): Promise<ListReaction> {
+    const idempotencyKey = this.req.headers['x-idempotency-key'];
+    if (idempotencyKey) {
+      options = { ...options, idempotencyKey: String(idempotencyKey) };
+    }
     return this.listReactionsRepository.createChild(id, listReaction, options);
   }
 }

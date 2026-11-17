@@ -351,10 +351,33 @@ export class ListEntityRelationRepository extends EntityPersistenceBaseRepositor
   }
 
   /**
-   * Creates a new relation with enrichment and validation.
+   * Creates a new relation record with enrichment and validation.
+   *
+   * Idempotency: if `options.idempotencyKey` is provided, the repository checks
+   * whether a record with that key already exists. If found, the existing record
+   * is returned without creating a duplicate. If not found, the key is written
+   * onto the new document before it is persisted.
    */
   async create(data: DataObject<ListToEntityRelation>, options?: Options) {
+    const idempotencyKey = options?.idempotencyKey as string | undefined;
+
+    if (idempotencyKey) {
+      const existing = await super.findOne(
+        { where: { _idempotencyKey: idempotencyKey } as Where<ListToEntityRelation> },
+        options,
+      );
+
+      if (existing) {
+        return this.injectRecordType(existing);
+      }
+    }
+
     const enrichedData = await this.enrichIncomingRelationForCreation(data);
+
+    if (idempotencyKey) {
+      (enrichedData as Record<string, unknown>)._idempotencyKey = idempotencyKey;
+    }
+
     const validEnrichedData = await this.validateIncomingRelationForCreation(
       enrichedData,
       options,

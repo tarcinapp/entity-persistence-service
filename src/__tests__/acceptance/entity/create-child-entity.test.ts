@@ -87,4 +87,35 @@ describe('POST /entities/{id}/children', () => {
     expect(childrenResponse.body).to.be.Array().lengthOf(1);
     expect(childrenResponse.body[0]._id).to.be.equal(childResponse.body._id);
   });
+
+  describe('idempotency', () => {
+    it('returns the same child entity on retry with the same X-Idempotency-Key', async () => {
+      appWithClient = await setupApplication({});
+      ({ client } = appWithClient);
+
+      // Create parent entity
+      const parentResponse = await client
+        .post('/entities')
+        .send({ _name: 'Parent', _kind: 'entity' })
+        .expect(200);
+      const parentId = parentResponse.body._id;
+
+      const payload = { _name: 'Child Entity', _kind: 'entity' };
+      const key = 'idem-child-entity-key-001';
+
+      const first = await client
+        .post(`/entities/${parentId}/children`)
+        .set('X-Idempotency-Key', key)
+        .send(payload)
+        .expect(200);
+
+      const retry = await client
+        .post(`/entities/${parentId}/children`)
+        .set('X-Idempotency-Key', key)
+        .send(payload)
+        .expect(200);
+
+      expect(retry.body._id).to.equal(first.body._id);
+    });
+  });
 });

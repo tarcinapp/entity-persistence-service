@@ -236,6 +236,10 @@ export class EntitiesThroughListController {
     @inject('active.transaction.options', { optional: true })
     options: any = {},
   ): Promise<GenericEntity> {
+    const idempotencyKey = this.req.headers['x-idempotency-key'];
+    if (idempotencyKey) {
+      options = { ...options, idempotencyKey: String(idempotencyKey) };
+    }
     const repo = await this.listRepository.entities(id);
 
     return repo.create(entity, options);

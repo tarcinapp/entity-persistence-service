@@ -152,6 +152,10 @@ export class ListEntityRelsController {
     @inject('active.transaction.options', { optional: true })
     options: Options = {},
   ): Promise<ListToEntityRelation> {
+    const idempotencyKey = this.req.headers['x-idempotency-key'];
+    if (idempotencyKey) {
+      options = { ...options, idempotencyKey: String(idempotencyKey) };
+    }
     return this.listEntityRelationRepository.create(
       listEntityRelation,
       options,

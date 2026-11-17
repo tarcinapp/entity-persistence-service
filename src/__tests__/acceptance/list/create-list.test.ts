@@ -890,4 +890,54 @@ describe('POST /lists', () => {
     });
   });
 
+  describe('idempotency', () => {
+    it('returns the same list on retry with the same X-Idempotency-Key (200)', async () => {
+      appWithClient = await setupApplication({ list_kinds: 'playlist' });
+      ({ client } = appWithClient);
+
+      const payload = { _name: 'Idempotent List', _kind: 'playlist' };
+      const key = 'idem-list-test-key-001';
+
+      const first = await client
+        .post('/lists')
+        .set('X-Idempotency-Key', key)
+        .send(payload)
+        .expect(200);
+
+      const retry = await client
+        .post('/lists')
+        .set('X-Idempotency-Key', key)
+        .send(payload)
+        .expect(200);
+
+      expect(retry.body._id).to.equal(first.body._id);
+      expect(retry.body._name).to.equal(first.body._name);
+    });
+
+    it('creates a new list when no X-Idempotency-Key is supplied (behaviour unchanged)', async () => {
+      appWithClient = await setupApplication({ list_kinds: 'playlist' });
+      ({ client } = appWithClient);
+
+      const response = await client
+        .post('/lists')
+        .send({ _name: 'No-key List', _kind: 'playlist' })
+        .expect(200);
+
+      expect(response.body._id).to.be.String();
+    });
+
+    it('does not expose _idempotencyKey in the list response body', async () => {
+      appWithClient = await setupApplication({ list_kinds: 'playlist' });
+      ({ client } = appWithClient);
+
+      const response = await client
+        .post('/lists')
+        .set('X-Idempotency-Key', 'hidden-list-key')
+        .send({ _name: 'Hidden Key List', _kind: 'playlist' })
+        .expect(200);
+
+      expect(response.body._idempotencyKey).to.be.undefined();
+    });
+  });
+
 });

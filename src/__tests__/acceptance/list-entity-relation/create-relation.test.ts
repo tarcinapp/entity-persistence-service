@@ -683,4 +683,69 @@ describe('POST /relations', () => {
       })
       .expect(200);
   });
+
+  describe('idempotency', () => {
+    it('returns the same relation on retry with the same X-Idempotency-Key', async () => {
+      appWithClient = await setupApplication({
+        list_entity_rel_kinds: 'membership',
+      });
+      ({ client } = appWithClient);
+
+      // Create source list and entity
+      const listResponse = await client
+        .post('/lists')
+        .send({ _name: 'My List', _kind: 'list' })
+        .expect(200);
+      const listId = listResponse.body._id;
+
+      const entityResponse = await client
+        .post('/entities')
+        .send({ _name: 'My Entity', _kind: 'entity' })
+        .expect(200);
+      const entityId = entityResponse.body._id;
+
+      const payload = { _listId: listId, _entityId: entityId, _kind: 'membership' };
+      const key = 'idem-relation-key-001';
+
+      const first = await client
+        .post('/relations')
+        .set('X-Idempotency-Key', key)
+        .send(payload)
+        .expect(200);
+
+      const retry = await client
+        .post('/relations')
+        .set('X-Idempotency-Key', key)
+        .send(payload)
+        .expect(200);
+
+      expect(retry.body._id).to.equal(first.body._id);
+    });
+
+    it('creates a new relation when no X-Idempotency-Key is supplied', async () => {
+      appWithClient = await setupApplication({
+        list_entity_rel_kinds: 'membership',
+      });
+      ({ client } = appWithClient);
+
+      const listResponse = await client
+        .post('/lists')
+        .send({ _name: 'My List', _kind: 'list' })
+        .expect(200);
+      const listId = listResponse.body._id;
+
+      const entityResponse = await client
+        .post('/entities')
+        .send({ _name: 'My Entity', _kind: 'entity' })
+        .expect(200);
+      const entityId = entityResponse.body._id;
+
+      const response = await client
+        .post('/relations')
+        .send({ _listId: listId, _entityId: entityId, _kind: 'membership' })
+        .expect(200);
+
+      expect(response.body._id).to.be.String();
+    });
+  });
 });
